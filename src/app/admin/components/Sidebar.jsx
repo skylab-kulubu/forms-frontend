@@ -70,7 +70,7 @@ export default function Sidebar({ user, children }) {
   const panelRef = useRef(null);
 
   return (
-    <div className="min-h-screen bg-white md:pl-72">
+    <div className="min-h-screen md:pl-72">
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 shrink-0 border-r border-zinc-200/70 bg-neutral-100/40 backdrop-blur-lg shadow-md">

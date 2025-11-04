@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Clock } from "lucide-react";
+import { FieldShell } from "@/app/components/FieldShell";
+import { useProp } from "../admin/new-form/components/useProp";
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -32,71 +34,44 @@ function clampStep(minute, step) {
   return Math.max(0, Math.min(59, r));
 }
 
-export function CreateFormTimePicker({ questionNumber }) {
-  const [question, setQuestion] = useState("");
-  const [description, setDescription] = useState("");
-  const [required, setRequired] = useState(false);
+export function CreateFormTimePicker({ questionNumber, props, onPropsChange }) {
+  const {prop, bind, toggle} = useProp(props, onPropsChange);
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl border border-white/10 bg-neutral-900/40 shadow-lg backdrop-blur-sm">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <div className="grid size-6 place-items-center rounded-md border border-white/15 bg-white/5 text-[13px] font-semibold text-neutral-200">
-          {questionNumber}
-        </div>
-        <span className="text-sm font-medium text-neutral-100">Zaman Seçici</span>
-        <div className="ml-auto">
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-            <button type="button" aria-pressed={!required} onClick={() => setRequired(false)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${!required ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Opsiyonel
-            </button>
-            <button type="button" aria-pressed={required} onClick={() => setRequired(true)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${required ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Zorunlu
-            </button>
-          </div>
-        </div>
+    <FieldShell number={questionNumber} title="Zaman Seçici" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="tp-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Soru Metni
+        </label>
+        <input id="tp-question" type="text" {...bind("question")}
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          placeholder="Sorunuzu buraya yazın."
+        />
       </div>
 
-      <div className="flex flex-col gap-3 p-3 md:p-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="tp-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Soru Metni
-          </label>
-          <input id="tp-question" type="text"
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-            placeholder="Sorunuzu buraya yazın."
-            value={question} onChange={(e) => setQuestion(e.target.value)}
-          />
-        </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="tp-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Açıklama
+        </label>
+        <input id="tp-description" type="text" {...bind("description")}
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          placeholder="Açıklamanızı buraya yazın."
+        />
+      </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="tp-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Açıklama
-          </label>
-          <input id="tp-description" type="text"
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-            placeholder="Açıklamanızı buraya yazın."
-            value={description} onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Örnek Cevap
-          </label>
-          <div className="rounded-lg border border-white/10 bg-neutral-900/60 p-3 text-center text-sm text-neutral-400">
-            <div className="mx-auto inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2">
-              <Clock size={16} />
-              <span>Timepicker burada görünecek</span>
-            </div>
-            <div className="mt-2 text-[11px] text-neutral-500">24 saat • 5 dk adım</div>
+      <div className="flex flex-col gap-1.5">
+        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Örnek Cevap
+        </label>
+        <div className="rounded-lg border border-white/10 bg-neutral-900/60 p-3 text-center text-sm text-neutral-400">
+          <div className="mx-auto inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2">
+            <Clock size={16} />
+            <span>Timepicker burada görünecek</span>
           </div>
+          <div className="mt-2 text-[11px] text-neutral-500">24 saat • 5 dk adım</div>
         </div>
       </div>
-    </div>
+    </FieldShell>
   );
 }
 

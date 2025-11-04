@@ -5,7 +5,7 @@ import { DndContext, useDraggable, useDroppable, DragOverlay, pointerWithin } fr
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from '@dnd-kit/utilities';
 
-import { COMPONENTS } from "./form-registry";
+import { COMPONENTS, REGISTRY } from "./form-registry";
 
 function LibraryPanel({ children }) {
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
@@ -40,12 +40,20 @@ function LibraryItem({ item }) {
     )
 }
 
-function GhostComponent({ active }) {
-    const type = active?.data?.current?.type;
+function GhostComponent({ active, schema }) {
+    if (!active) return null;
+    const from = active.data?.current?.from;
+    let type = active.data?.current?.type ?? null;
+
+    if (!type && from === "canvas") {
+        const node = schema.find(f => f.id === active.id);
+        type = node?.type ?? null;
+    }
+    if (!type) return null;
     const item = COMPONENTS.find(c => c.type === type);
     if (!item) return null;
     return (
-        <div>
+        <div className="pointer-events-none select-none opacity-90">
             <img src={item.svg} alt={item.label} />
         </div>
     );
@@ -55,7 +63,7 @@ function Canvas({ children }) {
     const { setNodeRef, isOver } = useDroppable({ id: "canvas" });
 
     return (
-        <div ref={setNodeRef} className={`col-span-8 min-h-[60vh] rounded-xl p-3 transition border 
+        <div ref={setNodeRef} className={`col-span-8 min-h-[60vh] overflow-y-auto rounded-xl p-3 transition border 
             ${isOver ? "border-emerald-400/50 bg-emerald-500/5" : "border-transparent"}`}
         >
             {children}
@@ -63,30 +71,42 @@ function Canvas({ children }) {
     )
 }
 
-function CanvasItem({ field }) {
+function CanvasItem({ field, index, onPatch }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
         id: field.id,
         data: { from: "canvas", id: field.id },
     });
 
     const style = { transform: CSS.Transform.toString(transform), transition };
+    const entry = REGISTRY[field.type];
+    const FormComponent = entry?.Create;
+
+    const stopIfInteractive = (e) => {
+        const el = e.target;
+        if (
+            el.closest('input, textarea, select, button, [contenteditable="true"], a, [role="textbox"]')
+        ) {
+            e.stopPropagation();
+        }
+    };
 
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}
-            className="rounded-md border border-white/10 bg-white/5 p-3 cursor-grab active:cursor-grabbing"
+            onPointerDownCapture={stopIfInteractive} onMouseDownCapture={stopIfInteractive} onTouchStartCapture={stopIfInteractive}
+            className="cursor-grab active:cursor-grabbing"
         >
-            {/* CreateFormX gelcek buraya */}
-            <div className="text-sm font-medium mb-1">{field.type}</div>
-            <div className="text-xs text-neutral-400">CreateForm{field.type} gelcek bura</div>
+            {FormComponent ? (
+                <FormComponent questionNumber={index} props={field.props} onPropsChange={(next) => onPatch(field.id, next)} />
+            ) : null}
         </div>
     );
 }
 
 function DropSlot({ index, enabled }) {
     const { setNodeRef, isOver } = useDroppable(enabled ? { id: `slot-${index}`, data: { index } } : { id: undefined });
-    if (!enabled) return(<div className="h-2"/>);
+    if (!enabled) return (<div className="h-2" />);
     return (
-        <div ref={setNodeRef} className={`rounded transition ${isOver ? "bg-emerald-400/40 h-8 my-1" : "bg-transparent h-2"}`}/>
+        <div ref={setNodeRef} className={`rounded transition ${isOver ? "bg-emerald-400/40 h-8 my-1" : "bg-transparent h-2"}`} />
     );
 }
 
@@ -95,9 +115,17 @@ export default function FormBuilder() {
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
 
+    const patchField = (id, nextProps) => {
+        setSchema(prev => prev.map(f => f.id === id ? { ...f, props: nextProps } : f));
+    };
+
+    if (typeof window !== "undefined") {
+        window.getFormSchema = () => structuredClone(schema);
+    }
+
     return (
-        <DndContext 
-            collisionDetection={pointerWithin} 
+        <DndContext
+            collisionDetection={pointerWithin}
             onDragStart={({ active }) => {
                 const from = active.data?.current?.from ?? null;
                 setDragSource(from);
@@ -118,13 +146,14 @@ export default function FormBuilder() {
                 if (from === "library") {
                     const type = active.data.current.type;
                     const id = Math.random().toString(36).slice(2, 10);
+                    const props = structuredClone(REGISTRY[type]?.defaults ?? {});
                     if (over?.id !== "canvas" && slotIndex === null) return;
                     setSchema((prev) => {
                         if (slotIndex === null && over?.id === "canvas") {
-                            return [...prev, { id, type }];
+                            return [...prev, { id, type, props }];
                         };
                         const newSchema = [...prev];
-                        newSchema.splice(slotIndex, 0, { id, type });
+                        newSchema.splice(slotIndex, 0, { id, type, props });
                         return newSchema;
                     });
                 }
@@ -168,7 +197,7 @@ export default function FormBuilder() {
                                 <DropSlot index={0} enabled={dragSource === "library"} />
                                 {schema.map((f, i) => (
                                     <li key={f.id} className="flex flex-col">
-                                        <CanvasItem field={f} />
+                                        <CanvasItem field={f} index={i + 1} onPatch={patchField} />
                                         <DropSlot index={i + 1} enabled={dragSource === "library"} />
                                     </li>
                                 ))}
@@ -188,7 +217,7 @@ export default function FormBuilder() {
 
             <DragOverlay>
                 {activeDragItem ? (
-                    <GhostComponent active={activeDragItem} />
+                    <GhostComponent active={activeDragItem} schema={schema} />
                 ) : null}
             </DragOverlay>
         </DndContext >

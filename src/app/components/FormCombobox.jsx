@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronsUpDown, Plus, Search, X } from "lucide-react";
+import { FieldShell } from "@/app/components/FieldShell";
+import { useProp } from "../admin/new-form/components/useProp";
 
 function normalizeOptions(options) {
   return (options ?? []).map((option, idx) => {
@@ -14,124 +16,109 @@ function normalizeOptions(options) {
   });
 }
 
-export function CreateFormCombobox({ questionNumber }) {
-  const [question, setQuestion] = useState("");
-  const [description, setDescription] = useState("");
-  const [required, setRequired] = useState(false);
-  const [allowCustom, setAllowCustom] = useState(false);
-  const [choices, setChoices] = useState(["Seçenek 1", "Seçenek 2"]);
+export function CreateFormCombobox({ questionNumber, props, onPropsChange }) {
+  const { prop, bind, toggle, patch} = useProp(props, onPropsChange);
 
-  const addChoice = () => setChoices((prev) => [...prev, `Seçenek ${prev.length + 1}`]);
-  const updateChoice = (index, value) => setChoices((prev) => prev.map((c, i) => (i === index ? value : c)));
-  const removeChoice = (index) => setChoices((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
+  const addChoice = () => {
+    const next = [...(prop.choices ?? []), `Seçenek ${((prop.choices ?? []).length + 1)}`];
+    patch({ choices: next });
+  };
+  const updateChoice = (index, value) => {
+    const next = [...(prop.choices ??  [])];
+    next[index] = value;
+    patch({ choices: next});
+  };
+
+  const removeChoice = (index) => {
+    const array = prop.choices ?? [];
+    const next = array.length > 1 ? array.filter((_, i) => i !== index) : array;
+    patch({ choices: next });
+  };
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl border border-white/10 bg-neutral-900/40 shadow-lg backdrop-blur-sm">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <div className="grid size-6 place-items-center rounded-md border border-white/15 bg-white/5 text-[13px] font-semibold text-neutral-200">
-          {questionNumber}
+    <FieldShell number={questionNumber} title="Açılır Liste" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="cb-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Soru Metni
+        </label>
+        <input id="cb-question" type="text" {...bind("question")}
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          placeholder="Sorunuzu buraya yazın."
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="cb-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Açıklama
+        </label>
+        <input id="cb-description" type="text" {...bind("description")}
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          placeholder="Açıklamanızı buraya yazın."
+        />
+      </div>
+
+      <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
+        <span className="text-[12px] text-neutral-300">Serbest girişe izin ver</span>
+        <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+          <button type="button" aria-pressed={!prop.allowCustom} onClick={() => toggle("allowCustom", false)}
+            className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${!prop.allowCustom ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+          >
+            Hayır
+          </button>
+          <button type="button" aria-pressed={prop.allowCustom} onClick={() => toggle("allowCustom", true)}
+            className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${prop.allowCustom ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
+          >
+            Evet
+          </button>
         </div>
-        <span className="text-sm font-medium text-neutral-100">Açılır Liste</span>
-        <div className="ml-auto">
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-            <button type="button" aria-pressed={!required} onClick={() => setRequired(false)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${!required ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Seçenekler</label>
+        <div className="flex flex-col gap-2">
+          {prop.choices.map((choice, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <input type="text"
+                className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                placeholder={`Seçenek ${idx + 1}`} value={choice} onChange={(e) => updateChoice(idx, e.target.value)}
+              />
+              <button type="button" onClick={() => removeChoice(idx)}
+                className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[11px] text-neutral-300 hover:text-neutral-100 disabled:opacity-50"
+                disabled={prop.choices.length <= 1}
+              >
+                <X size={18} />
+              </button>
+            </div>
+          ))}
+          <div>
+            <button type="button" onClick={addChoice}
+              className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
             >
-              Opsiyonel
-            </button>
-            <button type="button" aria-pressed={required} onClick={() => setRequired(true)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${required ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Zorunlu
+              <Plus size={14} /> Seçenek Ekle
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 p-3 md:p-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="cb-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Soru Metni
-          </label>
-          <input id="cb-question" type="text"
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-            placeholder="Sorunuzu buraya yazın." value={question} onChange={(e) => setQuestion(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="cb-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Açıklama
-          </label>
-          <input id="cb-description" type="text"
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-            placeholder="Açıklamanızı buraya yazın." value={description} onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-          <span className="text-[12px] text-neutral-300">Serbest girişe izin ver</span>
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-            <button type="button" aria-pressed={!allowCustom} onClick={() => setAllowCustom(false)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${!allowCustom ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+      <div className="flex flex-col gap-1.5">
+        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Örnek Cevap
+        </label>
+        <div className="rounded-lg border border-white/10 bg-neutral-900/60 p-3 text-sm text-neutral-400">
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+              <ChevronsUpDown size={16} />
+            </span>
+            <button type="button" disabled
+              className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none"
             >
-              Hayır
-            </button>
-            <button type="button" aria-pressed={allowCustom} onClick={() => setAllowCustom(true)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${allowCustom ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Evet
+              <span className="text-neutral-500">Bir seçenek seçin</span>
             </button>
           </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Seçenekler</label>
-          <div className="flex flex-col gap-2">
-            {choices.map((choice, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <input type="text"
-                  className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
-                  placeholder={`Seçenek ${idx + 1}`} value={choice} onChange={(e) => updateChoice(idx, e.target.value)}
-                />
-                <button type="button" onClick={() => removeChoice(idx)}
-                  className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[11px] text-neutral-300 hover:text-neutral-100 disabled:opacity-50"
-                  disabled={choices.length <= 1}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            ))}
-            <div>
-              <button type="button" onClick={addChoice}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
-              >
-                <Plus size={14} /> Seçenek Ekle
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Örnek Cevap
-          </label>
-          <div className="rounded-lg border border-white/10 bg-neutral-900/60 p-3 text-sm text-neutral-400">
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                <ChevronsUpDown size={16} />
-              </span>
-              <button type="button" disabled
-                className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none"
-              >
-                <span className="text-neutral-500">Bir seçenek seçin</span>
-              </button>
-            </div>
-            <div className="mt-2 text-[11px] text-neutral-500">Tek seçenek seçilir {allowCustom ? " • serbest giriş açık" : ""}</div>
-          </div>
+          <div className="mt-2 text-[11px] text-neutral-500">Tek seçenek seçilir {prop.allowCustom ? " • serbest giriş açık" : ""}</div>
         </div>
       </div>
-    </div>
+    </FieldShell>
   );
 }
 
@@ -278,4 +265,3 @@ export function DisplayFormCombobox({ question, description, required = false, o
     </div>
   );
 }
-

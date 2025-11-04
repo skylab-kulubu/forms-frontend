@@ -2,6 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Upload, X, File as FileIcon } from "lucide-react";
+import { FieldShell } from "@/app/components/FieldShell";
+import { useProp } from "../admin/new-form/components/useProp";
 
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes)) return "-";
@@ -39,102 +41,70 @@ function fileMatchesAccept(file, acceptList) {
     // Exact mime type
     return type === rule;
   });
-}
+} 
 
-export function CreateFormFileUpload({ questionNumber }) {
-  const [question, setQuestion] = useState("");
-  const [description, setDescription] = useState("");
-  const [required, setRequired] = useState(false);
-  const [accept, setAccept] = useState(".pdf,.jpg,.png");
-  const [maxSizeMB, setMaxSizeMB] = useState(0);
+export function CreateFormFileUpload({ questionNumber, props, onPropsChange }) {
+  const { prop, bind, toggle} = useProp(props, onPropsChange);
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl border border-white/10 bg-neutral-900/40 shadow-lg backdrop-blur-sm">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <div className="grid size-6 place-items-center rounded-md border border-white/15 bg-white/5 text-[13px] font-semibold text-neutral-200">
-          {questionNumber}
+    <FieldShell number={questionNumber} title="Dosya Yükleme" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="file-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Soru Metni
+        </label>
+        <input id="file-question" type="text" {...bind("question")}
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          placeholder="Sorunuzu buraya yazın."
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="file-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Açıklama
+        </label>
+        <input id="file-description" type="text" {...bind("description")}
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          placeholder="Açıklamanızı buraya yazın."
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="file-accept" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+            İzin verilen dosya türleri
+          </label>
+          <input id="file-accept" type="text" {...bind("acceptedFiles")}
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+            placeholder="Örn: .pdf,.jpg,.png veya image/*"
+          />
+          <span className="px-0.5 text-[11px] text-neutral-500">Virgülle ayırın. Boş bırakılırsa tüm türlere izin verilir.</span>
         </div>
-        <span className="text-sm font-medium text-neutral-100">Dosya Yükleme</span>
-        <div className="ml-auto">
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-            <button type="button" aria-pressed={!required} onClick={() => setRequired(false)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${!required ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Opsiyonel
-            </button>
-            <button type="button" aria-pressed={required} onClick={() => setRequired(true)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${required ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Zorunlu
-            </button>
-          </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="file-maxsize" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+            Maksimum dosya boyutu (MB)
+          </label>
+          <input id="file-maxsize" type="number" min={0} {...bind("maxSize")}
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+            placeholder="0 = sınırsız"
+          />
+          <span className="px-0.5 text-[11px] text-neutral-500">0 ise sınır yok</span>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 p-3 md:p-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="file-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Soru Metni
-          </label>
-          <input id="file-question" type="text"
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-            placeholder="Sorunuzu buraya yazın."
-            value={question} onChange={(e) => setQuestion(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="file-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Açıklama
-          </label>
-          <input id="file-description" type="text"
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-            placeholder="Açıklamanızı buraya yazın."
-            value={description} onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="file-accept" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-              İzin verilen dosya türleri
-            </label>
-            <input id="file-accept" type="text"
-              className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-              placeholder="Örn: .pdf,.jpg,.png veya image/*"
-              value={accept} onChange={(e) => setAccept(e.target.value)}
-            />
-            <span className="px-0.5 text-[11px] text-neutral-500">Virgülle ayırın. Boş bırakılırsa tüm türlere izin verilir.</span>
+      <div className="flex flex-col gap-1.5">
+        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Örnek Cevap
+        </label>
+        <div className="rounded-lg border border-dashed border-white/10 bg-neutral-900/60 p-6 text-center text-sm text-neutral-400">
+          <div className="mx-auto grid size-10 place-items-center rounded-md bg-white/10 text-neutral-300">
+            <Upload size={18} />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="file-maxsize" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-              Maksimum dosya boyutu (MB)
-            </label>
-            <input id="file-maxsize" type="number" min={0}
-              className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-              placeholder="0 = sınırsız"
-              value={maxSizeMB}
-              onChange={(e) => setMaxSizeMB(Number(e.target.value))}
-            />
-            <span className="px-0.5 text-[11px] text-neutral-500">0 ise sınır yok</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Örnek Cevap
-          </label>
-          <div className="rounded-lg border border-dashed border-white/10 bg-neutral-900/60 p-6 text-center text-sm text-neutral-400">
-            <div className="mx-auto grid size-10 place-items-center rounded-md bg-white/10 text-neutral-300">
-              <Upload size={18} />
-            </div>
-            <p className="mt-2 text-sm font-medium text-neutral-100">Dosya yükle</p>
-            <p className="text-xs text-neutral-400">Sürükleyip bırakın veya tıklayın</p>
-            <p className="mt-1 text-[11px] text-neutral-500">İzin verilen: {accept || "Tüm türler"} • {maxSizeMB > 0 ? `${maxSizeMB}MB sınır` : "Sınırsız boyut"}</p>
-          </div>
+          <p className="mt-2 text-sm font-medium text-neutral-100">Dosya yükle</p>
+          <p className="text-xs text-neutral-400">Sürükleyip bırakın veya tıklayın</p>
+          <p className="mt-1 text-[11px] text-neutral-500">İzin verilen: {prop.acceptedFiles || "Tüm türler"} • {prop.maxSize > 0 ? `${prop.maxSize}MB sınır` : "Sınırsız boyut"}</p>
         </div>
       </div>
-    </div>
+    </FieldShell>
   );
 }
 

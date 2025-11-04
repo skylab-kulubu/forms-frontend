@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Link as LinkIcon, Github, Linkedin, Instagram, X } from "lucide-react";
+import { FieldShell } from "@/app/components/FieldShell";
+import { useProp } from "../admin/new-form/components/useProp";
 
 function getProviderIcon(input) {
   if (!input || typeof input !== "string") return LinkIcon;
@@ -22,100 +24,71 @@ function getProviderIcon(input) {
   return LinkIcon;
 }
 
-export function CreateFormLink({ questionNumber }) {
-  const [question, setQuestion] = useState("");
-  const [description, setDescription] = useState("");
-  const [required, setRequired] = useState(false);
-  const [allowMultiple, setAllowMultiple] = useState(false);
+export function CreateFormLink({ questionNumber, props, onPropsChange }) {
+  const {prop, bind, toggle} = useProp(props, onPropsChange);
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl border border-white/10 bg-neutral-900/40 shadow-lg backdrop-blur-sm">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <div className="grid size-6 place-items-center rounded-md border border-white/15 bg-white/5 text-[13px] font-semibold text-neutral-200">
-          {questionNumber}
-        </div>
-        <span className="text-sm font-medium text-neutral-100">Bağlantı</span>
-        <div className="ml-auto">
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-            <button type="button" aria-pressed={!required} onClick={() => setRequired(false)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${!required ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Opsiyonel
-            </button>
-            <button type="button" aria-pressed={required}
-              onClick={() => setRequired(true)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${required ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Zorunlu
-            </button>
-          </div>
+    <FieldShell number={questionNumber} title="Bağlantı" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="link-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Soru Metni
+        </label>
+        <input id="link-question" type="text" {...bind("question")}
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          placeholder="Sorunuzu buraya yazın."
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="link-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Açıklama
+        </label>
+        <input id="link-description" type="text" {...bind("description")}
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          placeholder="Açıklamanızı buraya yazın."
+        />
+      </div>
+
+      <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
+        <span className="text-[12px] text-neutral-300">Birden fazla linke izin ver</span>
+        <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+          <button type="button" aria-pressed={!prop.allowMultiple} onClick={() => toggle("allowMultiple", false)}
+            className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${!prop.allowMultiple ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+          >
+            Hayır
+          </button>
+          <button type="button" aria-pressed={prop.allowMultiple} onClick={() => toggle("allowMultiple", true)}
+            className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${prop.allowMultiple ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
+          >
+            Evet
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 p-3 md:p-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="link-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Soru Metni
-          </label>
-          <input id="link-question" type="text"
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-            placeholder="Sorunuzu buraya yazın."
-            value={question} onChange={(e) => setQuestion(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="link-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Açıklama
-          </label>
-          <input id="link-description" type="text"
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
-            placeholder="Açıklamanızı buraya yazın."
-            value={description} onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-          <span className="text-[12px] text-neutral-300">Birden fazla linke izin ver</span>
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-            <button type="button" aria-pressed={!allowMultiple} onClick={() => setAllowMultiple(false)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${!allowMultiple ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Hayır
-            </button>
-            <button type="button" aria-pressed={allowMultiple} onClick={() => setAllowMultiple(true)}
-              className={`px-2 py-1 text-[11px] rounded-lg transition focus:outline-none ${allowMultiple ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
-            >
-              Evet
-            </button>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="link-answer" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          Cevap
+        </label>
+        <div className="flex flex-col gap-2">
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+              <LinkIcon size={16} />
+            </span>
+            <input id="link-answer" type="url" disabled
+              className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-3 py-2 text-center text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-70 disabled:border-white/5 disabled:bg-neutral-900/40"
+              placeholder="https://ornek.com/profil"
+            />
           </div>
+          {prop.allowMultiple && (
+            <input type="url" disabled
+              className="block w-full rounded-lg border border-white/10 bg-neutral-900/40 px-3 py-2 text-center text-sm text-neutral-100 placeholder-neutral-500 opacity-70"
+              placeholder="Yeni bağlantı eklenebilir"
+            />
+          )}
         </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="link-answer" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-            Cevap
-          </label>
-          <div className="flex flex-col gap-2">
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                <LinkIcon size={16} />
-              </span>
-              <input id="link-answer" type="url" disabled
-                className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-3 py-2 text-center text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-70 disabled:border-white/5 disabled:bg-neutral-900/40"
-                placeholder="https://ornek.com/profil"
-              />
-            </div>
-            {allowMultiple && (
-              <input type="url" disabled
-                className="block w-full rounded-lg border border-white/10 bg-neutral-900/40 px-3 py-2 text-center text-sm text-neutral-100 placeholder-neutral-500 opacity-70"
-                placeholder="Yeni bağlantı eklenebilir"
-              />
-            )}
-          </div>
-          <span className="px-0.5 text-[11px] text-neutral-500">Profil ya da web sitesi bağlantısı bekleniyor</span>
-        </div>
+        <span className="px-0.5 text-[11px] text-neutral-500">Profil ya da web sitesi bağlantısı bekleniyor</span>
       </div>
-    </div>
+    </FieldShell>
   );
 }
 
