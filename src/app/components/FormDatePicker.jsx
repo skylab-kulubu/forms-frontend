@@ -63,8 +63,8 @@ function getCalendarMatrix(viewYear, viewMonth, firstDayOfWeek = 1) {
   return weeks;
 }
 
-export function CreateFormDatePicker({ questionNumber, props, onPropsChange }) {
-  const { prop, bind, toggle} = useProp(props, onPropsChange);
+export function CreateFormDatePicker({ questionNumber, props, onPropsChange, readOnly }) {
+  const { prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
     <FieldShell number={questionNumber} title="Tarih Seçici" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>

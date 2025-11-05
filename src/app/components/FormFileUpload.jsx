@@ -43,8 +43,8 @@ function fileMatchesAccept(file, acceptList) {
   });
 } 
 
-export function CreateFormFileUpload({ questionNumber, props, onPropsChange }) {
-  const { prop, bind, toggle} = useProp(props, onPropsChange);
+export function CreateFormFileUpload({ questionNumber, props, onPropsChange, readOnly }) {
+  const { prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
     <FieldShell number={questionNumber} title="Dosya Yükleme" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>

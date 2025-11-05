@@ -24,8 +24,8 @@ function getProviderIcon(input) {
   return LinkIcon;
 }
 
-export function CreateFormLink({ questionNumber, props, onPropsChange }) {
-  const {prop, bind, toggle} = useProp(props, onPropsChange);
+export function CreateFormLink({ questionNumber, props, onPropsChange, readOnly }) {
+  const {prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
     <FieldShell number={questionNumber} title="Bağlantı" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>

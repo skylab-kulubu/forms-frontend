@@ -1,7 +1,6 @@
-export function useProp(prop, onPropChange) {
-  if (!prop || !onPropChange) {
-    throw new Error("useProp: Prop ve onPropChange zorunludur.");
-  }
+export function useProp(prop, onPropChange, readOnly = false) {
+  if (!prop) throw new Error("useProp: Prop zorunlu");
+  if (!onPropChange && !readOnly) throw new Error("useProp: onPropChange zorunlu (readOnly değilse)");
 
   const patch = (next) => {
     onPropChange({ ...prop, ...next });

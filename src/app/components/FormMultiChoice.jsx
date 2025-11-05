@@ -5,8 +5,8 @@ import { X } from "lucide-react";
 import { FieldShell } from "@/app/components/FieldShell";
 import { useProp } from "../admin/new-form/components/useProp";
 
-export function CreateFormMultiChoice({ questionNumber, props, onPropsChange }) {
-  const { prop, bind, toggle, patch} = useProp(props, onPropsChange);
+export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, readOnly }) {
+  const { prop, bind, toggle, patch} = useProp(props, onPropsChange, readOnly);
 
   const addChoice = () => {
     const next = [...(prop.choices ?? []), `Seçenek ${((prop.choices ?? []).length +1)}`];

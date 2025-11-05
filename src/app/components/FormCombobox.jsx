@@ -16,8 +16,8 @@ function normalizeOptions(options) {
   });
 }
 
-export function CreateFormCombobox({ questionNumber, props, onPropsChange }) {
-  const { prop, bind, toggle, patch} = useProp(props, onPropsChange);
+export function CreateFormCombobox({ questionNumber, props, onPropsChange, readOnly }) {
+  const { prop, bind, toggle, patch} = useProp(props, onPropsChange, readOnly);
 
   const addChoice = () => {
     const next = [...(prop.choices ?? []), `Seçenek ${((prop.choices ?? []).length + 1)}`];

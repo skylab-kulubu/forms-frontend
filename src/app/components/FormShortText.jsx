@@ -4,8 +4,8 @@ import { useState } from "react";
 import { FieldShell } from "@/app/components/FieldShell";
 import { useProp } from "../admin/new-form/components/useProp";
 
-export function CreateFormShortText({ questionNumber, props, onPropsChange }) {
-  const { prop, bind, toggle} = useProp(props, onPropsChange);
+export function CreateFormShortText({ questionNumber, props, onPropsChange, readOnly }) {
+  const { prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
     <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>

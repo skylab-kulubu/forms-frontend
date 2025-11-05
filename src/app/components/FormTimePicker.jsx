@@ -34,8 +34,8 @@ function clampStep(minute, step) {
   return Math.max(0, Math.min(59, r));
 }
 
-export function CreateFormTimePicker({ questionNumber, props, onPropsChange }) {
-  const {prop, bind, toggle} = useProp(props, onPropsChange);
+export function CreateFormTimePicker({ questionNumber, props, onPropsChange, readOnly }) {
+  const {prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
     <FieldShell number={questionNumber} title="Zaman Seçici" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
