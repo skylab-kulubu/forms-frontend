@@ -178,12 +178,6 @@ export default function Sidebar({ user, children }) {
         <div ref={panelRef} className={`absolute inset-y-0 left-0 w-72 backdrop-blu border-r border-neutral-950/70 bg-neutral-950/90 shadow-xl transition-transform duration-200 
           ${open ? "translate-x-0" : "-translate-x-full"}`}
         >
-          <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-3">
-            <div className="text-sm font-semibold">Menu</div>
-            <button onClick={() => setOpen(false)} className="inline-flex items-center justify-center rounded-md p-2 text-zinc-700 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/5">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
           <SidebarContent user={user} pathname={pathname} onItemClick={() => setOpen(false)} />
         </div>
       </div>
