@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { DndContext, useDndContext, useDraggable, useDroppable, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from '@dnd-kit/utilities';
 import { AnimatePresence, motion } from "framer-motion"
-import { Trash, Trash2, CopyPlus, PackagePlus } from "lucide-react";
+import { Trash, Trash2, CopyPlus, PackagePlus, PencilLine } from "lucide-react";
 
 import { COMPONENTS, REGISTRY } from "./form-registry";
 
@@ -17,7 +17,7 @@ function LibraryPanel({ children }) {
     const showTrash = from === "canvas";
 
     return (
-        <motion.div ref={setNodeRef} className="relative col-span-4 min-h-[60vh] max-h-screen overflow-y-auto rounded-xl p-3 scrollbar"
+        <motion.div ref={setNodeRef} className="relative col-span-4 min-h-[60vh] max-h-screen overflow-y-auto rounded-xl p-2 scrollbar"
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
@@ -27,7 +27,7 @@ function LibraryPanel({ children }) {
                 transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
-                <h3 className="text-sm font-semibold text-neutral-200 tracking-wide px-4 pt-3 pb-2 border-b border-neutral-800">
+                <h3 className="h-10 flex items-center px-4 text-sm font-semibold text-neutral-200 tracking-wide border-b border-neutral-800">
                     Bileşenler
                 </h3>
 
@@ -109,15 +109,35 @@ function GhostComponent({ active, schema }) {
 }
 
 
-function Canvas({ children, dragSource }) {
+function Canvas({ children, dragSource, schemaTitle, setSchemaTitle }) {
     const { setNodeRef, isOver } = useDroppable({ id: "canvas" });
+    const showDrop = isOver && dragSource === "library";
 
     return (
-        <div ref={setNodeRef} className={`col-span-8 min-h-[60vh] max-h-screen overflow-y-auto rounded-xl p-3 my-4 transition border-2 scrollbar-hidden 
-            ${isOver && dragSource !== "canvas" ? "border-emerald-400/50 bg-emerald-600/5" : "border-transparent"}`}
+        <motion.div className="col-span-8 min-h-[80vh] max-h-[95vh] p-2"
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
         >
-            {children}
-        </div>
+            <div className="max-w-3xl mx-auto px-4 h-10 flex items-center border-b border-neutral-800">
+                <div className="relative w-full">
+                    <input id="form-title" type="text" placeholder="Yeni Form"
+                        value={schemaTitle} onChange={(e) => setSchemaTitle(e.target.value)}
+                        className="w-full pr-5 bg-transparent text-sm font-semibold text-neutral-200 tracking-wide outline-none leading-none placeholder-neutral-600"
+                    />
+                    {schemaTitle?.trim() && (
+                        <PencilLine size={12} className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-neutral-500" />
+                    )}
+                </div>
+            </div>
+            <motion.div ref={setNodeRef} className={`overflow-y-auto rounded-xl transition border-2 scrollbar-hidden h-full
+                ${isOver && dragSource !== "canvas" ? "border-emerald-400/50 bg-emerald-600/5" : "border-transparent"}`}
+                animate={{ scale: showDrop ? 0.99 : 1 }}
+                transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
+            >
+                {children}
+            </motion.div>
+        </motion.div>
     )
 }
 
@@ -170,6 +190,7 @@ function DropSlot({ index, enabled }) {
 
 export default function FormBuilder() {
     const [schema, setSchema] = useState([]);
+    const [schemaTitle, setSchemaTitle] = useState("Yeni Form");
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
 
@@ -244,7 +265,7 @@ export default function FormBuilder() {
             onDragCancel={() => { setDragSource(null); setActiveDragItem(null); }}
         >
             <div className="grid grid-cols-12 gap-4">
-                <Canvas dragSource={dragSource}>
+                <Canvas dragSource={dragSource} schemaTitle={schemaTitle} setSchemaTitle={setSchemaTitle}>
                     {schema.length === 0 ? (
                         <div className="grid h-[80vh] place-items-center text-sm text-neutral-500">
                             <div>

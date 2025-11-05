@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const FormBuilder = dynamic(() => import(".//components/FormBuilder"), {
+const FormBuilder = dynamic(() => import("./components/FormBuilder"), {
   ssr: false,
 });
 
