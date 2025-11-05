@@ -17,7 +17,7 @@ function LibraryPanel({ children }) {
     const showTrash = from === "canvas";
 
     return (
-        <motion.div ref={setNodeRef} className="relative col-span-4 min-h-[60vh] max-h-screen overflow-y-auto rounded-xl p-2 scrollbar"
+        <motion.div ref={setNodeRef} className="relative col-span-4 min-h-[60vh] max-h-[93vh] overflow-y-auto rounded-xl p-2 scrollbar"
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
@@ -114,7 +114,7 @@ function Canvas({ children, dragSource, schemaTitle, setSchemaTitle }) {
     const showDrop = isOver && dragSource === "library";
 
     return (
-        <motion.div className="col-span-8 min-h-[80vh] max-h-[95vh] p-2"
+        <motion.div className="col-span-8 min-h-[80vh] max-h-[88vh] p-2"
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}

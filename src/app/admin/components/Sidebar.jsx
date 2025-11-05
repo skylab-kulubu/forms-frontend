@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Breadcrumbs from "./Breadcrumbs";
 import { LayoutDashboard, Menu, X, ChevronDown, ChevronRight, Settings } from "lucide-react";
 
 function SectionLabel({ children }) {
@@ -77,6 +78,13 @@ export default function Sidebar({ user, children }) {
         <SidebarContent user={user} pathname={pathname} />
       </aside>
 
+      {/* Desktop top bar */}
+      <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
+        <div className="flex h-14 items-center px-6">
+          <Breadcrumbs labels={{ "/admin": "Dashboard", "/admin/new-form": "Yeni Form" }} />
+        </div>
+      </div>
+
       {/* Mobile top bar */}
       <div className="md:hidden sticky top-0 z-40 border-b border-zinc-200 bg-white/80 backdrop-blur">
         <div className="flex h-14 items-center px-3">
@@ -85,7 +93,11 @@ export default function Sidebar({ user, children }) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="ml-2 text-sm font-semibold">Breadcrumbs eklencek buraya</div>
+          <div className="ml-2 min-w-0 flex-1">
+            <Breadcrumbs
+              labels={{ "/admin": "Dashboard", "/admin/new-form": "Yeni Form" }}
+            />
+          </div>
         </div>
       </div>
 
