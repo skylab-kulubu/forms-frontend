@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronsUpDown, Plus, Search, X } from "lucide-react";
 import { FieldShell } from "@/app/components/FieldShell";
-import { useProp } from "../admin/new-form/components/useProp";
+import { useProp } from "../admin/components/form-editor/components/components/useProp";
 
 function normalizeOptions(options) {
   return (options ?? []).map((option, idx) => {

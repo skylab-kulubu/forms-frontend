@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Link as LinkIcon, Github, Linkedin, Instagram, X } from "lucide-react";
 import { FieldShell } from "@/app/components/FieldShell";
-import { useProp } from "../admin/new-form/components/useProp";
+import { useProp } from "../admin/components/form-editor/components/components/useProp";
 
 function getProviderIcon(input) {
   if (!input || typeof input !== "string") return LinkIcon;
