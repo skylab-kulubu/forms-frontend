@@ -8,6 +8,9 @@ import { PackagePlus } from "lucide-react";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
+import dynamic from "next/dynamic";
+
+const LibraryTipTap = dynamic(() => import("./components/LibraryTipTap").then((mod) => ({ default: mod.LibraryTipTap })), { ssr: false });
 
 import { COMPONENTS, REGISTRY } from "./form-registry";
 
@@ -24,6 +27,7 @@ const LINKABLE_FORMS = [
 export default function FormBuilder() {
     const [schema, setSchema] = useState([]);
     const [schemaTitle, setSchemaTitle] = useState("Yeni Form");
+    const [description, setDescription] = useState("");
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
     const [libraryTab, setLibraryTab] = useState("components");
@@ -162,7 +166,7 @@ export default function FormBuilder() {
                                 <LibraryItem key={component.type} item={component} />
                             ))}
                         </div>
-                    ) : (
+                    ) : libraryTab === "settings" ? (
                         <LibrarySettings editors={editors}
                             onChangeEditorRole={handleChangeEditorRole}
                             handleAddEditor={handleAddEditor}
@@ -182,6 +186,22 @@ export default function FormBuilder() {
                             setAllowMultipleResponses={setAllowMultipleResponses}
                             LINKABLE_FORMS={LINKABLE_FORMS}
                         />
+                    ) : (
+                        <div className="flex h-full min-h-0 flex-col gap-4 p-4 text-sm text-neutral-200">
+                            <section className="flex flex-1 min-h-0 flex-col gap-4">
+                                <div>
+                                    <p className="font-semibold text-neutral-100">Form açıklaması</p>
+                                    <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
+                                        Formu görüntüleyen kişiler için kısa bir açıklama ekleyin.
+                                    </p>
+                                </div>
+                                <div className="flex-1 min-h-0">
+                                    <LibraryTipTap value={description} onChange={setDescription}
+                                        placeholder="Bu form için kısa bir açıklama gir..."
+                                    />
+                                </div>
+                            </section>
+                        </div>
                     )}
                 </LibraryPanel>
             </div>

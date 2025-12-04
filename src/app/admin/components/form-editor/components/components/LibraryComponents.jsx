@@ -10,12 +10,12 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab }
     const showTrash = from === "canvas";
 
     return (
-        <motion.div ref={setNodeRef} className="relative col-span-4 min-h-[60vh] max-h-[93vh] overflow-y-auto rounded-xl p-2 scrollbar"
+        <motion.div ref={setNodeRef} className="relative col-span-4 flex h-[93vh] min-w-0 rounded-xl p-2 overflow-hidden"
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
         >
-            <motion.div className="flex flex-col h-full rounded-xl"
+            <motion.div className="flex h-full min-w-0 flex-1 flex-col rounded-xl"
                 animate={{ opacity: showTrash ? 0 : 1, y: showTrash ? 6 : 0, scale: showTrash ? 0.98 : 1 }}
                 transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
@@ -35,6 +35,13 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab }
                         >
                             Ayarlar
                         </button>
+                        <span className="mx-2 h-3 w-px bg-neutral-800" />
+                        <button type="button"
+                            className={`font-semibold transition-colors ${activeTab === "description" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+                            onClick={() => onSelectTab && onSelectTab("description")}
+                        >
+                            Açıklama
+                        </button>
                     </div>
                     <div className="flex items-center gap-1 text-neutral-500">
                         <button type="button" aria-label="Son değişikliği geri al" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
@@ -49,7 +56,7 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab }
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-1 scrollbar">
+                <div className={`flex-1 min-h-0 p-1 ${activeTab === 'description' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto overflow-x-hidden scrollbar'}`}>
                     <AnimatePresence mode="wait" initial={false}>
                         <motion.div
                             key={activeTab}
@@ -57,6 +64,7 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab }
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -6 }}
                             transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
+                            className="h-full"
                         >
                             {children}
                         </motion.div>
