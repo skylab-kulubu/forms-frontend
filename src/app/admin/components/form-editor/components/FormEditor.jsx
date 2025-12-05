@@ -4,19 +4,22 @@ import { useState } from "react";
 import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { PackagePlus } from "lucide-react";
+import dynamic from "next/dynamic";
 
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
-import dynamic from "next/dynamic";
-
-const LibraryTipTap = dynamic(() => import("./components/LibraryTipTap").then((mod) => ({ default: mod.LibraryTipTap })), { ssr: false });
+import { useFormMutation } from "@/hooks/useForm";
 
 import { COMPONENTS, REGISTRY } from "./form-registry";
 
+const LibraryTipTap = dynamic(() => import("./components/LibraryTipTap").then((mod) => ({ default: mod.LibraryTipTap })), { ssr: false });
+
+const FIXED_USER_ID = "11111111-1111-1111-1111-111111111111";
+const formId = crypto.randomUUID();
+
 const INITIAL_EDITORS = [
-    { id: "owner", name: "egehavcu", email: "egehan@avcu.yedim", role: "Sahip", locked: true },
-    { id: "editor", name: "kimbu", email: "x@std.yildiz.edu.tr", role: "Düzenleme" },
+    { id: FIXED_USER_ID, name: "Skylab Kişisi", email: "forms@skylab.com", role: 3, locked: true }
 ];
 
 const LINKABLE_FORMS = [
@@ -32,12 +35,33 @@ export default function FormBuilder() {
     const [activeDragItem, setActiveDragItem] = useState(null);
     const [libraryTab, setLibraryTab] = useState("components");
     const [editors, setEditors] = useState(INITIAL_EDITORS);
-    const [newEditor, setNewEditor] = useState("");
     const [linkedFormId, setLinkedFormId] = useState("");
     const [allowMultipleResponses, setAllowMultipleResponses] = useState(false);
     const [allowAnonymousResponses, setAllowAnonymousResponses] = useState(false);
-    const [isAcceptingResponses, setIsAcceptingResponses] = useState(true);
-    const [newEditorRole, setNewEditorRole] = useState("Görüntüleyici");
+    const [status, setStatus] = useState(1);
+    const [newEditor, setNewEditor] = useState("");
+    const [newEditorRole, setNewEditorRole] = useState(1);
+
+    const { mutate: saveForm, isPending, error } = useFormMutation();
+
+    const handleSave = () => { 
+        const payload = {
+            Id: formId || null,
+            Title: schemaTitle,
+            Description: description,
+            Schema: schema,
+            Status: status,
+            AllowMultipleResponses: allowMultipleResponses,
+            AllowAnonymousResponses: allowAnonymousResponses,
+            LinkedFormId: linkedFormId || null,
+            Collaborators: editors.filter(editor => !editor.locked).map(editor => ({
+                Email: editor.email,
+                Role: editor.role
+            }))
+        };
+        saveForm(payload);
+    };
+
 
     const handleAddEditor = (event) => {
         event.preventDefault();
@@ -159,7 +183,7 @@ export default function FormBuilder() {
                     )}
                 </Canvas>
 
-                <LibraryPanel activeTab={libraryTab} onSelectTab={setLibraryTab}>
+                <LibraryPanel activeTab={libraryTab} onSelectTab={setLibraryTab} handleSave={handleSave} isPending={isPending} error={error}>
                     {libraryTab === "components" ? (
                         <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
                             {COMPONENTS.map((component) => (
@@ -177,11 +201,11 @@ export default function FormBuilder() {
                             setNewEditorRole={setNewEditorRole}
                             setLinkedFormId={setLinkedFormId}
                             linkedFormId={linkedFormId}
-                            isAcceptingResponses={isAcceptingResponses}
+                            status={status}
                             allowAnonymousResponses={allowAnonymousResponses}
                             setAllowAnonymousResponses={setAllowAnonymousResponses}
                             linkedForm={linkedForm}
-                            setIsAcceptingResponses={setIsAcceptingResponses}
+                            setStatus= {setStatus}
                             allowMultipleResponses={allowMultipleResponses}
                             setAllowMultipleResponses={setAllowMultipleResponses}
                             LINKABLE_FORMS={LINKABLE_FORMS}
@@ -196,9 +220,7 @@ export default function FormBuilder() {
                                     </p>
                                 </div>
                                 <div className="flex-1 min-h-0">
-                                    <LibraryTipTap value={description} onChange={setDescription}
-                                        placeholder="Bu form için kısa bir açıklama gir..."
-                                    />
+                                    <LibraryTipTap value={description} onChange={setDescription} />
                                 </div>
                             </section>
                         </div>

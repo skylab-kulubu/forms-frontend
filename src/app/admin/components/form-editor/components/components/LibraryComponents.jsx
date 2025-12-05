@@ -2,7 +2,7 @@ import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { CheckCircle2, RotateCcw, Trash, Trash2 } from "lucide-react";
 
-export function LibraryPanel({ children, activeTab = "components", onSelectTab }) {
+export function LibraryPanel({ children, activeTab = "components", onSelectTab, handleSave, isPending, error }) {
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
 
@@ -50,7 +50,7 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab }
                         <button type="button" aria-label="Değişiklikleri sil" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
                             <Trash2 size={16} />
                         </button>
-                        <button type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
+                        <button onClick={handleSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
                             <CheckCircle2 size={16} />
                         </button>
                     </div>

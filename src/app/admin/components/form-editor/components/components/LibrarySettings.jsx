@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Check, ChevronDown, ChevronsUpDown, Eye, PencilLine, Plus, Search, UserMinus, X } from "lucide-react";
 
 export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, handleRemoveEditor, newEditor, setNewEditor,
-    setLinkedFormId, linkedFormId, linkedForm, isAcceptingResponses, setIsAcceptingResponses, allowAnonymousResponses,
+    setLinkedFormId, linkedFormId, linkedForm, status, setStatus, allowAnonymousResponses,
     setAllowAnonymousResponses, allowMultipleResponses, setAllowMultipleResponses, LINKABLE_FORMS
 }) {
     const [openMenuId, setOpenMenuId] = useState(null);
@@ -79,21 +79,21 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                                         <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.id ? null : editor.id)}
                                             className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition-colors hover:border-white/20 hover:text-neutral-50"
                                         >
-                                            {editor.role}
+                                            {editor.role === 2 ? "Editör" : "Okuyucu"}
                                             <ChevronDown size={12} className="opacity-70" />
                                         </button>
                                         {openMenuId === editor.id && (
                                             <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-white/10 bg-neutral-950/95 p-1 shadow-2xl backdrop-blur">
-                                                <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.id, "Düzenleme"); setOpenMenuId(null); }}
-                                                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${editor.role === "Düzenleme" ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
+                                                <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.id, 2); setOpenMenuId(null); }}
+                                                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${editor.role === 2 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
                                                 >
-                                                    {editor.role === "Düzenleme" ? <Check size={12} className="text-emerald-300" /> : <PencilLine size={12} className="shrink-0" />}
+                                                    {editor.role === 2 ? <Check size={12} className="text-emerald-300" /> : <PencilLine size={12} className="shrink-0" />}
                                                     <span className="flex-1">Düzenleme</span>
                                                 </button>
-                                                <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.id, "Görüntüleme"); setOpenMenuId(null); }}
-                                                    className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${editor.role === "Görüntüleme" ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
+                                                <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.id, 1); setOpenMenuId(null); }}
+                                                    className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${editor.role === 1 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
                                                 >
-                                                    {editor.role === "Görüntüleme" ? <Check size={12} className="text-emerald-300" /> : <Eye size={12} className="shrink-0" />}
+                                                    {editor.role === 1 ? <Check size={12} className="text-emerald-300" /> : <Eye size={12} className="shrink-0" />}
                                                     <span className="flex-1">Görüntüleme</span>
                                                 </button>
                                                 <div className="my-1 h-px bg-neutral-900" />
@@ -226,8 +226,8 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             Formu yayından kaldırmadan önce geçici olarak duraklatabilir veya yeniden açabilirsiniz.
                         </p>
                     </div>
-                    <span className={`rounded-full border px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${isAcceptingResponses ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" : "border-neutral-700 bg-neutral-900/60 text-neutral-400"}`}>
-                        {isAcceptingResponses ? "Yayında" : "Duraklatıldı"}
+                    <span className={`rounded-full border px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${status ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" : "border-neutral-700 bg-neutral-900/60 text-neutral-400"}`}>
+                        {status ? "Yayında" : "Duraklatıldı"}
                     </span>
                 </div>
 
@@ -238,13 +238,13 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             <p className="text-[10px] text-neutral-500">Kapattığınızda kullanıcılar formu görebilir fakat gönderemez.</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button type="button" onClick={() => setIsAcceptingResponses((prev) => !prev)} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${isAcceptingResponses ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
-                                <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${isAcceptingResponses ? "translate-x-5" : "translate-x-0"}`} />
+                            <button type="button" onClick={() => setStatus((prev) => (prev === 2 ? 1 : 2))} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${status === 2 ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
+                                <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${status ? "translate-x-5" : "translate-x-0"}`} />
                             </button>
                         </div>
                     </div>
 
-                    {!isAcceptingResponses && (
+                    {!status && (
                         <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 shadow-sm">
                             Form duraklatıldı. Kullanıcılar bu formu yalnızca görüntüleyebilir ve nedenini belirten özel bir mesaj gösterilir.
                         </div>

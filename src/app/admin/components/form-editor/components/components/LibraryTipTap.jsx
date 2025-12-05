@@ -6,7 +6,7 @@ import Strike from "@tiptap/extension-strike";
 import Heading from "@tiptap/extension-heading";
 import { Bold, Heading1, Heading2, Italic, List, ListOrdered, Quote, Redo2, Underline as UnderlineIcon, Undo2 } from "lucide-react";
 
-export function LibraryTipTap({ value = "", onChange, placeholder = "Formunuza kisa bir not ekleyin..." }) {
+export function LibraryTipTap({ value = "", onChange }) {
     const [, forceTick] = useState(0);
     const editor = useEditor({
         immediatelyRender: false,
@@ -32,6 +32,7 @@ export function LibraryTipTap({ value = "", onChange, placeholder = "Formunuza k
         },
     });
 
+    const placeholder = "Bu alana form açıklamasını girin. Açıklama, formun ne hakkında olduğunu ve kullanıcıların ne bekleyebileceğini belirtmek için kullanılır.";
     const showPlaceholder = editor ? editor.isEmpty : !(value && value.replace(/<[^>]*>/g, "").trim());
 
     useEffect(() => {
