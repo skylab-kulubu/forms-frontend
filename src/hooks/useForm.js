@@ -2,12 +2,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const BASE_URL = "http://localhost:5000";
 
-const fetchFormById = async (id) => {
-    const response = await fetch(`${BASE_URL}/api/forms/${id}`);
+const parseError = async (response, fallbackMessage) => {
+    const errorData = await response.json().catch(() => null);
+    const error = new Error(errorData?.detail || fallbackMessage);
+    error.status = response.status;
+    error.body = errorData;
+    return error;
+};
+
+const fetchFormById = async (formId) => {
+    const response = await fetch(`${BASE_URL}/api/forms/${formId}`);
 
     if (!response.ok) {
-        throw new Error("Form verileri alınamadı.");
+        throw await parseError(response, "Form verileri alınamadı.");
     }
+
     return response.json();
 };
 
@@ -19,12 +28,13 @@ const upsertFormData = async (payload) => {
         },
         body: JSON.stringify(payload),
     });
+
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || "Kaydetme işlemi başarısız.");
+        throw await parseError(response, "Kaydetme işlemi başarısız.");
     }
+
     return response.json();
-}
+};
 
 export const useFormQuery = (formId) => {
     return useQuery({
@@ -35,7 +45,7 @@ export const useFormQuery = (formId) => {
         refetchOnWindowFocus: false,
         retry: 1,
     });
-}
+};
 
 export const useFormMutation = () => {
     const queryClient = useQueryClient();
@@ -51,4 +61,4 @@ export const useFormMutation = () => {
             console.error("Kayıt hatası:", error.message);
         },
     });
-}
+};

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { FieldShell } from "@/app/components/FieldShell";
-import { useProp } from "../admin/components/form-editor/components/components/useProp";
+import { useProp } from "../admin/components/form-editor/components/useProp";
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 

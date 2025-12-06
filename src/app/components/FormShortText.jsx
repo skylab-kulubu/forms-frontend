@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FieldShell } from "@/app/components/FieldShell";
-import { useProp } from "../admin/components/form-editor/components/components/useProp";
+import { useProp } from "../admin/components/form-editor/components/useProp";
 
 export function CreateFormShortText({ questionNumber, props, onPropsChange, readOnly }) {
   const { prop, bind, toggle} = useProp(props, onPropsChange, readOnly);

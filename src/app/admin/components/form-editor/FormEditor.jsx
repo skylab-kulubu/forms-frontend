@@ -27,18 +27,20 @@ const LINKABLE_FORMS = [
     { id: "support", label: "Destek Talep Formu" },
 ];
 
-export default function FormBuilder() {
-    const [schema, setSchema] = useState([]);
-    const [schemaTitle, setSchemaTitle] = useState("Yeni Form");
-    const [description, setDescription] = useState("");
+export default function FormEditor({ initialForm = null }) {
+    const isEditMode = !!initialForm?.id;
+
+    const [schema, setSchema] = useState(initialForm?.schema || []);
+    const [schemaTitle, setSchemaTitle] = useState(initialForm?.title || "Yeni Form");
+    const [description, setDescription] = useState(initialForm?.description || "");
+    const [linkedFormId, setLinkedFormId] = useState(initialForm?.linkedFormId || "");
+    const [allowMultipleResponses, setAllowMultipleResponses] = useState(initialForm?.allowMultipleResponses || false);
+    const [allowAnonymousResponses, setAllowAnonymousResponses] = useState(initialForm?.allowAnonymousResponses || false);
+    const [editors, setEditors] = useState(initialForm?.Collaborators || INITIAL_EDITORS);
+    const [status, setStatus] = useState(initialForm?.status || 1);
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
     const [libraryTab, setLibraryTab] = useState("components");
-    const [editors, setEditors] = useState(INITIAL_EDITORS);
-    const [linkedFormId, setLinkedFormId] = useState("");
-    const [allowMultipleResponses, setAllowMultipleResponses] = useState(false);
-    const [allowAnonymousResponses, setAllowAnonymousResponses] = useState(false);
-    const [status, setStatus] = useState(1);
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
 
@@ -46,7 +48,7 @@ export default function FormBuilder() {
 
     const handleSave = () => { 
         const payload = {
-            Id: formId || null,
+            Id: initialForm?.id || formId || null,
             Title: schemaTitle,
             Description: description,
             Schema: schema,
