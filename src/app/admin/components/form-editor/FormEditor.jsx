@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { PackagePlus } from "lucide-react";
@@ -44,18 +44,28 @@ export default function FormEditor({ initialForm = null }) {
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
 
-    const { mutate: saveForm, isPending, error } = useFormMutation();
+    const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
 
-    const handleSave = () => { 
+    useEffect(() => {
+        if (!isError && !isSuccess) return;
+
+        const timer = setTimeout(() => {
+            reset();
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [isError, isSuccess, reset]);
+
+    const handleSave = () => {
         const payload = {
             Id: initialForm?.id || formId || null,
             Title: schemaTitle,
             Description: description,
             Schema: schema,
             Status: status,
-            AllowMultipleResponses: allowMultipleResponses,
+            AllowMultipleResponses: allowAnonymousResponses ? true : allowMultipleResponses,
             AllowAnonymousResponses: allowAnonymousResponses,
-            LinkedFormId: linkedFormId || null,
+            LinkedFormId: allowAnonymousResponses ? null : (linkedFormId || null),
             Collaborators: editors.filter(editor => !editor.locked).map(editor => ({
                 Email: editor.email,
                 Role: editor.role
@@ -73,7 +83,7 @@ export default function FormEditor({ initialForm = null }) {
         const formattedName = normalized.replace(/[\s._-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()).trim();
         const fallbackEmail = rawValue.includes("@") ? rawValue : `${rawValue.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@paylasim.local`;
         const id = Math.random().toString(36).slice(2, 10);
-        setEditors((prev) => [ ...prev, { id, name: formattedName || fallbackEmail, email: fallbackEmail, role: "Görüntüleyici" } ]);
+        setEditors((prev) => [...prev, { id, name: formattedName || fallbackEmail, email: fallbackEmail, role: "Görüntüleyici" }]);
         setNewEditor("");
     };
 
@@ -185,7 +195,7 @@ export default function FormEditor({ initialForm = null }) {
                     )}
                 </Canvas>
 
-                <LibraryPanel activeTab={libraryTab} onSelectTab={setLibraryTab} handleSave={handleSave} isPending={isPending} error={error}>
+                <LibraryPanel activeTab={libraryTab} onSelectTab={setLibraryTab} handleSave={handleSave} isPending={isPending} isSuccess={isSuccess} isError={isError}>
                     {libraryTab === "components" ? (
                         <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
                             {COMPONENTS.map((component) => (
@@ -207,7 +217,7 @@ export default function FormEditor({ initialForm = null }) {
                             allowAnonymousResponses={allowAnonymousResponses}
                             setAllowAnonymousResponses={setAllowAnonymousResponses}
                             linkedForm={linkedForm}
-                            setStatus= {setStatus}
+                            setStatus={setStatus}
                             allowMultipleResponses={allowMultipleResponses}
                             setAllowMultipleResponses={setAllowMultipleResponses}
                             LINKABLE_FORMS={LINKABLE_FORMS}

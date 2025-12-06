@@ -72,7 +72,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             <div className="relative flex items-center">
                                 {editor.locked ? (
                                     <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300">
-                                        {editor.role}
+                                        {editor.role === 3 ? "Sahip" : "?   "}
                                     </span>
                                 ) : (
                                     <div className="relative">
@@ -128,8 +128,8 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                 </form>
             </section>
 
-            <section className="py-6 space-y-4">
-                <div className="flex items-start justify-between gap-4">
+            <section className="py-6 space-y-4 relative">
+                <div className={`flex items-start justify-between gap-4 transition-opacity duration-300 ${allowAnonymousResponses ? "opacity-20" : ""}`}>
                     <div>
                         <p className="font-semibold text-neutral-100">Başka bir form ile bağla</p>
                         <p className="mt-1 text-[11px] text-neutral-500 leading-relaxed">
@@ -141,14 +141,14 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                     </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className={`space-y-3 transition-opacity duration-300 ${allowAnonymousResponses ? "opacity-20" : ""}`}>
                     <label className="px-0.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">Hedef form</label>
                     <div className="relative" ref={formPickerRef}>
                         <div className="relative">
                             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
                                 <ChevronsUpDown size={14} />
                             </span>
-                            <button type="button" aria-haspopup="dialog" aria-expanded={showFormPicker} onClick={() => setShowFormPicker((prev) => !prev)}
+                            <button type="button" aria-haspopup="dialog" aria-expanded={showFormPicker} onClick={() => !allowAnonymousResponses && setShowFormPicker((prev) => !prev)}
                                 className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 shadow-sm outline-none transition hover:bg-white/5 focus:border-white/25 focus:ring-2 focus:ring-white/15"
                             >
                                 <span className={selectedForm ? "text-neutral-100" : "text-neutral-500"}>
@@ -216,6 +216,12 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                         </div>
                     )}
                 </div>
+
+                <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${allowAnonymousResponses ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                    <span className="px-3 py-1.5 rounded-full border border-white/10 bg-neutral-900/80 text-[11px] font-medium text-neutral-200">
+                        Anonim cevap açık olduğundan kapalıdır
+                    </span>
+                </div>
             </section>
 
             <section className="py-6 space-y-4">
@@ -226,8 +232,8 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             Formu yayından kaldırmadan önce geçici olarak duraklatabilir veya yeniden açabilirsiniz.
                         </p>
                     </div>
-                    <span className={`rounded-full border px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${status ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" : "border-neutral-700 bg-neutral-900/60 text-neutral-400"}`}>
-                        {status ? "Yayında" : "Duraklatıldı"}
+                    <span className={`rounded-full border px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${status === 2 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" : "border-neutral-700 bg-neutral-900/60 text-neutral-400"}`}>
+                        {status === 2 ? "Yayında" : "Duraklatıldı"}
                     </span>
                 </div>
 
@@ -239,14 +245,14 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                         </div>
                         <div className="flex items-center gap-3">
                             <button type="button" onClick={() => setStatus((prev) => (prev === 2 ? 1 : 2))} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${status === 2 ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
-                                <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${status ? "translate-x-5" : "translate-x-0"}`} />
+                                <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${status === 2 ? "translate-x-5" : "translate-x-0"}`} />
                             </button>
                         </div>
                     </div>
 
-                    {!status && (
+                    {status !== 2 && (
                         <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 shadow-sm">
-                            Form duraklatıldı. Kullanıcılar bu formu yalnızca görüntüleyebilir ve nedenini belirten özel bir mesaj gösterilir.
+                            Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.
                         </div>
                     )}
 
@@ -255,17 +261,18 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             <p className="text-sm font-semibold text-neutral-100">Anonim cevap izni</p>
                             <p className="text-[10px] text-neutral-500">Kimlik bilgisi olmadan gönderime izin ver.</p>
                         </div>
-                        <button type="button" onClick={() => setAllowAnonymousResponses((prev) => !prev)} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${allowAnonymousResponses ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
+                        <button type="button" onClick={() => setAllowAnonymousResponses((prev) => { const next = !prev; if (next) { setAllowMultipleResponses(true); setLinkedFormId(null); } return next; })}
+                            className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${allowAnonymousResponses ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
                             <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${allowAnonymousResponses ? "translate-x-5" : "translate-x-0"}`} />
                         </button>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5">
+                    <div className={`flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5 transition-opacity duration-300 ${allowAnonymousResponses ? "opacity-20" : ""}`}>
                         <div>
                             <p className="text-sm font-semibold text-neutral-100">Birden çok cevap izni</p>
                             <p className="text-[10px] text-neutral-500">Aynı kullanıcı yeniden gönderebilsin.</p>
                         </div>
-                        <button type="button" onClick={() => setAllowMultipleResponses((prev) => !prev)} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${allowMultipleResponses ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
+                        <button type="button" disabled={allowAnonymousResponses} onClick={() => setAllowMultipleResponses((prev) => !prev)} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${allowMultipleResponses ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
                             <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${allowMultipleResponses ? "translate-x-5" : "translate-x-0"}`} />
                         </button>
                     </div>
