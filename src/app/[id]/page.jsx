@@ -1,0 +1,20 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { useDisplayFormQuery } from "@/lib/hooks/useForm";
+import { FormStatusHandler } from "@/app/components/FormStatusHandler";
+import FormDisplayer from "@/app/components/form-displayer/FormDisplayer";
+
+export default function DisplayFormPage() {
+  const { id } = useParams();
+  const { data, isLoading, error } = useDisplayFormQuery(id);
+
+  return (
+    <FormStatusHandler
+      isLoading={isLoading}
+      error={error}
+      data={data}
+      renderForm={(data) => ( <FormDisplayer form={data.form} /> )}
+    />
+  );
+}

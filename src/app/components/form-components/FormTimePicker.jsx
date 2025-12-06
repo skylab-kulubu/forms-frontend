@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Clock } from "lucide-react";
-import { FieldShell } from "@/app/components/FieldShell";
-import { useProp } from "../admin/components/form-editor/components/useProp";
+import { FieldShell } from "./FieldShell";
+import { useProp } from "@/app/admin/components/form-editor/components/useProp";
 
 function pad2(n) {
   return String(n).padStart(2, "0");

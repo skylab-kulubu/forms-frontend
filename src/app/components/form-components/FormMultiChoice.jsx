@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { FieldShell } from "@/app/components/FieldShell";
-import { useProp } from "../admin/components/form-editor/components/useProp";
+import { FieldShell } from "./FieldShell";
+import { useProp } from "@/app/admin/components/form-editor/components/useProp";
 
 export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, readOnly }) {
   const { prop, bind, toggle, patch} = useProp(props, onPropsChange, readOnly);

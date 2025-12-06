@@ -9,9 +9,9 @@ import dynamic from "next/dynamic";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
-import { useFormMutation } from "@/hooks/useForm";
+import { useFormMutation } from "@/lib/hooks/useFormAdmin";
 
-import { COMPONENTS, REGISTRY } from "./form-registry";
+import { COMPONENTS, REGISTRY } from "../../../components/form-registry";
 
 const LibraryTipTap = dynamic(() => import("./components/LibraryTipTap").then((mod) => ({ default: mod.LibraryTipTap })), { ssr: false });
 

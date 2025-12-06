@@ -1,11 +1,11 @@
-import { CreateFormShortText, DisplayFormShortText }      from "@/app/components/FormShortText";
-import { CreateFormLongText, DisplayFormLongText }        from "@/app/components/FormLongText";
-import { CreateFormCombobox, DisplayFormCombobox }        from "@/app/components/FormCombobox";
-import { CreateFormMultiChoice, DisplayFormMultiChoice }  from "@/app/components/FormMultiChoice";
-import { CreateFormDatePicker, DisplayFormDatePicker }    from "@/app/components/FormDatePicker";
-import { CreateFormTimePicker, DisplayFormTimePicker }    from "@/app/components/FormTimePicker";
-import { CreateFormFileUpload, DisplayFormFileUpload }    from "@/app/components/FormFileUpload";
-import { CreateFormLink, DisplayFormLink }                from "@/app/components/FormLink";
+import { CreateFormShortText, DisplayFormShortText }      from "@/app/components/form-components/FormShortText";
+import { CreateFormLongText, DisplayFormLongText }        from "@/app/components/form-components/FormLongText";
+import { CreateFormCombobox, DisplayFormCombobox }        from "@/app/components/form-components/FormCombobox";
+import { CreateFormMultiChoice, DisplayFormMultiChoice }  from "@/app/components/form-components/FormMultiChoice";
+import { CreateFormDatePicker, DisplayFormDatePicker }    from "@/app/components/form-components/FormDatePicker";
+import { CreateFormTimePicker, DisplayFormTimePicker }    from "@/app/components/form-components/FormTimePicker";
+import { CreateFormFileUpload, DisplayFormFileUpload }    from "@/app/components/form-components/FormFileUpload";
+import { CreateFormLink, DisplayFormLink }                from "@/app/components/form-components/FormLink";
 
 export const REGISTRY = {
   short_text: {

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import { Loader2, FileLock, Shredder, FileExclamationPoint } from "lucide-react";
-import { useFormQuery } from "@/hooks/useForm";
+import { useFormQuery } from "@/lib/hooks/useFormAdmin";
 import FormEditor from "../../components/form-editor/FormEditor";
 
 const stateConfigs = {

@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { motion } from "framer-motion"
 import { CopyPlus, PencilLine } from "lucide-react";
 
-import { REGISTRY } from "../form-registry";
+import { REGISTRY } from "../../../../components/form-registry";
 
 export function GhostComponent({ active, schema }) {
     if (!active) return null;
