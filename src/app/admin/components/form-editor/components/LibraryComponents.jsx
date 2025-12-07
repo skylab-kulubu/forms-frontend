@@ -44,7 +44,7 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab, 
                         </button>
                     </div>
                     <div className="flex items-center gap-1 text-neutral-500">
-                        <button type="button" aria-label="Son değişikliği geri al" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
+                        <button type="button" aria-label="Son değişikliği geri al" disabled className="rounded-lg p-1.5 opacity-50 transition-colors cursor-not-allowed">
                             <RotateCcw size={16} />
                         </button>
                         <button type="button" aria-label="Değişiklikleri sil" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">

@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Dot, Keyboard, Link, X } from "lucide-react";
+import { Dot, Keyboard, X } from "lucide-react";
 import { APPROVAL_PRESETS } from "./approval-presets";
 
 export default function ApprovalOverlay({ open, preset, context = {}, onApprove, onReject }) {
   const config = APPROVAL_PRESETS[preset] ?? APPROVAL_PRESETS.default;
 
+  const Icon = config.icon ?? Dot;
   const title = config.title ?? "Onay gerekiyor";
   const highlights = typeof config.highlights === "function" ? config.highlights(context) : Array.isArray(config.highlights) ? config.highlights : [];
   const approveLabel = typeof config.approveLabel === "function" ? config.approveLabel(context) : config.approveLabel ?? "Onaylıyorum";
@@ -72,7 +73,7 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
               <div className="flex items-start justify-between gap-4 border-b border-white/5 px-6 py-3">
                 <div className="flex items-center gap-3">
                   <div className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-linear-to-br from-emerald-900/25 via-cyan-700/15 to-indigo-500/10 text-white shadow-inner">
-                    <Link size={20} />
+                    <Icon size={20} />
                   </div>
                   <div>
                     <p className="text-lg font-semibold text-neutral-50">{title}</p>

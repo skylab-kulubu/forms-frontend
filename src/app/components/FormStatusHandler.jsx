@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Clock, FileLock, Loader2, PauseCircle, Shredder } from "lucide-react";
+import { FilePenLine, FileCheckIcon, FileClock, FileLock2, Loader2, Shredder, FileQuestionMark } from "lucide-react";
 
 const FORM_ACCESS_STATUS = {
   AVAILABLE: 0,
@@ -13,7 +13,6 @@ const FORM_ACCESS_STATUS = {
   NOT_AVAILABLE: 45,
 };
 
-
 const stateConfigs = {
     loading: {
         icon: Loader2,
@@ -21,17 +20,17 @@ const stateConfigs = {
         description: "Lütfen birkaç saniye bekleyin.",
     },
     pending: {
-        icon: Clock,
+        icon: FileClock,
         title: "İşlem bekleniyor",
         description: "Form cevabınız şu an inceleniyor.",
     },
     completed: {
-        icon: CheckCircle2,
+        icon: FileCheckIcon,
         title: "Form zaten tamamlanmış",
         description: "Bu formu daha önce doldurmuşsunuz.",
     },
     requiresParent: {
-        icon: AlertTriangle,
+        icon: FilePenLine,
         title: "Bir önceki adım gerekli",
         description: "Devam etmek için önceki formu doldurmanız gerekiyor.",
     },
@@ -41,17 +40,17 @@ const stateConfigs = {
         description: "Form silinmiş olabilir, hiç oluşturulmamış olabilir ya da adres hatalı olabilir.",
     },
     notAvailable: {
-        icon: PauseCircle,
+        icon: FileLock2,
         title: "Form erişime kapalı",
         description: "Form sahibi gönderimleri durdurmuş veya formun süresi dolmuş olabilir.",
     },
     notAuthorized: {
-        icon: FileLock,
+        icon: FileLock2,
         title: "Yetkisiz erişim",
         description: "Bu formu görüntüleme yetkiniz bulunmuyor.",
     },
     genericError: {
-        icon: AlertTriangle,
+        icon: FileQuestionMark,
         title: "Bir hata oluştu",
         description: "Form verileri alınırken beklenmedik bir hata oluştu.",
     },

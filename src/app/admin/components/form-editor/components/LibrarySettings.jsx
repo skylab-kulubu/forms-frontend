@@ -119,7 +119,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             className="w-full rounded-lg border border-white/10 bg-neutral-900/60 pr-11 pl-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-white/25 focus:ring-2 focus:ring-white/15"
                         />
                         <button type="submit" aria-label="Ekle"
-                            className="group absolute right-1 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-lg bg-emerald-500/10 text-emerald-200 transition-colors hover:bg-emerald-500/20 hover:text-emerald-100"
+                            className="group absolute right-1 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-lg border border-emerald-900/80 bg-emerald-500/10 text-emerald-200 transition-colors hover:bg-emerald-500/20 hover:text-emerald-100"
                         >
                             <Plus size={16} className="transition-opacity duration-150 group-hover:hidden" />
                             <ArrowUp size={16} className="hidden transition-opacity duration-150 group-hover:block" />
