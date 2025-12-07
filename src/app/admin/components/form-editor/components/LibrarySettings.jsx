@@ -188,7 +188,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                                                 <span className="mt-0.5 h-2 w-2 rounded-full bg-emerald-400/70" />
                                                 <div className="flex-1">
                                                     <p className="font-medium leading-tight">{form.label}</p>
-                                                    <p className="text-[11px] text-neutral-500">Form cevabı onaylanınca görünür.</p>
+                                                    <p className="text-[11px] text-neutral-500">{form.id}</p>
                                                 </div>
                                             </button>
                                         );

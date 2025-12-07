@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
-import { useFormMutation } from "@/lib/hooks/useFormAdmin";
+import { useFormMutation, useUserFormsQuery } from "@/lib/hooks/useFormAdmin";
 
 import { COMPONENTS, REGISTRY } from "../../../components/form-registry";
 
@@ -22,14 +22,7 @@ const INITIAL_EDITORS = [
     { id: FIXED_USER_ID, name: "Skylab Kişisi", email: "forms@skylab.com", role: 3, locked: true }
 ];
 
-const LINKABLE_FORMS = [
-    { id: "feedback", label: "Geri Bildirim Formu" },
-    { id: "support", label: "Destek Talep Formu" },
-];
-
 export default function FormEditor({ initialForm = null }) {
-    const isEditMode = !!initialForm?.id;
-
     const [schema, setSchema] = useState(initialForm?.schema || []);
     const [schemaTitle, setSchemaTitle] = useState(initialForm?.title || "Yeni Form");
     const [description, setDescription] = useState(initialForm?.description || "");
@@ -45,6 +38,14 @@ export default function FormEditor({ initialForm = null }) {
     const [newEditorRole, setNewEditorRole] = useState(1);
 
     const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
+    const { data: userForms, isLoading: isUserFormsLoading } = useUserFormsQuery();
+
+    const LINKABLE_FORMS = (userForms ?? [])
+        .filter((form) => (form.id) !== initialForm?.id)
+        .map((form) => ({
+            id: form.id,
+            label: form.title ?? "--",
+        }));
 
     useEffect(() => {
         if (!isError && !isSuccess) return;

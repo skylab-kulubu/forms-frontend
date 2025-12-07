@@ -14,6 +14,18 @@ const upsertForm = async (payload) => {
   });
 };
 
+const fetchUserForms = async () => {
+  const response = await request("/api/admin/forms");
+  return response?.data ?? [];
+} 
+
+export const useUserFormsQuery = () =>
+  useQuery({
+    queryKey: ["user-forms"],
+    queryFn: fetchUserForms,
+    retry: false,
+  });
+
 export const useFormQuery = (formId) =>
   useQuery({
     queryKey: ["form", formId],
