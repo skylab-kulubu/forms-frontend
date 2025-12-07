@@ -2,6 +2,7 @@
 
 import { REGISTRY } from "@/app/components/form-registry";
 import { FormDisplayerHeader } from "./components/FormDisplayerComponents";
+import { FormResponseStatus } from "./components/FormResponseStatus";
 import { motion } from "framer-motion";
 
 function mapPropsForDisplay(type, props = {}) {
@@ -30,11 +31,14 @@ export default function FormDisplayer({ form }) {
   const schema = Array.isArray(form?.schema) ? form.schema : [];
   const title = form?.title ?? "";
   const description = form?.description ?? "";
+  const relationshipStatusValue = Number(form?.relationshipStatus);
+  const relationshipStatus = Number.isFinite(relationshipStatusValue) ? relationshipStatusValue : 0;
 
   const hasSchema = schema.length > 0;
 
   return (
     <div className="flex w-full max-w-2xl flex-col gap-6 py-8 px-3 sm:px-0 mx-auto">
+      <FormResponseStatus relationshipStatus={relationshipStatus} />
       <FormDisplayerHeader title={title} description={description} />
 
       {hasSchema ? (

@@ -99,6 +99,9 @@ export function FormStatusHandler({ isLoading, error, data, renderForm }) {
 
                 case FORM_ACCESS_STATUS.NOT_AUTHORIZED:
                     return "notAuthorized";
+                
+                case FORM_ACCESS_STATUS.REQUIRES_PARENT_APPROVAL:
+                    return "requiresParent";
 
                 default:
                     return "genericError";
@@ -114,9 +117,6 @@ export function FormStatusHandler({ isLoading, error, data, renderForm }) {
 
             case FORM_ACCESS_STATUS.PENDING_APPROVAL:
                 return "pending";
-
-            case FORM_ACCESS_STATUS.REQUIRES_PARENT_APPROVAL:
-                return "requiresParent";
 
             default:
                 return "genericError";
