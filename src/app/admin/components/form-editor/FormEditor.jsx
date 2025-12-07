@@ -33,19 +33,15 @@ export default function FormEditor({ initialForm = null }) {
     const [editors, setEditors] = useState(initialForm?.Collaborators || INITIAL_EDITORS);
     const [status, setStatus] = useState(initialForm?.status || 1);
 
+    const isChildForm = initialForm?.isChildForm || false;
+
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
     const [libraryTab, setLibraryTab] = useState("components");
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
 
-    const [linkOverlay, setLinkOverlay] = useState({
-        open: false,
-        scenario: null,
-        previousId: initialForm?.linkedFormId || "",
-        nextId: "",
-        reason: null
-    });
+    const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: initialForm?.linkedFormId || "", nextId: "", reason: null });
 
     const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
     const { data: userForms, isLoading: isUserFormsLoading } = useUserFormsQuery();
@@ -53,10 +49,7 @@ export default function FormEditor({ initialForm = null }) {
 
     const LINKABLE_FORMS = (userForms ?? [])
         .filter((form) => (form.id) !== initialForm?.id)
-        .map((form) => ({
-            id: form.id,
-            label: form.title ?? "--",
-        }));
+        .map((form) => ({ id: form.id, label: form.title ?? "--" }));
 
     useEffect(() => {
         if (!isError && !isSuccess) return;
@@ -242,24 +235,40 @@ export default function FormEditor({ initialForm = null }) {
                             ))}
                         </div>
                     ) : libraryTab === "settings" ? (
-                        <LibrarySettings editors={editors}
-                            onChangeEditorRole={handleChangeEditorRole}
-                            handleAddEditor={handleAddEditor}
-                            handleRemoveEditor={handleRemoveEditor}
-                            newEditor={newEditor}
-                            setNewEditor={setNewEditor}
-                            newEditorRole={newEditorRole}
-                            setNewEditorRole={setNewEditorRole}
-                            setLinkedFormId={handleRequestLinkForm}
-                            linkedFormId={linkedFormId}
-                            status={status}
-                            allowAnonymousResponses={allowAnonymousResponses}
-                            setAllowAnonymousResponses={setAllowAnonymousResponses}
-                            setStatus={setStatus}
-                            allowMultipleResponses={allowMultipleResponses}
-                            setAllowMultipleResponses={setAllowMultipleResponses}
-                            LINKABLE_FORMS={LINKABLE_FORMS}
-                        />
+                        <div className="relative h-full">
+                            <div className={isChildForm ? "pointer-events-none opacity-40" : ""}>
+                                <LibrarySettings
+                                    editors={editors}
+                                    onChangeEditorRole={handleChangeEditorRole}
+                                    handleAddEditor={handleAddEditor}
+                                    handleRemoveEditor={handleRemoveEditor}
+                                    newEditor={newEditor}
+                                    setNewEditor={setNewEditor}
+                                    newEditorRole={newEditorRole}
+                                    setNewEditorRole={setNewEditorRole}
+                                    setLinkedFormId={handleRequestLinkForm}
+                                    linkedFormId={linkedFormId}
+                                    status={status}
+                                    allowAnonymousResponses={allowAnonymousResponses}
+                                    setAllowAnonymousResponses={setAllowAnonymousResponses}
+                                    setStatus={setStatus}
+                                    allowMultipleResponses={allowMultipleResponses}
+                                    setAllowMultipleResponses={setAllowMultipleResponses}
+                                    LINKABLE_FORMS={LINKABLE_FORMS}
+                                />
+                            </div>
+
+                            <div className={`pointer-events-auto inset-0 flex items-center justify-center ${isChildForm ? "absolute" : "hidden"}`}>
+                                <div className="mx-4 max-w-xs rounded-lg border border-neutral-700 bg-neutral-900/90 px-4 py-3 text-center shadow-lg">
+                                    <p className="mb-1 text-sm font-semibold text-neutral-500 uppercase tracking-wide">
+                                        Ayarlar kilitli
+                                    </p>
+                                    <p className="text-[11px] leading-relaxed text-neutral-300">
+                                        Bu formun ayarları, bağlı olduğu ana form tarafından yönetilmektedir.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     ) : (
                         <div className="flex h-full min-h-0 flex-col gap-4 p-4 text-sm text-neutral-200">
                             <section className="flex flex-1 min-h-0 flex-col gap-4">
@@ -295,7 +304,7 @@ export default function FormEditor({ initialForm = null }) {
                     }
                     resetLinkOverlay();
                 }}
-                onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay();}}
+                onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay(); }}
             />
         </DndContext>
     );
