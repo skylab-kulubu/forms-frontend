@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
-import { useFormMutation, useUserFormsQuery, useLinkFormMutation, useUnlinkFormMutation } from "@/lib/hooks/useFormAdmin";
+import { useFormMutation, useUserFormsQuery } from "@/lib/hooks/useFormAdmin";
 import ApprovalOverlay from "../ApprovalOverlay";
 
 import { COMPONENTS, REGISTRY } from "../../../components/form-registry";
@@ -32,19 +32,22 @@ export default function FormEditor({ initialForm = null }) {
     const [allowAnonymousResponses, setAllowAnonymousResponses] = useState(initialForm?.allowAnonymousResponses || false);
     const [editors, setEditors] = useState(initialForm?.Collaborators || INITIAL_EDITORS);
     const [status, setStatus] = useState(initialForm?.status || 1);
+
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
     const [libraryTab, setLibraryTab] = useState("components");
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
-    const [linkApprovalOpen, setLinkApprovalOpen] = useState(false);
-    const [linkScenario, setLinkScenario] = useState(null);
-    const [pendingLinkedForm, setPendingLinkedForm] = useState(null);
-    const [previousLinkedFormId, setPreviousLinkedFormId] = useState(initialForm?.linkedFormId || "");
+
+    const [linkOverlay, setLinkOverlay] = useState({
+        open: false,
+        scenario: null,
+        previousId: initialForm?.linkedFormId || "",
+        nextId: "",
+        reason: null
+    });
 
     const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
-    const { mutate: linkFormMutate, isPending: isLinkPending } = useLinkFormMutation();
-    const { mutate: unlinkFormMutate, isPending: isUnlinkPending } = useUnlinkFormMutation();
     const { data: userForms, isLoading: isUserFormsLoading } = useUserFormsQuery();
 
 
@@ -65,30 +68,23 @@ export default function FormEditor({ initialForm = null }) {
         return () => clearTimeout(timer);
     }, [isError, isSuccess, reset]);
 
-    const handleRequestLinkForm = (nextLinkedFormIdRaw) => {
-        const nextId = nextLinkedFormIdRaw || "";
+    const handleRequestLinkForm = (nextLinkedFormId, reason = "manual") => {
+        const nextId = nextLinkedFormId || "";
         const currentId = linkedFormId || "";
 
         let scenario = null;
-        let target = null;
 
         if (!currentId && nextId) {
             scenario = "link-add";
-            target = LINKABLE_FORMS.find((f) => f.id === nextId) ?? null;
         } else if (currentId && nextId && nextId !== currentId) {
             scenario = "link-change";
-            target = LINKABLE_FORMS.find((f) => f.id === nextId) ?? null;
         } else if (currentId && !nextId) {
             scenario = "link-remove";
-            target = LINKABLE_FORMS.find((f) => f.id === currentId) ?? null;
         } else {
             return;
         }
 
-        setPreviousLinkedFormId(currentId);
-        setPendingLinkedForm(target);
-        setLinkScenario(scenario);
-        setLinkApprovalOpen(true);
+        setLinkOverlay({ open: true, scenario, previousId: currentId, nextId, reason });
     };
 
     const handleSave = () => {
@@ -100,6 +96,7 @@ export default function FormEditor({ initialForm = null }) {
             Status: status,
             AllowMultipleResponses: allowAnonymousResponses ? true : allowMultipleResponses,
             AllowAnonymousResponses: allowAnonymousResponses,
+            LinkedFormId: allowAnonymousResponses ? null : (linkedFormId || null),
             Collaborators: editors.filter(editor => !editor.locked).map(editor => ({
                 Email: editor.email,
                 Role: editor.role
@@ -129,19 +126,16 @@ export default function FormEditor({ initialForm = null }) {
         setEditors((prev) => prev.map((item) => item.id === editorId ? { ...item, role: nextRole } : item));
     };
 
-    const currentLinkedForm = LINKABLE_FORMS.find((form) => form.id === linkedFormId) ?? null;
-
-    const overlayContext = {
-        currentFormLabel: currentLinkedForm?.label ?? "",
-        targetFormLabel: pendingLinkedForm?.label ?? "",
-        isPending: isLinkPending || isUnlinkPending,
-    };
-
     const resetLinkOverlay = () => {
-        setLinkApprovalOpen(false);
-        setPendingLinkedForm(null);
-        setLinkScenario(null);
+        setLinkOverlay({
+            open: false,
+            scenario: null,
+            previousId: "",
+            nextId: "",
+            reason: null,
+        });
     };
+
 
     const patchField = (id, nextProps) => {
         setSchema((prev) => prev.map((field) => (field.id === id ? { ...field, props: nextProps } : field)));
@@ -261,7 +255,6 @@ export default function FormEditor({ initialForm = null }) {
                             status={status}
                             allowAnonymousResponses={allowAnonymousResponses}
                             setAllowAnonymousResponses={setAllowAnonymousResponses}
-                            linkedForm={currentLinkedForm}
                             setStatus={setStatus}
                             allowMultipleResponses={allowMultipleResponses}
                             setAllowMultipleResponses={setAllowMultipleResponses}
@@ -289,61 +282,20 @@ export default function FormEditor({ initialForm = null }) {
                 {activeDragItem ? <GhostComponent active={activeDragItem} schema={schema} /> : null}
             </DragOverlay>
 
-            <ApprovalOverlay
-                open={linkApprovalOpen}
-                preset={linkScenario || "default"}
-                context={overlayContext}
+            <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
                 onApprove={() => {
-                    if (!linkScenario) {
-                        setLinkApprovalOpen(false);
-                        setPendingLinkedForm(null);
-                        return;
-                    }
-
-                    
-                    if (!initialForm?.id) { // Form daha backend’de yoksa
-                        if (linkScenario === "link-add" || linkScenario === "link-change") {
-                            setLinkedFormId(pendingLinkedForm?.id || "");
-                        } else if (linkScenario === "link-remove") {
-                            setLinkedFormId("");
-                        }
+                    if (!linkOverlay.scenario) {
                         resetLinkOverlay();
                         return;
                     }
-                    if (linkScenario === "link-add" || linkScenario === "link-change") {
-                        linkFormMutate(
-                            { parentFormId: initialForm.id, childFormId: pendingLinkedForm?.id },
-                            {
-                                onSuccess: () => {
-                                    setLinkedFormId(pendingLinkedForm?.id || "");
-                                    resetLinkOverlay();
-                                },
-                                onError: () => {
-                                    setLinkedFormId(previousLinkedFormId || "");
-                                    resetLinkOverlay();
-                                },
-                            }
-                        );
-                    } else if (linkScenario === "link-remove") {
-                        unlinkFormMutate(
-                            { formId: initialForm.id },
-                            {
-                                onSuccess: () => {
-                                    setLinkedFormId("");
-                                    resetLinkOverlay();
-                                },
-                                onError: () => {
-                                    setLinkedFormId(previousLinkedFormId || "");
-                                    resetLinkOverlay();
-                                },
-                            }
-                        );
+                    if (linkOverlay.scenario === "link-add" || linkOverlay.scenario === "link-change") {
+                        setLinkedFormId(linkOverlay.nextId);
+                    } else if (linkOverlay.scenario === "link-remove") {
+                        setLinkedFormId("");
                     }
-                }}
-                onReject={() => {
                     resetLinkOverlay();
-                    setLinkedFormId(previousLinkedFormId || "");
                 }}
+                onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay();}}
             />
         </DndContext>
     );

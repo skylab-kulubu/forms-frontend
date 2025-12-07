@@ -1,4 +1,4 @@
-export const APPROVAL_PRESETS = { // context: { currentFormLabel?, targetFormLabel?, isPending? }
+export const APPROVAL_PRESETS = {
     "link-add": {
         variant: "delayed",
         delaySeconds: 6,
@@ -20,10 +20,8 @@ export const APPROVAL_PRESETS = { // context: { currentFormLabel?, targetFormLab
         delaySeconds: 6,
         requiredPhrase: "Onaylıyorum",
         title: "Form bağlantısını değiştirmeyi onayla",
-        highlights: (ctx) => [
-            ctx.currentFormLabel && ctx.targetFormLabel
-                ? `"${ctx.currentFormLabel}" ile olan bağlantı kaldırılıp "${ctx.targetFormLabel}" ile güncellenecek.`
-                : "Bu formun mevcut bağlantısı yeni seçilen forma yönlendirilecek.",
+        highlights: () => [
+            "Bu formun mevcut bağlantısı yeni seçilen forma yönlendirilecek.",
             "Eski bağlantıya bağlı akışlar artık yeni forma göre çalışacak.",
             "Bağlantıyı tekrar ayarlar bölümünden değiştirebilirsiniz.",
         ],

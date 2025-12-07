@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Check, ChevronDown, ChevronsUpDown, Eye, PencilLine, Plus, Search, UserMinus, X } from "lucide-react";
 
 export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, handleRemoveEditor, newEditor, setNewEditor,
-    setLinkedFormId, linkedFormId, linkedForm, status, setStatus, allowAnonymousResponses,
+    setLinkedFormId, linkedFormId, status, setStatus, allowAnonymousResponses,
     setAllowAnonymousResponses, allowMultipleResponses, setAllowMultipleResponses, LINKABLE_FORMS
 }) {
     const [openMenuId, setOpenMenuId] = useState(null);
@@ -10,7 +10,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
     const [formSearch, setFormSearch] = useState("");
     const formPickerRef = useRef(null);
 
-    const selectedForm = linkedForm ?? LINKABLE_FORMS.find((form) => form.id === linkedFormId) ?? null;
+    const linkedForm = LINKABLE_FORMS.find((form) => form.id === linkedFormId) ?? null;
 
     useEffect(() => {
         if (!showFormPicker) return;
@@ -151,10 +151,10 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             <button type="button" aria-haspopup="dialog" aria-expanded={showFormPicker} onClick={() => !allowAnonymousResponses && setShowFormPicker((prev) => !prev)}
                                 className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 shadow-sm outline-none transition hover:bg-white/5 focus:border-white/25 focus:ring-2 focus:ring-white/15"
                             >
-                                <span className={selectedForm ? "text-neutral-100" : "text-neutral-500"}>
-                                    {selectedForm ? selectedForm.label : "Bağlantı seçin"}
+                                <span className={linkedForm ? "text-neutral-100" : "text-neutral-500"}>
+                                    {linkedForm ? linkedForm.label : "Bağlantı seçin"}
                                 </span>
-                                {selectedForm && (
+                                {linkedForm && (
                                     <span onClick={(event) => { event.stopPropagation(); clearForm(); }} className="ml-2 text-neutral-500 transition-colors hover:text-neutral-200">
                                         <X size={14} />
                                     </span>
@@ -180,7 +180,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                                     )}
 
                                     {filteredForms.map((form) => {
-                                        const active = selectedForm?.id === form.id;
+                                        const active = linkedForm?.id === form.id;
                                         return (
                                             <button key={form.id} type="button" onClick={() => chooseForm(form.id)}
                                                 className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
@@ -197,7 +197,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
 
                                 <div className="mt-2 flex items-center justify-between">
                                     <span className="text-[11px] text-neutral-500">Bu form tamamlandığında seçilen forma geçilir.</span>
-                                    {selectedForm && (
+                                    {linkedForm && (
                                         <button type="button" onClick={clearForm} className="text-[11px] text-neutral-400 transition-colors hover:text-neutral-200">
                                             Temizle
                                         </button>
@@ -207,9 +207,9 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                         )}
                     </div>
 
-                    {selectedForm && (
+                    {linkedForm && (
                         <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
-                            <span>{selectedForm.label} ile eşleştirildi.</span>
+                            <span>{linkedForm.label} ile eşleştirildi.</span>
                             <button type="button" className="text-emerald-100/80 transition-colors hover:text-emerald-50" onClick={clearForm}>
                                 Kaldır
                             </button>
@@ -261,7 +261,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             <p className="text-sm font-semibold text-neutral-100">Anonim cevap izni</p>
                             <p className="text-[10px] text-neutral-500">Kimlik bilgisi olmadan gönderime izin ver.</p>
                         </div>
-                        <button type="button" onClick={() => setAllowAnonymousResponses((prev) => { const next = !prev; if (next) { setAllowMultipleResponses(true); setLinkedFormId(null); } return next; })}
+                        <button type="button" onClick={() => setAllowAnonymousResponses((prev) => { const next = !prev; if (next) { setAllowMultipleResponses(true); if (linkedFormId) { setLinkedFormId(null, "anonymous-toggle") } } return next; })}
                             className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${allowAnonymousResponses ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
                             <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${allowAnonymousResponses ? "translate-x-5" : "translate-x-0"}`} />
                         </button>
