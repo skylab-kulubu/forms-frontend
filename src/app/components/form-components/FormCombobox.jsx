@@ -17,16 +17,16 @@ function normalizeOptions(options) {
 }
 
 export function CreateFormCombobox({ questionNumber, props, onPropsChange, readOnly }) {
-  const { prop, bind, toggle, patch} = useProp(props, onPropsChange, readOnly);
+  const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
 
   const addChoice = () => {
     const next = [...(prop.choices ?? []), `Seçenek ${((prop.choices ?? []).length + 1)}`];
     patch({ choices: next });
   };
   const updateChoice = (index, value) => {
-    const next = [...(prop.choices ??  [])];
+    const next = [...(prop.choices ?? [])];
     next[index] = value;
-    patch({ choices: next});
+    patch({ choices: next });
   };
 
   const removeChoice = (index) => {
@@ -122,7 +122,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
   );
 }
 
-export function DisplayFormCombobox({ question, description, required = false, options = [], allowCustom = false, value, onChange }) {
+export function DisplayFormCombobox({ question, questionNumber, description, required = false, options = [], allowCustom = false, value, onChange }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -178,15 +178,22 @@ export function DisplayFormCombobox({ question, description, required = false, o
   const displayText = selectedLabel || "Bir seçenek seçin";
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl border border-white/10 bg-neutral-900/40 shadow-lg backdrop-blur-sm">
+    <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
-        <div className="flex items-start justify-between">
-          <p className="text-sm font-medium text-neutral-100">
-            {question} {required && <span className="ml-1 text-red-600">*</span>}
-          </p>
-        </div>
+        <div className="flex gap-3">
+          {questionNumber != null && (
+            <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+              {questionNumber}
+            </div>
+          )}
 
-        {description && <p className="text-xs text-neutral-400">{description}</p>}
+          <div className="flex flex-col">
+            <p className="text-sm font-medium text-neutral-100">
+              {question}{" "} {required && <span className="ml-1 text-red-700">*</span>}
+            </p>
+            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+          </div>
+        </div>
 
         <div className="relative mt-3" ref={triggerRef}>
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">

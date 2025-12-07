@@ -44,7 +44,7 @@ export function CreateFormLongText({ questionNumber, props, onPropsChange, readO
   );
 }
 
-export function DisplayFormLongText({ question, description, required = false, value, onChange }) {
+export function DisplayFormLongText({ question, questionNumber, description, required = false, value, onChange }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
   const currentValue = value !== undefined ? value : internalValue;
   const handleChange = onChange !== undefined ? onChange : (e) => setInternalValue(e.target.value);
@@ -58,17 +58,22 @@ export function DisplayFormLongText({ question, description, required = false, v
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl border border-white/10 bg-neutral-900/40 shadow-lg backdrop-blur-sm">
+    <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
-        <div className="flex items-start justify-between">
-          <p className="text-sm font-medium text-neutral-100">
-            {question} {required && <span className="ml-1 text-red-600">*</span>}
-          </p>
-        </div>
+        <div className="flex gap-3">
+          {questionNumber != null && (
+            <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+              {questionNumber}
+            </div>
+          )}
 
-        {description && (
-          <p className="text-xs text-neutral-400">{description}</p>
-        )}
+          <div className="flex flex-col">
+            <p className="text-sm font-medium text-neutral-100">
+              {question}{" "} {required && <span className="ml-1 text-xs text-red-700">*</span>}
+            </p>
+            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+          </div>
+        </div>
 
         <textarea name="long_text" rows={3} aria-required={required}
           value={currentValue} ref={textareaRef}

@@ -92,7 +92,7 @@ export function CreateFormLink({ questionNumber, props, onPropsChange, readOnly 
   );
 }
 
-export function DisplayFormLink({ question, description, required = false, allowMultiple = false, value, onChange }) {
+export function DisplayFormLink({ question, questionNumber, description, required = false, allowMultiple = false, value, onChange }) {
   const isValidUrl = (input) => {
     if (!input || typeof input !== "string") return false;
     let u;
@@ -121,15 +121,22 @@ export function DisplayFormLink({ question, description, required = false, allow
     const Icon = useMemo(() => getProviderIcon(currentValue), [currentValue]);
 
     return (
-      <div className="mx-auto w-full max-w-2xl rounded-xl border border-white/10 bg-neutral-900/40 shadow-lg backdrop-blur-sm">
+      <div className="mx-auto w-full max-w-2xl rounded-xl">
         <div className="flex flex-col p-2 md:p-4">
-          <div className="flex items-start justify-between">
-            <p className="text-sm font-medium text-neutral-100">
-              {question} {required && <span className="ml-1 text-red-600">*</span>}
-            </p>
-          </div>
+          <div className="flex gap-3">
+          {questionNumber != null && (
+            <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+              {questionNumber}
+            </div>
+          )}
 
-          {description && <p className="text-xs text-neutral-400">{description}</p>}
+          <div className="flex flex-col">
+            <p className="text-sm font-medium text-neutral-100">
+              {question}{" "} {required && <span className="ml-1 text-red-700">*</span>}
+            </p>
+            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+          </div>
+        </div>
 
           <div className="relative mt-3">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
