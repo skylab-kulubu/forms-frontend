@@ -3,14 +3,14 @@ import { ArrowUp, Check, ChevronDown, ChevronsUpDown, Eye, PencilLine, Plus, Sea
 
 export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, handleRemoveEditor, newEditor, setNewEditor,
     setLinkedFormId, linkedFormId, status, setStatus, allowAnonymousResponses,
-    setAllowAnonymousResponses, allowMultipleResponses, setAllowMultipleResponses, LINKABLE_FORMS
+    setAllowAnonymousResponses, allowMultipleResponses, setAllowMultipleResponses, linkableForms
 }) {
     const [openMenuId, setOpenMenuId] = useState(null);
     const [showFormPicker, setShowFormPicker] = useState(false);
     const [formSearch, setFormSearch] = useState("");
     const formPickerRef = useRef(null);
 
-    const linkedForm = LINKABLE_FORMS.find((form) => form.id === linkedFormId) ?? null;
+    const linkedForm = linkableForms.find((form) => form.id === linkedFormId) ?? null;
 
     useEffect(() => {
         if (!showFormPicker) return;
@@ -25,9 +25,9 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
 
     const filteredForms = useMemo(() => {
         const q = formSearch.trim().toLowerCase();
-        if (!q) return LINKABLE_FORMS;
-        return LINKABLE_FORMS.filter((form) => form.label.toLowerCase().includes(q));
-    }, [formSearch, LINKABLE_FORMS]);
+        if (!q) return linkableForms;
+        return linkableForms.filter((form) => form.title.toLowerCase().includes(q));
+    }, [formSearch, linkableForms]);
 
     const chooseForm = (formId) => {
         setLinkedFormId && setLinkedFormId(formId);
@@ -152,7 +152,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                                 className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 shadow-sm outline-none transition hover:bg-white/5 focus:border-white/25 focus:ring-2 focus:ring-white/15"
                             >
                                 <span className={linkedForm ? "text-neutral-100" : "text-neutral-500"}>
-                                    {linkedForm ? linkedForm.label : "Bağlantı seçin"}
+                                    {linkedForm ? linkedForm.title : "Bağlantı seçin"}
                                 </span>
                                 {linkedForm && (
                                     <span onClick={(event) => { event.stopPropagation(); clearForm(); }} className="ml-2 text-neutral-500 transition-colors hover:text-neutral-200">
@@ -185,9 +185,9 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                                             <button key={form.id} type="button" onClick={() => chooseForm(form.id)}
                                                 className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
                                             >
-                                                <span className="mt-0.5 h-2 w-2 rounded-full bg-emerald-400/70" />
+                                                <span className="mt-1.5 h-2 w-2 rounded-full bg-emerald-400/70" />
                                                 <div className="flex-1">
-                                                    <p className="font-medium leading-tight">{form.label}</p>
+                                                    <p className="font-medium leading-tight">{form.title}</p>
                                                     <p className="text-[11px] text-neutral-500">{form.id}</p>
                                                 </div>
                                             </button>
@@ -209,7 +209,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
 
                     {linkedForm && (
                         <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
-                            <span>{linkedForm.label} ile eşleştirildi.</span>
+                            <span>{linkedForm.title} ile eşleştirildi.</span>
                             <button type="button" className="text-emerald-100/80 transition-colors hover:text-emerald-50" onClick={clearForm}>
                                 Kaldır
                             </button>

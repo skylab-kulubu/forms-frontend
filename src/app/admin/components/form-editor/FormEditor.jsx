@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
 import { PackagePlus } from "lucide-react";
@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
-import { useFormMutation, useUserFormsQuery } from "@/lib/hooks/useFormAdmin";
+import { useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
 import ApprovalOverlay from "../ApprovalOverlay";
 
 import { COMPONENTS, REGISTRY } from "../../../components/form-registry";
@@ -44,12 +44,7 @@ export default function FormEditor({ initialForm = null }) {
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: initialForm?.linkedFormId || "", nextId: "", reason: null });
 
     const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
-    const { data: userForms, isLoading: isUserFormsLoading } = useUserFormsQuery();
-
-
-    const LINKABLE_FORMS = (userForms ?? [])
-        .filter((form) => (form.id) !== initialForm?.id)
-        .map((form) => ({ id: form.id, label: form.title ?? "--" }));
+    const { data: linkableForms, isLoading: isLinkableFormsLoading } = useLinkableFormsQuery(initialForm?.id || formId);
 
     useEffect(() => {
         if (!isError && !isSuccess) return;
@@ -254,7 +249,7 @@ export default function FormEditor({ initialForm = null }) {
                                     setStatus={setStatus}
                                     allowMultipleResponses={allowMultipleResponses}
                                     setAllowMultipleResponses={setAllowMultipleResponses}
-                                    LINKABLE_FORMS={LINKABLE_FORMS}
+                                    linkableForms={linkableForms ?? []}
                                 />
                             </div>
 

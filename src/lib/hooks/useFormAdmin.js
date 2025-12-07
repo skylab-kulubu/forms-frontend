@@ -19,30 +19,10 @@ const fetchUserForms = async () => {
   return response?.data ?? [];
 };
 
-const linkForm = async ({ parentFormId, childFormId }) => {
-  return request("/api/admin/forms/link", {
-    method: "POST",
-    body: { parentFormId, childFormId },
-  });
-};
-
-const unlinkForm = async ({ formId }) => {
-  return request(`/api/admin/forms/${formId}/unlink`, {
-    method: "POST",
-  });
-};
-
-export const useLinkFormMutation = () => {
-  return useMutation({
-    mutationFn: linkForm,
-  });
-};
-
-export const useUnlinkFormMutation = () => {
-  return useMutation({
-    mutationFn: unlinkForm,
-  });
-};
+const fetchLinkableUserForms = async (formId) => {
+  const response = await request(`/api/admin/forms/${formId}/linkable-forms`);
+  return response?.data ?? [];
+}
 
 export const useUserFormsQuery = () =>
   useQuery({
@@ -58,6 +38,14 @@ export const useFormQuery = (formId) =>
     enabled: !!formId,
     retry: false,
   });
+
+export const useLinkableFormsQuery = (formId) => 
+  useQuery({
+    queryKey: ["linkable-forms", formId],
+    queryFn: () => fetchLinkableUserForms(formId),
+    enabled: !!formId,
+    retry: false,
+  })
 
 export const useFormMutation = () => {
   const queryClient = useQueryClient();
