@@ -17,7 +17,32 @@ const upsertForm = async (payload) => {
 const fetchUserForms = async () => {
   const response = await request("/api/admin/forms");
   return response?.data ?? [];
-} 
+};
+
+const linkForm = async ({ parentFormId, childFormId }) => {
+  return request("/api/admin/forms/link", {
+    method: "POST",
+    body: { parentFormId, childFormId },
+  });
+};
+
+const unlinkForm = async ({ formId }) => {
+  return request(`/api/admin/forms/${formId}/unlink`, {
+    method: "POST",
+  });
+};
+
+export const useLinkFormMutation = () => {
+  return useMutation({
+    mutationFn: linkForm,
+  });
+};
+
+export const useUnlinkFormMutation = () => {
+  return useMutation({
+    mutationFn: unlinkForm,
+  });
+};
 
 export const useUserFormsQuery = () =>
   useQuery({
