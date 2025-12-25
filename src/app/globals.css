@@ -51,3 +51,44 @@
 .scrollbar-hidden::-webkit-scrollbar-track {
   background: transparent;
 }
+
+@layer components {
+  .checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 1rem;
+    width: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(23, 23, 23, 0.6); 
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: grid;
+    place-content: center;
+  }
+
+  .checkbox:checked {
+    background-color: #6366f1;
+    border-color: #6366f1;
+  }
+
+  .checkbox::before {
+    content: "";
+    width: 0.75rem;
+    height: 0.75rem;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em white; 
+    transform-origin: center;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  }
+
+  .checkbox:checked::before {
+    transform: scale(0.7);
+  }
+
+  .checkbox:focus-visible {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+  }
+}

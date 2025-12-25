@@ -78,13 +78,13 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
   );
 }
 
-export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, options = [], value, onChange }) {
-  const normalized = options.map((option, idx) => {
-    if (typeof option === "string") {
-      return { id: String(idx), label: option };
+export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, choices = [], value, onChange }) {
+  const normalized = choices.map((choice, idx) => {
+    if (typeof choice === "string") {
+      return { id: String(idx), label: choice };
     }
-    const id = String(option?.id ?? option?.value ?? idx);
-    return { id, label: String(option?.label ?? option?.value ?? `Seçenek ${idx + 1}`) };
+    const id = String(choice?.id ?? choice?.value ?? idx);
+    return { id, label: String(choice?.label ?? choice?.value ?? `Seçenek ${idx + 1}`) };
   });
   const [internalValue, setInternalValue] = useState(Array.isArray(value) ? value : []);
   const currentValue = value !== undefined ? (Array.isArray(value) ? value : []) : internalValue;
@@ -122,25 +122,24 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
         </div>
 
         <div className="mt-3 flex flex-col gap-2">
-          {normalized.map((option, idx) => {
-            const id = `mc_${idx}_${option.id}`;
-            const checked = currentValue.includes(option.id);
+          {normalized.map((choice, idx) => {
+            const id = `mc_${idx}_${choice.id}`;
+            const checked = currentValue.includes(choice.id);
             return (
               <label key={id} htmlFor={id}
-                className="flex cursor-pointer select-none items-center gap-3 rounded-md border border-white/10 bg-white/5 p-2 transition hover:bg-white/10 has-checked:border-orange-300/10 has-checked:bg-orange-200/10"
+                className="flex cursor-pointer select-none items-center gap-3 rounded-md border border-white/10 bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-indigo-300/10 has-checked:bg-indigo-200/20"
               >
                 <input id={id} name="multi_choice" type="checkbox" aria-required={required}
-                  checked={checked}
-                  onChange={() => toggle(option.id)}
-                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-neutral-900/60 accent-yellow-600 outline-none"
+                  checked={checked} onChange={() => toggle(choice.id)}
+                  className="checkbox shrink-0"
                 />
-                <span className="text-sm text-neutral-200">{option.label}</span>
+                <span className="text-sm text-neutral-200">{choice.label}</span>
               </label>
             );
           })}
         </div>
 
-        {required && <span className="px-0.5 text-[11px] text-neutral-500">Zorunlu alan</span>}
+        {required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1">Zorunlu alan</span>}
       </div>
     </div>
   );

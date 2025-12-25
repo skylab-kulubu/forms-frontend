@@ -5,13 +5,13 @@ import { ChevronsUpDown, Plus, Search, X } from "lucide-react";
 import { FieldShell } from "./FieldShell";
 import { useProp } from "@/app/admin/components/form-editor/components/useProp";
 
-function normalizeOptions(options) {
-  return (options ?? []).map((option, idx) => {
-    if (typeof option === "string") {
-      return { id: String(idx), label: option };
+function normalizeOptions(choices) {
+  return (choices ?? []).map((choice, idx) => {
+    if (typeof choice === "string") {
+      return { id: String(idx), label: choice };
     }
-    const id = String(option?.id ?? option?.value ?? idx);
-    const label = String(option?.label ?? option?.value ?? `Seçenek ${idx + 1}`);
+    const id = String(choice?.id ?? choice?.value ?? idx);
+    const label = String(choice?.label ?? choice?.value ?? `Seçenek ${idx + 1}`);
     return { id, label };
   });
 }
@@ -122,14 +122,14 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
   );
 }
 
-export function DisplayFormCombobox({ question, questionNumber, description, required = false, options = [], allowCustom = false, value, onChange }) {
+export function DisplayFormCombobox({ question, questionNumber, description, required = false, choices = [], allowCustom = false, value, onChange }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const triggerRef = useRef(null);
   const popoverRef = useRef(null);
 
-  const normalized = useMemo(() => normalizeOptions(options), [options]);
+  const normalized = useMemo(() => normalizeOptions(choices), [choices]);
   const currentValue = value !== undefined ? (value ?? "") : internalValue;
   const selectedLabel = useMemo(() => {
     const found = normalized.find((o) => o.id === currentValue || o.label === currentValue);

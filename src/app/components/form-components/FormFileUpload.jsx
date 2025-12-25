@@ -108,9 +108,9 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
   );
 }
 
-export function DisplayFormFileUpload({ question, questionNumber, description, required = false, accept = "", maxSizeMB = 0, value, onChange}) {
+export function DisplayFormFileUpload({ question, questionNumber, description, required = false, accept = "", maxSize = 0, value, onChange}) {
   const acceptList = useMemo(() => parseAccept(accept), [accept]);
-  const maxBytes = Number(maxSizeMB) > 0 ? Number(maxSizeMB) * 1024 * 1024 : Infinity;
+  const maxBytes = Number(maxSize) > 0 ? Number(maxSize) * 1024 * 1024 : Infinity;
   const [internalFile, setInternalFile] = useState(null);
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);

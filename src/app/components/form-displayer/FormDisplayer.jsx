@@ -10,16 +10,6 @@ import Background from "../Background";
 import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-function mapPropsForDisplay(type, props = {}) {
-  if (type === "combobox" || type === "multi_choice") {
-    return { ...props, options: props.options ?? props.choices ?? [] };
-  }
-  if (type === "file") {
-    return { ...props, accept: props.accept ?? props.acceptedFiles ?? "", maxSizeMB: props.maxSizeMB ?? props.maxSize ?? 0 };
-  }
-  return props;
-}
-
 const containerVariants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
@@ -58,20 +48,67 @@ export default function FormDisplayer({ form, step }) {
       schema.forEach((field) => {
         if (field.props?.required) {
           const val = formValues[field.id];
-          const isEmpty = val === undefined || val === null || (typeof val === "string" && val.trim() === "") || (Array.isArray(val) && val.length === 0);
+          let isEmpty = val === undefined || val === null;
+          if (!isEmpty) {
+            if (typeof val === "string") isEmpty = val.trim() === "";
+            else if (Array.isArray(val)) isEmpty = val.length === 0;
+          }
           if (isEmpty) missingFields.push(field.id);
         }
       });
 
       if (missingFields.length > 0) {
         setErrorMessage("Eksik alanları doldurunuz!");
+
+        setTimeout(() => {
+          const firstMissingId = missingFields[0];
+          const element = document.getElementById(firstMissingId);
+          if (element) element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        }, 150);
+
+        setTimeout(() => {
+          setErrorMessage(null);
+        }, 2000);
         return;
       }
 
       const formattedResponses = schema.map((field) => {
         let rawValue = formValues[field.id];
         if (rawValue === undefined || rawValue === null) rawValue = "";
-        const finalAnswer = Array.isArray(rawValue) ? rawValue.join(", ") : String(rawValue);
+        let finalAnswer = "";
+
+        switch (field.type) {
+          case "multi_choice":
+            if (Array.isArray(rawValue) && field.props?.choices) {
+              const choices = field.props.choices;
+              finalAnswer = rawValue.map((idx) => {
+                const numericIdx = Number(idx);
+                if (!isNaN(numericIdx) && choices[numericIdx]) return choices[numericIdx];
+                return idx;
+              }).join(", ");
+            } 
+            else finalAnswer = Array.isArray(rawValue) ? rawValue.join(", ") : String(rawValue);
+            break;
+
+          case "combobox":
+            if (field.props?.choices) {
+              const numericIdx = Number(rawValue);
+              if (rawValue !== "" && !isNaN(numericIdx) && field.props.choices[numericIdx]) finalAnswer = field.props.choices[numericIdx];
+              else finalAnswer = String(rawValue);
+            } 
+            else finalAnswer = String(rawValue);
+            break;
+
+          case "file":
+            if (rawValue instanceof File) finalAnswer = rawValue.name;
+            else finalAnswer = "";
+            break;
+          
+          default:
+            if (Array.isArray(rawValue)) finalAnswer = rawValue.join(", ");
+            else finalAnswer = String(rawValue);
+            break;
+        }
         return { id: field.id, question: field.props?.question || "", answer: finalAnswer };
       });
 
@@ -83,10 +120,15 @@ export default function FormDisplayer({ form, step }) {
             setSubmissionState("pending");
             setSubmissionStatus(10);
           } else {
-            setSubmissionState("completed"); 
+            setSubmissionState("completed");
           }
         },
-        onError: () => setErrorMessage("Bir hata oluştu."),
+        onError: () => {
+          setErrorMessage("Bir hata oluştu.");
+          setTimeout(() => {
+            setErrorMessage(null);
+          }, 2000);
+        },
       });
     }, 100);
   };
@@ -112,9 +154,10 @@ export default function FormDisplayer({ form, step }) {
           {!isFinished ? (
             <motion.div key="form-card" className="w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-black/20 shadow-2xl"
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.3 } }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
             >
               <motion.div className="flex flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
-                
+
                 <motion.div variants={itemVariants}>
                   <FormResponseStatus step={step} />
                 </motion.div>
@@ -130,32 +173,24 @@ export default function FormDisplayer({ form, step }) {
                       const DisplayComponent = entry?.Display;
                       if (!DisplayComponent) return null;
 
-                      const displayProps = { ...mapPropsForDisplay(field.type, field.props ?? {}), questionNumber: index + 1 };
-                      
                       const isLast = index === schema.length - 1;
 
                       return (
-                        <motion.div key={field.id} variants={itemVariants} style={{ zIndex: schema.length - index }}
+                        <motion.div key={field.id} id={field.id} variants={itemVariants} style={{ zIndex: schema.length - index }}
                           className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
                         >
-                          <DisplayComponent {...displayProps} value={formValues[field.id]} onChange={(e) => handleValueChange(field.id, e.target.value)}/>
+                          <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]} onChange={(e) => handleValueChange(field.id, e.target.value)} />
                         </motion.div>
                       );
                     })}
 
                     <motion.div variants={itemVariants} className="mt-6 flex justify-end">
-                      <button onClick={handleSubmit} disabled={submitMutation.isPending}
+                      <motion.button onClick={handleSubmit} disabled={submitMutation.isPending || errorMessage} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none
                         ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : submitMutation.isPending ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-pink-300/30 border-pink-200/40 hover:bg-pink-200/60"}`}
                       >
-                        {errorMessage ? (
-                          {errorMessage}
-                        ) : submitMutation.isPending ? (
-                          <Loader2 className="animate-spin" size={16} />
-                        ) : (
-                          "Yanıtları Gönder"
-                        )}
-                      </button>
+                        {errorMessage ? (errorMessage) : submitMutation.isPending ? (<Loader2 className="animate-spin" size={16} />) : ("Yanıtları Gönder")}
+                      </motion.button>
                     </motion.div>
                   </>
                 ) : (
