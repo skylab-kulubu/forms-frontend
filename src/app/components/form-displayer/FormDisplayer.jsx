@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { FormDisplayerHeader } from "./components/FormDisplayerComponents";
 import { FormResponseStatus } from "./components/FormResponseStatus";
@@ -34,6 +34,8 @@ export default function FormDisplayer({ form, step }) {
   const [submissionState, setSubmissionState] = useState(null);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [missingFieldIds, setMissingFieldIds] = useState([]);
+  const missingTimeoutRef = useRef(null);
 
   const handleValueChange = (fieldId, value) => {
     setFormValues((prev) => ({ ...prev, [fieldId]: value }));
@@ -60,6 +62,15 @@ export default function FormDisplayer({ form, step }) {
       if (missingFields.length > 0) {
         setErrorMessage("Eksik alanları doldurunuz!");
 
+        if (missingTimeoutRef.current) {
+          clearTimeout(missingTimeoutRef.current);
+        }
+        setMissingFieldIds(missingFields);
+        missingTimeoutRef.current = setTimeout(() => {
+          setMissingFieldIds([]);
+          missingTimeoutRef.current = null;
+        }, 2000);
+
         setTimeout(() => {
           const firstMissingId = missingFields[0];
           const element = document.getElementById(firstMissingId);
@@ -71,6 +82,12 @@ export default function FormDisplayer({ form, step }) {
         }, 2000);
         return;
       }
+
+      if (missingTimeoutRef.current) {
+        clearTimeout(missingTimeoutRef.current);
+        missingTimeoutRef.current = null;
+      }
+      setMissingFieldIds([]);
 
       const formattedResponses = schema.map((field) => {
         let rawValue = formValues[field.id];
@@ -174,12 +191,13 @@ export default function FormDisplayer({ form, step }) {
                       if (!DisplayComponent) return null;
 
                       const isLast = index === schema.length - 1;
+                      const isMissing = missingFieldIds.includes(field.id);
 
                       return (
                         <motion.div key={field.id} id={field.id} variants={itemVariants} style={{ zIndex: schema.length - index }}
                           className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
                         >
-                          <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]} onChange={(e) => handleValueChange(field.id, e.target.value)} />
+                          <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]} onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing} />
                         </motion.div>
                       );
                     })}

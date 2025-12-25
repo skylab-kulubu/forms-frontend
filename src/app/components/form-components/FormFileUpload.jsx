@@ -108,7 +108,7 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
   );
 }
 
-export function DisplayFormFileUpload({ question, questionNumber, description, required = false, accept = "", maxSize = 0, value, onChange}) {
+export function DisplayFormFileUpload({ question, questionNumber, description, required = false, accept = "", maxSize = 0, value, onChange, missing = false }) {
   const acceptList = useMemo(() => parseAccept(accept), [accept]);
   const maxBytes = Number(maxSize) > 0 ? Number(maxSize) * 1024 * 1024 : Infinity;
   const [internalFile, setInternalFile] = useState(null);
@@ -180,14 +180,14 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex gap-3">
           {questionNumber != null && (
-            <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
               {questionNumber}
             </div>
           )}
 
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question}{" "} {required && <span className="ml-1 text-red-700">*</span>}
+              {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
             {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
@@ -211,7 +211,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
           onDrop={onDrop}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
-          className={`mt-3 rounded-lg border ${dragging ? "border-emerald-300/40 bg-emerald-500/10" : "border-dashed border-white/10 bg-neutral-900/60"} px-4 py-8 text-center transition-colors`}
+          className={`mt-3 rounded-lg border ${dragging ? "border-emerald-300/40 bg-emerald-500/10" : missing ? "border-dashed border-red-400/60 bg-red-900/60" : "border-dashed border-white/10 bg-neutral-900/60"} px-4 py-8 text-center transition-colors`}
         >
           <div className="mx-auto grid size-10 place-items-center rounded-md bg-white/10 text-neutral-300">
             <Upload size={18} />

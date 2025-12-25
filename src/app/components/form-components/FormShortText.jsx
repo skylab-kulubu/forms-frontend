@@ -44,7 +44,7 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
   );
 }
 
-export function DisplayFormShortText({ question, questionNumber, description, required = false, value, onChange }) {
+export function DisplayFormShortText({ question, questionNumber, description, required = false, value, onChange, missing = false }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
   const currentValue = value !== undefined ? value : internalValue;
   const handleChange = onChange !== undefined ? onChange : (e) => setInternalValue(e.target.value);
@@ -54,14 +54,14 @@ export function DisplayFormShortText({ question, questionNumber, description, re
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex gap-3">
           {questionNumber != null && (
-            <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
               {questionNumber}
             </div>
           )}
 
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question}{" "} {required && <span className="ml-1 text-red-700">*</span>}
+              {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
             {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
@@ -70,7 +70,7 @@ export function DisplayFormShortText({ question, questionNumber, description, re
         <input name="short_text" type="text" aria-required={required}
           value={currentValue} onChange={handleChange}
           placeholder="Cevabınızı buraya yazın."
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 mt-3 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className={`block w-full rounded-lg border bg-neutral-900/60 px-3 py-2 mt-3 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-white/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-white/30"}`}
         />
 
         {required && (

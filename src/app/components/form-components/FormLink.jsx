@@ -92,7 +92,7 @@ export function CreateFormLink({ questionNumber, props, onPropsChange, readOnly 
   );
 }
 
-export function DisplayFormLink({ question, questionNumber, description, required = false, allowMultiple = false, value, onChange }) {
+export function DisplayFormLink({ question, questionNumber, description, required = false, allowMultiple = false, value, onChange, missing = false }) {
   const isValidUrl = (input) => {
     if (!input || typeof input !== "string") return false;
     let u;
@@ -125,14 +125,14 @@ export function DisplayFormLink({ question, questionNumber, description, require
         <div className="flex flex-col p-2 md:p-4">
           <div className="flex gap-3">
           {questionNumber != null && (
-            <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
               {questionNumber}
             </div>
           )}
 
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question}{" "} {required && <span className="ml-1 text-red-700">*</span>}
+              {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
             {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
@@ -145,7 +145,7 @@ export function DisplayFormLink({ question, questionNumber, description, require
             <input name="link" type="url" aria-required={required}
               value={currentValue} onChange={handleChange}
               placeholder="https://ornek.com"
-              className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+              className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-white/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-white/30"}`}
             />
           </div>
 
@@ -214,6 +214,7 @@ export function DisplayFormLink({ question, questionNumber, description, require
             const Icon = getProviderIcon(v);
             const placeholder = index === fields.length - 1 && v === "" ? "Yeni bağlantı ekleyin" : "https://ornek.com/profil";
             const isTrailingEmpty = index === fields.length - 1 && v === "";
+            const isMissingField = missing && index === 0 && v === "";
             return (
               <div key={`link_${index}`} className="relative flex items-center gap-2">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
@@ -221,7 +222,7 @@ export function DisplayFormLink({ question, questionNumber, description, require
                 </span>
                 <input name="link[]" type="url" aria-required={required && index === 0}
                   value={v} onChange={(e) => updateAt(index, e.target.value)} placeholder={placeholder}
-                  className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+                  className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-white/20 ${isMissingField ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-white/30"}`}
                 />
                 {!isTrailingEmpty && (
                   <button type="button" onClick={() => removeAt(index)} aria-label="Linki kaldır"

@@ -78,7 +78,7 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
   );
 }
 
-export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, choices = [], value, onChange }) {
+export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, choices = [], value, onChange, missing = false }) {
   const normalized = choices.map((choice, idx) => {
     if (typeof choice === "string") {
       return { id: String(idx), label: choice };
@@ -88,6 +88,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
   });
   const [internalValue, setInternalValue] = useState(Array.isArray(value) ? value : []);
   const currentValue = value !== undefined ? (Array.isArray(value) ? value : []) : internalValue;
+  const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
 
   const commit = (next) => {
     if (onChange) {
@@ -108,14 +109,14 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex gap-3">
           {questionNumber != null && (
-            <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
               {questionNumber}
             </div>
           )}
 
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question}{" "} {required && <span className="ml-1 text-red-700">*</span>}
+              {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
             {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
@@ -127,7 +128,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
             const checked = currentValue.includes(choice.id);
             return (
               <label key={id} htmlFor={id}
-                className="flex cursor-pointer select-none items-center gap-3 rounded-md border border-white/10 bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-indigo-300/10 has-checked:bg-indigo-200/20"
+                className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-indigo-300/10 has-checked:bg-indigo-200/20`}
               >
                 <input id={id} name="multi_choice" type="checkbox" aria-required={required}
                   checked={checked} onChange={() => toggle(choice.id)}
