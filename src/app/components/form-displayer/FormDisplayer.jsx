@@ -42,6 +42,7 @@ export default function FormDisplayer({ form, step }) {
 
   const [formValues, setFormValues] = useState({});
   const [submissionState, setSubmissionState] = useState(null);
+  const [submissionStatus, setSubmissionStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
   const handleValueChange = (fieldId, value) => {
@@ -78,8 +79,12 @@ export default function FormDisplayer({ form, step }) {
 
       submitMutation.mutate(payload, {
         onSuccess: (response) => {
-          if (response?.status === 1) setSubmissionState("pending");
-          else setSubmissionState("completed"); 
+          if (response?.status === 10) {
+            setSubmissionState("pending");
+            setSubmissionStatus(10);
+          } else {
+            setSubmissionState("completed"); 
+          }
         },
         onError: () => setErrorMessage("Bir hata oluştu."),
       });
@@ -94,21 +99,19 @@ export default function FormDisplayer({ form, step }) {
       <AnimatePresence>
         {!isFinished && (
           <motion.div key="background-layer" className="fixed inset-0 z-0 pointer-events-none"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 1.5 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
           >
             <Background />
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 flex min-h-full w-full flex-col items-center justify-center py-12 px-4 sm:px-6">
+      <div className={`relative z-10 flex min-h-full w-full flex-col items-center ${isFinished ? "justify-start" : "justify-center py-12 px-4 sm:px-6"}`}>
 
         <AnimatePresence mode="wait">
           {!isFinished ? (
-            <motion.div key="form-card"
+            <motion.div key="form-card" className="w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-black/20 shadow-2xl"
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.3 } }}
-              className="w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-black/20 shadow-2xl"
             >
               <motion.div className="flex flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
                 
@@ -132,9 +135,8 @@ export default function FormDisplayer({ form, step }) {
                       const isLast = index === schema.length - 1;
 
                       return (
-                        <motion.div key={field.id} variants={itemVariants}
+                        <motion.div key={field.id} variants={itemVariants} style={{ zIndex: schema.length - index }}
                           className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
-                          style={{ zIndex: schema.length - index }}
                         >
                           <DisplayComponent {...displayProps} value={formValues[field.id]} onChange={(e) => handleValueChange(field.id, e.target.value)}/>
                         </motion.div>
@@ -164,11 +166,10 @@ export default function FormDisplayer({ form, step }) {
               </motion.div>
             </motion.div>
           ) : (
-            <motion.div key="success-screen"
+            <motion.div key="success-screen" className="w-full"
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative z-20 flex max-w-md flex-col items-center gap-6 p-8 text-center"
             >
-              <StateCard state={submissionState} />
+              <StateCard state={submissionState} step={step} status={submissionStatus} />
             </motion.div>
           )}
         </AnimatePresence>

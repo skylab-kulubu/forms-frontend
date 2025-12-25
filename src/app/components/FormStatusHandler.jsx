@@ -74,24 +74,37 @@ const cardVariants = {
     exit: { opacity: 0, y: -26, scale: 0.98, transition: { duration: 0.28, ease: [0.4, 0, 0.2, 1] } },
 };
 
-export function StateCard({ state, message }) {
+export function StateCard({ state, message, step, status }) {
     const config = stateConfigs[state];
+    
     if (!config) return null;
 
     const Icon = config.icon;
     const description = message || config.description;
 
     return (
-        <motion.div key={state} variants={cardVariants}
-            initial="initial" animate="animate" exit="exit"
-            className="mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-6 text-center"
-            style={{ transformOrigin: "center" }}
+        <motion.div key={state} className="flex min-h-[85vh] w-full flex-col items-center p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
         >
-            <Icon className={`text-neutral-200 h-10 w-10 drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] ${state === "loading" ? "animate-spin" : ""}`} />
-            <div className="flex flex-col gap-2 text-balance">
-                <p className="text-md font-semibold text-neutral-100">{config.title}</p>
-                <p className="text-xs text-neutral-400">{description}</p>
+            {step > 0 && state !== "loading" && (
+                <div className="w-full max-w-2xl mt-8 mb-auto">
+                     <FormResponseStatus step={step} status={status} />
+                </div>
+            )}
+
+            <div className="flex-1 flex items-center justify-center w-full">
+                <motion.div variants={cardVariants} initial="initial" animate="animate" exit="exit"
+                    className="mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-6 text-center"
+                >
+                    <Icon className={`text-neutral-200 h-10 w-10 drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] ${state === "loading" ? "animate-spin" : ""}`} />
+                    <div className="flex flex-col gap-2 text-balance">
+                        <p className="text-md font-semibold text-neutral-100">{config.title}</p>
+                        <p className="text-xs text-neutral-400">{description}</p>
+                    </div>
+                </motion.div>
             </div>
+            
+            {step > 0 && state !== "loading" && <div className="mb-auto hidden sm:block h-10"></div>}
         </motion.div>
     );
 }
@@ -144,20 +157,8 @@ export function FormStatusHandler({ isLoading, error, data, renderForm }) {
     };
 
     return (
-        <div className="flex min-h-[85vh] w-full flex-col items-center p-4">
-            {step > 0 && uiState !== "loading" && (
-                <div className="w-full max-w-2xl mt-8 mb-auto">
-                     <FormResponseStatus step={step} status={status} />
-                </div>
-            )}
-
-            <div className="flex-1 flex items-center justify-center w-full">
-                <AnimatePresence mode="wait">
-                    <StateCard state={uiState} />
-                </AnimatePresence>
-            </div>
-            
-            {step > 0 && uiState !== "loading" && <div className="mb-auto hidden sm:block h-10"></div>}
-        </div>
+        <AnimatePresence mode="wait">
+            <StateCard key={uiState} state={uiState} step={step} status={status} />
+        </AnimatePresence>
     );
 }
