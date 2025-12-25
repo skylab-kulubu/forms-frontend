@@ -7,7 +7,8 @@ const FORM_ACCESS_STATUS = {
   AVAILABLE: 0,
   PENDING_APPROVAL: 10,
   REQUIRES_PARENT_APPROVAL: 11,
-  COMPLETED: 20,
+  APPROVED: 20,
+  COMPLETED: 21,
   NOT_AUTHORIZED: 41,
   NOT_FOUND: 44,
   NOT_AVAILABLE: 45,
@@ -19,14 +20,19 @@ const stateConfigs = {
         title: "Form yükleniyor",
         description: "Lütfen birkaç saniye bekleyin.",
     },
+    completed: { 
+        icon: FileCheckIcon,
+        title: "Cevabınız kaydedildi",
+        description: "Form cevaplarınız başarıyla gönderildi.",
+    },
     pending: {
         icon: FileClock,
         title: "İşlem bekleniyor",
         description: "Form cevabınız şu an inceleniyor.",
     },
-    completed: {
+    approved: {
         icon: FileCheckIcon,
-        title: "Form zaten tamamlanmış",
+        title: "Form cevabınız?", // bunları düzelticem
         description: "Bu formu daha önce doldurmuşsunuz.",
     },
     requiresParent: {
@@ -62,7 +68,7 @@ const cardVariants = {
     exit: { opacity: 0, y: -26, scale: 0.98, transition: { duration: 0.28, ease: [0.4, 0, 0.2, 1] } },
 };
 
-function StateCard({ state, message }) {
+export function StateCard({ state, message }) {
     const config = stateConfigs[state];
     if (!config) return null;
 
@@ -112,9 +118,9 @@ export function FormStatusHandler({ isLoading, error, data, renderForm }) {
 
         switch (status) {
             case FORM_ACCESS_STATUS.AVAILABLE:
-            case FORM_ACCESS_STATUS.COMPLETED:
                 return "success";
-
+            case FORM_ACCESS_STATUS.COMPLETED:
+                return "completed";
             case FORM_ACCESS_STATUS.PENDING_APPROVAL:
                 return "pending";
 
