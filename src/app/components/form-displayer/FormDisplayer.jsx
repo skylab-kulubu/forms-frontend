@@ -32,12 +32,10 @@ const itemVariants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } }
 };
 
-export default function FormDisplayer({ form }) {
+export default function FormDisplayer({ form, step }) {
   const schema = Array.isArray(form?.schema) ? form.schema : [];
   const title = form?.title ?? "";
   const description = form?.description ?? "";
-  const relationshipStatusValue = Number(form?.relationshipStatus);
-  const relationshipStatus = Number.isFinite(relationshipStatusValue) ? relationshipStatusValue : 0;
   const hasSchema = schema.length > 0;
 
   const submitMutation = useSubmitFormMutation();
@@ -115,7 +113,7 @@ export default function FormDisplayer({ form }) {
               <motion.div className="flex flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
                 
                 <motion.div variants={itemVariants}>
-                  <FormResponseStatus relationshipStatus={relationshipStatus} />
+                  <FormResponseStatus step={step} />
                 </motion.div>
 
                 <motion.div variants={itemVariants}>

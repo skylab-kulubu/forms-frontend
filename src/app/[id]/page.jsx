@@ -14,7 +14,7 @@ export default function FormDisplayerPage() {
       isLoading={isLoading}
       error={error}
       data={data}
-      renderForm={(data) => ( <FormDisplayer form={data.data} /> )}
+      renderForm={(responseData) => ( <FormDisplayer form={responseData.data.form} step={responseData.data.step}/> )}
     />
   );
 }
