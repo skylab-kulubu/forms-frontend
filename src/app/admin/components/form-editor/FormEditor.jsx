@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { useState, useEffect, use } from "react";
-import { DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { useState, useEffect } from "react";
+import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { PackagePlus } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -133,9 +133,20 @@ export default function FormEditor({ initialForm = null }) {
         window.getFormSchema = () => structuredClone(schema);
     }
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 5 }
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+            keyboardCodes: { start: ["Enter"], cancel: ["Escape"], end: ["Enter"] }
+        })
+    );
+
     return (
         <DndContext
             collisionDetection={pointerWithin}
+            sensors={sensors}
             onDragStart={({ active }) => {
                 const from = active.data?.current?.from ?? null;
                 setDragSource(from);

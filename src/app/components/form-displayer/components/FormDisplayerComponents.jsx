@@ -7,7 +7,7 @@ export function FormDisplayerHeader({ title, description }) {
   if (!hasTitle && !hasDescription) return null;
 
   return (
-    <div className="rounded-xl px-4 py-5 max-w-2xl">
+    <div className="rounded-xl px-4 pb-5 max-w-2xl">
       {hasTitle && (
         <h1 className="text-3xl font-semibold tracking-tight text-neutral-50">
           {title}
