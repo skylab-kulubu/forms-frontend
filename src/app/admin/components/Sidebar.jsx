@@ -127,7 +127,7 @@ function SidebarContent({ user, pathname, onItemClick }) {
           pathname={pathname}
           onItemClick={onItemClick}
           items={[
-            { href: "/admin/new-form", icon: FilePlus, label: "Yeni Form" },
+            { href: "/admin/forms/new-form", icon: FilePlus, label: "Yeni Form" },
             { href: "/admin/forms", icon: List, label: "Formları Görüntüle" },
           ]}
         />
@@ -154,7 +154,7 @@ export default function Sidebar({ user, children }) {
       {/* Desktop top bar */}
       <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
         <div className="flex h-14 items-center px-6">
-          <Breadcrumbs labels={{ "/admin": "Dashboard", "/admin/new-form": "Yeni Form", "/admin/forms": "Formlar" }} />
+          <Breadcrumbs labels={{ "/admin": "Dashboard", "/admin/forms/new-form": "Yeni Form", "/admin/forms": "Formlar" }} />
         </div>
       </div>
 
@@ -167,7 +167,7 @@ export default function Sidebar({ user, children }) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="ml-2 min-w-0 flex-1">
-            <Breadcrumbs labels={{ "/admin": "Dashboard", "/admin/new-form": "Yeni Form", "/admin/forms": "Formlar" }} />
+            <Breadcrumbs labels={{ "/admin": "Dashboard", "/admin/forms/new-form": "Yeni Form", "/admin/forms": "Formlar" }} />
           </div>
         </div>
       </div>

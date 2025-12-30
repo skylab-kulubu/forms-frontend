@@ -24,6 +24,12 @@ const fetchLinkableUserForms = async (formId) => {
   return response?.data ?? [];
 }
 
+const deleteForm = async (formId) => {
+  return request(`/api/admin/forms/${formId}`, {
+    method: "DELETE",
+  });
+};
+
 export const useUserFormsQuery = () =>
   useQuery({
     queryKey: ["user-forms"],
@@ -56,6 +62,20 @@ export const useFormMutation = () => {
       if (data?.id) {
         queryClient.setQueryData(["form", data.id], data);
       }
+    },
+  });
+};
+
+export const useDeleteFormMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteForm,
+    onSuccess: (_data, formId) => {
+      if (formId) {
+        queryClient.removeQueries({ queryKey: ["form", formId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["user-forms"] });
     },
   });
 };

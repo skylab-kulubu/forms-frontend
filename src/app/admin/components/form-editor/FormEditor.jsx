@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { PackagePlus } from "lucide-react";
@@ -9,7 +10,7 @@ import dynamic from "next/dynamic";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
-import { useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
+import { useDeleteFormMutation, useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
 import ApprovalOverlay from "../ApprovalOverlay";
 
 import { COMPONENTS, REGISTRY } from "../../../components/form-registry";
@@ -23,7 +24,8 @@ const INITIAL_EDITORS = [
     { userId: FIXED_USER_ID, fullName: "Skylab Ki?isi", email: "forms@skylab.com", role: 3, photoUrl: null }
 ];
 
-export default function FormEditor({ initialForm = null }) {
+export default function FormEditor({ initialForm = null, onRefresh }) {
+    const router = useRouter();
     const [schema, setSchema] = useState(initialForm?.schema || []);
     const [schemaTitle, setSchemaTitle] = useState(initialForm?.title || "Yeni Form");
     const [description, setDescription] = useState(initialForm?.description || "");
@@ -33,6 +35,7 @@ export default function FormEditor({ initialForm = null }) {
     const [editors, setEditors] = useState(initialForm?.collaborators || INITIAL_EDITORS);
     const [status, setStatus] = useState(initialForm?.status || 1);
     const currentUserRole = Number(initialForm?.userRole ?? 3);
+    const isNewForm = !initialForm?.id;
 
     const isChildForm = initialForm?.isChildForm || false;
 
@@ -43,8 +46,10 @@ export default function FormEditor({ initialForm = null }) {
     const [newEditorRole, setNewEditorRole] = useState(1);
 
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: initialForm?.linkedFormId || "", nextId: "", reason: null });
+    const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
 
     const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
+    const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
     const { data: linkableForms, isLoading: isLinkableFormsLoading } = useLinkableFormsQuery(initialForm?.id || formId);
 
     useEffect(() => {
@@ -76,6 +81,41 @@ export default function FormEditor({ initialForm = null }) {
         setLinkOverlay({ open: true, scenario, previousId: currentId, nextId, reason });
     };
 
+    const applyFormState = (form) => {
+        const nextForm = form ?? {};
+        setSchema(Array.isArray(nextForm.schema) ? nextForm.schema : []);
+        setSchemaTitle(nextForm.title || "Yeni Form");
+        setDescription(nextForm.description || "");
+        setLinkedFormId(nextForm.linkedFormId || "");
+        setAllowMultipleResponses(Boolean(nextForm.allowMultipleResponses));
+        setAllowAnonymousResponses(Boolean(nextForm.allowAnonymousResponses));
+        setEditors(Array.isArray(nextForm.collaborators) && nextForm.collaborators.length > 0 ? nextForm.collaborators : INITIAL_EDITORS);
+        setStatus(Number.isFinite(nextForm.status) ? nextForm.status : 1);
+        setNewEditor("");
+        setNewEditorRole(1);
+    };
+
+    const handleRefresh = async () => {
+        if (isNewForm) {
+            applyFormState(null);
+            return;
+        }
+        if (!onRefresh) return;
+        try {
+            const result = await onRefresh();
+            const refreshedForm = result?.data?.data ?? result?.data;
+            if (refreshedForm) {
+                applyFormState(refreshedForm);
+            }
+        } catch {
+        }
+    };
+
+    const handleDeleteRequest = () => {
+        if (isNewForm) return;
+        setDeleteOverlayOpen(true);
+    };
+
     const handleSave = () => {
         const payload = {
             Id: initialForm?.id || formId || null,
@@ -91,7 +131,28 @@ export default function FormEditor({ initialForm = null }) {
                 Role: editor.role
             }))
         };
-        saveForm(payload);
+        saveForm(payload, {
+            onSuccess: (data) => {
+                if (!isNewForm) return;
+                const nextId = data?.id ?? data?.data?.id;
+                if (nextId) {
+                    router.push(`/admin/forms/${nextId}`);
+                }
+            },
+        });
+    };
+
+    const handleDeleteConfirm = () => {
+        if (!initialForm?.id || isDeletePending) return;
+        deleteForm(initialForm.id, {
+            onSuccess: () => {
+                setDeleteOverlayOpen(false);
+                router.push("/admin/forms");
+            },
+            onError: () => {
+                setDeleteOverlayOpen(false);
+            },
+        });
     };
 
     const handleAddEditor = (event) => {
@@ -242,7 +303,17 @@ export default function FormEditor({ initialForm = null }) {
                     )}
                 </Canvas>
 
-                <LibraryPanel activeTab={libraryTab} onSelectTab={setLibraryTab} handleSave={handleSave} isPending={isPending} isSuccess={isSuccess} isError={isError}>
+                <LibraryPanel
+                    activeTab={libraryTab}
+                    onSelectTab={setLibraryTab}
+                    handleSave={handleSave}
+                    onRefresh={handleRefresh}
+                    onDelete={handleDeleteRequest}
+                    isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
+                    isPending={isPending}
+                    isSuccess={isSuccess}
+                    isError={isError}
+                >
                     {libraryTab === "components" ? (
                         <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
                             {COMPONENTS.map((component) => (
@@ -321,6 +392,13 @@ export default function FormEditor({ initialForm = null }) {
                     resetLinkOverlay();
                 }}
                 onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay(); }}
+            />
+            <ApprovalOverlay
+                open={deleteOverlayOpen}
+                preset="delete-form"
+                context={{ isPending: isDeletePending }}
+                onApprove={handleDeleteConfirm}
+                onReject={() => setDeleteOverlayOpen(false)}
             />
         </DndContext>
     );

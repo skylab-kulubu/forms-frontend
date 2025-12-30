@@ -54,7 +54,7 @@ export default function FormsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <FormsHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={setSortValue} onRefresh={() => refetch()} onCreate={() => router.push("/admin/new-form")} stats={{ count: forms.length }} />
+      <FormsHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={setSortValue} onRefresh={() => refetch()} onCreate={() => router.push("/admin/forms/new-form")} stats={{ count: forms.length }} />
       {isLoading ? (
         <ListItemSkeleton count={3} />
       ) : hasError ? (

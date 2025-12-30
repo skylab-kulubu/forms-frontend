@@ -1,8 +1,8 @@
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
-import { CheckCircle2, CircleGauge, CircleAlert, RotateCcw, Trash, Trash2, Check } from "lucide-react";
+import { CheckCircle2, CircleGauge, CircleAlert, RotateCcw, Trash, Trash2 } from "lucide-react";
 
-export function LibraryPanel({ children, activeTab = "components", onSelectTab, handleSave, isPending, isError, isSuccess }) {
+export function LibraryPanel({ children, activeTab = "components", onSelectTab, handleSave, onRefresh, onDelete, isDeleteDisabled, isPending, isError, isSuccess }) {
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
 
@@ -44,14 +44,18 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab, 
                         </button>
                     </div>
                     <div className="flex items-center gap-1 text-neutral-500">
-                        <button type="button" aria-label="Son değişikliği geri al" disabled className="rounded-lg p-1.5 opacity-50 transition-colors cursor-not-allowed">
+                        <button type="button" aria-label="Yenile" onClick={onRefresh} disabled={!onRefresh}
+                            className={`rounded-lg p-1.5 transition-colors ${onRefresh ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
+                        >
                             <RotateCcw size={16} />
                         </button>
-                        <button type="button" aria-label="Değişiklikleri sil" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
+                        <button type="button" aria-label="Formu sil" onClick={onDelete} disabled={isDeleteDisabled}
+                            className={`rounded-lg p-1.5 transition-colors ${isDeleteDisabled ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+                        >
                             <Trash2 size={16} />
                         </button>
                         <button onClick={handleSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
-                            {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-600" />) : isSuccess ? (<CheckCircle2 size={16} className="text-emerald-600" />) : (<CheckCircle2 size={16} />)} 
+                            {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-600" />) : isSuccess ? (<CheckCircle2 size={16} className="text-emerald-600" />) : (<CheckCircle2 size={16} />)}
                         </button>
                     </div>
                 </div>
