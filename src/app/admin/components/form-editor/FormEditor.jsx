@@ -20,7 +20,7 @@ const FIXED_USER_ID = "11111111-1111-1111-1111-111111111111";
 const formId = crypto.randomUUID();
 
 const INITIAL_EDITORS = [
-    { id: FIXED_USER_ID, name: "Skylab Kişisi", email: "forms@skylab.com", role: 3, locked: true }
+    { userId: FIXED_USER_ID, fullName: "Skylab Ki?isi", email: "forms@skylab.com", role: 3, photoUrl: null }
 ];
 
 export default function FormEditor({ initialForm = null }) {
@@ -30,8 +30,9 @@ export default function FormEditor({ initialForm = null }) {
     const [linkedFormId, setLinkedFormId] = useState(initialForm?.linkedFormId || "");
     const [allowMultipleResponses, setAllowMultipleResponses] = useState(initialForm?.allowMultipleResponses || false);
     const [allowAnonymousResponses, setAllowAnonymousResponses] = useState(initialForm?.allowAnonymousResponses || false);
-    const [editors, setEditors] = useState(initialForm?.Collaborators || INITIAL_EDITORS);
+    const [editors, setEditors] = useState(initialForm?.collaborators || INITIAL_EDITORS);
     const [status, setStatus] = useState(initialForm?.status || 1);
+    const currentUserRole = Number(initialForm?.userRole ?? 3);
 
     const isChildForm = initialForm?.isChildForm || false;
 
@@ -85,7 +86,7 @@ export default function FormEditor({ initialForm = null }) {
             AllowMultipleResponses: allowAnonymousResponses ? true : allowMultipleResponses,
             AllowAnonymousResponses: allowAnonymousResponses,
             LinkedFormId: allowAnonymousResponses ? null : (linkedFormId || null),
-            Collaborators: editors.filter(editor => !editor.locked).map(editor => ({
+            Collaborators: editors.filter((editor) => Number(editor.role) !== 3).map((editor) => ({
                 Email: editor.email,
                 Role: editor.role
             }))
@@ -100,18 +101,26 @@ export default function FormEditor({ initialForm = null }) {
         const normalized = rawValue.includes("@") ? rawValue.split("@")[0] : rawValue;
         const formattedName = normalized.replace(/[\s._-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()).trim();
         const fallbackEmail = rawValue.includes("@") ? rawValue : `${rawValue.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@paylasim.local`;
-        const id = Math.random().toString(36).slice(2, 10);
-        setEditors((prev) => [...prev, { id, name: formattedName || fallbackEmail, email: fallbackEmail, role: "Görüntüleyici" }]);
+        const userId = Math.random().toString(36).slice(2, 10);
+        const nextRole = currentUserRole === 2 ? 1 : (Number(newEditorRole) === 2 ? 2 : 1);
+        setEditors((prev) => [...prev, { userId, fullName: formattedName || fallbackEmail, email: fallbackEmail, role: nextRole, photoUrl: null }]);
         setNewEditor("");
     };
 
     const handleRemoveEditor = (editor) => {
-        if (editor.locked) return;
-        setEditors((prev) => prev.filter((item) => item.id !== editor.id));
+        const editorRoleValue = Number(editor.role);
+        if (editorRoleValue === 3) return;
+        if (currentUserRole === 2) {
+            if (editorRoleValue === 2) return;
+        } else if (currentUserRole !== 3) {
+            return;
+        }
+        setEditors((prev) => prev.filter((item) => item.userId !== editor.userId));
     };
 
     const handleChangeEditorRole = (editorId, nextRole) => {
-        setEditors((prev) => prev.map((item) => item.id === editorId ? { ...item, role: nextRole } : item));
+        if (currentUserRole !== 3) return;
+        setEditors((prev) => prev.map((item) => item.userId === editorId ? { ...item, role: nextRole } : item));
     };
 
     const resetLinkOverlay = () => {
@@ -261,6 +270,7 @@ export default function FormEditor({ initialForm = null }) {
                                     allowMultipleResponses={allowMultipleResponses}
                                     setAllowMultipleResponses={setAllowMultipleResponses}
                                     linkableForms={linkableForms ?? []}
+                                    currentUserRole={currentUserRole}
                                 />
                             </div>
 
