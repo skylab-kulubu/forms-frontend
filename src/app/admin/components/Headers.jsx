@@ -12,7 +12,7 @@ const fadeIn = {
 
 function HeaderShell({ title, description, children }) {
   return (
-    <motion.section {...fadeIn} className="pb-2 border-b border-white/10">
+    <motion.div {...fadeIn} className="pb-2 border-b border-white/10">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="text-xl font-semibold text-neutral-200">
           {title}
@@ -21,11 +21,11 @@ function HeaderShell({ title, description, children }) {
       </div>
 
       {children ? <div className="mt-3">{children}</div> : null}
-    </motion.section >
+    </motion.div>
   );
 }
 
-export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "recent", onSortChange, onRefresh, onCreate, stats }) {
+export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "recent", onSortChange, onRefresh, onCreate, stats = { count: 0 } }) {
   const sortOptions = [
     { value: "recent", label: "Son düzenlenen" },
     { value: "responses", label: "En çok yanıt" },
@@ -33,7 +33,6 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "rec
   ];
 
   const currentSort = sortOptions.find((item) => item.value === sortValue) ?? sortOptions[0];
-  const formsCount = stats.count;
 
   const cycleSort = () => {
     const index = sortOptions.findIndex((item) => item.value === currentSort.value);
@@ -65,7 +64,7 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "rec
 
         <div className="flex flex-wrap items-center gap-3 text-right shrink-0 md:ml-auto">
           <div className="text-[12px] text-neutral-500">
-            <span className="font-semibold text-neutral-200">{formsCount}</span> erişilebilen form
+            <span className="font-semibold text-neutral-200">{stats?.count ?? 0}</span> erişilebilen form
           </div>
         </div>
       </div>

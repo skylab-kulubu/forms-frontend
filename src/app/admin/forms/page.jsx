@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { FormsHeader } from "../components/Headers";
-import ListItem from "../components/ListItem";
+import ListItem, { ListItemSkeleton } from "../components/ListItem";
 import { useUserFormsQuery } from "@/lib/hooks/useFormAdmin";
 
 export default function FormsPage() {
@@ -54,11 +54,9 @@ export default function FormsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <FormsHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={setSortValue} onRefresh={() => refetch()} onCreate={() => router.push("/admin/new-form")} stats={{ count: forms.length }}/>
+      <FormsHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={setSortValue} onRefresh={() => refetch()} onCreate={() => router.push("/admin/new-form")} stats={{ count: forms.length }} />
       {isLoading ? (
-        <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
-          Loading forms...
-        </div>
+        <ListItemSkeleton count={3} />
       ) : hasError ? (
         <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
           Forms could not be loaded.

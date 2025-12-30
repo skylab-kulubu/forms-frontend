@@ -27,6 +27,54 @@ function RoleBadge({ role }) {
   );
 }
 
+function SkeletonBlock({ className = "" }) {
+  return <div aria-hidden="true" className={`shimmer ${className}`} />;
+}
+
+export function ListItemSkeleton({ count = 4, className = "" }) {
+  const items = Array.from({ length: count });
+
+  return (
+    <div className={`space-y-1.5 ${className}`}>
+      {items.map((_, index) => (
+        <div key={index} className="w-full rounded-xl border border-black/40 bg-black/15 px-4 py-1 shadow-sm backdrop-blur sm:px-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1 sm:flex-[0.65]">
+              <div className="flex flex-wrap items-center gap-2">
+                <SkeletonBlock className="h-3.5 w-28 rounded-md" />
+                <SkeletonBlock className="h-3 w-10 rounded-md" />
+              </div>
+              <SkeletonBlock className="mt-2 h-3 w-40 rounded-md" />
+            </div>
+
+            <div className="flex w-full justify-center sm:w-auto sm:flex-[1.35] sm:justify-start">
+              <div className="w-full max-w-md rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2">
+                <div className="space-y-2">
+                  <SkeletonBlock className="h-3.5 w-24 rounded-md" />
+                  <SkeletonBlock className="h-3 w-36 rounded-md" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 sm:ml-auto sm:justify-end">
+              <div className="flex items-center gap-1">
+                <SkeletonBlock className="h-7 w-9 rounded-md" />
+                <SkeletonBlock className="h-7 w-7 rounded-md" />
+                <SkeletonBlock className="h-7 w-7 rounded-md" />
+              </div>
+              <div className="flex items-center gap-2">
+                <SkeletonBlock className="h-8 w-8 rounded-md" />
+                <SkeletonBlock className="h-8 w-8 rounded-md" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
+    </div>
+  );
+}
+
 export default function ListItem({ form, linkedForm, viewHref, editHref, onViewResponses, onEdit, className = "" }) {
   if (!form) return null;
 
