@@ -146,7 +146,7 @@ export default function ResponseDisplayer({ response }) {
                 <p>Cevaplanan {answeredCount} soru</p>
                 <div className="flex gap-1">
                   <ClockPlusIcon size={12} className="mt-0.5" />
-                  <p>{formatDateTime(response?.submittedAt)}</p>
+                  <p>{formatDateTime(activeResponse?.submittedAt)}</p>
                 </div>
               </div>
             </div>
