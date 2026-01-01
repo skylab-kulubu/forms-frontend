@@ -35,11 +35,32 @@ export const useResponseStatusMutation = () => {
     const hasDataPrev = prev && Object.prototype.hasOwnProperty.call(prev, "data");
     if (hasDataNext || hasDataPrev) {
       const prevData = hasDataPrev ? prev.data : prev;
-      const nextData = hasDataNext ? next.data : next;
+      const nextData = hasDataNext ? next.data : (hasDataPrev ? {} : next);
       const base = hasDataNext ? next : (hasDataPrev ? prev : {});
       return { ...base, data: { ...(prevData || {}), ...(nextData || {}) } };
     }
     return { ...(prev || {}), ...(next || {}) };
+  };
+
+  const applyStatusOverrides = (payload, variables) => {
+    if (!payload || !variables) return payload;
+    const hasData = Object.prototype.hasOwnProperty.call(payload, "data");
+    const current = hasData ? payload.data : payload;
+    const overrides = {};
+    if (variables.newStatus != null) {
+      overrides.status = variables.newStatus;
+    }
+    if (variables.note != null) {
+      overrides.reviewerNote = variables.note;
+      overrides.reviewDescription = variables.note;
+    }
+    if (!current?.reviewedAt && (variables.newStatus === 2 || variables.newStatus === 3)) {
+      overrides.reviewedAt = new Date().toISOString();
+    }
+    if (Object.keys(overrides).length === 0) return payload;
+    return hasData
+      ? { ...payload, data: { ...(current || {}), ...overrides } }
+      : { ...payload, ...overrides };
   };
 
   return useMutation({
@@ -47,10 +68,10 @@ export const useResponseStatusMutation = () => {
     onSuccess: (data, variables) => {
       const responseId = variables?.responseId;
       if (!responseId) return;
-      if (data) {
-        queryClient.setQueryData(["response", responseId], (prev) => mergeResponsePayload(prev, data));
-        return;
-      }
+      queryClient.setQueryData(["response", responseId], (prev) => {
+        const merged = mergeResponsePayload(prev, data);
+        return applyStatusOverrides(merged, variables);
+      });
       queryClient.invalidateQueries({ queryKey: ["response", responseId] });
     },
   });

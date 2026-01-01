@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, ClockCheckIcon, Loader2, PencilLine, RotateCcw, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, ClockCheckIcon, Loader2, PencilLine, Undo2, X } from "lucide-react";
 import { useResponseStatusMutation } from "@/lib/hooks/useResponse";
 
 const STATUS_META = {
-  2: { label: "Onaylandi", style: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" },
+  2: { label: "Onaylandı", style: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" },
   3: { label: "Reddedildi", style: "border-red-500/40 bg-red-500/10 text-red-200" },
   default: { label: "Beklemede", style: "border-white/10 bg-white/5 text-neutral-300" },
 };
@@ -26,7 +27,7 @@ const formatDateTime = (value) => {
   return date.toLocaleString();
 };
 
-export function ResponseActions({ response, isLoading = false }) {
+export function ResponseActions({ response }) {
   const reviewedAt = response?.reviewedAt;
   const reviewDescription = response?.reviewDescription || response?.reviewerNote || "";
   const statusValue = Number(response?.status ?? 0);
@@ -35,16 +36,42 @@ export function ResponseActions({ response, isLoading = false }) {
 
   const [note, setNote] = useState(reviewDescription);
   const [isEditing, setIsEditing] = useState(canReview && !reviewedAt);
-  const { mutate, isPending, error } = useResponseStatusMutation();
+  const [actionState, setActionState] = useState("idle");
+  const actionTimerRef = useRef(null);
+  const responseId = response?.id;
+  const prevResponseIdRef = useRef(responseId);
+  const { mutate, isPending } = useResponseStatusMutation();
+
+  const clearActionTimer = () => {
+    if (actionTimerRef.current) {
+      clearTimeout(actionTimerRef.current);
+      actionTimerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     setNote(reviewDescription);
     setIsEditing(canReview && !reviewedAt);
   }, [response?.id, reviewDescription, reviewedAt, canReview]);
 
-  if (isLoading) {
-    return <div></div>;
-  }
+  useEffect(() => {
+    if (prevResponseIdRef.current !== responseId) {
+      prevResponseIdRef.current = responseId;
+      clearActionTimer();
+      setActionState("idle");
+    }
+  }, [responseId]);
+
+  useEffect(() => () => clearActionTimer(), []);
+
+  useEffect(() => {
+    if (actionState === "success" || actionState === "error") {
+      clearActionTimer();
+      actionTimerRef.current = setTimeout(() => {
+        setActionState("idle");
+      }, 1000);
+    }
+  }, [actionState]);
 
   if (!response) {
     return <div></div>;
@@ -64,18 +91,29 @@ export function ResponseActions({ response, isLoading = false }) {
   const initials = getInitials(displayName || submitterId);
 
   const submitStatus = (nextStatus) => {
-    if (!canReview || !response?.id || isPending) return;
+    if (!canReview || !response?.id || isPending || actionState !== "idle") return;
+    clearActionTimer();
+    setActionState("loading");
     mutate(
       {
         responseId: response.id,
         newStatus: nextStatus,
         note: note?.trim() ? note.trim() : null,
       },
-      { onSuccess: () => setIsEditing(false) }
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+          setActionState("success");
+        },
+        onError: () => {
+          setActionState("error");
+        },
+      }
     );
   };
 
-  const showReviewDetails = canReview && Boolean(reviewedAt) && !isEditing;
+  const showReviewDetails = canReview && Boolean(reviewedAt) && !isEditing && actionState === "idle";
+  const actionTone = actionState === "error" ? "border-red-500/30 bg-red-500/10 text-red-200" : actionState === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5 text-neutral-200";
 
   return (
     <div className="flex h-full items-start justify-center overflow-y-hidden pt-20 pb-6">
@@ -101,8 +139,17 @@ export function ResponseActions({ response, isLoading = false }) {
         </div>
 
         {canReview ? (
-          showReviewDetails ? (
-            <div className="mt-4 rounded-lg border border-white/10 bg-neutral-950/30 p-3">
+          <AnimatePresence mode="wait" initial={false}>
+            {showReviewDetails ? (
+              <motion.div
+                key="review"
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-4 rounded-lg border border-white/10 bg-neutral-950/30 p-3"
+              >
               <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">önceki inceleme</p>
               <div className="flex text-xs text-neutral-500 gap-1">
                 <ClockCheckIcon size={12} className="mt-0.5" />
@@ -128,23 +175,54 @@ export function ResponseActions({ response, isLoading = false }) {
               >
                 <PencilLine size={16} className="mx-auto" />
               </button>
-            </div>
-          ) : (
-            <>
-              <div className="mt-4 flex items-center gap-2">
-                <button type="button" onClick={() => submitStatus(2)} disabled={isPending} aria-label="Onayla" title="Onayla"
-                  className="flex-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPending ? <Loader2 size={16} className="mx-auto animate-spin" /> : <Check size={16} className="mx-auto" />}
-                </button>
-                <button type="button" onClick={() => submitStatus(3)} disabled={isPending} aria-label="Reddet" title="Reddet"
-                  className="flex-1 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPending ? <Loader2 size={16} className="mx-auto animate-spin" /> : <X size={16} className="mx-auto" />}
-                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="edit"
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+              <div className="mt-4">
+                <AnimatePresence mode="wait" initial={false}>
+                  {actionState === "idle" ? (
+                    <motion.div layout key="actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                      className="flex items-center gap-2"
+                    >
+                      <button type="button" onClick={() => submitStatus(2)} disabled={isPending} aria-label="Onayla" title="Onayla"
+                        className="flex-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Check size={16} className="mx-auto" />
+                      </button>
+                      <button type="button" onClick={() => submitStatus(3)} disabled={isPending} aria-label="Reddet" title="Reddet"
+                        className="flex-1 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <X size={16} className="mx-auto" />
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div layout key="feedback" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                      className={`flex py-2 w-full items-center justify-center rounded-lg border ${actionTone}`}
+                    >
+                      {actionState === "loading" ? (
+                        <Loader2 size={16} className="mx-auto animate-spin" />
+                      ) : actionState === "success" ? (
+                        <Check size={16} className="mx-auto" />
+                      ) : (
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.18em]">
+                          X
+                        </span>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              <div className="mt-4 flex flex-col gap-2">
+              <motion.div layout className="mt-4 flex flex-col gap-2">
                 <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500">
                   Açıklama
                 </label>
@@ -153,17 +231,15 @@ export function ResponseActions({ response, isLoading = false }) {
                 />
                 {reviewedAt && (
                   <button type="button" onClick={() => { setIsEditing(false); setNote(reviewDescription); }} aria-label="Değişiklikten vazgeç" title="Değişiklikten vazgeç"
-                    className="mt-2 inline-flex items-center justify-center rounded-md px-2 py-1 text-[11px] uppercase tracking-[0.2em] text-neutral-400 transition hover:text-neutral-200"
+                    className="mt-2 inline-flex items-center justify-center rounded-md px-2 py-1 text-[11px] uppercase tracking-[0.2em] transition border border-white/10 bg-white/5 hover:bg-white/10 text-neutral-200"
                   >
-                    <RotateCcw size={14} />
+                    <Undo2 size={14} />
                   </button>
                 )}
-                {error && (
-                  <p className="text-[11px] text-red-300">İşlem başarısız oldu</p>
-                )}
-              </div>
-            </>
-          )
+              </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         ) : null}
       </div>
     </div>

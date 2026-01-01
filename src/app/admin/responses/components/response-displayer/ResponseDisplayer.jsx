@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, ClockPlusIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClockPlusIcon, FileXCorner } from "lucide-react";
 
 import { useResponseQuery } from "@/lib/hooks/useResponse";
 import { ResponseListItem, ResponseListSkeleton } from "./components/ResponseDisplayerComponents";
@@ -60,13 +60,21 @@ export default function ResponseDisplayer({ response }) {
   const arrowSide = activeView === "responses" ? baseArrowSide : baseArrowSide === "left" ? "right" : "left";
   const ArrowIcon = arrowSide === "left" ? ArrowLeft : ArrowRight;
 
+  const renderEmptyState = (title, description) => (
+    <div className="flex min-h-[35vh] items-center justify-center px-6 text-center shadow-sm">
+      <div className="flex max-w-sm flex-col items-center gap-3">
+        <FileXCorner className="h-8 w-8 text-neutral-200 drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)]" />
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-semibold text-neutral-100">{title}</p>
+          {description && <p className="text-xs text-neutral-400">{description}</p>}
+        </div>
+      </div>
+    </div>
+  );
+
   const renderSchemaList = (items) => {
     if (!items || items.length === 0) {
-      return (
-        <div className="flex min-h-[35vh] items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 text-sm text-neutral-400">
-          Bu yanitta gosterilecek soru yok.
-        </div>
-      );
+      return renderEmptyState("Bu yanitta gosterilecek soru yok.", "Yanit bos olabilir.");
     }
 
     return (
@@ -96,24 +104,14 @@ export default function ResponseDisplayer({ response }) {
   if (isLinkedLoading) {
     linkedContent = <ResponseListSkeleton />;
   } else if (linkedError) {
-    linkedContent = (
-      <div className="flex min-h-[35vh] items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 text-sm text-neutral-400">
-        Bagli yanit yuklenemedi.
-      </div>
-    );
+    linkedContent = renderEmptyState("Bağlı yanıt yüklenemedi", "Lütfen daha sonra tekrar deneyin.");
   } else if (!linkedResponse) {
-    linkedContent = (
-      <div className="flex min-h-[35vh] items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 text-sm text-neutral-400">
-        Bagli yanit bulunamadi.
-      </div>
-    );
+    linkedContent = renderEmptyState("Bağlı yanıt bulunamadı.", "Yanıta erişilemedi.");
   } else {
     linkedContent = renderSchemaList(linkedSchema);
   }
 
-  const answeredCount = activeView === "linked"
-    ? (isLinkedLoading || linkedError || !linkedResponse ? "--" : countAnswered(linkedSchema))
-    : countAnswered(schema);
+  const answeredCount = activeView === "linked" ? (isLinkedLoading || linkedError || !linkedResponse ? "--" : countAnswered(linkedSchema)) : countAnswered(schema);
   const activeId = activeView === "linked" ? (linkedResponse?.id ?? linkedResponseId) : response?.id;
   const activeResponse = activeView === "linked" ? linkedResponse : response;
   const actionsLoading = activeView === "linked" && isLinkedLoading;

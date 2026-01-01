@@ -2,7 +2,7 @@
 
 import { FormResponseStatus } from "./form-displayer/components/FormResponseStatus";
 import { AnimatePresence, motion } from "framer-motion";
-import { FilePenLine, FileCheckIcon, FileClock, FileLock2, Loader2, Shredder, FileQuestionMark } from "lucide-react";
+import { FilePenLine, FileCheckIcon, FileClock, FileLock2, Loader2, Shredder, FileSearchCorner, FileXCorner } from "lucide-react";
 
 const FORM_ACCESS_STATUS = {
   AVAILABLE: 0,
@@ -47,7 +47,7 @@ const stateConfigs = {
         description: "Devam etmek için önceki formu doldurmanız gerekiyor.",
     },
     notFound: {
-        icon: Shredder,
+        icon: FileSearchCorner,
         title: "Form bulunamadı",
         description: "Form silinmiş olabilir, hiç oluşturulmamış olabilir ya da adres hatalı olabilir.",
     },
@@ -62,9 +62,27 @@ const stateConfigs = {
         description: "Bu formu görüntüleme yetkiniz bulunmuyor.",
     },
     genericError: {
-        icon: FileQuestionMark,
+        icon: FileXCorner,
         title: "Bir hata oluştu",
         description: "Form verileri alınırken beklenmedik bir hata oluştu.",
+    },
+};
+
+const responseStateConfigs = {
+    notFound: {
+        icon: FileSearchCorner,
+        title: "Yanıt bulunamadı",
+        description: "Yanıt silinmiş olabilir, hiç oluşturulmamış olabilir ya da adres hatalı olabilir.",
+    },
+    notAuthorized: {
+        icon: FileLock2,
+        title: "Yetkisiz erişim",
+        description: "Bu yanıtı görüntüleme yetkiniz bulunmuyor.",
+    },
+    genericError: {
+        icon: FileXCorner,
+        title: "Bir hata oluştu",
+        description: "Yanıt verileri alınırken beklenmedik bir hata oluştu.",
     },
 };
 
@@ -74,8 +92,9 @@ const cardVariants = {
     exit: { opacity: 0, y: -26, scale: 0.98, transition: { duration: 0.28, ease: [0.4, 0, 0.2, 1] } },
 };
 
-export function StateCard({ state, message, step, status }) {
-    const config = stateConfigs[state];
+export function StateCard({ state, message, step, status, variant = "form" }) {
+    const configSet = variant === "response" ? responseStateConfigs : stateConfigs;
+    const config = configSet[state];
     
     if (!config) return null;
 
@@ -109,13 +128,24 @@ export function StateCard({ state, message, step, status }) {
     );
 }
 
-export function FormStatusHandler({ isLoading, error, data, renderForm }) {
+export function FormStatusHandler({ isLoading, error, data, renderForm, variant = "form" }) {
     const step = data?.data?.step ?? 0;
     
     const getUiState = () => {
         if (isLoading) return "loading";
         if (error) {
             const accessStatus = error.body?.status;
+
+            if (variant === "response") {
+                switch (accessStatus) {
+                    case FORM_ACCESS_STATUS.NOT_FOUND:
+                        return "notFound";
+                    case FORM_ACCESS_STATUS.NOT_AUTHORIZED:
+                        return "notAuthorized";
+                    default:
+                        return "genericError";
+                }
+            }
 
             switch (accessStatus) {
                 case FORM_ACCESS_STATUS.NOT_FOUND:
@@ -158,7 +188,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm }) {
 
     return (
         <AnimatePresence mode="wait">
-            <StateCard key={uiState} state={uiState} step={step} status={status} />
+            <StateCard key={uiState} state={uiState} step={step} status={status} variant={variant} />
         </AnimatePresence>
     );
 }
