@@ -30,7 +30,7 @@ export default function ResponsePage() {
 
           <div className="col-span-12 lg:col-span-4">
             <div className="h-[93vh] bg-neutral-900/40 p-4 shadow-sm">
-              <ResponseActions />
+              <ResponseActions isLoading />
             </div>
           </div>
         </div>
