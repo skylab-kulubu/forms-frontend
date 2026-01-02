@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { CornerDownRight, Eye, PencilLine, Repeat2, UserX, ChartColumn } from "lucide-react";
+import { CheckCircle2, Clock, CornerDownRight, Eye, PencilLine, Repeat2, UserX, ChartColumn, XCircle } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
+import { useResponseStatusMutation } from "@/lib/hooks/useResponse";
 
 const ROLE_STYLES = {
   3: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
@@ -75,6 +76,146 @@ export function ListItemSkeleton({ count = 4, className = "" }) {
   );
 }
 
+const RESPONSE_STATUS_STYLES = {
+  0: "hidden",
+  1: "border-amber-500/30 bg-amber-500/10 text-amber-200",
+  2: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
+  3: "border-red-500/30 bg-red-500/10 text-red-200",
+  default: "hidden",
+};
+
+const RESPONSE_STATUS_LABELS = {
+  0: "Durum Yok",
+  1: "Beklemede",
+  2: "Onaylandı",
+  3: "Reddedildi",
+  default: "Durum Yok",
+};
+
+function ResponseStatusBadge({ status }) {
+  const label = RESPONSE_STATUS_LABELS[status] ?? RESPONSE_STATUS_LABELS.default;
+  const style = RESPONSE_STATUS_STYLES[status] ?? RESPONSE_STATUS_STYLES.default;
+
+  return (
+    <span className={`rounded-md border px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] ${style}`}>
+      {label}
+    </span>
+  );
+}
+
+const formatDate = (value) => {
+  if (!value) return "--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--";
+  return date.toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+};
+
+export function ResponseListItemSkeleton({ count = 4, className = "" }) {
+  const items = Array.from({ length: count });
+
+  return (
+    <div className={`space-y-1.5 ${className}`}>
+      {items.map((_, index) => (
+        <div key={index} className="w-full rounded-xl border border-black/40 bg-black/15 px-4 py-2 shadow-sm backdrop-blur sm:px-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1 sm:flex-[0.65]">
+              <div className="flex items-center gap-3">
+                <SkeletonBlock className="h-10 w-10 rounded-lg" />
+                <div className="min-w-0">
+                  <SkeletonBlock className="h-3.5 w-24 rounded-md" />
+                  <SkeletonBlock className="mt-2 h-3 w-32 rounded-md" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex w-full justify-center sm:w-auto sm:flex-[1.35] sm:justify-start">
+              <div className="w-full max-w-md rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2">
+                <div className="flex items-center justify-between gap-3">
+                  <SkeletonBlock className="h-3.5 w-36 rounded-md" />
+                  <SkeletonBlock className="h-3 w-16 rounded-md" />
+                </div>
+                <SkeletonBlock className="mt-2 h-3 w-24 rounded-md" />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
+              <SkeletonBlock className="h-8 w-8 rounded-md" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function ResponseListItem({ response, className = "" }) {
+  if (!response) return null;
+
+  const statusValue = Number(response.status ?? 0);
+  const userName = response.fullName || "--";
+  const userId = response.userId || "--";
+  const photoUrl = response.photoUrl || null;
+  const reviewedBy = response.reviewedBy || null;
+  const reviewerName = reviewedBy?.name || "--";
+  const submittedAt = formatDate(response.submittedAt);
+
+  return (
+    <div className={`w-full rounded-xl border border-black/40 bg-black/15 px-4 py-2 shadow-sm backdrop-blur sm:px-4 ${className}`}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="min-w-0 flex-1 sm:flex-[0.65]">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg border border-white/10 bg-neutral-900/60 text-[10px] font-semibold uppercase text-neutral-400 grid place-items-center overflow-hidden">
+              {photoUrl ? (
+                <img src={photoUrl} alt={userName} className="h-full w-full object-cover" />
+              ) : (
+                <span>--</span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-neutral-100 truncate">{userName || "--"}</p>
+              <p className="text-[10px] text-neutral-500 truncate">{userId}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex w-full justify-center sm:w-auto sm:flex-[1.35] sm:justify-start">
+          <div className="w-full max-w-md rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-neutral-100 truncate">ID: {response.id || "--"}</p>
+              </div>
+              <ResponseStatusBadge status={statusValue} />
+            </div>
+            {(statusValue === 2 || statusValue === 3) ? (
+              <p className="text-[10px] text-neutral-400">
+                {reviewerName} tarafından incelendi.
+              </p>
+            ) : statusValue === 0 ? (
+              <p className="text-[10px] text-neutral-400">
+                Onay aşaması bulunmamakta.
+              </p>
+            ) : (
+              <p className="text-[10px] text-neutral-400">
+                Bu cevap henüz incelenmedi.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
+          <div className="flex flex-wrap items-center gap-2 text-[10px] text-neutral-500">
+            <span className="inline-flex items-center gap-1">
+              <Clock size={12} />
+              {submittedAt}
+            </span>
+          </div>
+          <ActionButton href={`/admin/responses/${response.id}`} icon={Eye} label="Görüntüle" />
+        </div>
+      </div>
+    </div >
+  );
+}
+
 export default function ListItem({ form, linkedForm, viewHref, editHref, onViewResponses, onEdit, className = "" }) {
   if (!form) return null;
 
@@ -128,8 +269,8 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
           </div>
 
           <div className="flex items-center gap-2">
-            <ActionButton href={viewHref} onClick={onViewResponses} icon={Eye}label={responsesLabel}/>
-            <ActionButton href={editHref} onClick={onEdit} icon={PencilLine} label="Edit form" variant="primary"/>
+            <ActionButton href={viewHref} onClick={onViewResponses} icon={Eye} label={responsesLabel} />
+            <ActionButton href={editHref} onClick={onEdit} icon={PencilLine} label="Edit form" variant="primary" />
           </div>
         </div>
       </div>

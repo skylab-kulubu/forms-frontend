@@ -71,7 +71,7 @@ export default function FormsPage() {
             const linkedForm = form?.linkedFormId ? formsById.get(form.linkedFormId) : null;
             return (
               <ListItem key={form.id} form={form} linkedForm={linkedForm}
-                viewHref={`/admin/forms/${form.id}?tab=responses`} editHref={`/admin/forms/${form.id}`}
+                viewHref={`/admin/responses/list/${form.id}`} editHref={`/admin/forms/${form.id}`}
               />
             );
           })}
