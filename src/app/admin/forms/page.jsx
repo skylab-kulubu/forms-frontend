@@ -1,18 +1,56 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { FormsHeader } from "../components/Headers";
 import ListItem, { ListItemSkeleton } from "../components/ListItem";
+import Pagination from "../components/utils/Pagination";
 import { useUserFormsQuery } from "@/lib/hooks/useFormAdmin";
 
 export default function FormsPage() {
   const router = useRouter();
-  const { data: formsData, isLoading, error, refetch } = useUserFormsQuery();
   const [searchValue, setSearchValue] = useState("");
-  const [sortValue, setSortValue] = useState("recent");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sortValue, setSortValue] = useState("desc");
+  const [roleValue, setRoleValue] = useState("all");
+  const [allowAnonymous, setAllowAnonymous] = useState(null);
+  const [allowMultiple, setAllowMultiple] = useState(null);
+  const [hasLinkedForm, setHasLinkedForm] = useState(null);
+  const [page, setPage] = useState(1);
 
-  const forms = Array.isArray(formsData) ? formsData : [];
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedSearch(searchValue.trim());
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [searchValue]);
+
+  useEffect(() => {
+    setPage((prev) => (prev === 1 ? prev : 1));
+  }, [debouncedSearch, sortValue, roleValue, allowAnonymous, allowMultiple, hasLinkedForm]);
+
+  const roleParam = useMemo(() => {
+    if (roleValue === "viewer") return 1;
+    if (roleValue === "editor") return 2;
+    if (roleValue === "owner") return 3;
+    return null;
+  }, [roleValue]);
+
+  const sortDirection = sortValue === "asc" ? "ascending" : "descending";
+
+  const { data: formsData, isLoading, error, refetch } = useUserFormsQuery({
+    page,
+    search: debouncedSearch || undefined,
+    role: roleParam,
+    allowAnonymous,
+    allowMultiple,
+    hasLinkedForm,
+    sortDirection,
+  });
+
+  const formsMeta = formsData?.data ?? {};
+  const forms = Array.isArray(formsMeta.items) ? formsMeta.items : Array.isArray(formsData) ? formsData : [];
 
   const formsById = useMemo(() => {
     const map = new Map();
@@ -22,61 +60,74 @@ export default function FormsPage() {
     return map;
   }, [forms]);
 
-  const filteredForms = useMemo(() => {
-    const query = searchValue.trim().toLowerCase();
-    let next = forms;
-
-    if (query) {
-      next = next.filter((form) => {
-        const title = form?.title?.toLowerCase() ?? "";
-        const id = form?.id?.toLowerCase() ?? "";
-        return title.includes(query) || id.includes(query);
-      });
-    }
-
-    const sorted = [...next];
-    switch (sortValue) {
-      case "responses":
-        sorted.sort((a, b) => (b.responseCount ?? 0) - (a.responseCount ?? 0));
-        break;
-      case "alphabetic":
-        sorted.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
-        break;
-      default:
-        sorted.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
-        break;
-    }
-
-    return sorted;
-  }, [forms, searchValue, sortValue]);
-
+  const totalCount = formsMeta.totalCount ?? forms.length;
   const hasError = Boolean(error);
+  const contentKey = `${sortValue}-${roleValue}-${allowAnonymous}-${allowMultiple}-${hasLinkedForm}-${debouncedSearch}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
 
   return (
-    <div className="p-6 space-y-6">
-      <FormsHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={setSortValue} onRefresh={() => refetch()} onCreate={() => router.push("/admin/forms/new-form")} stats={{ count: forms.length }} />
-      {isLoading ? (
-        <ListItemSkeleton count={3} />
-      ) : hasError ? (
-        <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
-          Forms could not be loaded.
-        </div>
-      ) : filteredForms.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
-          No forms found.
-        </div>
-      ) : (
-        <div className="space-y-1.5">
-          {filteredForms.map((form) => {
-            const linkedForm = form?.linkedFormId ? formsById.get(form.linkedFormId) : null;
-            return (
-              <ListItem key={form.id} form={form} linkedForm={linkedForm}
-                viewHref={`/admin/responses/list/${form.id}`} editHref={`/admin/forms/${form.id}`}
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-6">
+      <FormsHeader
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        sortValue={sortValue}
+        onSortChange={setSortValue}
+        roleValue={roleValue}
+        onRoleChange={setRoleValue}
+        allowAnonymous={allowAnonymous}
+        onAllowAnonymousChange={setAllowAnonymous}
+        allowMultiple={allowMultiple}
+        onAllowMultipleChange={setAllowMultiple}
+        hasLinkedForm={hasLinkedForm}
+        onHasLinkedFormChange={setHasLinkedForm}
+        onRefresh={() => refetch()}
+        onCreate={() => router.push("/admin/forms/new-form")}
+        stats={{ count: totalCount }}
+      />
+
+      <AnimatePresence mode="wait">
+        <motion.div key={contentKey} className="flex min-h-0 flex-1 flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {isLoading ? (
+            <ListItemSkeleton count={3} />
+          ) : hasError ? (
+            <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
+              Forms could not be loaded.
+            </div>
+          ) : forms.length === 0 ? (
+            <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
+              No forms found.
+            </div>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="flex-1 overflow-y-auto pr-1 scrollbar">
+                <div className="space-y-1.5">
+                  {forms.map((form) => {
+                    const linkedForm = form?.linkedFormId ? formsById.get(form.linkedFormId) : null;
+                    return (
+                      <ListItem key={form.id} form={form} linkedForm={linkedForm}
+                        viewHref={`/admin/responses/list/${form.id}`} editHref={`/admin/forms/${form.id}`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+              <Pagination
+                current={formsMeta.page ?? page}
+                totalPages={formsMeta.totalPages ?? 1}
+                totalCount={totalCount}
+                pageSize={formsMeta.pageSize ?? forms.length}
+                entriesLength={forms.length}
+                docked
+                onPageChange={setPage}
               />
-            );
-          })}
-        </div>
-      )}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

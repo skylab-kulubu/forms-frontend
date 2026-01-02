@@ -14,9 +14,27 @@ const upsertForm = async (payload) => {
   });
 };
 
-const fetchUserForms = async () => {
-  const response = await request("/api/admin/forms");
-  return response?.data ?? [];
+const fetchUserForms = async ({
+  page = 1,
+  pageSize,
+  search,
+  role,
+  allowAnonymous,
+  allowMultiple,
+  hasLinkedForm,
+  sortDirection,
+} = {}) => {
+  const params = new URLSearchParams();
+  if (page !== undefined && page !== null) params.set("Page", page);
+  if (pageSize !== undefined && pageSize !== null) params.set("PageSize", pageSize);
+  if (search) params.set("Search", search);
+  if (role !== undefined && role !== null) params.set("Role", role);
+  if (allowAnonymous !== undefined && allowAnonymous !== null) params.set("AllowAnonymous", allowAnonymous);
+  if (allowMultiple !== undefined && allowMultiple !== null) params.set("AllowMultiple", allowMultiple);
+  if (hasLinkedForm !== undefined && hasLinkedForm !== null) params.set("HasLinkedForm", hasLinkedForm);
+  if (sortDirection) params.set("SortDirection", sortDirection);
+  const query = params.toString();
+  return request(`/api/admin/forms${query ? `?${query}` : ""}`);
 };
 
 const fetchLinkableUserForms = async (formId) => {
@@ -30,12 +48,25 @@ const deleteForm = async (formId) => {
   });
 };
 
-export const useUserFormsQuery = () =>
-  useQuery({
-    queryKey: ["user-forms"],
-    queryFn: fetchUserForms,
-    retry: false,
+export const useUserFormsQuery = (options = {}) => {
+  const {
+    page = 1,
+    pageSize,
+    search,
+    role,
+    allowAnonymous,
+    allowMultiple,
+    hasLinkedForm,
+    sortDirection,
+    ...queryOptions
+  } = options;
+  return useQuery({
+    queryKey: ["user-forms", page, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, sortDirection],
+    queryFn: () => fetchUserForms({ page, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, sortDirection }),
+    retry: queryOptions.retry ?? false,
+    ...queryOptions,
   });
+};
 
 export const useFormQuery = (formId) =>
   useQuery({

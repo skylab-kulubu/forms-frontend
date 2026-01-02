@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, CheckCircle2, Clock, SlidersHorizontal, User, UserX, Users, XCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, CornerDownRight, Crown, Eye, PencilLine, Repeat2, UserX, Users } from "lucide-react";
 
 function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   const count = Math.max(options.length, 1);
@@ -35,6 +35,21 @@ function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   );
 }
 
+function TriStateIconButton({ value, onChange, icon: Icon, label }) {
+  const nextValue = value === null ? true : value === true ? false : null;
+  const stateClass = value === true ? "border-indigo-400/40 bg-indigo-500/15 text-indigo-100"
+    : value === false ? "border-red-400/40 bg-red-500/15 text-red-100"
+    : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-indigo-300";
+
+  return (
+    <button type="button" onClick={() => onChange?.(nextValue)} aria-label={label} title={label}
+      className={`flex h-7 flex-1 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 ${stateClass}`}
+    >
+      <Icon className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
+
 const panelVariants = {
   hidden: { opacity: 0, y: -8, scale: 0.98 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
@@ -51,7 +66,9 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, height: "auto", transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] } },
 };
 
-export default function ResponsesFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, className = "" }) {
+export default function FormsFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange,
+  allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, className = ""
+}) {
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -78,52 +95,50 @@ export default function ResponsesFilterShell({ open, anchorRef, onClose, sortVal
     { value: "asc", label: "Artan", icon: ArrowUp },
   ];
 
-  const statusOptions = [
-    { value: "all", label: "Hepsi", icon: SlidersHorizontal },
-    { value: "pending", label: "Beklemede", icon: Clock },
-    { value: "approved", label: "Onayli", icon: CheckCircle2 },
-    { value: "rejected", label: "Reddedilen", icon: XCircle },
-  ];
-
-  const respondentOptions = [
+  const roleOptions = [
     { value: "all", label: "Hepsi", icon: Users },
-    { value: "anonymous", label: "Anonim", icon: UserX },
-    { value: "registered", label: "Kayitli", icon: User },
+    { value: "viewer", label: "Okuyucu", icon: Eye },
+    { value: "editor", label: "Editor", icon: PencilLine },
+    { value: "owner", label: "Sahip", icon: Crown },
   ];
 
   return (
     <AnimatePresence>
       {open ? (
-        <motion.div ref={panelRef} role="dialog" aria-label="Responses filters" layout
+        <motion.div ref={panelRef} role="dialog" aria-label="Forms filters" layout
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
           transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute left-1/2 top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute left-1/2 top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] -translate-x-1/2 rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
-          <motion.div variants={contentVariants} className="flex flex-col text-center p-4">
+          <motion.div variants={contentVariants} className="flex flex-col p-4 text-center">
             <motion.div variants={itemVariants} className="overflow-hidden">
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
                   Tarih Sıralaması
                 </p>
-                <SegmentedControl options={sortOptions} value={sortValue} onChange={onSortChange} ariaLabel="Tarih Sıralaması" />
+                <SegmentedControl options={sortOptions} value={sortValue} onChange={onSortChange} ariaLabel="Siralama" />
               </div>
             </motion.div>
 
             <motion.div variants={itemVariants} className="overflow-hidden">
               <div className="space-y-2 pt-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
-                  Cevap Durumu
+                  Form Yetkisi
                 </p>
-                <SegmentedControl options={statusOptions} value={statusValue} onChange={onStatusChange} ariaLabel="Cevap Durumu" />
+                <SegmentedControl options={roleOptions} value={roleValue} onChange={onRoleChange} ariaLabel="Rol" />
               </div>
             </motion.div>
 
             <motion.div variants={itemVariants} className="overflow-hidden">
               <div className="space-y-2 pt-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
-                  Anonimlik Durumu
+                  Form Özellikleri
                 </p>
-                <SegmentedControl options={respondentOptions} value={respondentValue} onChange={onRespondentChange} ariaLabel="Anonimlik Durumu" />
+                <div className="flex items-center gap-2">
+                  <TriStateIconButton value={allowAnonymous} onChange={onAllowAnonymousChange} icon={UserX} label="Anonim cevap" />
+                  <TriStateIconButton value={allowMultiple} onChange={onAllowMultipleChange} icon={Repeat2} label="Coklu cevap" />
+                  <TriStateIconButton value={hasLinkedForm} onChange={onHasLinkedFormChange} icon={CornerDownRight} label="Bagli form" />
+                </div>
               </div>
             </motion.div>
           </motion.div>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
+import FormsFilterShell from "./utils/FormsFilterShell";
 
 const fadeIn = {
   initial: { opacity: 0, y: -8 },
@@ -27,23 +28,16 @@ function HeaderShell({ title, description, children }) {
   );
 }
 
-export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "recent", onSortChange, onRefresh, onCreate, stats = { count: 0 } }) {
-  const sortOptions = [
-    { value: "recent", label: "Son düzenlenen" },
-    { value: "responses", label: "En çok yanıt" },
-    { value: "alphabetic", label: "Alfabetik" },
-  ];
-
-  const currentSort = sortOptions.find((item) => item.value === sortValue) ?? sortOptions[0];
-
-  const cycleSort = () => {
-    const index = sortOptions.findIndex((item) => item.value === currentSort.value);
-    const next = sortOptions[(index + 1) % sortOptions.length];
-    onSortChange?.(next.value);
-  };
+export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange, allowAnonymous = null, 
+  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, onRefresh, onCreate, stats = { count: 0 }
+}) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterButtonRef = useRef(null);
+  const activeFilters = [ sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, hasLinkedForm !== null ].filter(Boolean).length;
+  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
 
   return (
-    <HeaderShell title="Formlar" description="Formlarını ara, sırala ve hızlıca cevaplara göz at">
+    <HeaderShell title="Formlar" description="Formlari ara, sirala ve hizlica cevaplara goz at">
       <div className="flex flex-wrap items-center gap-3 w-full md:flex-nowrap">
         <div className="relative flex-1 min-w-[220px] md:min-w-[280px] max-w-md">
           <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-500" />
@@ -53,9 +47,17 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "rec
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <ActionButton icon={SlidersHorizontal} onClick={cycleSort} size="md" tone="header"
-            title={`Sırala: ${currentSort.label}`} aria-label={`Sırala: ${currentSort.label}`}
-          />
+          <div ref={filterButtonRef} className="relative">
+            <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size="md" tone="header"
+              variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
+            />
+            <FormsFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)}
+              sortValue={sortValue} onSortChange={onSortChange} roleValue={roleValue} onRoleChange={onRoleChange}
+              allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
+              allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
+              hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={onHasLinkedFormChange}
+            />
+          </div>
           <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header"
             title="Yenile" aria-label="Yenile"
           />
@@ -67,7 +69,7 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "rec
         <div className="flex flex-wrap items-center gap-3 -mt-2.5 text-center shrink-0 md:ml-auto">
           <div className="text-[12px] text-neutral-500">
             <div className="px-3 py-2 text-[11px] text-neutral-400">
-              <p className="text-[10px] uppercase tracking-wide text-neutral-500">Erişilebilen form</p>
+              <p className="text-[10px] uppercase tracking-wide text-neutral-500">Erişilebilir Form</p>
               <p className="text-sm font-semibold text-neutral-100">{stats.count ?? "--"}</p>
             </div>
           </div>
