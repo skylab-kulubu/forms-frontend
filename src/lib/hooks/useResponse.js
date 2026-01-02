@@ -5,8 +5,14 @@ const fetchResponseById = async (responseId) => {
   return request(`/api/admin/forms/responses/${responseId}`);
 };
 
-const fetchFormResponses = async (formId) => {
-  return request(`/api/admin/forms/${formId}/responses`);
+const fetchFormResponses = async (formId, { page = 1, status, responderType, sortingDirection } = {}) => {
+  const params = new URLSearchParams();
+  if (page !== undefined && page !== null) params.set("Page", page);
+  if (status !== undefined && status !== null) params.set("Status", status);
+  if (responderType !== undefined && responderType !== null) params.set("ResponderType", responderType);
+  if (sortingDirection) params.set("SortingDirection", sortingDirection);
+  const query = params.toString();
+  return request(`/api/admin/forms/${formId}/responses${query ? `?${query}` : ""}`);
 };
 
 const patchResponseStatus = async ({ responseId, newStatus, note }) => {
@@ -30,14 +36,16 @@ export const useResponseQuery = (responseId, options = {}) =>
     ...options,
   });
 
-export const useFormResponsesQuery = (formId, options = {}) =>
-  useQuery({
-    queryKey: ["form-responses", formId],
-    queryFn: () => fetchFormResponses(formId),
-    enabled: options.enabled ?? !!formId,
-    retry: options.retry ?? false,
-    ...options,
+export const useFormResponsesQuery = (formId, options = {}) => {
+  const { page = 1, status, responderType, sortingDirection, ...queryOptions } = options;
+  return useQuery({
+    queryKey: ["form-responses", formId, page, status, responderType, sortingDirection],
+    queryFn: () => fetchFormResponses(formId, { page, status, responderType, sortingDirection }),
+    enabled: queryOptions.enabled ?? !!formId,
+    retry: queryOptions.retry ?? false,
+    ...queryOptions,
   });
+};
 
 export const useResponseStatusMutation = () => {
   const queryClient = useQueryClient();

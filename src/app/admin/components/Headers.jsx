@@ -1,8 +1,10 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
+import ResponsesFilterShell from "./utils/ResponsesFilterShell";
 
 const fadeIn = {
   initial: { opacity: 0, y: -8 },
@@ -75,22 +77,13 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "rec
   );
 }
 
-export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, filterValue = "all", onFilterChange, onRefresh, stats = { averageTime: "--", responseCount: 0, pendingCount: 0 } }) {
-  const filterOptions = [
-    { value: "all", label: "Tüm Cevaplar" },
-    { value: "none", label: "Durum Yok" },
-    { value: "pending", label: "Beklemede" },
-    { value: "approved", label: "Onaylandı" },
-    { value: "rejected", label: "Reddedildi" },
-  ];
-
-  const currentFilter = filterOptions.find((item) => item.value === filterValue) ?? filterOptions[0];
-
-  const cycleFilter = () => {
-    const index = filterOptions.findIndex((item) => item.value === currentFilter.value);
-    const next = filterOptions[(index + 1) % filterOptions.length];
-    onFilterChange?.(next.value);
-  };
+export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc",
+  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, stats = { averageTime: "--", responseCount: 0, pendingCount: 0 },
+}) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterButtonRef = useRef(null);
+  const activeFilters = [ sortValue !== "desc", statusValue !== "all", respondentValue !== "all" ].filter(Boolean).length;
+  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
 
   return (
     <HeaderShell title={formTitle || "--"} description={`ID: ${formId || "--"}`}>
@@ -103,9 +96,15 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <ActionButton icon={SlidersHorizontal} onClick={cycleFilter} size="md" tone="header"
-            title={`Filtre: ${currentFilter.label}`} aria-label={`Filtre: ${currentFilter.label}`}
-          />
+          <div ref={filterButtonRef} className="relative">
+            <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size="md" tone="header"
+              variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
+            />
+            <ResponsesFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)}
+              sortValue={sortValue} onSortChange={onSortChange} statusValue={statusValue} onStatusChange={onStatusChange}
+              respondentValue={respondentValue} onRespondentChange={onRespondentChange}
+            />
+          </div>
           <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header"
             title="Yenile" aria-label="Yenile"
           />
