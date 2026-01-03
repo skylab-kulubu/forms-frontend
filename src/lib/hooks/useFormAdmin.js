@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { request } from "../apiClient";
 
-const BASE_URL = "http://localhost:5000";
-
 const fetchFormById = async (formId) => {
   return request(`/api/admin/forms/${formId}`);
 };
@@ -14,16 +12,7 @@ const upsertForm = async (payload) => {
   });
 };
 
-const fetchUserForms = async ({
-  page = 1,
-  pageSize,
-  search,
-  role,
-  allowAnonymous,
-  allowMultiple,
-  hasLinkedForm,
-  sortDirection,
-} = {}) => {
+const fetchUserForms = async ({ page = 1, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, sortDirection } = {}) => {
   const params = new URLSearchParams();
   if (page !== undefined && page !== null) params.set("Page", page);
   if (pageSize !== undefined && pageSize !== null) params.set("PageSize", pageSize);
@@ -49,17 +38,7 @@ const deleteForm = async (formId) => {
 };
 
 export const useUserFormsQuery = (options = {}) => {
-  const {
-    page = 1,
-    pageSize,
-    search,
-    role,
-    allowAnonymous,
-    allowMultiple,
-    hasLinkedForm,
-    sortDirection,
-    ...queryOptions
-  } = options;
+  const { page = 1, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, sortDirection, ...queryOptions } = options;
   return useQuery({
     queryKey: ["user-forms", page, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, sortDirection],
     queryFn: () => fetchUserForms({ page, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, sortDirection }),
