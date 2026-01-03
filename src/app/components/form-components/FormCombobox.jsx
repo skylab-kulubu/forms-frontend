@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronsUpDown, Plus, Search, X } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { ChevronsUpDown, Plus, X } from "lucide-react";
 import { FieldShell } from "./FieldShell";
 import { useProp } from "@/app/admin/components/form-editor/components/useProp";
+import SearchPicker from "@/app/components/utils/SearchPicker";
 
 function normalizeOptions(choices) {
   return (choices ?? []).map((choice, idx) => {
@@ -127,10 +129,10 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const triggerRef = useRef(null);
-  const popoverRef = useRef(null);
 
   const normalized = useMemo(() => normalizeOptions(choices), [choices]);
   const currentValue = value !== undefined ? (value ?? "") : internalValue;
+
   const selectedLabel = useMemo(() => {
     const found = normalized.find((o) => o.id === currentValue || o.label === currentValue);
     return found?.label ?? (currentValue || "");
@@ -148,7 +150,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
     const onDoc = (e) => {
       if (!open) return;
       const t = e.target;
-      if (popoverRef.current && !popoverRef.current.contains(t) && triggerRef.current && !triggerRef.current.contains(t)) {
+      if (triggerRef.current && !triggerRef.current.contains(t)) {
         setOpen(false);
       }
     };
@@ -156,16 +158,26 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const filtered = useMemo(() => {
+  const pickerItems = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return normalized;
-    return normalized.filter((o) => o.label.toLowerCase().includes(q));
-  }, [normalized, query]);
+    let items = q ? normalized.filter((o) => o.label.toLowerCase().includes(q)) : [...normalized];
+    const exactMatch = normalized.some((o) => o.label.toLowerCase() === q);
+    if (allowCustom && q && !exactMatch) {
+      items.push({
+        id: `__custom__${q}`,
+        label: q,
+        isCustomAction: true
+      });
+    }
+    return items;
+  }, [normalized, query, allowCustom]);
 
-  const canCreate = allowCustom && query.trim().length > 0 && !normalized.some((o) => o.label.toLowerCase() === query.trim().toLowerCase());
-
-  const choose = (idOrLabel) => {
-    commit(idOrLabel);
+  const handleSelect = (item) => {
+    if (item.isCustomAction) {
+      commit(item.label);
+    } else {
+      commit(item.id);
+    }
     setOpen(false);
     setQuery("");
   };
@@ -186,7 +198,6 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
               {questionNumber}
             </div>
           )}
-
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
               {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
@@ -210,63 +221,38 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
             )}
           </button>
 
-          {open && (
-            <div ref={popoverRef} role="dialog" aria-label="Seçim kutusu"
-              className="absolute z-20 mt-2 w-full rounded-xl border border-white/10 bg-neutral-900/40 p-2.5 text-neutral-100 shadow-lg backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30"
-            >
-              <div className="relative">
-                <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400">
-                  <Search size={14} />
-                </span>
-                <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ara..."
-                  className="w-full rounded-md border border-white/10 bg-white/5 pl-7 pr-2 py-1.5 text-sm text-neutral-100 outline-none placeholder-neutral-500 focus:border-white/20"
-                />
-              </div>
-
-              <div className="mt-2 max-h-56 overflow-auto rounded-md border border-white/10 bg-white/5">
-                {filtered.length === 0 && !canCreate && (
-                  <div className="px-2 py-2 text-[12px] text-neutral-400">Eşleşme bulunamadı.</div>
-                )}
-
-                {filtered.map((o) => {
-                  const active = currentValue === o.id || currentValue === o.label;
+          <AnimatePresence>
+            {open && (
+              <SearchPicker items={pickerItems} itemsPerPage={5} activeItemId={currentValue}
+                getItemId={(item) => item.id} onSelect={handleSelect} searchValue={query} onSearchChange={setQuery}
+                autoFocus={true} className="w-full" showClear={!!currentValue} onClear={() => { clear(); setOpen(false); }}
+                renderItem={(item, { active, onSelect }) => {
+                  if (item.isCustomAction) {
+                    return (
+                      <button type="button" onClick={onSelect}
+                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-indigo-200/80"}`}
+                      >
+                        <Plus size={14} className="opacity-70" />
+                        <span>
+                          Yeni oluştur: <span className="font-semibold">"{item.label}"</span>
+                        </span>
+                      </button>
+                    );
+                  }
                   return (
-                    <button key={o.id} type="button" onClick={() => choose(o.id)}
-                      className={`block w-full text-left px-2 py-1.5 text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
+                    <button type="button" onClick={onSelect}
+                      className={`block w-full text-left px-3 py-2 text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
                     >
-                      {o.label}
+                      {item.label}
                     </button>
                   );
-                })}
-
-                {canCreate && (
-                  <button type="button" onClick={() => choose(query.trim())}
-                    className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm text-neutral-200 transition hover:bg-white/10"
-                  >
-                    <Plus size={14} className="text-neutral-400" />
-                    <span>
-                      Yeni oluştur: <span className="text-neutral-100">"{query.trim()}"</span>
-                    </span>
-                  </button>
-                )}
-              </div>
-
-              <div className="mt-2 flex items-center justify-between">
-                <button type="button" onClick={() => { setOpen(false); setQuery(""); }} className="text-[11px] text-neutral-400 hover:text-neutral-200">
-                  Kapat
-                </button>
-                {currentValue && (
-                  <button type="button" onClick={clear} className="text-[11px] text-neutral-400 hover:text-neutral-200">
-                    Temizle
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+                }}
+              />
+            )}
+          </AnimatePresence>
         </div>
 
         <input type="hidden" name="combobox" value={currentValue} aria-required={required} />
-
         {required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1">Zorunlu alan</span>}
       </div>
     </div>

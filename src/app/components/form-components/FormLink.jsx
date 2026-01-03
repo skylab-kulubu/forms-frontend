@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Link as LinkIcon, Github, Linkedin, Instagram, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { FieldShell } from "./FieldShell";
 import { useProp } from "@/app/admin/components/form-editor/components/useProp";
 
@@ -25,7 +26,7 @@ function getProviderIcon(input) {
 }
 
 export function CreateFormLink({ questionNumber, props, onPropsChange, readOnly }) {
-  const {prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
+  const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
 
   return (
     <FieldShell number={questionNumber} title="Bağlantı" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
@@ -124,19 +125,19 @@ export function DisplayFormLink({ question, questionNumber, description, require
       <div className="mx-auto w-full max-w-2xl rounded-xl">
         <div className="flex flex-col p-2 md:p-4">
           <div className="flex gap-3">
-          {questionNumber != null && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
-              {questionNumber}
-            </div>
-          )}
+            {questionNumber != null && (
+              <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+                {questionNumber}
+              </div>
+            )}
 
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
-            </p>
-            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            <div className="flex flex-col">
+              <p className="text-sm font-medium text-neutral-100">
+                {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
+              </p>
+              {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            </div>
           </div>
-        </div>
 
           <div className="relative mt-3">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
@@ -199,41 +200,58 @@ export function DisplayFormLink({ question, questionNumber, description, require
   const fields = currentLinks.length === 0 ? [""] : currentLinks;
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl border border-white/10 bg-neutral-900/40 shadow-lg backdrop-blur-sm">
+    <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
-        <div className="flex items-start justify-between">
-          <p className="text-sm font-medium text-neutral-100">
-            {question} {required && <span className="ml-1 text-red-600">*</span>}
-          </p>
+        <div className="flex gap-3">
+          {questionNumber != null && (
+            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+              {questionNumber}
+            </div>
+          )}
+
+          <div className="flex flex-col">
+            <p className="text-sm font-medium text-neutral-100">
+              {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
+            </p>
+            {description && <p className="my-1 text-xs text-neutral-400">{description}</p>}
+          </div>
         </div>
 
-        {description && <p className="text-xs text-neutral-400">{description}</p>}
-
         <div className="mt-3 flex flex-col gap-2">
-          {fields.map((v, index) => {
-            const Icon = getProviderIcon(v);
-            const placeholder = index === fields.length - 1 && v === "" ? "Yeni bağlantı ekleyin" : "https://ornek.com/profil";
-            const isTrailingEmpty = index === fields.length - 1 && v === "";
-            const isMissingField = missing && index === 0 && v === "";
-            return (
-              <div key={`link_${index}`} className="relative flex items-center gap-2">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                  <Icon size={16} />
-                </span>
-                <input name="link[]" type="url" aria-required={required && index === 0}
-                  value={v} onChange={(e) => updateAt(index, e.target.value)} placeholder={placeholder}
-                  className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-white/20 ${isMissingField ? "border-red-500 focus:border-red-500" : "border-white/10 focus:border-white/30"}`}
-                />
-                {!isTrailingEmpty && (
-                  <button type="button" onClick={() => removeAt(index)} aria-label="Linki kaldır"
-                    className="absolute right-2 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1 text-neutral-300 hover:text-neutral-100"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
+          <AnimatePresence initial={false}>
+            {fields.map((v, index) => {
+              const Icon = getProviderIcon(v);
+              const placeholder = index === fields.length - 1 && v === "" ? "Yeni bağlantı ekleyin..." : "https://ornek.com/profil";
+              const isTrailingEmpty = index === fields.length - 1 && v === "";
+              const isMissingField = missing && index === 0 && v === "";
+
+              return (
+                <motion.div key={index} layout className="relative"
+                  initial={{ opacity: 0, height: 0, y: -10 }}
+                  animate={{ opacity: 1, height: "auto", y: 0 }}
+                  exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                    <Icon size={16} />
+                  </span>
+                  
+                  <input name="link[]" type="url" aria-required={required && index === 0}
+                    value={v} onChange={(e) => updateAt(index, e.target.value)} placeholder={placeholder}
+                    className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-white/20 ${isMissingField ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-white/30"}`}
+                  />
+
+                  {!isTrailingEmpty && (
+                    <button type="button" onClick={() => removeAt(index)} aria-label="Linki kaldır"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
           <span className="px-0.5 text-[11px] text-neutral-500">Geçerli bir bağlantı girildiğinde yeni alan açılır</span>
         </div>
 

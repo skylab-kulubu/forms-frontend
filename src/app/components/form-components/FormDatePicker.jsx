@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { FieldShell } from "./FieldShell";
 import { useProp } from "@/app/admin/components/form-editor/components/useProp";
+import { AnimatePresence } from "framer-motion";
+import DatePicker from "../utils/DatePicker";
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 
@@ -28,43 +30,9 @@ const months = [
   "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
   "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 ];
-const weekdays = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
-
-function startOfMonth(y, m) { return new Date(y, m, 1); }
-function endOfMonth(y, m) { return new Date(y, m + 1, 0); }
-
-function getCalendarMatrix(viewYear, viewMonth, firstDayOfWeek = 1) {
-  const first = startOfMonth(viewYear, viewMonth);
-  const last = endOfMonth(viewYear, viewMonth);
-  const firstWeekDay = (first.getDay() + 7 - firstDayOfWeek) % 7; // how many prev days to show
-  const totalDays = last.getDate();
-
-  const cells = [];
-
-  for (let i = 0; i < firstWeekDay; i++) { // previous month tail
-    const d = new Date(viewYear, viewMonth, -i);
-    cells.unshift({ date: d, inMonth: false });
-  }
-  for (let day = 1; day <= totalDays; day++) { // current month
-    const d = new Date(viewYear, viewMonth, day);
-    cells.push({ date: d, inMonth: true });
-  }
-  while (cells.length % 7 !== 0) { // next month head
-    const d = new Date(viewYear, viewMonth, totalDays + (cells.length - firstWeekDay - totalDays) + 1);
-    cells.push({ date: d, inMonth: false });
-  }
-  while (cells.length < 42) {
-    const lastCell = cells[cells.length - 1].date;
-    const d = new Date(lastCell.getFullYear(), lastCell.getMonth(), lastCell.getDate() + 1);
-    cells.push({ date: d, inMonth: false });
-  }
-  const weeks = [];
-  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-  return weeks;
-}
 
 export function CreateFormDatePicker({ questionNumber, props, onPropsChange, readOnly }) {
-  const { prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
+  const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
 
   return (
     <FieldShell number={questionNumber} title="Tarih Seçici" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
@@ -111,24 +79,11 @@ export function DisplayFormDatePicker({ question, questionNumber, description, r
 
   const selected = useMemo(() => parseYMD(value ?? internalValue), [value, internalValue]);
 
-  const now = new Date();
-  const initialYear = selected?.getFullYear() ?? now.getFullYear();
-  const initialMonth = selected?.getMonth() ?? now.getMonth();
-  const [viewYear, setViewYear] = useState(initialYear);
-  const [viewMonth, setViewMonth] = useState(initialMonth);
-
-  useEffect(() => {
-    if (selected) {
-      setViewYear(selected.getFullYear());
-      setViewMonth(selected.getMonth());
-    }
-  }, [open]);
-
   useEffect(() => {
     const onDoc = (e) => {
       if (!open) return;
       const t = e.target;
-      if (popoverRef.current && !popoverRef.current.contains(t) && triggerRef.current && !triggerRef.current.contains(t)) {
+      if (triggerRef.current && !triggerRef.current.contains(t)) {
         setOpen(false);
       }
     };
@@ -141,16 +96,7 @@ export function DisplayFormDatePicker({ question, questionNumber, description, r
     else setInternalValue(next);
   };
 
-  const matrix = useMemo(() => getCalendarMatrix(viewYear, viewMonth, 1), [viewYear, viewMonth]);
-
-  const selectDate = (d) => { commit(toYMD(d)); setOpen(false); };
-
-  const headerLabel = `${months[viewMonth]} ${viewYear}`;
   const display = selected ? `${pad2(selected.getDate())} ${months[selected.getMonth()]} ${selected.getFullYear()}` : "Tarih seçin";
-
-  const weekdayLabels = weekdays;
-
-  const isSameDay = (a, b) => a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
@@ -166,7 +112,7 @@ export function DisplayFormDatePicker({ question, questionNumber, description, r
             <p className="text-sm font-medium text-neutral-100">
               {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
-            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
         </div>
 
@@ -180,69 +126,14 @@ export function DisplayFormDatePicker({ question, questionNumber, description, r
             <span className={selected ? "text-neutral-100" : "text-neutral-500"}>{display}</span>
           </button>
 
-          {open && (
-            <div ref={popoverRef} role="dialog" aria-label="Tarih seçici"
-              className="absolute z-20 mt-2 w-[280px] rounded-xl border border-white/10 bg-neutral-900/40 p-2.5 text-neutral-100 shadow-lg backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30"
-            >
-              <div className="flex h-8 w-full items-center justify-between">
-                <button type="button" aria-label="Önceki ay"
-                  onClick={() => { const m = viewMonth - 1; setViewMonth((m + 12) % 12); setViewYear(viewYear + (m < 0 ? -1 : 0));}}
-                  className="inline-flex size-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-neutral-300 hover:text-neutral-100 hover:bg-white/10"
-                >
-                  <ChevronLeft className="size-4" />
-                </button>
-                <div className="text-sm font-medium select-none text-neutral-100">
-                  {headerLabel}
-                </div>
-                <button type="button" aria-label="Sonraki ay"
-                  onClick={() => { const m = viewMonth + 1; setViewMonth(m % 12); setViewYear(viewYear + (m > 11 ? 1 : 0)); }}
-                  className="inline-flex size-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-neutral-300 hover:text-neutral-100 hover:bg-white/10"
-                >
-                  <ChevronRight className="size-4" />
-                </button>
-              </div>
-
-              <div className="mt-1 grid grid-cols-7 gap-1 text-center">
-                {weekdayLabels.map((weekday) => (
-                  <div key={weekday} className="text-[12px] text-neutral-400 select-none">
-                    {weekday}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-1 grid grid-cols-7 gap-1">
-                {matrix.flat().map(({ date, inMonth }, idx) => {
-                  const isToday = isSameDay(date, now);
-                  const isSelected = selected && isSameDay(date, selected);
-                  return (
-                    <button key={idx} type="button" onClick={() => selectDate(date)}
-                      className={`grid size-8 place-items-center rounded-md text-[13px] leading-none transition
-                        ${inMonth ? "text-neutral-100 hover:bg-white/10" : "text-neutral-500 hover:bg-white/5"}
-                        ${isSelected ? "bg-white/20 text-neutral-100 ring-1 ring-white/20" : ""}
-                        ${isToday && !isSelected ? "outline-1 outline-white/25" : ""}
-                      `}
-                    >
-                      {date.getDate()}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-2 flex items-center justify-between">
-                <button type="button"
-                  onClick={() => { const t = new Date(); setViewYear(t.getFullYear()); setViewMonth(t.getMonth()); selectDate(t); }}
-                  className="text-xs text-neutral-400 hover:text-neutral-200"
-                >
-                  Bugün
-                </button>
-                <button type="button" onClick={() => { commit(""); setOpen(false); }}
-                  className="text-xs text-neutral-400 hover:text-neutral-200"
-                >
-                  Temizle
-                </button>
-              </div>
-            </div>
-          )}
+          <AnimatePresence>
+            {open && (
+              <DatePicker value={selected}
+                onChange={(date) => { commit(toYMD(date)); }}
+                onClose={() => setOpen(false)}
+              />
+            )}
+          </AnimatePresence>
         </div>
 
         <input type="hidden" name="date" value={value !== undefined ? (value ?? "") : internalValue} />

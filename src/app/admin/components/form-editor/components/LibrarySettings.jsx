@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp, Check, ChevronDown, ChevronsUpDown, Eye, PencilLine, Plus, UserMinus, X } from "lucide-react";
-import SearchPicker from "../../utils/SearchPicker";
+import SearchPicker from "../../../../components/utils/SearchPicker";
 
 const alertVariants = {
     hidden: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" },
