@@ -7,12 +7,12 @@ export default function Background() {
         <motion.div
           className="absolute -top-[10%] -left-[20%] w-[70vw] h-[70vw] min-w-[600px] min-h-[600px] bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.2),transparent_80%)] rounded-full mix-blend-screen filter blur-[100px]"
           animate={{  x: [0, 50, -30, 0], y: [0, -50, 30, 0], scale: [1, 1.1, 0.95, 1] }}
-          transition={{ duration: 18, ease: "easeInOut" }}
+          transition={{ duration: 1, ease: "easeInOut" }}
         />
         <motion.div
           className="absolute -bottom-[20%] -right-[10%] w-[80vw] h-[80vw] min-w-[700px] min-h-[700px] bg-[radial-gradient(ellipse_at_bottom_right,rgba(236,72,153,0.2),transparent_80%)] rounded-full mix-blend-screen filter blur-[130px]"
           animate={{ x: [0, -60, 40, 0], y: [0, 60, -40, 0], scale: [1, 0.9, 1.1, 1] }}
-          transition={{ duration: 22, ease: "easeInOut" }}
+          transition={{ duration: 2, ease: "easeInOut" }}
         />
       </motion.div>
     </div>
