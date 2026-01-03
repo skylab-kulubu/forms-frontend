@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, Check, ChevronDown, ChevronsUpDown, Eye, PencilLine, Plus, Search, UserMinus, X } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { ArrowUp, Check, ChevronDown, ChevronsUpDown, Eye, PencilLine, Plus, UserMinus, X } from "lucide-react";
+import SearchPicker from "../../utils/SearchPicker";
 
 export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, handleRemoveEditor, newEditor, setNewEditor,
     setLinkedFormId, linkedFormId, status, setStatus, allowAnonymousResponses,
@@ -186,49 +188,25 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             </button>
                         </div>
 
-                        {showFormPicker && (
-                            <div className="absolute z-20 mt-2 w-full rounded-xl border border-white/10 bg-neutral-900/80 p-3 text-neutral-100 shadow-xl backdrop-blur supports-backdrop-filter:bg-neutral-900/60">
-                                <div className="relative">
-                                    <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-neutral-500">
-                                        <Search size={14} />
-                                    </span>
-                                    <input autoFocus type="text" value={formSearch} onChange={(event) => setFormSearch(event.target.value)}
-                                        placeholder="Ara..."
-                                        className="w-full rounded-md border border-white/10 bg-white/5 pl-7 pr-2 py-1.5 text-sm text-neutral-100 outline-none placeholder-neutral-500 focus:border-white/20"
-                                    />
-                                </div>
-
-                                <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-white/10 bg-white/5">
-                                    {filteredForms.length === 0 && (
-                                        <div className="px-3 py-2 text-[12px] text-neutral-400">Eşleşme bulunamadı.</div>
-                                    )}
-
-                                    {filteredForms.map((form) => {
-                                        const active = linkedForm?.id === form.id;
-                                        return (
-                                            <button key={form.id} type="button" onClick={() => chooseForm(form.id)}
-                                                className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
-                                            >
-                                                <span className="mt-1.5 h-2 w-2 rounded-full bg-emerald-400/70" />
-                                                <div className="flex-1">
-                                                    <p className="font-medium leading-tight">{form.title}</p>
-                                                    <p className="text-[11px] text-neutral-500">{form.id}</p>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <div className="mt-2 flex items-center justify-between">
-                                    <span className="text-[11px] text-neutral-500">Bu form tamamlandığında seçilen forma geçilir.</span>
-                                    {linkedForm && (
-                                        <button type="button" onClick={clearForm} className="text-[11px] text-neutral-400 transition-colors hover:text-neutral-200">
-                                            Temizle
+                        <AnimatePresence>
+                            {showFormPicker ? (
+                                <SearchPicker searchValue={formSearch} onSearchChange={setFormSearch} autoFocus
+                                    items={filteredForms} itemsPerPage={4} activeItemId={linkedForm?.id} getItemId={(form) => form.id}
+                                    onSelect={(form) => chooseForm(form.id)} footerText="Bu form tamamlandığında seçilen forma geçilir."
+                                    showClear={Boolean(linkedForm)} onClear={clearForm}
+                                    renderItem={(form, { active, onSelect }) => (
+                                        <button type="button" onClick={onSelect} className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
+                                        >
+                                            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
+                                            <div className="flex-1">
+                                                <p className="font-medium leading-tight">{form.title}</p>
+                                                <p className="text-[11px] text-neutral-500">{form.id}</p>
+                                            </div>
                                         </button>
                                     )}
-                                </div>
-                            </div>
-                        )}
+                                />
+                            ) : null}
+                        </AnimatePresence>
                     </div>
 
                     {linkedForm && (
