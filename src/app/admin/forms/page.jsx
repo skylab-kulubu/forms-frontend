@@ -7,6 +7,8 @@ import { FormsHeader } from "../components/Headers";
 import ListItem, { ListItemSkeleton } from "../components/ListItem";
 import Pagination from "../components/utils/Pagination";
 import { useUserFormsQuery } from "@/lib/hooks/useFormAdmin";
+import StateCard from "@/app/components/StateCard";
+import { FileSearchCorner, FileXCorner } from "lucide-react";
 
 export default function FormsPage() {
   const router = useRouter();
@@ -39,15 +41,7 @@ export default function FormsPage() {
 
   const sortDirection = sortValue === "asc" ? "ascending" : "descending";
 
-  const { data: formsData, isLoading, error, refetch } = useUserFormsQuery({
-    page,
-    search: debouncedSearch || undefined,
-    role: roleParam,
-    allowAnonymous,
-    allowMultiple,
-    hasLinkedForm,
-    sortDirection,
-  });
+  const { data: formsData, isLoading, error, refetch } = useUserFormsQuery({ page, search: debouncedSearch || undefined, role: roleParam, allowAnonymous, allowMultiple, hasLinkedForm, sortDirection });
 
   const formsMeta = formsData?.data ?? {};
   const forms = Array.isArray(formsMeta.items) ? formsMeta.items : Array.isArray(formsData) ? formsData : [];
@@ -66,65 +60,47 @@ export default function FormsPage() {
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-6">
-      <FormsHeader
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        sortValue={sortValue}
-        onSortChange={setSortValue}
-        roleValue={roleValue}
-        onRoleChange={setRoleValue}
-        allowAnonymous={allowAnonymous}
-        onAllowAnonymousChange={setAllowAnonymous}
-        allowMultiple={allowMultiple}
-        onAllowMultipleChange={setAllowMultiple}
-        hasLinkedForm={hasLinkedForm}
-        onHasLinkedFormChange={setHasLinkedForm}
-        onRefresh={() => refetch()}
-        onCreate={() => router.push("/admin/forms/new-form")}
-        stats={{ count: totalCount }}
+      <FormsHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={setSortValue} roleValue={roleValue} onRoleChange={setRoleValue}
+        allowAnonymous={allowAnonymous} onAllowAnonymousChange={setAllowAnonymous} allowMultiple={allowMultiple} onAllowMultipleChange={setAllowMultiple} hasLinkedForm={hasLinkedForm}
+        onHasLinkedFormChange={setHasLinkedForm} onRefresh={() => refetch()} onCreate={() => router.push("/admin/forms/new-form")} stats={{ count: totalCount }}
       />
 
       <AnimatePresence mode="wait">
         <motion.div key={contentKey} className="flex min-h-0 flex-1 flex-col"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
         >
           {isLoading ? (
             <ListItemSkeleton count={3} />
           ) : hasError ? (
-            <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
-              Forms could not be loaded.
-            </div>
+            <StateCard title={"Formlar yüklenemedi"} Icon={FileXCorner} description={"Form verileri yüklenirken hata oluştu."} />
           ) : forms.length === 0 ? (
-            <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
-              No forms found.
-            </div>
+            <StateCard title={"Form bulunamadı"} Icon={FileSearchCorner}
+              description={searchValue !== "" ? "Aranılan kelimede form bulunamadı."
+              : (roleValue !== null || allowAnonymous !== null || allowMultiple !== null || hasLinkedForm !== null) ? "Verilen filtrelere uygun form bulunamadı."
+              : "Erişiminiz olduğu bir form bulunamadı."
+          }/>
           ) : (
-            <div className="flex min-h-0 flex-1 flex-col">
-              <div className="flex-1 overflow-y-auto pr-1 scrollbar">
-                <div className="space-y-1.5">
-                  {forms.map((form) => {
-                    const linkedForm = form?.linkedFormId ? formsById.get(form.linkedFormId) : null;
-                    return (
-                      <ListItem key={form.id} form={form} linkedForm={linkedForm}
-                        viewHref={`/admin/responses/list/${form.id}`} editHref={`/admin/forms/${form.id}`}
-                      />
-                    );
-                  })}
-                </div>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex-1 overflow-y-auto pr-1 scrollbar">
+              <div className="space-y-1.5">
+                {forms.map((form) => {
+                  const linkedForm = form?.linkedFormId ? formsById.get(form.linkedFormId) : null;
+                  return (
+                    <ListItem key={form.id} form={form} linkedForm={linkedForm}
+                      viewHref={`/admin/responses/list/${form.id}`} editHref={`/admin/forms/${form.id}`}
+                    />
+                  );
+                })}
               </div>
-              <Pagination
-                current={formsMeta.page ?? page}
-                totalPages={formsMeta.totalPages ?? 1}
-                totalCount={totalCount}
-                pageSize={formsMeta.pageSize ?? forms.length}
-                entriesLength={forms.length}
-                docked
-                onPageChange={setPage}
-              />
             </div>
+            <Pagination current={formsMeta.page ?? page}
+              totalPages={formsMeta.totalPages ?? 1}
+              totalCount={totalCount}
+              pageSize={formsMeta.pageSize ?? forms.length}
+              entriesLength={forms.length}
+              onPageChange={setPage}
+            />
+          </div>
           )}
         </motion.div>
       </AnimatePresence>

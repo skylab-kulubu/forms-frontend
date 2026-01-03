@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, ClockPlusIcon, FileXCorner } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClockPlusIcon, FileXCorner, ListX, TextSearch,  } from "lucide-react";
 
 import { useResponseQuery } from "@/lib/hooks/useResponse";
 import { ResponseListItem, ResponseListSkeleton } from "./components/ResponseDisplayerComponents";
 import { ResponseActions } from "./components/ResponseActions";
+import StateCard from "@/app/components/StateCard";
 
 const slideVariants = {
   enter: (direction) => ({
@@ -60,21 +61,13 @@ export default function ResponseDisplayer({ response }) {
   const arrowSide = activeView === "responses" ? baseArrowSide : baseArrowSide === "left" ? "right" : "left";
   const ArrowIcon = arrowSide === "left" ? ArrowLeft : ArrowRight;
 
-  const renderEmptyState = (title, description) => (
-    <div className="flex min-h-[35vh] items-center justify-center px-6 text-center shadow-sm">
-      <div className="flex max-w-sm flex-col items-center gap-3">
-        <FileXCorner className="h-8 w-8 text-neutral-200 drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)]" />
-        <div className="flex flex-col gap-1">
-          <p className="text-sm font-semibold text-neutral-100">{title}</p>
-          {description && <p className="text-xs text-neutral-400">{description}</p>}
-        </div>
-      </div>
-    </div>
-  );
-
   const renderSchemaList = (items) => {
     if (!items || items.length === 0) {
-      return renderEmptyState("Bu yanitta gosterilecek soru yok.", "Yanit bos olabilir.");
+      return (
+        <div className="flex min-h-[40vh]">
+          <StateCard title={"Soru yok"} Icon={ListX} description={"Bu yanıtta gösterilebilecek soru yok."} />
+        </div>
+      )
     }
 
     return (
@@ -104,9 +97,17 @@ export default function ResponseDisplayer({ response }) {
   if (isLinkedLoading) {
     linkedContent = <ResponseListSkeleton />;
   } else if (linkedError) {
-    linkedContent = renderEmptyState("Bağlı yanıt yüklenemedi", "Lütfen daha sonra tekrar deneyin.");
+    linkedContent = (
+      <div className="flex min-h-[40vh]">
+        <StateCard title={"Hata oluştu"} Icon={ListX} description={"Yanır verileri çekilirken bir hata oluştu."} />
+      </div>
+    )
   } else if (!linkedResponse) {
-    linkedContent = renderEmptyState("Bağlı yanıt bulunamadı.", "Yanıta erişilemedi.");
+    linkedContent = (
+      <div className="flex min-h-[40vh]">
+        <StateCard title={"Yanıta ulaşılamadı"} Icon={TextSearch} description={"Bu yanıtta gösterilebilecek soru yok."} />
+      </div>
+    )
   } else {
     linkedContent = renderSchemaList(linkedSchema);
   }
@@ -180,7 +181,7 @@ export default function ResponseDisplayer({ response }) {
         transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
       >
         <div className="h-[93vh] p-4 shadow-sm">
-          <ResponseActions response={activeResponse} isLoading={actionsLoading} loadingLabel={activeView === "linked" ? "Bagli yanit yukleniyor..." : "Yanit yukleniyor..."} />
+          <ResponseActions response={activeResponse} isLoading={actionsLoading} />
         </div>
       </motion.div>
     </div>

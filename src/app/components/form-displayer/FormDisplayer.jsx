@@ -5,7 +5,7 @@ import { REGISTRY } from "@/app/components/form-registry";
 import { FormDisplayerHeader } from "./components/FormDisplayerComponents";
 import { FormResponseStatus } from "./components/FormResponseStatus";
 import { useSubmitFormMutation } from "@/lib/hooks/useForm";
-import { StateCard } from "../FormStatusHandler";
+import { FormStatusDisplayer } from "../FormStatusHandler";
 import Background from "../Background";
 import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -222,7 +222,7 @@ export default function FormDisplayer({ form, step }) {
             <motion.div key="success-screen" className="w-full"
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <StateCard state={submissionState} step={step} status={submissionStatus} />
+              <FormStatusDisplayer state={submissionState} step={step} status={submissionStatus} />
             </motion.div>
           )}
         </AnimatePresence>

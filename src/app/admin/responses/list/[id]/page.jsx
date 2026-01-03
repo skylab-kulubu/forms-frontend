@@ -7,6 +7,8 @@ import { ResponsesHeader } from "../../../components/Headers";
 import { ResponseListItem, ResponseListItemSkeleton } from "../../../components/ListItem";
 import Pagination from "../../../components/utils/Pagination";
 import { useFormResponsesQuery } from "@/lib/hooks/useResponse";
+import StateCard from "@/app/components/StateCard";
+import { ListX, TextSearch } from "lucide-react";
 
 export default function ResponsesListPage() {
   const params = useParams();
@@ -71,13 +73,13 @@ export default function ResponsesListPage() {
           {isLoading ? (
             <ResponseListItemSkeleton count={3} />
           ) : hasError ? (
-            <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
-              Responses could not be loaded.
-            </div>
-          ) : false ? (
-            <div className="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-6 text-sm text-neutral-400">
-              No responses found.
-            </div>
+            <StateCard title={"Cevaplar yüklenemedi"} Icon={ListX} description={"Cevap verileri yüklenirken hata oluştu."} />
+          ) : responses.length === 0 ? (
+            <StateCard title={"Cevap bulunamadı"} Icon={TextSearch}
+              description={searchValue !== "" ? "Aranan kişiye ait cevap bulunamadı."
+                : (statusValue !== "all" | respondentValue !== "all") ? "Verilen filtrelere uygun cevap bulunamadı."
+                : "Bu forma ait cevap henüz yok."
+              } />
           ) : (
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex-1 overflow-y-auto pr-1 scrollbar">

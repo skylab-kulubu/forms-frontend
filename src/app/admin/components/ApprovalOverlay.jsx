@@ -49,10 +49,7 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
     return () => clearInterval(interval);
   }, [open, mode, safeDelay]);
 
-  const canApprove =
-    mode === "phrase"
-      ? typedValue.trim().toLowerCase() === requiredPhrase.trim().toLowerCase()
-      : remaining <= 0;
+  const canApprove = mode === "phrase" ? typedValue.trim().toLowerCase() === requiredPhrase.trim().toLowerCase() : remaining <= 0;
 
   return (
     <AnimatePresence>
@@ -72,7 +69,7 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
             >
               <div className="flex items-start justify-between gap-4 border-b border-white/5 px-6 py-3">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-linear-to-br from-emerald-900/25 via-cyan-700/15 to-indigo-500/10 text-white shadow-inner">
+                  <div className="grid h-10 w-10 place-items-center rounded-xl border border-indigo-400/40 bg-indigo-500/10 text-indigo-100 shadow-inner">
                     <Icon size={20} />
                   </div>
                   <div>
@@ -97,12 +94,12 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
                   </p>
                   {mode === "phrase" && (
                     <div className="mt-3 space-y-2">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[12px] font-semibold text-emerald-100">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-[12px] font-semibold text-indigo-100">
                         <Keyboard size={14} />
                         <span>{requiredPhrase}</span>
                       </div>
                       <input type="text" value={typedValue} onChange={(event) => setTypedValue(event.target.value)} placeholder={requiredPhrase}
-                        className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-900/70 px-3 py-2.5 text-sm text-neutral-50 outline-none transition focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-500/20"
+                        className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-900/70 px-3 py-2.5 text-sm text-neutral-50 outline-none transition focus:border-indigo-100/50 focus:ring-2 focus:ring-indigo-100/20"
                       />
                     </div>
                   )}
@@ -113,7 +110,7 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
                   <ul className="mt-2 space-y-2 text-sm text-neutral-300">
                     {checklist.map((item, index) => (
                       <li key={index} className="flex items-start gap-2">
-                        <Dot size={16} className="mt-1 text-emerald-400" />
+                        <Dot size={16} className="mt-1 text-indigo-300" />
                         <span className="leading-relaxed">{item}</span>
                       </li>
                     ))}
@@ -124,12 +121,12 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
               <div className="flex flex-col gap-3 border-t border-white/5 bg-neutral-900/70 px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                   <button type="button" onClick={() => onReject?.()}
-                    className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-neutral-200 transition hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="rounded-lg border border-white/10 bg-neutral-800/50 px-4 py-2 text-sm font-semibold text-neutral-200 transition hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                   >
                     {rejectLabel}
                   </button>
                   <button type="button" disabled={!canApprove} onClick={() => { if (!canApprove) return; onApprove?.();}}
-                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/40 ${canApprove ? "bg-emerald-500/80 border border-emerald-800 text-neutral-100 hover:from-emerald-400 hover:to-emerald-300" : "cursor-not-allowed border-transparent bg-neutral-800 text-neutral-500"}`}
+                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/40 ${canApprove ? "border border-indigo-400/40 bg-indigo-500/30 text-indigo-100 hover:border-indigo-300/60 hover:bg-indigo-400/50" : "cursor-not-allowed border border-white/20 bg-neutral-800 text-neutral-500"}`}
                   >
                     {mode === "delayed" && remaining > 0 ? `${approveLabel} (${remaining}s)` : approveLabel}
                   </button>
