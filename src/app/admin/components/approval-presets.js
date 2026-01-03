@@ -3,7 +3,7 @@ import { Link, Shredder, Unlink } from "lucide-react";
 export const APPROVAL_PRESETS = {
     "link-add": {
         variant: "delayed",
-        delaySeconds: 6,
+        delaySeconds: 3,
         requiredPhrase: "Onaylıyorum",
         icon: Link,
         title: "Form bağlama işlemini onayla",
@@ -19,7 +19,7 @@ export const APPROVAL_PRESETS = {
 
     "link-change": {
         variant: "delayed",
-        delaySeconds: 6,
+        delaySeconds: 3,
         requiredPhrase: "Onaylıyorum",
         icon: Link,
         title: "Form bağlantısını değiştirmeyi onayla",

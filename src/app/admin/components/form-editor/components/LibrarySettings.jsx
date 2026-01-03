@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp, Check, ChevronDown, ChevronsUpDown, Eye, PencilLine, Plus, UserMinus, X } from "lucide-react";
 import SearchPicker from "../../utils/SearchPicker";
+
+const alertVariants = {
+    hidden: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" },
+    visible: { opacity: 1, height: "auto", marginTop: 12, marginBottom: 0, overflow: "hidden" },
+    exit: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" }
+};
 
 export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, handleRemoveEditor, newEditor, setNewEditor,
     setLinkedFormId, linkedFormId, status, setStatus, allowAnonymousResponses,
@@ -64,76 +70,76 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                     {editors.map((editor) => {
                         const roleValue = Number(editor.role);
                         return (
-                        <div key={editor.userId} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="grid h-9 w-9 place-items-center rounded-lg bg-neutral-950 text-xs font-semibold uppercase tracking-wide text-emerald-200">
-                                    {(editor.fullName || editor.email  || "--").charAt(0)}
+                            <div key={editor.userId} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="grid h-9 w-9 place-items-center rounded-lg bg-neutral-950 text-xs font-semibold uppercase tracking-wide text-emerald-200">
+                                        {(editor.fullName || editor.email || "--").charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-neutral-50">{editor.fullName || editor.email || "--"}</p>
+                                        <p className="text-[9px] text-neutral-500 truncate">{editor.email || editor.userId}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-neutral-50">{editor.fullName || editor.email || "--"}</p>
-                                    <p className="text-[9px] text-neutral-500 truncate">{editor.email || editor.userId}</p>
-                                </div>
-                            </div>
 
-                            <div className="relative flex items-center">
-                                {roleValue === 3 ? (
-                                    <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300">
-                                        {roleValue === 3 ? "Sahip" : "?   "}
-                                    </span>
-                                ) : canManageRoles ? (
-                                    <div className="relative">
-                                        <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.userId ? null : editor.userId)}
-                                            className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition-colors hover:border-white/20 hover:text-neutral-50"
-                                        >
-                                            {roleValue === 2 ? "Editör" : "Okuyucu"}
-                                            <ChevronDown size={12} className="opacity-70" />
-                                        </button>
-                                        {openMenuId === editor.userId && (
-                                            <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-white/10 bg-neutral-950/95 p-1 shadow-2xl backdrop-blur">
-                                                <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.userId, 2); setOpenMenuId(null); }}
-                                                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
-                                                >
-                                                    {roleValue === 2 ? <Check size={12} className="text-emerald-300" /> : <PencilLine size={12} className="shrink-0" />}
-                                                    <span className="flex-1">Düzenleme</span>
-                                                </button>
-                                                <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.userId, 1); setOpenMenuId(null); }}
-                                                    className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
-                                                >
-                                                    {roleValue === 1 ? <Check size={12} className="text-emerald-300" /> : <Eye size={12} className="shrink-0" />}
-                                                    <span className="flex-1">Görüntüleme</span>
-                                                </button>
-                                                <div className="my-1 h-px bg-neutral-900" />
-                                                <button type="button" onClick={() => { handleRemoveEditor(editor); setOpenMenuId(null); }}
-                                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] text-red-300/80 transition-colors hover:bg-red-500/10 hover:text-red-200"
-                                                >
-                                                    <UserMinus size={12} className="shrink-0" />
-                                                    <span className="flex-1">İzinleri kaldır</span>
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center">
-                                        {canRemoveReadersOnly && roleValue === 1 ? (
-                                            <div className="relative group/role">
-                                                <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition-opacity duration-150 group-hover/role:opacity-0 group-hover/role:pointer-events-none">
-                                                    Okuyucu
-                                                </span>
-                                                <button type="button" onClick={() => handleRemoveEditor(editor)} aria-label="Remove reader"
-                                                    className="absolute inset-0 inline-flex items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-red-200 opacity-0 pointer-events-none transition-opacity duration-150 hover:bg-red-500/20 group-hover/role:pointer-events-auto group-hover/role:opacity-100 focus:pointer-events-auto focus:opacity-100"
-                                                >
-                                                    Sil
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300">
+                                <div className="relative flex items-center">
+                                    {roleValue === 3 ? (
+                                        <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300">
+                                            {roleValue === 3 ? "Sahip" : "?   "}
+                                        </span>
+                                    ) : canManageRoles ? (
+                                        <div className="relative">
+                                            <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.userId ? null : editor.userId)}
+                                                className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition-colors hover:border-white/20 hover:text-neutral-50"
+                                            >
                                                 {roleValue === 2 ? "Editör" : "Okuyucu"}
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
+                                                <ChevronDown size={12} className="opacity-70" />
+                                            </button>
+                                            {openMenuId === editor.userId && (
+                                                <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-white/10 bg-neutral-950/95 p-1 shadow-2xl backdrop-blur">
+                                                    <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.userId, 2); setOpenMenuId(null); }}
+                                                        className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
+                                                    >
+                                                        {roleValue === 2 ? <Check size={12} className="text-emerald-300" /> : <PencilLine size={12} className="shrink-0" />}
+                                                        <span className="flex-1">Düzenleme</span>
+                                                    </button>
+                                                    <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.userId, 1); setOpenMenuId(null); }}
+                                                        className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
+                                                    >
+                                                        {roleValue === 1 ? <Check size={12} className="text-emerald-300" /> : <Eye size={12} className="shrink-0" />}
+                                                        <span className="flex-1">Görüntüleme</span>
+                                                    </button>
+                                                    <div className="my-1 h-px bg-neutral-900" />
+                                                    <button type="button" onClick={() => { handleRemoveEditor(editor); setOpenMenuId(null); }}
+                                                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] text-red-300/80 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                                                    >
+                                                        <UserMinus size={12} className="shrink-0" />
+                                                        <span className="flex-1">İzinleri kaldır</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center">
+                                            {canRemoveReadersOnly && roleValue === 1 ? (
+                                                <div className="relative group/role">
+                                                    <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition-opacity duration-150 group-hover/role:opacity-0 group-hover/role:pointer-events-none">
+                                                        Okuyucu
+                                                    </span>
+                                                    <button type="button" onClick={() => handleRemoveEditor(editor)} aria-label="Remove reader"
+                                                        className="absolute inset-0 inline-flex items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-red-200 opacity-0 pointer-events-none transition-opacity duration-150 hover:bg-red-500/20 group-hover/role:pointer-events-auto group-hover/role:opacity-100 focus:pointer-events-auto focus:opacity-100"
+                                                    >
+                                                        Sil
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300">
+                                                    {roleValue === 2 ? "Editör" : "Okuyucu"}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
                         );
                     })}
                 </div>
@@ -209,14 +215,18 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                         </AnimatePresence>
                     </div>
 
-                    {linkedForm && (
-                        <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
-                            <span>{linkedForm.title} ile eşleştirildi.</span>
-                            <button type="button" className="text-emerald-100/80 transition-colors hover:text-emerald-50" onClick={clearForm}>
-                                Kaldır
-                            </button>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {linkedForm && (
+                            <motion.div key={"linked-form-alert"} variants={alertVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3, ease: "easeInOut" }}>
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
+                                    <span>{linkedForm.title} ile eşleştirildi.</span>
+                                    <button type="button" className="text-emerald-100/80 transition-colors hover:text-emerald-50" onClick={clearForm}>
+                                        Kaldır
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${allowAnonymousResponses ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
@@ -252,11 +262,15 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                         </div>
                     </div>
 
-                    {status !== 2 && (
-                        <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 shadow-sm">
-                            Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {status !== 2 && (
+                            <motion.div key={"status-paused-alert"} variants={alertVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3, ease: "easeInOut" }}>
+                                <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 shadow-sm mb-3">
+                                    Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.
+                                </div>                            
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5">
                         <div>

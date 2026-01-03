@@ -380,22 +380,14 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
 
             <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
                 onApprove={() => {
-                    if (!linkOverlay.scenario) {
-                        resetLinkOverlay();
-                        return;
-                    }
-                    if (linkOverlay.scenario === "link-add" || linkOverlay.scenario === "link-change") {
-                        setLinkedFormId(linkOverlay.nextId);
-                    } else if (linkOverlay.scenario === "link-remove") {
-                        setLinkedFormId("");
-                    }
+                    if (!linkOverlay.scenario) { resetLinkOverlay(); return; }
+                    if (linkOverlay.scenario === "link-add" || linkOverlay.scenario === "link-change") { setLinkedFormId(linkOverlay.nextId); } 
+                    else if (linkOverlay.scenario === "link-remove") { setLinkedFormId(""); }
                     resetLinkOverlay();
                 }}
                 onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay(); }}
             />
-            <ApprovalOverlay
-                open={deleteOverlayOpen}
-                preset="delete-form"
+            <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form" 
                 context={{ isPending: isDeletePending }}
                 onApprove={handleDeleteConfirm}
                 onReject={() => setDeleteOverlayOpen(false)}
