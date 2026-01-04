@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -44,6 +44,8 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     const [libraryTab, setLibraryTab] = useState("components");
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
+    const [shareStatus, setShareStatus] = useState("idle");
+    const shareTimerRef = useRef(null);
 
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: initialForm?.linkedFormId || "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
@@ -61,6 +63,14 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
 
         return () => clearTimeout(timer);
     }, [isError, isSuccess, reset]);
+
+    useEffect(() => {
+        return () => {
+            if (shareTimerRef.current) {
+                clearTimeout(shareTimerRef.current);
+            }
+        };
+    }, []);
 
     const handleRequestLinkForm = (nextLinkedFormId, reason = "manual") => {
         const nextId = nextLinkedFormId || "";
@@ -116,6 +126,29 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         setDeleteOverlayOpen(true);
     };
 
+    const handleShare = async () => {
+        if (!initialForm?.id) return;
+        const shareUrl = `https://forms.yildizskylab.com/${initialForm.id}`;
+        let nextStatus = "error";
+
+        if (navigator?.clipboard?.writeText) {
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                nextStatus = "success";
+            } catch {
+            }
+        }
+
+        if (shareTimerRef.current) {
+            clearTimeout(shareTimerRef.current);
+        }
+        setShareStatus(nextStatus);
+        shareTimerRef.current = setTimeout(() => {
+            setShareStatus("idle");
+            shareTimerRef.current = null;
+        }, 2000);
+    };
+
     const handleSave = () => {
         const payload = {
             Id: initialForm?.id || formId || null,
@@ -136,7 +169,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                 if (!isNewForm) return;
                 const nextId = data?.id ?? data?.data?.id;
                 if (nextId) {
-                    router.push(`/admin/forms/${nextId}`);
+                    router.push(`/admin/forms/${nextId}/edit`);
                 }
             },
         });
@@ -308,6 +341,9 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                     onSelectTab={setLibraryTab}
                     handleSave={handleSave}
                     onRefresh={handleRefresh}
+                    onShare={handleShare}
+                    showShare={!isNewForm}
+                    shareStatus={shareStatus}
                     onDelete={handleDeleteRequest}
                     isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
                     isPending={isPending}
@@ -381,13 +417,13 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
             <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
                 onApprove={() => {
                     if (!linkOverlay.scenario) { resetLinkOverlay(); return; }
-                    if (linkOverlay.scenario === "link-add" || linkOverlay.scenario === "link-change") { setLinkedFormId(linkOverlay.nextId); } 
+                    if (linkOverlay.scenario === "link-add" || linkOverlay.scenario === "link-change") { setLinkedFormId(linkOverlay.nextId); }
                     else if (linkOverlay.scenario === "link-remove") { setLinkedFormId(""); }
                     resetLinkOverlay();
                 }}
                 onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay(); }}
             />
-            <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form" 
+            <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form"
                 context={{ isPending: isDeletePending }}
                 onApprove={handleDeleteConfirm}
                 onReject={() => setDeleteOverlayOpen(false)}

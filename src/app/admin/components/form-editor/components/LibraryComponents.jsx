@@ -1,8 +1,8 @@
 import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
-import { CheckCircle2, CircleGauge, CircleAlert, RotateCcw, Trash, Trash2 } from "lucide-react";
+import { CheckCircle2, CircleGauge, CircleAlert, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
 
-export function LibraryPanel({ children, activeTab = "components", onSelectTab, handleSave, onRefresh, onDelete, isDeleteDisabled, isPending, isError, isSuccess }) {
+export function LibraryPanel({ children, activeTab = "components", onSelectTab, handleSave, onRefresh, onShare, showShare, shareStatus, onDelete, isDeleteDisabled, isPending, isError, isSuccess }) {
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
 
@@ -44,6 +44,13 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab, 
                         </button>
                     </div>
                     <div className="flex items-center gap-1 text-neutral-500">
+                        {showShare ? (
+                            <button type="button" aria-label="Formu paylas" onClick={onShare} disabled={!onShare}
+                                className={`rounded-lg p-1.5 transition-colors ${onShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-emerald-500" : shareStatus === "error" ? "text-red-500" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+                            >
+                                <Share2 size={16} />
+                            </button>
+                        ) : null}
                         <button type="button" aria-label="Yenile" onClick={onRefresh} disabled={!onRefresh}
                             className={`rounded-lg p-1.5 transition-colors ${onRefresh ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
                         >
