@@ -3,24 +3,12 @@ import { NextResponse } from "next/server";
 
 const ALLOWED_ROLES = ["ADMIN", "YK", "DK", "EKİP"];
 
-function clearAuthCookies(res) {
-  for (const name of ["authjs.session-token", "__Secure-authjs.session-token"]) {
-    res.cookies.set(name, "", { path: "/", maxAge: 0 });
-  }
-}
-
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const isOnAdminPanel = req.nextUrl.pathname.startsWith("/admin");
-  const isOnAuthPage = req.nextUrl.pathname.startsWith("/auth");
 
-  if (req.auth?.error === "RefreshAccessTokenError" && !isOnAuthPage) {
-    const signInUrl = new URL("/auth/signin", req.nextUrl);
-    signInUrl.searchParams.set("callbackUrl", req.nextUrl.href);
-
-    const res = NextResponse.redirect(signInUrl);
-    clearAuthCookies(res);
-    return res;
+  if (req.auth?.error === "RefreshAccessTokenError") {
+    return NextResponse.redirect(new URL("/auth/signin?error=SessionExpired", req.nextUrl));
   }
 
   const userRoles = req.auth?.user?.roles || [];

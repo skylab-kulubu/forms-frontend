@@ -18,11 +18,11 @@ async function refreshAccessToken(token) {
 
         if (!response.ok) { throw refreshedTokens; }
 
-        return { 
-            ...token, 
-            accessToken: refreshedTokens.access_token, 
-            expiresAt: Date.now() + refreshedTokens.expires_in * 1000, 
-            refreshToken: refreshedTokens.refresh_token ?? token.refreshToken 
+        return {
+            ...token,
+            accessToken: refreshedTokens.access_token,
+            expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
+            refreshToken: refreshedTokens.refresh_token ?? token.refreshToken
         }
     } catch (error) {
         return { ...token, accessToken: undefined, refreshToken: undefined, expiresAt: 0, error: "RefreshAccessTokenError" }
@@ -87,6 +87,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     ...token.userProfile,
                     fullName: `${token.userProfile.firstName} ${token.userProfile.lastName}`,
                 };
+            }
+            if (token.error === "RefreshAccessTokenError") {
+                return null;
             }
             return session;
         },
