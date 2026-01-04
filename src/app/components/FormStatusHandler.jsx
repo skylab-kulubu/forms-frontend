@@ -2,7 +2,9 @@
 
 import { FormResponseStatus } from "./form-displayer/components/FormResponseStatus";
 import { AnimatePresence, motion } from "framer-motion";
+import { signIn } from "next-auth/react";
 import { FilePenLine, FileCheckIcon, FileClock, FileLock2, Loader2, Shredder, FileSearchCorner, FileXCorner } from "lucide-react";
+import LoginButton from "./utils/LoginButton";
 import StateCard from "./StateCard";
 
 const FORM_ACCESS_STATUS = {
@@ -11,6 +13,7 @@ const FORM_ACCESS_STATUS = {
   REQUIRES_PARENT_APPROVAL: 11,
   COMPLETED: 20,
   DECLINED: 21,
+  UNAUTHORIZED: 40,
   NOT_AUTHORIZED: 41,
   NOT_FOUND: 44,
   NOT_AVAILABLE: 45,
@@ -57,6 +60,11 @@ const stateConfigs = {
         title: "Form erişime kapalı",
         description: "Form sahibi gönderimleri durdurmuş veya formun süresi dolmuş olabilir.",
     },
+    unAuthorized: {
+        icon: FileLock2,
+        title: "Giriş yapmalısınız",
+        description: "Bu formu görüntülemek için giriş yapmanız gerekiyor.",
+    },
     notAuthorized: {
         icon: FileLock2,
         title: "Yetkisiz erişim",
@@ -95,6 +103,12 @@ export function FormStatusDisplayer({ state, message, step, status, variant = "f
 
     const Icon = config.icon;
     const description = message || config.description;
+    const showSignIn = state === "notAuthorized";
+
+    const handleSignIn = () => {
+        const callbackUrl = typeof window !== "undefined" ? window.location.href : "/";
+        signIn("keycloak", { callbackUrl });
+    };
 
     return (
         <motion.div key={state} className="flex min-h-[85vh] w-full flex-col items-center p-4"
@@ -107,6 +121,12 @@ export function FormStatusDisplayer({ state, message, step, status, variant = "f
             )}
 
             <StateCard title={config.title} description={description} Icon={Icon} isLoading={state === "loading"} />
+
+            {showSignIn && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.6 }}>
+                    <LoginButton onClick={handleSignIn} label="E-Skylab ile giriş yap"/>
+                </motion.div>
+            )}
             
             {step > 0 && state !== "loading" && <div className="mb-auto hidden sm:block h-10"></div>}
         </motion.div>
@@ -125,6 +145,8 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
                 switch (accessStatus) {
                     case FORM_ACCESS_STATUS.NOT_FOUND:
                         return "notFound";
+                    case FORM_ACCESS_STATUS.UNAUTHORIZED:
+                        return "unAuthorized";
                     case FORM_ACCESS_STATUS.NOT_AUTHORIZED:
                         return "notAuthorized";
                     default:
@@ -137,6 +159,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
                     return "notFound";
                 case FORM_ACCESS_STATUS.NOT_AVAILABLE:
                     return "notAvailable";
+                case FORM_ACCESS_STATUS.UNAUTHORIZED:
                 case FORM_ACCESS_STATUS.NOT_AUTHORIZED:
                     return "notAuthorized";
                 case FORM_ACCESS_STATUS.REQUIRES_PARENT_APPROVAL:
@@ -177,3 +200,4 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
         </AnimatePresence>
     );
 }
+

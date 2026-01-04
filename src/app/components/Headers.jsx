@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { LogOut } from "lucide-react";
+import LoginButton from "./utils/LoginButton";
 import HoverCard from "./utils/HoverCard";
 
 function getInitial(name, email) {
@@ -43,17 +44,15 @@ export default function MainHeader() {
 
         <div className="flex items-center gap-3 py-1">
           {status === "loading" ? null : !isAuthed ? (
-            <motion.button type="button" onClick={handleLogin} disabled={status === "loading"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-neutral-100 hover:text-pink-100 transition hover:border-pink-100/40 hover:bg-pink-100/30"
-            >
-              E-Skylab ile giriş yap
-            </motion.button>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className="-mt-1">
+              <LoginButton onClick={handleLogin} disabled={status === "loading"} label="Giriş Yap"/>
+            </motion.div>
           ) : (
             <>
               <HoverCard user={user}>
-                <div className="flex items-center gap-3 rounded-xl bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5 -mt-1">
-                  <motion.div initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
-                    className="hidden text-right sm:block"
+                <div className="flex items-center gap-2 rounded-xl bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5 -mt-1">
+                  <motion.div initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
+                    className="text-right block"
                   >
                     <p className="text-[12.5px] font-semibold text-neutral-100">
                       Merhaba, {name}
@@ -69,7 +68,7 @@ export default function MainHeader() {
                     )}
                   </motion.div>
                   <motion.button type="button" onClick={handleLogout} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
-                    className="rounded-lg bg-transparent text-xs py-1 -ml-1 font-semibold text-neutral-400 transition hover:text-pink-200"
+                    className="rounded-lg bg-transparent text-xs py-1 font-semibold text-neutral-400 transition hover:text-pink-200"
                   >
                     <LogOut size={14} />
                   </motion.button>
