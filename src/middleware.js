@@ -12,15 +12,16 @@ function clearAuthCookies(res) {
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const isOnAdminPanel = req.nextUrl.pathname.startsWith("/admin");
+  const isOnAuthPage = req.nextUrl.pathname.startsWith("/auth");
 
-  if (req.auth?.error === "RefreshAccessTokenError") {
+  if (req.auth?.error === "RefreshAccessTokenError" && !isOnAuthPage) {
     const signInUrl = new URL("/auth/signin", req.nextUrl);
     signInUrl.searchParams.set("callbackUrl", req.nextUrl.href);
 
     const res = NextResponse.redirect(signInUrl);
     clearAuthCookies(res);
     return res;
-  };
+  }
 
   const userRoles = req.auth?.user?.roles || [];
 
