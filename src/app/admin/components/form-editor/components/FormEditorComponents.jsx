@@ -33,18 +33,19 @@ export function GhostComponent({ active, schema }) {
 }
 
 
-export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle }) {
+export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span = 8, toolbar }) {
     const { setNodeRef, isOver } = useDroppable({ id: "canvas" });
     const showDrop = isOver && dragSource === "library";
+    const spanClass = span === 12 ? "col-span-12" : span === 11 ? "col-span-11" : "col-span-8";
 
     return (
-        <motion.div className="col-span-8 min-h-[80vh] max-h-[88vh] p-2"
+        <motion.div className={`${spanClass} min-h-[80vh] max-h-[88vh] p-2`}
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
         >
-            <div className="max-w-3xl mx-auto px-4 h-10 flex items-center border-b border-neutral-800">
-                <div className="relative w-full">
+            <div className="max-w-3xl mx-auto px-4 h-10 flex items-center gap-2 border-b border-neutral-800">
+                <div className="relative flex-1 min-w-0">
                     <input id="form-title" type="text" placeholder="Yeni Form"
                         value={schemaTitle} onChange={(e) => setSchemaTitle(e.target.value)}
                         className="w-full pr-5 bg-transparent text-sm font-semibold text-neutral-200 tracking-wide outline-none leading-none placeholder-neutral-600"
@@ -53,6 +54,7 @@ export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle }) {
                         <PencilLine size={12} className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-neutral-500" />
                     )}
                 </div>
+                {toolbar ? <div className="flex items-center gap-2">{toolbar}</div> : null}
             </div>
             <motion.div ref={setNodeRef} className={`overflow-y-auto rounded-xl transition border-2 scrollbar-hidden h-full
                 ${isOver && dragSource !== "canvas" ? "border-emerald-400/50 bg-emerald-600/5" : "border-transparent"}`}

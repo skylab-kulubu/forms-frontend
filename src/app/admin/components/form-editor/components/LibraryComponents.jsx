@@ -2,15 +2,33 @@ import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { CheckCircle2, CircleGauge, CircleAlert, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
 
-export function LibraryPanel({ children, activeTab = "components", onSelectTab, handleSave, onRefresh, onShare, showShare, shareStatus, onDelete, isDeleteDisabled, isPending, isError, isSuccess }) {
+export function LibraryPanel({
+    children,
+    activeTab = "components",
+    onSelectTab,
+    handleSave,
+    onRefresh,
+    onShare,
+    showShare,
+    shareStatus,
+    onDelete,
+    isDeleteDisabled,
+    isPending,
+    isError,
+    isSuccess,
+    layout = "grid",
+    className = "",
+}) {
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
 
     const from = active?.data?.current?.from;
     const showTrash = from === "canvas";
 
+    const layoutClass = layout === "drawer" ? "h-full w-full" : "col-span-4 h-[93vh]";
+
     return (
-        <motion.div ref={setNodeRef} className="relative col-span-4 flex h-[93vh] min-w-0 rounded-xl p-2 overflow-hidden"
+        <motion.div ref={setNodeRef} className={`relative flex min-w-0 rounded-xl p-2 overflow-hidden ${layoutClass} ${className}`}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
@@ -109,11 +127,16 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab, 
     );
 }
 
-export function LibraryItem({ item }) {
+export function LibraryItem({ item, onSelect }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `component-${item.type}`,
         data: { from: "library", type: item.type }
     });
+
+    const handleClick = () => {
+        if (!onSelect || isDragging) return;
+        onSelect(item);
+    };
 
     const style = {
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
@@ -123,7 +146,7 @@ export function LibraryItem({ item }) {
     }
 
     return (
-        <button ref={setNodeRef} {...listeners} {...attributes} style={style}>
+        <button ref={setNodeRef} {...listeners} {...attributes} style={style} type="button" onClick={handleClick}>
             <img src={item.svg} alt={item.label} />
         </button>
     )

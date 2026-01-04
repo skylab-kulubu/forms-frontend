@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor } from "@dnd-kit/core";
+import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { PackagePlus } from "lucide-react";
+import { PackagePlus, PanelRightOpen, Trash2, X } from "lucide-react";
 import dynamic from "next/dynamic";
 
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
@@ -12,6 +12,7 @@ import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
 import { useDeleteFormMutation, useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
 import ApprovalOverlay from "../ApprovalOverlay";
+import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "../utils/Drawer";
 
 import { COMPONENTS, REGISTRY } from "../../../components/form-registry";
 
@@ -20,9 +21,25 @@ const LibraryTipTap = dynamic(() => import("./components/LibraryTipTap").then((m
 const FIXED_USER_ID = "11111111-1111-1111-1111-111111111111";
 const formId = crypto.randomUUID();
 
-const INITIAL_EDITORS = [
-    { userId: FIXED_USER_ID, fullName: "Skylab Ki?isi", email: "forms@skylab.com", role: 3, photoUrl: null }
-];
+const INITIAL_EDITORS = [ { userId: FIXED_USER_ID, fullName: "Skylab Kişisi", email: "forms@skylab.com", role: 3, photoUrl: null }];
+
+function useMediaQuery(query) {
+    const [matches, setMatches] = useState(() => {
+        if (typeof window === "undefined") return false;
+        return window.matchMedia(query).matches;
+    });
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const media = window.matchMedia(query);
+        const handleChange = (event) => setMatches(event.matches);
+        media.addEventListener("change", handleChange);
+        setMatches(media.matches);
+        return () => media.removeEventListener("change", handleChange);
+    }, [query]);
+
+    return matches;
+}
 
 export default function FormEditor({ initialForm = null, onRefresh }) {
     const router = useRouter();
@@ -46,6 +63,12 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     const [newEditorRole, setNewEditorRole] = useState(1);
     const [shareStatus, setShareStatus] = useState("idle");
     const shareTimerRef = useRef(null);
+    const editorRef = useRef(null);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const lastOverRef = useRef(null);
+    const libraryDropElRef = useRef(null);
+
+    const isLgUp = useMediaQuery("(min-width: 1024px)");
 
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: initialForm?.linkedFormId || "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
@@ -71,6 +94,12 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
             }
         };
     }, []);
+
+    useEffect(() => {
+        if (isLgUp) {
+            setDrawerOpen(false);
+        }
+    }, [isLgUp]);
 
     const handleRequestLinkForm = (nextLinkedFormId, reason = "manual") => {
         const nextId = nextLinkedFormId || "";
@@ -246,6 +275,131 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         })
     );
 
+    const { setNodeRef: setLibraryDropNodeRef, isOver: isLibraryDropOver } = useDroppable({
+        id: "library",
+        disabled: isLgUp || drawerOpen,
+    });
+
+    const setLibraryDropRef = useCallback((node) => {
+        libraryDropElRef.current = node;
+        setLibraryDropNodeRef(node);
+    }, [setLibraryDropNodeRef]);
+
+    const handleLibrarySelect = (item) => {
+        const type = item?.type;
+        if (!type) return;
+        const id = Math.random().toString(36).slice(2, 10);
+        const props = structuredClone(REGISTRY[type]?.defaults ?? {});
+        setSchema((prev) => [...prev, { id, type, props }]);
+    };
+
+    const libraryPanel = (
+        <LibraryPanel activeTab={libraryTab} onSelectTab={setLibraryTab} handleSave={handleSave} onRefresh={handleRefresh}
+            onShare={handleShare} showShare={!isNewForm} shareStatus={shareStatus} onDelete={handleDeleteRequest}
+            isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
+            isPending={isPending} isSuccess={isSuccess} isError={isError} layout={isLgUp ? "grid" : "drawer"}
+        >
+            {libraryTab === "components" ? (
+                <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
+                    {COMPONENTS.map((component) => (
+                        <LibraryItem key={component.type} item={component} onSelect={isLgUp ? undefined : handleLibrarySelect} />
+                    ))}
+                </div>
+            ) : libraryTab === "settings" ? (
+                <div className="relative h-full">
+                    <div className={isChildForm ? "pointer-events-none opacity-40" : ""}>
+                        <LibrarySettings editors={editors} onChangeEditorRole={handleChangeEditorRole} handleAddEditor={handleAddEditor}
+                            handleRemoveEditor={handleRemoveEditor} newEditor={newEditor} setNewEditor={setNewEditor}
+                            newEditorRole={newEditorRole} setNewEditorRole={setNewEditorRole} setLinkedFormId={handleRequestLinkForm}
+                            linkedFormId={linkedFormId} status={status} allowAnonymousResponses={allowAnonymousResponses}
+                            setAllowAnonymousResponses={setAllowAnonymousResponses} setStatus={setStatus} allowMultipleResponses={allowMultipleResponses}
+                            setAllowMultipleResponses={setAllowMultipleResponses} linkableForms={linkableForms ?? []} currentUserRole={currentUserRole}
+                        />
+                    </div>
+
+                    <div className={`pointer-events-auto inset-0 flex items-center justify-center ${isChildForm ? "absolute" : "hidden"}`}>
+                        <div className="mx-4 max-w-xs rounded-lg border border-neutral-700 bg-neutral-900/90 px-4 py-3 text-center shadow-lg">
+                            <p className="mb-1 text-sm font-semibold text-neutral-500 uppercase tracking-wide">
+                                Ayarlar kilitli
+                            </p>
+                            <p className="text-[11px] leading-relaxed text-neutral-300">
+                                Bu formun ayarları, bağlı olduğu ana form tarafından yönetilmektedir.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex h-full min-h-0 flex-col gap-4 p-4 text-sm text-neutral-200">
+                    <section className="flex flex-1 min-h-0 flex-col gap-4">
+                        <div>
+                            <p className="font-semibold text-neutral-100">Form açıklaması</p>
+                            <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
+                                Formu görüntüleyen kişiler için kısa bir açıklama ekleyin.
+                            </p>
+                        </div>
+                        <div className="flex-1 min-h-0">
+                            <LibraryTipTap value={description} onChange={setDescription} />
+                        </div>
+                    </section>
+                </div>
+            )}
+        </LibraryPanel>
+    );
+
+    const drawerTrigger = (
+        <div ref={setLibraryDropRef} className="col-span-1 h-[92vh] w-8 justify-self-end mr-2">
+            <DrawerTrigger asChild>
+                <button type="button"
+                    className={`h-full w-full rounded-xl border text-neutral-200 transition-colors
+                        ${dragSource === "canvas" ? "border-neutral-700/80 border-dashed bg-neutral-950/60" : "border-neutral-800 bg-neutral-950/40 hover:border-neutral-700 hover:bg-neutral-900/70"}
+                        ${isLibraryDropOver ? "border-red-500/70 bg-red-500/10 text-red-100" : ""}`}
+                    aria-label="Paneli aç" title="Paneli aç"
+                >
+                    {dragSource === "canvas" ? (
+                        <div className="flex h-full flex-col items-center justify-center gap-2">
+                            <Trash2 size={16} className={isLibraryDropOver ? "text-red-300" : "text-neutral-400"} />
+                            <span className="text-[10px] font-semibold tracking-wide text-neutral-400">Sil</span>
+                        </div>
+                    ) : (
+                        <div className="flex h-full items-center justify-center">
+                            <PanelRightOpen size={18} />
+                        </div>
+                    )}
+                </button>
+            </DrawerTrigger>
+        </div>
+    );
+
+    const gridContent = (
+        <div className="grid grid-cols-12 gap-4">
+            <Canvas dragSource={dragSource} schemaTitle={schemaTitle} setSchemaTitle={setSchemaTitle} span={isLgUp ? 8 : 11}>
+                {schema.length === 0 ? (
+                    <div className="grid h-[80vh] place-items-center text-sm text-neutral-500">
+                        <div>
+                            <PackagePlus size={36} className="mx-auto my-4" />
+                            <span className="font-semibold">Paletten sürükleyip kanvasa bırak</span>
+                        </div>
+                    </div>
+                ) : (
+                    <SortableContext items={schema.map((field) => field.id)} strategy={verticalListSortingStrategy}>
+                        <ul className="flex flex-col gap-2 max-w-2xl mx-auto mb-4">
+                            <DropSlot index={0} enabled={dragSource === "library"} />
+                            {schema.map((field, index) => (
+                                <li key={field.id} className="flex flex-col">
+                                    <CanvasItem field={field} index={index + 1} onPatch={patchField} />
+                                    <DropSlot index={index + 1} enabled={dragSource === "library"} />
+                                </li>
+                            ))}
+                        </ul>
+                    </SortableContext>
+                )}
+            </Canvas>
+
+            {!isLgUp ? drawerTrigger : null}
+            {isLgUp ? libraryPanel : null}
+        </div>
+    );
+
     return (
         <DndContext
             collisionDetection={pointerWithin}
@@ -281,7 +435,24 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                         return next;
                     });
                 }
-                if (from === "canvas" && over?.id === "library") {
+                const overId = over?.id ?? lastOverRef.current;
+                let isOverLibrary = overId === "library";
+
+                if (!isOverLibrary && from === "canvas" && libraryDropElRef.current) {
+                    const targetRect = libraryDropElRef.current.getBoundingClientRect();
+                    const activeRect = active.rect?.current?.translated ?? active.rect?.current;
+                    if (activeRect) {
+                        const intersects = activeRect.left < targetRect.right
+                            && activeRect.right > targetRect.left
+                            && activeRect.top < targetRect.bottom
+                            && activeRect.bottom > targetRect.top;
+                        if (intersects) {
+                            isOverLibrary = true;
+                        }
+                    }
+                }
+
+                if (from === "canvas" && isOverLibrary) {
                     const fieldId = active.data.current.id;
                     setSchema((prev) => prev.filter((field) => field.id !== fieldId));
                 }
@@ -306,128 +477,59 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                 }
                 setDragSource(null);
                 setActiveDragItem(null);
+                lastOverRef.current = null;
+            }}
+            onDragOver={({ over }) => {
+                lastOverRef.current = over?.id ?? null;
             }}
             onDragCancel={() => {
                 setDragSource(null);
                 setActiveDragItem(null);
+                lastOverRef.current = null;
             }}
         >
-            <div className="grid grid-cols-12 gap-4">
-                <Canvas dragSource={dragSource} schemaTitle={schemaTitle} setSchemaTitle={setSchemaTitle}>
-                    {schema.length === 0 ? (
-                        <div className="grid h-[80vh] place-items-center text-sm text-neutral-500">
-                            <div>
-                                <PackagePlus size={36} className="mx-auto my-4" />
-                                <span className="font-semibold">Paletten sürükleyip kanvasa bırak</span>
+            <div ref={editorRef} className="relative">
+                {!isLgUp ? (
+                    <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+                        {gridContent}
+                    <DrawerContent className="bg-neutral-950/95" closeOnOverlayClick={true}>
+                            <div className="flex items-center justify-end px-4 pt-4">
+                                <DrawerClose asChild>
+                                    <button type="button" className="rounded-lg p-1.5 text-neutral-500 transition-colors hover:text-neutral-100 hover:bg-neutral-800/70"
+                                        aria-label="Paneli kapat" title="Paneli kapat"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </DrawerClose>
                             </div>
-                        </div>
-                    ) : (
-                        <SortableContext items={schema.map((field) => field.id)} strategy={verticalListSortingStrategy}>
-                            <ul className="flex flex-col gap-2 max-w-2xl mx-auto mb-4">
-                                <DropSlot index={0} enabled={dragSource === "library"} />
-                                {schema.map((field, index) => (
-                                    <li key={field.id} className="flex flex-col">
-                                        <CanvasItem field={field} index={index + 1} onPatch={patchField} />
-                                        <DropSlot index={index + 1} enabled={dragSource === "library"} />
-                                    </li>
-                                ))}
-                            </ul>
-                        </SortableContext>
-                    )}
-                </Canvas>
+                            <div className="min-h-0 flex-1 px-2 pb-2">
+                                {libraryPanel}
+                            </div>
+                        </DrawerContent>
+                    </Drawer>
+                ) : (
+                    gridContent
+                )}
 
-                <LibraryPanel
-                    activeTab={libraryTab}
-                    onSelectTab={setLibraryTab}
-                    handleSave={handleSave}
-                    onRefresh={handleRefresh}
-                    onShare={handleShare}
-                    showShare={!isNewForm}
-                    shareStatus={shareStatus}
-                    onDelete={handleDeleteRequest}
-                    isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
-                    isPending={isPending}
-                    isSuccess={isSuccess}
-                    isError={isError}
-                >
-                    {libraryTab === "components" ? (
-                        <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
-                            {COMPONENTS.map((component) => (
-                                <LibraryItem key={component.type} item={component} />
-                            ))}
-                        </div>
-                    ) : libraryTab === "settings" ? (
-                        <div className="relative h-full">
-                            <div className={isChildForm ? "pointer-events-none opacity-40" : ""}>
-                                <LibrarySettings
-                                    editors={editors}
-                                    onChangeEditorRole={handleChangeEditorRole}
-                                    handleAddEditor={handleAddEditor}
-                                    handleRemoveEditor={handleRemoveEditor}
-                                    newEditor={newEditor}
-                                    setNewEditor={setNewEditor}
-                                    newEditorRole={newEditorRole}
-                                    setNewEditorRole={setNewEditorRole}
-                                    setLinkedFormId={handleRequestLinkForm}
-                                    linkedFormId={linkedFormId}
-                                    status={status}
-                                    allowAnonymousResponses={allowAnonymousResponses}
-                                    setAllowAnonymousResponses={setAllowAnonymousResponses}
-                                    setStatus={setStatus}
-                                    allowMultipleResponses={allowMultipleResponses}
-                                    setAllowMultipleResponses={setAllowMultipleResponses}
-                                    linkableForms={linkableForms ?? []}
-                                    currentUserRole={currentUserRole}
-                                />
-                            </div>
+                <DragOverlay>
+                    {activeDragItem ? <GhostComponent active={activeDragItem} schema={schema} /> : null}
+                </DragOverlay>
 
-                            <div className={`pointer-events-auto inset-0 flex items-center justify-center ${isChildForm ? "absolute" : "hidden"}`}>
-                                <div className="mx-4 max-w-xs rounded-lg border border-neutral-700 bg-neutral-900/90 px-4 py-3 text-center shadow-lg">
-                                    <p className="mb-1 text-sm font-semibold text-neutral-500 uppercase tracking-wide">
-                                        Ayarlar kilitli
-                                    </p>
-                                    <p className="text-[11px] leading-relaxed text-neutral-300">
-                                        Bu formun ayarları, bağlı olduğu ana form tarafından yönetilmektedir.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex h-full min-h-0 flex-col gap-4 p-4 text-sm text-neutral-200">
-                            <section className="flex flex-1 min-h-0 flex-col gap-4">
-                                <div>
-                                    <p className="font-semibold text-neutral-100">Form açıklaması</p>
-                                    <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
-                                        Formu görüntüleyen kişiler için kısa bir açıklama ekleyin.
-                                    </p>
-                                </div>
-                                <div className="flex-1 min-h-0">
-                                    <LibraryTipTap value={description} onChange={setDescription} />
-                                </div>
-                            </section>
-                        </div>
-                    )}
-                </LibraryPanel>
+                <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
+                    onApprove={() => {
+                        if (!linkOverlay.scenario) { resetLinkOverlay(); return; }
+                        if (linkOverlay.scenario === "link-add" || linkOverlay.scenario === "link-change") { setLinkedFormId(linkOverlay.nextId); }
+                        else if (linkOverlay.scenario === "link-remove") { setLinkedFormId(""); }
+                        resetLinkOverlay();
+                    }}
+                    onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay(); }}
+                />
+                <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form"
+                    context={{ isPending: isDeletePending }}
+                    onApprove={handleDeleteConfirm}
+                    onReject={() => setDeleteOverlayOpen(false)}
+                />
             </div>
-
-            <DragOverlay>
-                {activeDragItem ? <GhostComponent active={activeDragItem} schema={schema} /> : null}
-            </DragOverlay>
-
-            <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
-                onApprove={() => {
-                    if (!linkOverlay.scenario) { resetLinkOverlay(); return; }
-                    if (linkOverlay.scenario === "link-add" || linkOverlay.scenario === "link-change") { setLinkedFormId(linkOverlay.nextId); }
-                    else if (linkOverlay.scenario === "link-remove") { setLinkedFormId(""); }
-                    resetLinkOverlay();
-                }}
-                onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay(); }}
-            />
-            <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form"
-                context={{ isPending: isDeletePending }}
-                onApprove={handleDeleteConfirm}
-                onReject={() => setDeleteOverlayOpen(false)}
-            />
         </DndContext>
     );
 }
