@@ -3,8 +3,9 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import Breadcrumbs from "./Breadcrumbs";
-import { LayoutDashboard, Menu, X, ChevronDown, ChevronRight, Settings, FilePlus, FileText, List } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, LogOut, FilePlus, FileText, List } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 function SectionLabel({ children }) {
@@ -13,6 +14,14 @@ function SectionLabel({ children }) {
       {children}
     </div>
   );
+}
+
+function getInitials(name, email) {
+  const source = (name || email || "").trim();
+  if (!source) return "?";
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 function NavItem({ href, icon: Icon, label, active, onClick, variant = "default" }) {
@@ -41,9 +50,7 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
 
   return (
     <div className="space-y-1">
-      <button
-        type="button"
-        aria-expanded={open}
+      <button type="button" aria-expanded={open}
         className={`${base} ${state} w-full text-left`}
         onClick={() => setOpen((v) => !v)}
       >
@@ -55,20 +62,12 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
       <AnimatePresence initial={false}>
         {open && (
           <motion.div key="nav-group" className="pl-4 ml-5 space-y-1 border-l-3 border-neutral-800/80 overflow-hidden"
-            initial="collapsed" 
+            initial="collapsed"
             animate="open"
             exit="collapsed"
             variants={{
-              open: {
-                height: "auto",
-                opacity: 1,
-                transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.04, delayChildren: 0.03 },
-              },
-              collapsed: {
-                height: 0,
-                opacity: 0,
-                transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.03, staggerDirection: -1 },
-              },
+              open: { height: "auto", opacity: 1, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.04, delayChildren: 0.03 } },
+              collapsed: { height: 0, opacity: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.03, staggerDirection: -1 } },
             }}
           >
             {items.map((item) => (
@@ -86,34 +85,58 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
   );
 }
 
-function SidebarContent({ user, pathname, onItemClick }) {
+function SidebarContent({ user, pathname, onItemClick, status }) {
+  const subtitle = user?.email?.trim() || user?.username?.trim() || "--";
+  const imageUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
+  const roles = Array.isArray(user?.roles) ? user.roles.filter(Boolean) : [];
 
-  const u = user ?? {
-    name: "Skylab K",
-    subtitle: "skylab@std.yildiz.edu",
-    initials: "SK",
-    imageUrl: null,
+  const displayName = user?.fullName.trim().toLocaleLowerCase("tr-TR").split(/\s+/)
+    .map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR")))
+    .join(" ") || "Kullanıcı";
+
+  const initials = getInitials(displayName, subtitle);
+
+  const handleLogout = async () => {
+    const logoutRedirectUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_ISSUER}/protocol/openid-connect/logout?post_logout_redirect_uri=${encodeURIComponent(window.location.origin)}`;
+    signOut({ callbackUrl: logoutRedirectUrl });
   };
 
   return (
-    <div className="flex h-full w-full flex-col gap-6 px-4 py-6">
+    <div className="flex h-full w-full flex-col gap-4 px-4 py-6">
       <div className="flex items-center gap-3 px-2">
-        <div className="h-10 w-10 rounded-lg bg-neutral-700 text-white grid place-items-center text-sm font-medium overflow-hidden">
-          {u.imageUrl ? (
-            <img src={u.imageUrl} alt={u.name} className="h-full w-full object-cover" />
-          ) : (
-            <span>{u.initials}</span>
-          )}
+        <div className="h-10 w-10 rounded-lg bg-neutral-800 border border-white/10 text-white grid place-items-center text-sm font-medium overflow-hidden">
+          {status === "loading" ? null
+            : imageUrl ? (
+              <motion.img
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
+                src={imageUrl} alt={displayName} className="h-full w-full object-cover" />
+            ) : (
+              <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>{initials}</motion.span>
+            )}
         </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-neutral-100 truncate">{u.name}</p>
-          <p className="text-xs text-neutral-500 truncate">{u.subtitle}</p>
-        </div>
-        <Settings className="ml-auto h-4 w-4 text-zinc-400" />
+        {status === "loading" ? null : (
+          <>
+            <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}
+              className="min-w-0"
+            >
+              <p className="text-sm font-semibold text-neutral-100 truncate">{displayName}</p>
+              <p className="text-xs text-neutral-500 truncate">{subtitle}</p>
+            </motion.div>
+            <motion.button type="button" onClick={handleLogout}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.6 }}
+              className="rounded-lg bg-transparent text-xs py-1  ml-auto font-semibold text-neutral-500 transition hover:text-indigo-300"
+            >
+              <LogOut size={16} />
+            </motion.button>
+          </>
+        )}
+      </div>
+
+      <div className="w-full rounded-md text-center border border-white/8 bg-white/3 px-2 py-1 text-[11px] text-neutral-200">
+        <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: 1.2 }}>{roles.length ? roles[0] : "--"}</motion.span>
       </div>
 
       <div className="space-y-2">
-        
         <div className="space-y-1">
           <NavItem href="/admin" icon={LayoutDashboard} label="Dashboard" active={pathname === "/admin"} onClick={onItemClick} />
         </div>
@@ -142,23 +165,22 @@ export default function Sidebar({ user, children }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const panelRef = useRef(null);
+  const { data: session, status } = useSession();
+  const resolvedUser = user ?? session?.user;
 
   return (
     <div className="min-h-screen md:pl-72">
 
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 shrink-0 border-r border-neutral-950/70 bg-neutral-950/40 backdrop-blur-lg shadow-md">
-        <SidebarContent user={user} pathname={pathname} />
+        <SidebarContent user={resolvedUser} pathname={pathname} status={status} />
       </aside>
 
-      {/* Desktop top bar */}
       <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
         <div className="flex h-14 items-center px-6">
           <Breadcrumbs labels={{ "/admin": "Dashboard", "/admin/forms/new-form": "Yeni Form", "/admin/forms": "Formlar" }} />
         </div>
       </div>
 
-      {/* Mobile top bar */}
       <div className="md:hidden sticky top-0 z-40 border-b border-neutral-950/70 bg-neutral-950/40 backdrop-blur">
         <div className="flex h-14 items-center px-3">
           <button onClick={() => setOpen(true)}
@@ -172,17 +194,15 @@ export default function Sidebar({ user, children }) {
         </div>
       </div>
 
-      {/* Mobile drawer */}
       <div className={`md:hidden ${open ? "fixed" : "hidden"} inset-0 z-50`}>
         <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
         <div ref={panelRef} className={`absolute inset-y-0 left-0 w-72 backdrop-blu border-r border-neutral-950/70 bg-neutral-950/90 shadow-xl transition-transform duration-200 
           ${open ? "translate-x-0" : "-translate-x-full"}`}
         >
-          <SidebarContent user={user} pathname={pathname} onItemClick={() => setOpen(false)} />
+          <SidebarContent user={resolvedUser} pathname={pathname} status={status} onItemClick={() => setOpen(false)} />
         </div>
       </div>
 
-      {/* Page content */}
       <div>{children}</div>
     </div>
   );
