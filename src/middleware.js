@@ -13,7 +13,9 @@ export default auth((req) => {
 
   if (isOnAdminPanel) {
     if (!isLoggedIn) {
-        return NextResponse.redirect(new URL("/api/auth/signin", req.nextUrl));
+        const signInUrl = new URL("/auth/signin", req.nextUrl);
+        signInUrl.searchParams.set("callbackUrl", req.nextUrl.href);
+        return NextResponse.redirect(signInUrl);
     }
     if (!hasPermission) {
         return NextResponse.redirect(new URL("/", req.nextUrl));
