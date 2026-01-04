@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
