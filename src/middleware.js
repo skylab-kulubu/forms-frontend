@@ -1,13 +1,13 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-const ALLOWED_ROLES = ["ADMIN", "YK", "DK"];
+const ALLOWED_ROLES = ["ADMIN", "YK", "DK", "EKİP"];
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const isOnAdminPanel = req.nextUrl.pathname.startsWith("/admin");
 
-  const userRoles = req.auth?.roles || [];
+  const userRoles = req.auth?.user?.roles || [];
 
   const hasPermission = userRoles.some(role => ALLOWED_ROLES.includes(role));
 

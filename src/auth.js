@@ -1,6 +1,5 @@
 import NextAuth from "next-auth"
 import Keycloak from "next-auth/providers/keycloak"
-import { jwtDecode } from "jwt-decode";
 
 async function refreshAccessToken(token) {
     try {
@@ -17,16 +16,38 @@ async function refreshAccessToken(token) {
 
         const refreshedTokens = await response.json()
 
-        if (!response.ok) {
-            throw refreshedTokens
-        }
+        if (!response.ok) { throw refreshedTokens; }
 
-        return { ...token, accessToken: refreshedTokens.access_token, expiresAt: Date.now() + refreshedTokens.expires_in * 1000, refreshToken: refreshedTokens.refresh_token ?? token.refreshToken }
-    } catch (error) {
-        return {
-            ...token,
-            error: "RefreshAccessTokenError",
+        return { 
+            ...token, 
+            accessToken: refreshedTokens.access_token, 
+            expiresAt: Date.now() + refreshedTokens.expires_in * 1000, 
+            refreshToken: refreshedTokens.refresh_token ?? token.refreshToken 
         }
+    } catch (error) {
+        return { ...token, error: "RefreshAccessTokenError" }
+    }
+}
+
+async function getUserProfile(accessToken) {
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+        const response = await fetch(`${baseUrl}/api/users/me`, {
+            headers: {
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            },
+            method: "GET",
+        });
+
+        if (!response.ok) return null;
+
+        const json = await response.json();
+
+        return json.data;
+    } catch (error) {
+        return null;
     }
 }
 
@@ -41,18 +62,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     callbacks: {
         async jwt({ token, account }) {
             if (account) {
-                let roles = [];
-                try {
-                    const decodedToken = jwtDecode(account.access_token);
-                    roles = decodedToken.realm_access?.roles || [];
-                } catch (error) {
-                    console.error("JWT Decode Hatası", error);
-                }
+                const userProfile = await getUserProfile(account.access_token);
+
                 return {
                     accessToken: account.access_token,
                     expiresAt: account.expires_at * 1000,
                     refreshToken: account.refresh_token,
-                    roles: roles,
+                    userProfile: userProfile || {}
                 }
             }
 
@@ -62,7 +78,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
         async session({ session, token }) {
             session.accessToken = token.accessToken;
-            session.roles = token.roles;
+
+            if (token.userProfile) {
+                session.user = {
+                    ...session.user,
+                    ...token.userProfile,
+                    fullName: `${token.userProfile.firstName} ${token.userProfile.lastName}`,
+                };
+            }
             return session;
         },
     },
