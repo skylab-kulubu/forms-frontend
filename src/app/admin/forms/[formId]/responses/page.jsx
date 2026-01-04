@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { FormHeader } from "../../../components/Headers";
+import { ResponsesHeader } from "../../../components/Headers";
 import { ResponseListItem, ResponseListItemSkeleton } from "../../../components/ListItem";
 import Pagination from "../../../components/utils/Pagination";
 import { useFormResponsesQuery } from "@/lib/hooks/useResponse";
@@ -11,7 +11,7 @@ import { useFormContext } from "../../../providers";
 import StateCard from "@/app/components/StateCard";
 import { ListX, TextSearch } from "lucide-react";
 
-export default function FormPage() {
+export default function ResponsesPage() {
   const params = useParams();
   const formId = params?.formId;
   const router = useRouter();
@@ -64,7 +64,7 @@ export default function FormPage() {
 
   return (
     <div className="flex h-[calc(100dvh-3rem)] flex-col gap-6 overflow-hidden p-6">
-      <FormHeader formTitle={formTitle} formId={formIdLabel} searchValue={searchValue} onSearchChange={setSearchValue}
+      <ResponsesHeader formTitle={formTitle} formId={formIdLabel} searchValue={searchValue} onSearchChange={setSearchValue}
         sortValue={sortValue} onSortChange={setSortValue} statusValue={statusValue} onStatusChange={setStatusValue}
         respondentValue={respondentValue} onRespondentChange={setRespondentValue} onRefresh={() => refetch()} onEdit={() => router.push(`/admin/forms/${formId}/edit`)} stats={stats}
       />

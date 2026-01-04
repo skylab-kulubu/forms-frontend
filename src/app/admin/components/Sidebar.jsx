@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, LogOut, FilePlus, FileText, List } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, LogOut, FilePlus, FileText, List, PencilLine } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const breadcrumbLabels = {
@@ -49,7 +49,14 @@ function NavItem({ href, icon: Icon, label, active, onClick, variant = "default"
 }
 
 function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
-  const hasActive = items.some((i) => i.href === pathname);
+  const itemIsActive = (item) => {
+    if (!item) return false;
+    if (item.href === pathname) return true;
+    if (!item.children?.length) return false;
+    return item.children.some((child) => itemIsActive(child));
+  };
+
+  const hasActive = items.some((item) => itemIsActive(item));
   const [open, setOpen] = useState(hasActive);
 
   const base = "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/5";
@@ -82,7 +89,45 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
                 variants={{ open: { opacity: 1, x: 0 }, collapsed: { opacity: 0, x: -6 } }}
                 transition={{ duration: 0.15 }}
               >
-                <NavItem href={item.href} icon={item.icon} label={item.label} active={pathname === item.href} variant="subtle" onClick={onItemClick} />
+                <NavItem
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  active={itemIsActive(item)}
+                  variant="subtle"
+                  onClick={onItemClick}
+                />
+                {item.children?.length ? (
+                  <div className="mt-1 ml-3 space-y-1 border-l border-neutral-800/60 pl-3">
+                    {item.children.map((child) => (
+                      <div key={child.href}>
+                        <NavItem
+                          href={child.href}
+                          icon={child.icon}
+                          label={child.label}
+                          active={itemIsActive(child)}
+                          variant="subtle"
+                          onClick={onItemClick}
+                        />
+                        {child.children?.length ? (
+                          <div className="mt-1 ml-3 space-y-1 border-l border-neutral-800/60 pl-3">
+                            {child.children.map((grandChild) => (
+                              <NavItem
+                                key={grandChild.href}
+                                href={grandChild.href}
+                                icon={grandChild.icon}
+                                label={grandChild.label}
+                                active={itemIsActive(grandChild)}
+                                variant="subtle"
+                                onClick={onItemClick}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </motion.div>
             ))}
           </motion.div>
@@ -92,7 +137,7 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
   );
 }
 
-function SidebarContent({ user, pathname, onItemClick, status }) {
+function SidebarContent({ user, pathname, onItemClick, status, formId, form, formLoading }) {
   const subtitle = user?.email?.trim() || user?.username?.trim() || "--";
   const imageUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
   const roles = Array.isArray(user?.roles) ? user.roles.filter(Boolean) : [];
@@ -107,6 +152,20 @@ function SidebarContent({ user, pathname, onItemClick, status }) {
     const logoutRedirectUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_ISSUER}/protocol/openid-connect/logout?post_logout_redirect_uri=${encodeURIComponent(window.location.origin)}`;
     signOut({ callbackUrl: logoutRedirectUrl });
   };
+
+  const activeFormLabel = formLoading ? "..." : (form?.title?.trim() || "...");
+
+  const activeFormItem = formId
+  ? {
+      href: `/admin/forms/${formId}`,
+      icon: FileText,
+      label: activeFormLabel,
+      children: [
+        { href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" },
+        { href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" },
+      ],
+    }
+  : null;
 
   return (
     <div className="flex h-full w-full flex-col gap-4 px-4 py-6">
@@ -151,14 +210,16 @@ function SidebarContent({ user, pathname, onItemClick, status }) {
 
       <div className="space-y-2">
         <SectionLabel>Platform</SectionLabel>
-        <NavGroup
-          icon={FileText}
-          label="Formlar"
-          pathname={pathname}
-          onItemClick={onItemClick}
+        <NavGroup icon={FileText} label="Formlar"
+          pathname={pathname} onItemClick={onItemClick}
           items={[
             { href: "/admin/forms/new-form", icon: FilePlus, label: "Yeni Form" },
-            { href: "/admin/forms", icon: List, label: "Formları Görüntüle" },
+            {
+              href: "/admin/forms",
+              icon: List,
+              label: "Formları Görüntüle"
+            },
+            ...(activeFormItem ? [activeFormItem] : []),
           ]}
         />
       </div>
@@ -196,7 +257,7 @@ export default function Sidebar({ user, children }) {
     <div className="min-h-screen md:pl-72">
 
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 shrink-0 border-r border-neutral-950/70 bg-neutral-950/40 backdrop-blur-lg shadow-md">
-        <SidebarContent user={resolvedUser} pathname={pathname} status={status} />
+        <SidebarContent user={resolvedUser} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} />
       </aside>
 
       <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
@@ -223,7 +284,7 @@ export default function Sidebar({ user, children }) {
         <div ref={panelRef} className={`absolute inset-y-0 left-0 w-72 backdrop-blu border-r border-neutral-950/70 bg-neutral-950/90 shadow-xl transition-transform duration-200 
           ${open ? "translate-x-0" : "-translate-x-full"}`}
         >
-          <SidebarContent user={resolvedUser} pathname={pathname} status={status} onItemClick={() => setOpen(false)} />
+          <SidebarContent user={resolvedUser} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} onItemClick={() => setOpen(false)} />
         </div>
       </div>
 

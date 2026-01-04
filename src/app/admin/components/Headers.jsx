@@ -79,7 +79,7 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "des
   );
 }
 
-export function FormHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc",
+export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc",
   onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, onEdit, stats = { averageTime: "--", responseCount: 0, pendingCount: 0 },
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
