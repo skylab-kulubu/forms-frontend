@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
 import FormsFilterShell from "./utils/FormsFilterShell";
@@ -79,8 +79,8 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "des
   );
 }
 
-export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc",
-  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, stats = { averageTime: "--", responseCount: 0, pendingCount: 0 },
+export function FormHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc",
+  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, onEdit, stats = { averageTime: "--", responseCount: 0, pendingCount: 0 },
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
@@ -109,6 +109,9 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
           </div>
           <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header"
             title="Yenile" aria-label="Yenile"
+          />
+          <ActionButton icon={PencilLine} variant="primary" onClick={onEdit} size="md" tone="header"
+            title="Düzenle" aria-label="Düzenle"
           />
         </div>
 

@@ -8,6 +8,15 @@ import Breadcrumbs from "./Breadcrumbs";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, LogOut, FilePlus, FileText, List } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+const breadcrumbLabels = {
+  "/admin": "Panel",
+  "/admin/forms": "Formlar",
+  "/admin/forms/new-form": "Yeni Form",
+  "/admin/forms/:id": "Cevaplar",
+  "/admin/forms/:id/edit": "Form Düzenleme",
+  "/admin/responses/:id": "Cevap Detayi",
+};
+
 function SectionLabel({ children }) {
   return (
     <div className="px-2 text-xs font-medium text-neutral-400 tracking-wide select-none">
@@ -177,7 +186,7 @@ export default function Sidebar({ user, children }) {
 
       <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
         <div className="flex h-14 items-center px-6">
-          <Breadcrumbs labels={{ "/admin": "Dashboard", "/admin/forms/new-form": "Yeni Form", "/admin/forms": "Formlar" }} />
+          <Breadcrumbs labels={breadcrumbLabels} />
         </div>
       </div>
 
@@ -189,7 +198,7 @@ export default function Sidebar({ user, children }) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="ml-2 min-w-0 flex-1">
-            <Breadcrumbs labels={{ "/admin": "Dashboard", "/admin/forms/new-form": "Yeni Form", "/admin/forms": "Formlar" }} />
+            <Breadcrumbs labels={breadcrumbLabels} />
           </div>
         </div>
       </div>

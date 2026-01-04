@@ -14,6 +14,40 @@ function formatLabel(part) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function getPatternLabel(href, labels) {
+  const entries = Object.entries(labels || {}).filter(([key]) => key.includes(":"));
+  if (entries.length === 0) return null;
+
+  const hrefParts = href.split("/").filter(Boolean);
+  let bestLabel = null;
+  let bestScore = -1;
+
+  for (const [pattern, label] of entries) {
+    const patternParts = pattern.split("/").filter(Boolean);
+    if (patternParts.length !== hrefParts.length) continue;
+
+    let score = 0;
+    let match = true;
+
+    for (let i = 0; i < patternParts.length; i += 1) {
+      const part = patternParts[i];
+      if (part.startsWith(":")) continue;
+      if (part !== hrefParts[i]) {
+        match = false;
+        break;
+      }
+      score += 1;
+    }
+
+    if (match && score > bestScore) {
+      bestScore = score;
+      bestLabel = label;
+    }
+  }
+
+  return bestLabel;
+}
+
 export default function Breadcrumbs({ segments, labels = {}, includeRoot = true, rootLabel = "Dashboard", className }) {
   const pathname = usePathname() || "/";
 
@@ -31,7 +65,7 @@ export default function Breadcrumbs({ segments, labels = {}, includeRoot = true,
 
       computed = rest.map((seg, i) => {
         const href = "/" + baseParts.concat(rest.slice(0, i + 1)).join("/");
-        const label = labels[href] || labels[seg] || formatLabel(seg);
+        const label = labels[href] || getPatternLabel(href, labels) || labels[seg] || formatLabel(seg);
         return { href, label };
       });
 
@@ -45,7 +79,7 @@ export default function Breadcrumbs({ segments, labels = {}, includeRoot = true,
       computed = parts.map((seg) => {
         acc.push(seg);
         const href = "/" + acc.join("/");
-        const label = labels[href] || labels[seg] || formatLabel(seg);
+        const label = labels[href] || getPatternLabel(href, labels) || labels[seg] || formatLabel(seg);
         return { href, label };
       });
     }
