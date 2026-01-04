@@ -2,7 +2,9 @@
 
 import { useMemo } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { motion } from "framer-motion";
 import { LogOut } from "lucide-react";
+import HoverCard from "./utils/HoverCard";
 
 function getInitial(name, email) {
   const source = (name || email || "").trim();
@@ -13,8 +15,7 @@ export default function MainHeader() {
   const { data: session, status } = useSession();
   const isAuthed = status === "authenticated";
   const user = session?.user;
-  const name = user?.firstName?.trim().toLocaleLowerCase("tr-TR").replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR")) || "--";
-  const email = user?.email?.trim() || "";
+  const name = user?.firstName?.trim().toLocaleLowerCase("tr-TR").replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR")) || "Kullanıcı";
   const avatarUrl = user?.profilePictureUrl?.trim() || "";
 
   const initial = useMemo(() => getInitial(user?.name, user?.email), [user]);
@@ -33,39 +34,47 @@ export default function MainHeader() {
   return (
     <header className={`w-full px-4 py-3 md:px-6`}>
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2">
-        <div className="flex items-center gap-4">
-          <img src="/skylab.svg" alt="Skylab Logo" className="h-12 w-12 object-contain p-0.5" />
+        <div className="flex items-center gap-3 py-1">
+          <img src="/skylab.svg" alt="Skylab Logo" className="h-10 w-10 object-contain p-0.5" />
           <div>
-            <p className="text-[21px] font-semibold text-[#e0c8e5] uppercase tracking-[6px] -mt-1">Forms</p>
+            <p className="text-[18px] font-semibold text-[#e0c8e5] uppercase tracking-[6px] -mt-1">Forms</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {!isAuthed ? (
-            <button type="button" onClick={handleLogin} disabled={status === "loading"}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-neutral-100 transition hover:border-white/20 hover:bg-white/10"
+        <div className="flex items-center gap-3 py-1">
+          {status === "loading" ? null : !isAuthed ? (
+            <motion.button type="button" onClick={handleLogin} disabled={status === "loading"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-neutral-100 hover:text-pink-100 transition hover:border-pink-100/40 hover:bg-pink-100/30"
             >
-              Login
-            </button>
+              E-Skylab ile giriş yap
+            </motion.button>
           ) : (
             <>
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
-                <button type="button" onClick={handleLogout} className="rounded-lg bg-transparent text-xs p-1 -mr-2 font-semibold text-neutral-400 transition hover:text-indigo-200">
-                  <LogOut size={12} style={{ transform: "scaleX(-1)" }} />
-                </button>
-                <div className="hidden text-right sm:block">
-                  <p className="text-xs font-semibold text-neutral-100">
-                    Merhaba, {name}
-                  </p>
+              <HoverCard user={user}>
+                <div className="flex items-center gap-3 rounded-xl bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5 -mt-1">
+                  <motion.div initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
+                    className="hidden text-right sm:block"
+                  >
+                    <p className="text-[12.5px] font-semibold text-neutral-100">
+                      Merhaba, {name}
+                    </p>
+                  </motion.div>
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
+                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-neutral-800 text-xs font-semibold text-neutral-200"
+                  >
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span>{initial}</span>
+                    )}
+                  </motion.div>
+                  <motion.button type="button" onClick={handleLogout} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
+                    className="rounded-lg bg-transparent text-xs py-1 -ml-1 font-semibold text-neutral-400 transition hover:text-pink-200"
+                  >
+                    <LogOut size={14} />
+                  </motion.button>
                 </div>
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-neutral-800 text-xs font-semibold text-neutral-200">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
-                  ) : (
-                    <span>{initial}</span>
-                  )}
-                </div>
-              </div>
+              </HoverCard>
             </>
           )}
         </div>
