@@ -1,20 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, LogOut, FilePlus, FileText, List } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const breadcrumbLabels = {
-  "/admin": "Panel",
+  "/admin": "Dashboard",
   "/admin/forms": "Formlar",
-  "/admin/forms/new-form": "Yeni Form",
-  "/admin/forms/:id": "Cevaplar",
-  "/admin/forms/:id/edit": "Form Düzenleme",
-  "/admin/responses/:id": "Cevap Detayi",
+  "/admin/forms/new-form": "Yeni Form"
 };
 
 function SectionLabel({ children }) {
@@ -177,6 +175,23 @@ export default function Sidebar({ user, children }) {
   const { data: session, status } = useSession();
   const resolvedUser = user ?? session?.user;
 
+  const { formId, form, loading: formLoading } = useFormContext();
+
+  const dynamicBreadcrumbLabels = useMemo(() => {
+    const base = breadcrumbLabels;
+
+    if (!formId) return base;
+
+    const title = (form?.title || "...").trim();
+
+    return {
+      ...base,
+      [`/admin/forms/${formId}`]: formLoading ? "..." : title,
+      [`/admin/forms/${formId}/edit`]: "Düzenleme",
+      [`/admin/forms/${formId}/responses`]: "Cevaplar",
+    };
+  }, [formId, form?.title, formLoading]);
+
   return (
     <div className="min-h-screen md:pl-72">
 
@@ -186,7 +201,7 @@ export default function Sidebar({ user, children }) {
 
       <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
         <div className="flex h-14 items-center px-6">
-          <Breadcrumbs labels={breadcrumbLabels} />
+          <Breadcrumbs labels={dynamicBreadcrumbLabels} />
         </div>
       </div>
 
@@ -198,7 +213,7 @@ export default function Sidebar({ user, children }) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="ml-2 min-w-0 flex-1">
-            <Breadcrumbs labels={breadcrumbLabels} />
+            <Breadcrumbs labels={dynamicBreadcrumbLabels} />
           </div>
         </div>
       </div>

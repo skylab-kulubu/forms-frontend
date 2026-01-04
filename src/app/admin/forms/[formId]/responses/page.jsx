@@ -3,17 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { FormHeader } from "../../components/Headers";
-import { ResponseListItem, ResponseListItemSkeleton } from "../../components/ListItem";
-import Pagination from "../../components/utils/Pagination";
+import { FormHeader } from "../../../components/Headers";
+import { ResponseListItem, ResponseListItemSkeleton } from "../../../components/ListItem";
+import Pagination from "../../../components/utils/Pagination";
 import { useFormResponsesQuery } from "@/lib/hooks/useResponse";
-import { useFormContext } from "../../providers";
+import { useFormContext } from "../../../providers";
 import StateCard from "@/app/components/StateCard";
 import { ListX, TextSearch } from "lucide-react";
 
 export default function FormPage() {
   const params = useParams();
-  const formId = params?.id;
+  const formId = params?.formId;
   const router = useRouter();
 
   const [searchValue, setSearchValue] = useState("");
@@ -88,7 +88,7 @@ export default function FormPage() {
               <div className="flex-1 overflow-y-auto pr-1 scrollbar">
                 <div className="space-y-1.5">
                   {responses.map((response) => (
-                    <ResponseListItem key={response.id} response={response} />
+                    <ResponseListItem key={response.id} formId={formId} response={response} />
                   ))}
                 </div>
               </div>

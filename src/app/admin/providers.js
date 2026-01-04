@@ -9,7 +9,7 @@ const FormContext = createContext(null);
 
 export function FormProvider({ children }) {
     const params = useParams();
-    const formId = params?.id;
+    const formId = params?.formId;
     const { status } = useSession();
 
     const { data: form, isLoading, error } = useFormInfoQuery(formId, status === "authenticated");

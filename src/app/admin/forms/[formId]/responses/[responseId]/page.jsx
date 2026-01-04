@@ -7,7 +7,7 @@ import { FormStatusHandler } from "@/app/components/FormStatusHandler";
 
 export default function ResponsePage() {
   const params = useParams();
-  const rawId = params?.id;
+  const rawId = params?.responseId;
   const responseId = Array.isArray(rawId) ? rawId[0] : rawId;
   const { data, isLoading, error } = useResponseQuery(responseId);
 

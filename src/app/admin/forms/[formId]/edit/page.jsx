@@ -6,8 +6,8 @@ import { FormStatusHandler } from "@/app/components/FormStatusHandler";
 import FormEditor from "../../../components/form-editor/FormEditor";
 
 export default function FormEditorPage() {
-  const { id } = useParams();
-  const { data, isLoading, error, refetch } = useFormQuery(id);
+  const { formId } = useParams();
+  const { data, isLoading, error, refetch } = useFormQuery(formId);
 
   return (
     <FormStatusHandler

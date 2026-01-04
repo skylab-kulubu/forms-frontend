@@ -148,7 +148,7 @@ export function ResponseListItemSkeleton({ count = 4, className = "" }) {
   );
 }
 
-export function ResponseListItem({ response, className = "" }) {
+export function ResponseListItem({ formId, response, className = "" }) {
   if (!response) return null;
 
   const statusValue = Number(response.status ?? 0);
@@ -209,7 +209,7 @@ export function ResponseListItem({ response, className = "" }) {
               {submittedAt}
             </span>
           </div>
-          <ActionButton href={`/admin/responses/${response.id}`} icon={Eye} label="Görüntüle" />
+          <ActionButton href={`/admin/forms/${formId}/responses/${response.id}`} icon={Eye} label="Görüntüle" />
         </div>
       </div>
     </div >
