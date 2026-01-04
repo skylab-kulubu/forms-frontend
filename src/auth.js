@@ -25,7 +25,7 @@ async function refreshAccessToken(token) {
             refreshToken: refreshedTokens.refresh_token ?? token.refreshToken 
         }
     } catch (error) {
-        return { ...token, error: "RefreshAccessTokenError" }
+        return { ...token, accessToken: undefined, refreshToken: undefined, expiresAt: 0, error: "RefreshAccessTokenError" }
     }
 }
 
@@ -68,7 +68,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     accessToken: account.access_token,
                     expiresAt: account.expires_at * 1000,
                     refreshToken: account.refresh_token,
-                    userProfile: userProfile || {}
+                    userProfile: userProfile || {},
+                    error: undefined
                 }
             }
 
@@ -78,6 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
         async session({ session, token }) {
             session.accessToken = token.accessToken;
+            session.error = token.error;
 
             if (token.userProfile) {
                 session.user = {
