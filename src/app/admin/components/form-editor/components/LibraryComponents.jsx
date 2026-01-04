@@ -2,22 +2,8 @@ import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { CheckCircle2, CircleGauge, CircleAlert, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
 
-export function LibraryPanel({
-    children,
-    activeTab = "components",
-    onSelectTab,
-    handleSave,
-    onRefresh,
-    onShare,
-    showShare,
-    shareStatus,
-    onDelete,
-    isDeleteDisabled,
-    isPending,
-    isError,
-    isSuccess,
-    layout = "grid",
-    className = "",
+export function LibraryPanel({ children, activeTab = "components", onSelectTab, handleSave, onRefresh, onShare,
+    showShare, shareStatus, onDelete, isDeleteDisabled, isPending, isError, isSuccess, layout = "grid", className = ""
 }) {
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
@@ -38,7 +24,7 @@ export function LibraryPanel({
                 transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
-                <div className="h-10 flex items-center justify-between px-4 text-sm tracking-wide border-b border-neutral-800">
+                <div className="min-h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 text-sm tracking-wide border-b border-neutral-800">
                     <div className="flex items-center">
                         <button type="button"
                             className={`font-semibold transition-colors ${activeTab === "components" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
@@ -61,7 +47,7 @@ export function LibraryPanel({
                             Açıklama
                         </button>
                     </div>
-                    <div className="flex items-center gap-1 text-neutral-500">
+                    <div className="ml-auto flex items-center gap-1 text-neutral-500">
                         {showShare ? (
                             <button type="button" aria-label="Formu paylas" onClick={onShare} disabled={!onShare}
                                 className={`rounded-lg p-1.5 transition-colors ${onShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-emerald-500" : shareStatus === "error" ? "text-red-500" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}

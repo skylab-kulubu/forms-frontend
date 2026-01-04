@@ -350,10 +350,9 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         <div ref={setLibraryDropRef} className="col-span-1 h-[92vh] w-8 justify-self-end mr-2">
             <DrawerTrigger asChild>
                 <button type="button"
-                    className={`h-full w-full rounded-xl border text-neutral-200 transition-colors
+                    className={`h-full w-full rounded-xl border text-neutral-200 transition-colors aria-label="Paneli aç" title="Paneli aç"
                         ${dragSource === "canvas" ? "border-neutral-700/80 border-dashed bg-neutral-950/60" : "border-neutral-800 bg-neutral-950/40 hover:border-neutral-700 hover:bg-neutral-900/70"}
                         ${isLibraryDropOver ? "border-red-500/70 bg-red-500/10 text-red-100" : ""}`}
-                    aria-label="Paneli aç" title="Paneli aç"
                 >
                     {dragSource === "canvas" ? (
                         <div className="flex h-full flex-col items-center justify-center gap-2">
