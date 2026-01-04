@@ -88,9 +88,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     fullName: `${token.userProfile.firstName} ${token.userProfile.lastName}`,
                 };
             }
-            if (token.error === "RefreshAccessTokenError") {
-                return null;
-            }
             return session;
         },
     },
