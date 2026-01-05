@@ -1,13 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, ClockPlusIcon, FileXCorner, ListX, TextSearch,  } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClockPlusIcon, ChevronsLeft, ListX, TextSearch,  } from "lucide-react";
 
 import { useResponseQuery } from "@/lib/hooks/useResponse";
 import { ResponseListItem, ResponseListSkeleton } from "./components/ResponseDisplayerComponents";
 import { ResponseActions } from "./components/ResponseActions";
 import StateCard from "@/app/components/StateCard";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/app/admin/components/utils/Drawer";
+
+function useMediaQuery(query) {
+    const [matches, setMatches] = useState(false);
+
+    useEffect(() => {
+        const media = window.matchMedia(query);
+        if (media.matches !== matches) {
+            setMatches(media.matches);
+        }
+        const listener = () => setMatches(media.matches);
+        media.addEventListener("change", listener);
+        return () => media.removeEventListener("change", listener);
+    }, [query, matches]);
+
+    return matches;
+}
+
+const ActionTrigger = forwardRef((props, ref) => {
+    return (
+        <div ref={ref} className="flex h-full items-center justify-end z-10 -mr-5.5">
+            <DrawerTrigger asChild>
+                <motion.button type="button" initial={{ x: 0 }} title="Paneli aç"
+                    className="relative flex h-full w-5 items-center justify-center rounded-l-full border border-r-0 border-neutral-800 bg-[#121212] shadow-xl text-neutral-500 hover:text-neutral-200 transition-colors"
+                >
+                    <ChevronsLeft size={16} className="opacity-60" />
+                </motion.button>
+            </DrawerTrigger>
+        </div>
+    );
+});
+ActionTrigger.displayName = "ActionTrigger";
 
 const slideVariants = {
   enter: (direction) => ({
@@ -41,11 +73,17 @@ export default function ResponseDisplayer({ response }) {
   const [activeView, setActiveView] = useState("responses");
   const [direction, setDirection] = useState(0);
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const isLgUp = useMediaQuery("(min-width: 1024px)");
+
+  useEffect(() => {
+    if (isLgUp) {
+        setDrawerOpen(false);
+    }
+  }, [isLgUp]);
+
   const linkedEnabled = canNavigateLinked && activeView === "linked";
-  const { data: linkedData, isLoading: isLinkedLoading, error: linkedError } = useResponseQuery(
-    linkedResponseId,
-    { enabled: linkedEnabled }
-  );
+  const { data: linkedData, isLoading: isLinkedLoading, error: linkedError } = useResponseQuery(linkedResponseId, { enabled: linkedEnabled });
   const linkedResponse = linkedData?.data ?? linkedData ?? null;
   const linkedSchema = Array.isArray(linkedResponse?.schema) ? linkedResponse.schema : [];
 
@@ -117,73 +155,106 @@ export default function ResponseDisplayer({ response }) {
   const activeResponse = activeView === "linked" ? linkedResponse : response;
   const actionsLoading = activeView === "linked" && isLinkedLoading;
 
-  return (
-    <div className="grid grid-cols-12 gap-4">
-      <motion.div className="col-span-12 lg:col-span-8" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
-      >
-        <div className="relative h-[93vh] p-4 shadow-sm">
-          <AnimatePresence mode="wait">
-            {canNavigateLinked && (
-              <motion.button key={arrowSide} type="button" onClick={handleToggleLinked} aria-label={"Diğer cevaplar"}
-                className={`absolute inset-y-0 translate-y-1/5 ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 flex w-5 h-[70vh] items-center justify-center rounded-md border border-white/5 bg-neutral-900/90 text-neutral-200 shadow-lg transition hover:bg-neutral-800 opacity-80`}
-                initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <ArrowIcon size={16} />
-              </motion.button>
-            )}
-          </AnimatePresence>
+  const renderMainContent = (className) => (
+    <motion.div className={`${className} h-full`} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
+    >
+      <div className="relative h-[93vh] p-4 shadow-sm">
+        <AnimatePresence mode="wait">
+          {canNavigateLinked && (
+            <motion.button key={arrowSide} type="button" onClick={handleToggleLinked} aria-label={"Diğer cevaplar"}
+              className={`absolute inset-y-0 translate-y-1/5 ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 flex w-5 h-[70vh] items-center justify-center rounded-md border border-white/5 bg-neutral-900/90 text-neutral-200 shadow-lg transition hover:bg-neutral-800 opacity-80`}
+              initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <ArrowIcon size={16} />
+            </motion.button>
+          )}
+        </AnimatePresence>
 
-          <div className="flex h-full flex-col gap-4">
-            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
-              {activeId && (
-                <div className="text-left">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">Response ID</p>
-                  <p className="mt-1 text-xs text-neutral-200 break-all">{activeId}</p>
-                </div>
-              )}
-              <div className="text-end text-xs text-neutral-500">
-                <p>Cevaplanan {answeredCount} soru</p>
-                <div className="flex gap-1">
-                  <ClockPlusIcon size={12} className="mt-0.5" />
-                  <p>{formatDateTime(activeResponse?.submittedAt)}</p>
-                </div>
+        <div className="flex h-full flex-col gap-4">
+          <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
+            {activeId && (
+              <div className="text-left">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">Response ID</p>
+                <p className="mt-1 text-xs text-neutral-200 break-all">{activeId}</p>
+              </div>
+            )}
+            <div className="text-end text-xs text-neutral-500">
+              <p>Cevaplanan {answeredCount} soru</p>
+              <div className="flex gap-1">
+                <ClockPlusIcon size={12} className="mt-0.5" />
+                <p>{formatDateTime(activeResponse?.submittedAt)}</p>
               </div>
             </div>
+          </div>
 
-            <div className="relative flex-1 overflow-hidden">
-              <AnimatePresence mode="wait" custom={direction}>
-                {activeView === "responses" ? (
-                  <motion.div key="responses" custom={direction} variants={slideVariants}
-                    initial="enter" animate="center" exit="exit"
-                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
-                  >
-                    {responsesContent}
-                  </motion.div>
-                ) : (
-                  <motion.div key="linked" custom={direction} variants={slideVariants}
-                    initial="enter" animate="center" exit="exit"
-                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
-                  >
-                    {linkedContent}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+          <div className="relative flex-1 overflow-hidden">
+            <AnimatePresence mode="wait" custom={direction}>
+              {activeView === "responses" ? (
+                <motion.div key="responses" custom={direction} variants={slideVariants}
+                  initial="enter" animate="center" exit="exit" transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
+                >
+                  {responsesContent}
+                </motion.div>
+              ) : (
+                <motion.div key="linked" custom={direction} variants={slideVariants}
+                  initial="enter" animate="center" exit="exit" transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
+                >
+                  {linkedContent}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-      </motion.div>
+      </div>
+    </motion.div>
+  );
 
-      <motion.div className="col-span-12 lg:col-span-4" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
-      >
-        <div className="h-[93vh] p-4 shadow-sm">
-          <ResponseActions response={activeResponse} isLoading={actionsLoading} />
+  const drawerContent = (
+     <div className="h-full w-full p-4 shadow-sm overflow-y-auto scrollbar">
+        <ResponseActions response={activeResponse} isLoading={actionsLoading} />
+     </div>
+  );
+
+  if (isLgUp) {
+      return (
+        <div className="grid grid-cols-12 gap-4">
+            {renderMainContent("col-span-12 lg:col-span-8")}
+            <motion.div className="col-span-4 h-[93vh]" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
+            >
+                {drawerContent}
+            </motion.div>
         </div>
-      </motion.div>
+      );
+  }
+
+  return (
+    <div className="relative w-full h-[93vh]">
+        {isLgUp ? (
+            <div className="grid grid-cols-12 gap-4 h-full">
+                {renderMainContent("col-span-12 lg:col-span-8")}
+                <motion.div className="col-span-4 h-full" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
+                >
+                    {drawerContent}
+                </motion.div>
+            </div>
+        ) : (
+            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+                <div className="flex h-full">
+                    {renderMainContent("flex-1 min-w-0")}
+                    <ActionTrigger />
+                </div>
+
+                <DrawerContent className="h-full" rootClassName="overflow-visible" wrapperClassName="-mr-5.5">
+                    {drawerContent}
+                </DrawerContent>
+            </Drawer>
+        )}
     </div>
   );
 }

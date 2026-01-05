@@ -88,7 +88,7 @@ export function DrawerClose({ asChild = false, children, onClick, ...props }) {
   );
 }
 
-export function DrawerContent({ children, className = "", overlayClassName = "", closeOnOverlayClick = true, ...props }) {
+export function DrawerContent({ children, className = "", overlayClassName = "", rootClassName = "", wrapperClassName = "", closeOnOverlayClick = true, ...props }) {
   const { open, setOpen } = useDrawerContext();
   const [mounted, setMounted] = useState(false);
 
@@ -112,12 +112,12 @@ export function DrawerContent({ children, className = "", overlayClassName = "",
   return (
     <AnimatePresence>
       {open && (
-        <div className="absolute inset-0 z-50 overflow-hidden">
+        <div className={`absolute inset-0 z-50 overflow-hidden ${rootClassName}`}>
           <motion.div className={overlayClasses} onClick={closeOnOverlayClick ? () => setOpen(false) : undefined}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           />
 
-          <motion.div  role="dialog"  aria-modal="true" className="absolute inset-y-0 right-0 flex h-full pointer-events-none" 
+          <motion.div  role="dialog"  aria-modal="true" className={`absolute inset-y-0 right-0 flex h-full pointer-events-none ${wrapperClassName}`} 
             initial={{ x: "100%" }} animate={{ x: "0%" }} exit={{ x: "100%" }} transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }} {...props}
           >
             

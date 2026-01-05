@@ -71,7 +71,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
 
     const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
-    const { data: linkableForms, isLoading: isLinkableFormsLoading } = useLinkableFormsQuery(initialForm?.id || formId);
+    const { data: linkableForms, isLoading: isLinkableFormsLoading } = useLinkableFormsQuery(initialForm?.id);
 
     useEffect(() => {
         if (!isError && !isSuccess) return;
