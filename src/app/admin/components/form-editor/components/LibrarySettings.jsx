@@ -71,12 +71,12 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                         const roleValue = Number(editor.role);
                         return (
                             <div key={editor.userId} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="grid h-9 w-9 place-items-center rounded-lg bg-neutral-950 text-xs font-semibold uppercase tracking-wide text-emerald-200">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950 text-xs font-semibold uppercase tracking-wide text-emerald-200">
                                         {(editor.fullName || editor.email || "--").charAt(0)}
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-neutral-50">{editor.fullName || editor.email || "--"}</p>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-neutral-50 truncate">{editor.fullName || editor.email || "--"}</p>
                                         <p className="text-[9px] text-neutral-500 truncate">{editor.email || editor.userId}</p>
                                     </div>
                                 </div>

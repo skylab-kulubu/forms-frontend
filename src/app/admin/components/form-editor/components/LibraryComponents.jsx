@@ -135,7 +135,7 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
                 className="group relative flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors"
             >
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-neutral-900 border border-white/10 text-neutral-400 group-hover:text-neutral-200">
-                     <img src={item.svg} alt="" className="h-9 w-9 opacity-90" />
+                     <item.icon size={20} /> 
                 </div>
 
                 <div className="flex-1 min-w-0">

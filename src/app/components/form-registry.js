@@ -7,6 +7,8 @@ import { CreateFormTimePicker, DisplayFormTimePicker }    from "@/app/components
 import { CreateFormFileUpload, DisplayFormFileUpload }    from "@/app/components/form-components/FormFileUpload";
 import { CreateFormLink, DisplayFormLink }                from "@/app/components/form-components/FormLink";
 
+import { Type, AlignLeft, ChevronsUpDown, ListChecks, Calendar, Clock, Paperclip, Link } from "lucide-react";
+
 export const REGISTRY = {
   short_text: {
     label: "Kısa Yanıt",
@@ -59,12 +61,12 @@ export const REGISTRY = {
 };
 
 export const COMPONENTS = [
-  { type: "short_text",  label: "Kısa Yanıt",   svg: "/assets/components/short-text.svg" },
-  { type: "long_text",   label: "Uzun Yanıt",   svg: "/assets/components/long-text.svg" },
-  { type: "combobox",    label: "Açılır Liste", svg: "/assets/components/combobox.svg" },
-  { type: "multi_choice",label: "Çoklu Seçim",  svg: "/assets/components/multi-choice.svg" },
-  { type: "date",        label: "Tarih",        svg: "/assets/components/date-picker.svg" },
-  { type: "time",        label: "Saat",         svg: "/assets/components/time-picker.svg" },
-  { type: "file",        label: "Dosya",        svg: "/assets/components/file-upload.svg" },
-  { type: "link",        label: "Bağlantı",     svg: "/assets/components/link.svg" },
+  { type: "short_text",  label: "Kısa Yanıt",   svg: "/assets/components/short-text.svg",   icon: Type },
+  { type: "long_text",   label: "Uzun Yanıt",   svg: "/assets/components/long-text.svg",    icon: AlignLeft },
+  { type: "combobox",    label: "Açılır Liste", svg: "/assets/components/combobox.svg",     icon: ChevronsUpDown },
+  { type: "multi_choice",label: "Çoklu Seçim",  svg: "/assets/components/multi-choice.svg", icon: ListChecks },
+  { type: "date",        label: "Tarih",        svg: "/assets/components/date-picker.svg",  icon: Calendar },
+  { type: "time",        label: "Saat",         svg: "/assets/components/time-picker.svg",  icon: Clock },
+  { type: "file",        label: "Dosya",        svg: "/assets/components/file-upload.svg",  icon: Paperclip },
+  { type: "link",        label: "Bağlantı",     svg: "/assets/components/link.svg",         icon: Link },
 ];
