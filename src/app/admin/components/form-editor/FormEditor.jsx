@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { PackagePlus, PanelRightOpen, Trash2, X } from "lucide-react";
+import { ChevronsLeft, PackagePlus, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
@@ -12,7 +13,7 @@ import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
 import { LibrarySettings } from "./components/LibrarySettings";
 import { useDeleteFormMutation, useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
 import ApprovalOverlay from "../ApprovalOverlay";
-import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from "../utils/Drawer";
+import { Drawer, DrawerContent, DrawerTrigger } from "../utils/Drawer";
 
 import { COMPONENTS, REGISTRY } from "../../../components/form-registry";
 
@@ -21,7 +22,7 @@ const LibraryTipTap = dynamic(() => import("./components/LibraryTipTap").then((m
 const FIXED_USER_ID = "11111111-1111-1111-1111-111111111111";
 const formId = crypto.randomUUID();
 
-const INITIAL_EDITORS = [ { userId: FIXED_USER_ID, fullName: "Skylab Kişisi", email: "forms@skylab.com", role: 3, photoUrl: null }];
+const INITIAL_EDITORS = [{ userId: FIXED_USER_ID, fullName: "Skylab Kişisi", email: "forms@skylab.com", role: 3, photoUrl: null }];
 
 function useMediaQuery(query) {
     const [matches, setMatches] = useState(() => {
@@ -347,24 +348,53 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     );
 
     const drawerTrigger = (
-        <div ref={setLibraryDropRef} className="col-span-1 h-[92vh] w-8 justify-self-end mr-2">
+        <div ref={setLibraryDropRef} className="col-span-1 h-[92vh] flex items-center justify-end z-10">
             <DrawerTrigger asChild>
-                <button type="button"
-                    className={`h-full w-full rounded-xl border text-neutral-200 transition-colors aria-label="Paneli aç" title="Paneli aç"
-                        ${dragSource === "canvas" ? "border-neutral-700/80 border-dashed bg-neutral-950/60" : "border-neutral-800 bg-neutral-950/40 hover:border-neutral-700 hover:bg-neutral-900/70"}
-                        ${isLibraryDropOver ? "border-red-500/70 bg-red-500/10 text-red-100" : ""}`}
+                <motion.button type="button" layout initial={false}
+                    animate={dragSource === "canvas" ? "dragging" : "idle"}
+                    variants={{
+                        idle: {
+                            width: "1.25rem",
+                            marginRight: "-1rem",
+                            borderTopLeftRadius: "9999px",
+                            borderBottomLeftRadius: "9999px",
+                            borderTopRightRadius: "0px",
+                            borderBottomRightRadius: "0px",
+                            backgroundColor: "#121212",
+                            borderColor: "rgb(38 38 38)",
+                            x: 0 
+                        },
+                        dragging: {
+                            width: "100%",
+                            marginRight: "0rem",
+                            borderTopLeftRadius: "9999px",
+                            borderBottomLeftRadius: "9999px",
+                            borderTopRightRadius: "9999px",
+                            borderBottomRightRadius: "9999px",
+                            backgroundColor: isLibraryDropOver ? "rgba(239, 68, 68, 0.1)" : "rgba(10, 10, 10, 0.6)",
+                            borderColor: isLibraryDropOver ? "rgba(239, 68, 68, 0.7)" : "rgba(64, 64, 64, 0.8)",
+                            x: 0
+                        }
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                    className="relative flex h-full items-center justify-center border border-r-0 overflow-hidden focus:outline-none shadow-sm"
+                    title={dragSource === "canvas" ? "Bırak ve sil" : "Paneli aç"}
                 >
-                    {dragSource === "canvas" ? (
-                        <div className="flex h-full flex-col items-center justify-center gap-2">
-                            <Trash2 size={16} className={isLibraryDropOver ? "text-red-300" : "text-neutral-400"} />
-                            <span className="text-[10px] font-semibold tracking-wide text-neutral-400">Sil</span>
-                        </div>
-                    ) : (
-                        <div className="flex h-full items-center justify-center">
-                            <PanelRightOpen size={18} />
-                        </div>
-                    )}
-                </button>
+                    <AnimatePresence mode="popLayout">
+                        {dragSource === "canvas" ? (
+                            <motion.div key="trash-icon" className="flex flex-col items-center justify-center gap-2"
+                                initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} transition={{ duration: 0.2 }}
+                            >
+                                <Trash2 size={20} className={isLibraryDropOver ? "text-red-400" : "text-neutral-400"} />
+                                <span className={`text-xs font-semibold ${isLibraryDropOver ? "text-red-400" : "text-neutral-500"}`}>Sil</span>
+                            </motion.div>
+                        ) : (
+                            <motion.div key="panel-handle" className="group transition-colors text-neutral-500 hover:text-neutral-300 focus:outline-none" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                                <ChevronsLeft size={14} strokeWidth={2.5} className="opacity-60 transition-transform duration-200 group-hover:scale-110 group-hover:opacity-100"/>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.button>
             </DrawerTrigger>
         </div>
     );
@@ -490,19 +520,14 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
             <div ref={editorRef} className="relative">
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                        {gridContent}
-                    <DrawerContent className="bg-neutral-950/95" closeOnOverlayClick={true}>
-                            <div className="flex items-center justify-end px-4 pt-4">
-                                <DrawerClose asChild>
-                                    <button type="button" className="rounded-lg p-1.5 text-neutral-500 transition-colors hover:text-neutral-100 hover:bg-neutral-800/70"
-                                        aria-label="Paneli kapat" title="Paneli kapat"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                </DrawerClose>
-                            </div>
-                            <div className="min-h-0 flex-1 px-2 pb-2">
-                                {libraryPanel}
+                        <div className="flex-1 h-full w-full p-4">
+                            {gridContent}
+                        </div>
+                        <DrawerContent className="h-full">
+                            <div className="h-full flex flex-col">
+                                <div className="flex-1 min-h-0 px-1 py-1">
+                                    {libraryPanel}
+                                </div>
                             </div>
                         </DrawerContent>
                     </Drawer>

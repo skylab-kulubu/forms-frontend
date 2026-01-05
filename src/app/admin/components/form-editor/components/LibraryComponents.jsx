@@ -24,25 +24,22 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab, 
                 transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
-                <div className="min-h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 text-sm tracking-wide border-b border-neutral-800">
-                    <div className="flex items-center">
-                        <button type="button"
-                            className={`font-semibold transition-colors ${activeTab === "components" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-                            onClick={() => onSelectTab && onSelectTab("components")}
+                <div className="min-h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 pb-2 lg:pb-0 text-sm tracking-wide border-b border-neutral-800">
+                    <div className="flex items-center grow justify-center sm:justify-start mr-4">
+                        <button type="button" onClick={() => onSelectTab && onSelectTab("components")}
+                            className={`font-semibold w-full transition-colors ${activeTab === "components" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
                         >
                             Bileşenler
                         </button>
                         <span className="mx-2 h-3 w-px bg-neutral-800" />
-                        <button type="button"
-                            className={`font-semibold transition-colors ${activeTab === "settings" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-                            onClick={() => onSelectTab && onSelectTab("settings")}
+                        <button type="button" onClick={() => onSelectTab && onSelectTab("settings")}
+                            className={`font-semibold w-full transition-colors ${activeTab === "settings" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
                         >
                             Ayarlar
                         </button>
                         <span className="mx-2 h-3 w-px bg-neutral-800" />
-                        <button type="button"
-                            className={`font-semibold transition-colors ${activeTab === "description" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-                            onClick={() => onSelectTab && onSelectTab("description")}
+                        <button type="button" onClick={() => onSelectTab && onSelectTab("description")}
+                            className={`font-semibold w-full transition-colors ${activeTab === "description" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
                         >
                             Açıklama
                         </button>
@@ -73,13 +70,8 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab, 
 
                 <div className={`flex-1 min-h-0 p-1 ${activeTab === 'description' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto overflow-x-hidden scrollbar'}`}>
                     <AnimatePresence mode="wait" initial={false}>
-                        <motion.div
-                            key={activeTab}
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
-                            className="h-full"
+                        <motion.div key={activeTab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }} className="h-full"
                         >
                             {children}
                         </motion.div>
@@ -90,9 +82,7 @@ export function LibraryPanel({ children, activeTab = "components", onSelectTab, 
             <AnimatePresence>
                 {showTrash && (
                     <motion.div key="trash-overlay" className={`m-4 rounded-xl pointer-events-none bg-neutral-100/2 absolute inset-0 grid place-items-center border-3 ${isOver ? "border-red-500/60" : "border-neutral-200/30 border-dashed"}`}
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
+                        initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
                         transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
                     >
                         <div className="flex flex-col items-center gap-2 text-center">
