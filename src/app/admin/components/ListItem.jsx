@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, Clock, CornerDownRight, Eye, PencilLine, Repeat2, UserX, ChartColumn, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, CornerDownRight, Eye, PencilLine, Repeat2, UserX, ChartColumn, XCircle, User2 } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import { useResponseStatusMutation } from "@/lib/hooks/useResponse";
 
@@ -103,6 +103,11 @@ function ResponseStatusBadge({ status }) {
   );
 }
 
+function getInitial(name, email) {
+  const source = (name || email || "").trim();
+  return source ? source[0].toUpperCase() : "?";
+}
+
 const formatDate = (value) => {
   if (!value) return "--";
   const date = new Date(value);
@@ -152,23 +157,25 @@ export function ResponseListItem({ formId, response, className = "" }) {
   if (!response) return null;
 
   const statusValue = Number(response.status ?? 0);
-  const userName = response.fullName || "--";
-  const userId = response.userId || "--";
-  const photoUrl = response.photoUrl || null;
+  const userName = response.user?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "Anonim Kullanıcı";
+  const userId = response.user?.id || "";
+  const photoUrl = response.user?.profilePictureUrl || null;
   const reviewedBy = response.reviewedBy || null;
   const reviewerName = reviewedBy?.name || "--";
   const submittedAt = formatDate(response.submittedAt);
+
+  const initial = getInitial(userName);
 
   return (
     <div className={`w-full rounded-xl border border-black/40 bg-black/15 px-4 py-2 shadow-sm backdrop-blur sm:px-4 ${className}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1 sm:flex-[0.65]">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg border border-white/10 bg-neutral-900/60 text-[10px] font-semibold uppercase text-neutral-400 grid place-items-center overflow-hidden">
+            <div className="h-10 w-10 rounded-lg border shrink-0 border-white/10 bg-neutral-900/60 text-[10px] font-semibold uppercase text-neutral-400 grid place-items-center overflow-hidden">
               {photoUrl ? (
                 <img src={photoUrl} alt={userName} className="h-full w-full object-cover" />
-              ) : (
-                <span>--</span>
+              ) : ( response.user?.fullName ? ( <span className="text-lg text-neutral-600">{initial}</span> 
+              ) : ( <User2 size={20} className="text-neutral-600" /> )
               )}
             </div>
             <div className="min-w-0">

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { MousePointerClick, PackagePlus, Plus } from "lucide-react";
+import { MousePointerClick, PackagePlus } from "lucide-react";
 
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { Library } from "./components/Library";
@@ -18,7 +18,7 @@ import { REGISTRY } from "../../../components/form-registry";
 const FIXED_USER_ID = "11111111-1111-1111-1111-111111111111";
 const formId = crypto.randomUUID();
 
-const INITIAL_EDITORS = [{ userId: FIXED_USER_ID, fullName: "Skylab Kişisi", email: "forms@skylab.com", role: 3, photoUrl: null }];
+const INITIAL_EDITORS = [{ user: { userId: FIXED_USER_ID, fullName: "--", email: "--", role: 3, profilePictureUrl: null }, role: 3 }];
 
 function useMediaQuery(query) {
     const [matches, setMatches] = useState(() => {
@@ -50,8 +50,6 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     const [status, setStatus] = useState(initialForm?.status || 1);
     const currentUserRole = Number(initialForm?.userRole ?? 3);
     const isNewForm = !initialForm?.id;
-
-    const isChildForm = initialForm?.isChildForm || false;
 
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
@@ -184,9 +182,9 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
             AllowMultipleResponses: allowAnonymousResponses ? true : allowMultipleResponses,
             AllowAnonymousResponses: allowAnonymousResponses,
             LinkedFormId: allowAnonymousResponses ? null : (linkedFormId || null),
-            Collaborators: editors.filter((editor) => Number(editor.role) !== 3).map((editor) => ({
-                Email: editor.email,
-                Role: editor.role
+            Collaborators: editors.map((editor) => ({
+                UserId: editor.user.id,
+                Role: Number(editor.role)
             }))
         };
         saveForm(payload, {
@@ -217,12 +215,19 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         event.preventDefault();
         const rawValue = newEditor.trim();
         if (!rawValue) return;
+
         const normalized = rawValue.includes("@") ? rawValue.split("@")[0] : rawValue;
         const formattedName = normalized.replace(/[\s._-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()).trim();
         const fallbackEmail = rawValue.includes("@") ? rawValue : `${rawValue.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@paylasim.local`;
         const userId = Math.random().toString(36).slice(2, 10);
         const nextRole = currentUserRole === 2 ? 1 : (Number(newEditorRole) === 2 ? 2 : 1);
-        setEditors((prev) => [...prev, { userId, fullName: formattedName || fallbackEmail, email: fallbackEmail, role: nextRole, photoUrl: null }]);
+
+        const newCollaborator = {
+            user: { id: userId, fullName: formattedName, email: fallbackEmail, photoUrl: null },
+            role: nextRole
+        };
+
+        setEditors((prev) => [...prev, newCollaborator]);
         setNewEditor("");
     };
 

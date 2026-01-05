@@ -9,6 +9,18 @@ const alertVariants = {
     exit: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" }
 };
 
+function normalizeUserName(username) {
+    return username?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ");
+}
+
+function getInitials(name, email) {
+  const source = (name || email || "").trim();
+  if (!source) return "?";
+  const parts = source.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, handleRemoveEditor, newEditor, setNewEditor,
     setLinkedFormId, linkedFormId, status, setStatus, allowAnonymousResponses,
     setAllowAnonymousResponses, allowMultipleResponses, setAllowMultipleResponses, linkableForms, currentUserRole
@@ -70,14 +82,18 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                     {editors.map((editor) => {
                         const roleValue = Number(editor.role);
                         return (
-                            <div key={editor.userId} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
+                            <div key={editor.user.id} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950 text-xs font-semibold uppercase tracking-wide text-emerald-200">
-                                        {(editor.fullName || editor.email || "--").charAt(0)}
+                                        {editor.user?.profilePictureUrl ? (
+                                            <img src={editor.user?.profilePictureUrl} alt={editor.user.fullName} className="h-full w-full object-cover" />
+                                        ) : (editor.user?.fullName ? (<span>{getInitials(editor.user.fullName)}</span>
+                                        ) : (<User2 size={20}/>)
+                                        )}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-neutral-50 truncate">{editor.fullName || editor.email || "--"}</p>
-                                        <p className="text-[9px] text-neutral-500 truncate">{editor.email || editor.userId}</p>
+                                        <p className="text-sm font-semibold text-neutral-50 truncate">{normalizeUserName(editor.user.fullName) || "--"}</p>
+                                        <p className="text-[9px] text-neutral-500 truncate">{editor.user.email}</p>
                                     </div>
                                 </div>
 
@@ -88,21 +104,21 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                                         </span>
                                     ) : canManageRoles ? (
                                         <div className="relative">
-                                            <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.userId ? null : editor.userId)}
+                                            <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.user.id ? null : editor.user.id)}
                                                 className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition-colors hover:border-white/20 hover:text-neutral-50"
                                             >
                                                 {roleValue === 2 ? "Editör" : "Okuyucu"}
                                                 <ChevronDown size={12} className="opacity-70" />
                                             </button>
-                                            {openMenuId === editor.userId && (
+                                            {openMenuId === editor.user.id && (
                                                 <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-white/10 bg-neutral-950/95 p-1 shadow-2xl backdrop-blur">
-                                                    <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.userId, 2); setOpenMenuId(null); }}
+                                                    <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.user.id, 2); setOpenMenuId(null); }}
                                                         className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
                                                     >
                                                         {roleValue === 2 ? <Check size={12} className="text-emerald-300" /> : <PencilLine size={12} className="shrink-0" />}
                                                         <span className="flex-1">Düzenleme</span>
                                                     </button>
-                                                    <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.userId, 1); setOpenMenuId(null); }}
+                                                    <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.user.id, 1); setOpenMenuId(null); }}
                                                         className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
                                                     >
                                                         {roleValue === 1 ? <Check size={12} className="text-emerald-300" /> : <Eye size={12} className="shrink-0" />}
@@ -267,7 +283,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                             <motion.div key={"status-paused-alert"} variants={alertVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3, ease: "easeInOut" }}>
                                 <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 shadow-sm mb-3">
                                     Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.
-                                </div>                            
+                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
