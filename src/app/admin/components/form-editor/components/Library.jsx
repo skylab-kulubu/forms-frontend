@@ -28,7 +28,7 @@ export function Library({layout = "grid", formState, formActions, onLibrarySelec
                 return (
                     <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
                         {COMPONENTS.map((component) => (
-                            <LibraryItem key={component.type} item={component} onSelect={layout === "grid" ? undefined : onLibrarySelect}/>
+                            <LibraryItem key={component.type} item={component} layout={layout} onSelect={onLibrarySelect}/>
                         ))}
                     </div>
                 );

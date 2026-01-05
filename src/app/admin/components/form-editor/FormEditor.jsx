@@ -4,13 +4,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { MousePointerClick, PackagePlus, Plus } from "lucide-react";
 
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
 import { useDeleteFormMutation, useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
 import ApprovalOverlay from "../ApprovalOverlay";
-import { Drawer, DrawerContent, DrawerTrigger } from "../utils/Drawer";
+import { Drawer, DrawerContent } from "../utils/Drawer";
 
 import { REGISTRY } from "../../../components/form-registry";
 
@@ -282,11 +283,13 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         setSchema((prev) => [...prev, { id, type, props }]);
     };
 
-    const formState = { schema, description, editors, status, linkedFormId, allowAnonymousResponses, 
+    const formState = {
+        schema, description, editors, status, linkedFormId, allowAnonymousResponses,
         allowMultipleResponses, newEditor, newEditorRole, linkableForms: linkableForms ?? [], isChildForm: initialForm?.isChildForm
     };
 
-    const formActions = { setDescription, handleSave, onRefresh: handleRefresh, onShare: handleShare, handleDeleteRequest, handleAddEditor, 
+    const formActions = {
+        setDescription, handleSave, onRefresh: handleRefresh, onShare: handleShare, handleDeleteRequest, handleAddEditor,
         handleRemoveEditor, handleChangeEditorRole, setNewEditor, setNewEditorRole, setLinkedFormId: handleRequestLinkForm,
         setStatus, setAllowAnonymousResponses, setAllowMultipleResponses
     };
@@ -295,9 +298,24 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         <div className="grid grid-cols-12 gap-4">
             <Canvas dragSource={dragSource} schemaTitle={schemaTitle} setSchemaTitle={setSchemaTitle} span={isLgUp ? 8 : 11}>
                 {schema.length === 0 ? (
-                    <div className="grid h-[80vh] place-items-center text-sm text-neutral-500">
-                         <div className="text-center">
-                            <span className="font-semibold block">Paletten sürükleyip kanvasa bırak</span>
+                    <div className="grid h-[80vh] place-items-center">
+                        <div className="flex flex-col items-center gap-5 text-center px-6">
+                            <div className="relative grid h-20 w-20 place-items-center rounded-3xl border-2 border-dashed border-neutral-800 bg-neutral-900/50 text-neutral-500">
+                                {isLgUp ? (
+                                    <MousePointerClick size={32} strokeWidth={1.5} className="opacity-80" />
+                                ) : (
+                                    <PackagePlus size={32} strokeWidth={1.5} className="opacity-80" />
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5 max-w-xs mx-auto">
+                                <h3 className="text-lg font-semibold text-neutral-200">
+                                    Formunuzu oluşturmaya başlayın
+                                </h3>
+                                <p className="text-xs leading-relaxed text-neutral-500">
+                                    {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Formunuza yeni alanlar eklemek için bileşen panelini açın."}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 ) : (
@@ -316,7 +334,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
             </Canvas>
 
             {!isLgUp && (
-                <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp}/>
+                <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} />
             )}
 
             {isLgUp && (
@@ -420,11 +438,11 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                         <div className="flex-1 h-full w-full p-4">
                             {gridContent}
                         </div>
-                        
+
                         <DrawerContent className="h-full">
                             <div className="h-full flex flex-col">
                                 <div className="flex-1 min-h-0 px-1 py-1">
-                                    <Library layout="drawer" formState={formState} formActions={formActions} onLibrarySelect={handleLibrarySelect}                                        
+                                    <Library layout="drawer" formState={formState} formActions={formActions} onLibrarySelect={handleLibrarySelect}
                                         isPending={isPending} isSuccess={isSuccess} isError={isError} shareStatus={shareStatus}
                                         currentUserRole={currentUserRole} isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
                                     />

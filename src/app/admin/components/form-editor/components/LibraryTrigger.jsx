@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, PanelRightOpen } from "lucide-react";
+import { Trash2, ChevronsLeft } from "lucide-react";
 import { DrawerTrigger } from "../../utils/Drawer";
 
 export const LibraryTrigger = forwardRef(({ dragSource, isDropOver, isLgUp }, ref) => {
@@ -34,7 +34,7 @@ export const LibraryTrigger = forwardRef(({ dragSource, isDropOver, isLgUp }, re
                             <motion.div key="panel-handle"
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
                             >
-                                <PanelRightOpen size={14} strokeWidth={2.5} className="text-neutral-500 opacity-60 hover:opacity-100 transition-opacity" />
+                                <ChevronsLeft size={14} strokeWidth={2.5} className="text-neutral-500 opacity-60 hover:opacity-100 transition-opacity" />
                             </motion.div>
                         )}
                     </AnimatePresence>
