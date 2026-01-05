@@ -159,11 +159,11 @@ export default function ResponseDisplayer({ response }) {
     <motion.div className={`${className} h-full`} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
     >
-      <div className="relative h-[93vh] p-4 shadow-sm">
+      <div className="relative h-[93vh] p-4">
         <AnimatePresence mode="wait">
           {canNavigateLinked && (
             <motion.button key={arrowSide} type="button" onClick={handleToggleLinked} aria-label={"Diğer cevaplar"}
-              className={`absolute inset-y-0 translate-y-1/5 ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 flex w-5 h-[70vh] items-center justify-center rounded-md border border-white/5 bg-neutral-900/90 text-neutral-200 shadow-lg transition hover:bg-neutral-800 opacity-80`}
+              className={`absolute inset-y-0 translate-y-1/5 ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 flex w-5 h-[70vh] items-center justify-center rounded-md border border-white/5 bg-neutral-900/90 text-neutral-200 transition hover:bg-neutral-800 opacity-80`}
               initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
@@ -214,7 +214,7 @@ export default function ResponseDisplayer({ response }) {
   );
 
   const drawerContent = (
-     <div className="h-full w-full p-4 shadow-sm overflow-y-auto scrollbar">
+     <div className="h-full w-full p-4 overflow-y-auto scrollbar">
         <ResponseActions response={activeResponse} isLoading={actionsLoading} />
      </div>
   );

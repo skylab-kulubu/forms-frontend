@@ -10,6 +10,7 @@ import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormE
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
 import { useDeleteFormMutation, useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
+import { useShareLink } from "@/app/admin/hooks/useShareLink";
 import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 
@@ -55,8 +56,6 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     const [activeDragItem, setActiveDragItem] = useState(null);
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
-    const [shareStatus, setShareStatus] = useState("idle");
-    const shareTimerRef = useRef(null);
     const editorRef = useRef(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const lastOverRef = useRef(null);
@@ -80,14 +79,6 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
 
         return () => clearTimeout(timer);
     }, [isError, isSuccess, reset]);
-
-    useEffect(() => {
-        return () => {
-            if (shareTimerRef.current) {
-                clearTimeout(shareTimerRef.current);
-            }
-        };
-    }, []);
 
     useEffect(() => {
         if (isLgUp) {
@@ -149,28 +140,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         setDeleteOverlayOpen(true);
     };
 
-    const handleShare = async () => {
-        if (!initialForm?.id) return;
-        const shareUrl = `https://forms.yildizskylab.com/${initialForm.id}`;
-        let nextStatus = "error";
-
-        if (navigator?.clipboard?.writeText) {
-            try {
-                await navigator.clipboard.writeText(shareUrl);
-                nextStatus = "success";
-            } catch {
-            }
-        }
-
-        if (shareTimerRef.current) {
-            clearTimeout(shareTimerRef.current);
-        }
-        setShareStatus(nextStatus);
-        shareTimerRef.current = setTimeout(() => {
-            setShareStatus("idle");
-            shareTimerRef.current = null;
-        }, 2000);
-    };
+    const { shareStatus, handleShare } = useShareLink(initialForm?.id);
 
     const handleSave = () => {
         const payload = {

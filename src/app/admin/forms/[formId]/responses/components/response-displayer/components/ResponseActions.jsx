@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ClockCheckIcon, Loader2, PencilLine, Undo2, X, User2 } from "lucide-react";
+import { Check, ClockCheckIcon, Loader2, PencilLine, Share2, Trash2, Undo2, X, User2 } from "lucide-react";
 import { useResponseStatusMutation } from "@/lib/hooks/useResponse";
+import { useShareLink } from "@/app/admin/hooks/useShareLink";
 
 const STATUS_META = {
   2: { label: "Onaylandı", style: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" },
@@ -39,8 +40,13 @@ export function ResponseActions({ response }) {
   const [actionState, setActionState] = useState("idle");
   const actionTimerRef = useRef(null);
   const responseId = response?.id;
+  const responseFormId = response?.formId || response?.form?.id || null;
   const prevResponseIdRef = useRef(responseId);
   const { mutate, isPending } = useResponseStatusMutation();
+  const sharePath = responseFormId && responseId ? `admin/${responseFormId}/responses/${responseId}` : null;
+  const { shareStatus, handleShare } = useShareLink(sharePath);
+  const canShare = Boolean(sharePath);
+  const isDeleteDisabled = true;
 
   const clearActionTimer = () => {
     if (actionTimerRef.current) {
@@ -62,7 +68,9 @@ export function ResponseActions({ response }) {
     }
   }, [responseId]);
 
-  useEffect(() => () => clearActionTimer(), []);
+  useEffect(() => () => {
+    clearActionTimer();
+  }, []);
 
   useEffect(() => {
     if (actionState === "success" || actionState === "error") {
@@ -116,8 +124,26 @@ export function ResponseActions({ response }) {
   const actionTone = actionState === "error" ? "border-red-500/30 bg-red-500/10 text-red-200" : actionState === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5 text-neutral-200";
 
   return (
-    <div className="flex h-full items-start justify-center overflow-y-hidden pt-20 pb-6">
-      <div className="w-full max-w-sm rounded-xl border border-white/10 bg-neutral-950/40 p-4 shadow-sm text-neutral-200">
+    <div className="flex h-full items-start justify-center overflow-y-hidden pb-6">
+      <div className="w-full max-w-sm rounded-xl text-neutral-200">
+        <div className="min-h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 pb-2 lg:pb-0 text-sm tracking-wide border-b border-white/10 mt-1.5">
+          <div className="flex items-center grow justify-center sm:justify-start mr-4">
+            <p className="font-semibold text-neutral-200">Cevap işlemleri</p>
+          </div>
+          <div className="ml-auto flex items-center gap-1 text-neutral-500">
+            <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" onClick={handleShare} disabled={!canShare}
+              className={`rounded-lg p-1.5 transition-colors ${canShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-emerald-500" : shareStatus === "error" ? "text-red-500" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+            >
+              <Share2 size={16} />
+            </button>
+            <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isDeleteDisabled}
+              className={`rounded-lg p-1.5 transition-colors ${isDeleteDisabled ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        </div>
+        <div className="p-4">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500">
             Yanıt Sahibi
@@ -240,6 +266,7 @@ export function ResponseActions({ response }) {
             )}
           </AnimatePresence>
         ) : null}
+        </div>
       </div>
     </div>
   );
