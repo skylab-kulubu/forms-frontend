@@ -1,10 +1,14 @@
 "use client";
 
+import DOMPurify from "isomorphic-dompurify";
+
 export function FormDisplayerHeader({ title, description }) {
   const hasTitle = typeof title === "string" && title.trim().length > 0;
   const hasDescription = typeof description === "string" && description.trim().length > 0;
 
   if (!hasTitle && !hasDescription) return null;
+
+  const sanitizedDescription = hasDescription ? DOMPurify.sanitize(description) : "";
 
   return (
     <div className="rounded-xl px-4 pb-5 max-w-2xl">
@@ -23,7 +27,7 @@ export function FormDisplayerHeader({ title, description }) {
             [&_h1]:text-[14px] [&_h1]:font-semibold
             [&_h2]:text-[13px] [&_h2]:font-semibold
             [&_h3]:text-[12px] [&_h3]:font-semibold"
-          dangerouslySetInnerHTML={{ __html: description }}
+          dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
         />
       )}
     </div>

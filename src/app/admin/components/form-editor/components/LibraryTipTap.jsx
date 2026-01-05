@@ -68,7 +68,7 @@ export function LibraryTipTap({ value = "", onChange }) {
 
     return (
         <div className="flex h-full min-h-0 flex-col gap-3">
-            <div className="flex shrink-0 items-center gap-1 overflow-x-auto rounded-xl border border-white/10 bg-neutral-900/60 p-1 px-2 scrollbar-thin">
+            <div className="flex shrink-0 items-center gap-1 overflow-x-auto rounded-xl border border-white/10 bg-neutral-900/60 p-1 px-2 scrollbar-hidden">
                 {toolbar.map((item, index) => {
                     if (item.type === "separator") {
                         return <span key={`sep-${index}`} className="mx-1 h-5 w-px shrink-0 bg-neutral-800" />;
