@@ -4,20 +4,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { ChevronsLeft, PackagePlus, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import dynamic from "next/dynamic";
 
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
-import { LibraryPanel, LibraryItem } from "./components/LibraryComponents";
-import { LibrarySettings } from "./components/LibrarySettings";
+import { Library } from "./components/Library";
+import { LibraryTrigger } from "./components/LibraryTrigger";
 import { useDeleteFormMutation, useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
 import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent, DrawerTrigger } from "../utils/Drawer";
 
-import { COMPONENTS, REGISTRY } from "../../../components/form-registry";
-
-const LibraryTipTap = dynamic(() => import("./components/LibraryTipTap").then((mod) => ({ default: mod.LibraryTipTap })), { ssr: false });
+import { REGISTRY } from "../../../components/form-registry";
 
 const FIXED_USER_ID = "11111111-1111-1111-1111-111111111111";
 const formId = crypto.randomUUID();
@@ -59,7 +54,6 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
 
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
-    const [libraryTab, setLibraryTab] = useState("components");
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
     const [shareStatus, setShareStatus] = useState("idle");
@@ -248,13 +242,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     };
 
     const resetLinkOverlay = () => {
-        setLinkOverlay({
-            open: false,
-            scenario: null,
-            previousId: "",
-            nextId: "",
-            reason: null,
-        });
+        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
     };
 
 
@@ -294,119 +282,22 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         setSchema((prev) => [...prev, { id, type, props }]);
     };
 
-    const libraryPanel = (
-        <LibraryPanel activeTab={libraryTab} onSelectTab={setLibraryTab} handleSave={handleSave} onRefresh={handleRefresh}
-            onShare={handleShare} showShare={!isNewForm} shareStatus={shareStatus} onDelete={handleDeleteRequest}
-            isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
-            isPending={isPending} isSuccess={isSuccess} isError={isError} layout={isLgUp ? "grid" : "drawer"}
-        >
-            {libraryTab === "components" ? (
-                <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
-                    {COMPONENTS.map((component) => (
-                        <LibraryItem key={component.type} item={component} onSelect={isLgUp ? undefined : handleLibrarySelect} />
-                    ))}
-                </div>
-            ) : libraryTab === "settings" ? (
-                <div className="relative h-full">
-                    <div className={isChildForm ? "pointer-events-none opacity-40" : ""}>
-                        <LibrarySettings editors={editors} onChangeEditorRole={handleChangeEditorRole} handleAddEditor={handleAddEditor}
-                            handleRemoveEditor={handleRemoveEditor} newEditor={newEditor} setNewEditor={setNewEditor}
-                            newEditorRole={newEditorRole} setNewEditorRole={setNewEditorRole} setLinkedFormId={handleRequestLinkForm}
-                            linkedFormId={linkedFormId} status={status} allowAnonymousResponses={allowAnonymousResponses}
-                            setAllowAnonymousResponses={setAllowAnonymousResponses} setStatus={setStatus} allowMultipleResponses={allowMultipleResponses}
-                            setAllowMultipleResponses={setAllowMultipleResponses} linkableForms={linkableForms ?? []} currentUserRole={currentUserRole}
-                        />
-                    </div>
+    const formState = { schema, description, editors, status, linkedFormId, allowAnonymousResponses, 
+        allowMultipleResponses, newEditor, newEditorRole, linkableForms: linkableForms ?? [], isChildForm: initialForm?.isChildForm
+    };
 
-                    <div className={`pointer-events-auto inset-0 flex items-center justify-center ${isChildForm ? "absolute" : "hidden"}`}>
-                        <div className="mx-4 max-w-xs rounded-lg border border-neutral-700 bg-neutral-900/90 px-4 py-3 text-center shadow-lg">
-                            <p className="mb-1 text-sm font-semibold text-neutral-500 uppercase tracking-wide">
-                                Ayarlar kilitli
-                            </p>
-                            <p className="text-[11px] leading-relaxed text-neutral-300">
-                                Bu formun ayarları, bağlı olduğu ana form tarafından yönetilmektedir.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div className="flex h-full min-h-0 flex-col gap-4 p-4 text-sm text-neutral-200">
-                    <section className="flex flex-1 min-h-0 flex-col gap-4">
-                        <div>
-                            <p className="font-semibold text-neutral-100">Form açıklaması</p>
-                            <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
-                                Formu görüntüleyen kişiler için kısa bir açıklama ekleyin.
-                            </p>
-                        </div>
-                        <div className="flex-1 min-h-0">
-                            <LibraryTipTap value={description} onChange={setDescription} />
-                        </div>
-                    </section>
-                </div>
-            )}
-        </LibraryPanel>
-    );
-
-    const drawerTrigger = (
-        <div ref={setLibraryDropRef} className="col-span-1 h-[92vh] flex items-center justify-end z-10">
-            <DrawerTrigger asChild>
-                <motion.button type="button" layout initial={false}
-                    animate={dragSource === "canvas" ? "dragging" : "idle"}
-                    variants={{
-                        idle: {
-                            width: "1.25rem",
-                            marginRight: "-1rem",
-                            borderTopLeftRadius: "9999px",
-                            borderBottomLeftRadius: "9999px",
-                            borderTopRightRadius: "0px",
-                            borderBottomRightRadius: "0px",
-                            backgroundColor: "#121212",
-                            borderColor: "rgb(38 38 38)",
-                            x: 0 
-                        },
-                        dragging: {
-                            width: "100%",
-                            marginRight: "0rem",
-                            borderTopLeftRadius: "9999px",
-                            borderBottomLeftRadius: "9999px",
-                            borderTopRightRadius: "9999px",
-                            borderBottomRightRadius: "9999px",
-                            backgroundColor: isLibraryDropOver ? "rgba(239, 68, 68, 0.1)" : "rgba(10, 10, 10, 0.6)",
-                            borderColor: isLibraryDropOver ? "rgba(239, 68, 68, 0.7)" : "rgba(64, 64, 64, 0.8)",
-                            x: 0
-                        }
-                    }}
-                    transition={{ type: "spring", stiffness: 300, damping: 28 }}
-                    className="relative flex h-full items-center justify-center border border-r-0 overflow-hidden focus:outline-none shadow-sm"
-                    title={dragSource === "canvas" ? "Bırak ve sil" : "Paneli aç"}
-                >
-                    <AnimatePresence mode="popLayout">
-                        {dragSource === "canvas" ? (
-                            <motion.div key="trash-icon" className="flex flex-col items-center justify-center gap-2"
-                                initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} transition={{ duration: 0.2 }}
-                            >
-                                <Trash2 size={20} className={isLibraryDropOver ? "text-red-400" : "text-neutral-400"} />
-                                <span className={`text-xs font-semibold ${isLibraryDropOver ? "text-red-400" : "text-neutral-500"}`}>Sil</span>
-                            </motion.div>
-                        ) : (
-                            <motion.div key="panel-handle" className="group transition-colors text-neutral-500 hover:text-neutral-300 focus:outline-none" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-                                <ChevronsLeft size={14} strokeWidth={2.5} className="opacity-60 transition-transform duration-200 group-hover:scale-110 group-hover:opacity-100"/>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.button>
-            </DrawerTrigger>
-        </div>
-    );
+    const formActions = { setDescription, handleSave, onRefresh: handleRefresh, onShare: handleShare, handleDeleteRequest, handleAddEditor, 
+        handleRemoveEditor, handleChangeEditorRole, setNewEditor, setNewEditorRole, setLinkedFormId: handleRequestLinkForm,
+        setStatus, setAllowAnonymousResponses, setAllowMultipleResponses
+    };
 
     const gridContent = (
         <div className="grid grid-cols-12 gap-4">
             <Canvas dragSource={dragSource} schemaTitle={schemaTitle} setSchemaTitle={setSchemaTitle} span={isLgUp ? 8 : 11}>
                 {schema.length === 0 ? (
                     <div className="grid h-[80vh] place-items-center text-sm text-neutral-500">
-                        <div>
-                            <PackagePlus size={36} className="mx-auto my-4" />
-                            <span className="font-semibold">Paletten sürükleyip kanvasa bırak</span>
+                         <div className="text-center">
+                            <span className="font-semibold block">Paletten sürükleyip kanvasa bırak</span>
                         </div>
                     </div>
                 ) : (
@@ -424,15 +315,21 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                 )}
             </Canvas>
 
-            {!isLgUp ? drawerTrigger : null}
-            {isLgUp ? libraryPanel : null}
+            {!isLgUp && (
+                <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp}/>
+            )}
+
+            {isLgUp && (
+                <Library layout="grid" formState={formState} formActions={formActions} isPending={isPending}
+                    isSuccess={isSuccess} isError={isError} shareStatus={shareStatus} currentUserRole={currentUserRole}
+                    isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
+                />
+            )}
         </div>
     );
 
     return (
-        <DndContext
-            collisionDetection={pointerWithin}
-            sensors={sensors}
+        <DndContext collisionDetection={pointerWithin} sensors={sensors}
             onDragStart={({ active }) => {
                 const from = active.data?.current?.from ?? null;
                 setDragSource(from);
@@ -523,16 +420,22 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                         <div className="flex-1 h-full w-full p-4">
                             {gridContent}
                         </div>
+                        
                         <DrawerContent className="h-full">
                             <div className="h-full flex flex-col">
                                 <div className="flex-1 min-h-0 px-1 py-1">
-                                    {libraryPanel}
+                                    <Library layout="drawer" formState={formState} formActions={formActions} onLibrarySelect={handleLibrarySelect}                                        
+                                        isPending={isPending} isSuccess={isSuccess} isError={isError} shareStatus={shareStatus}
+                                        currentUserRole={currentUserRole} isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
+                                    />
                                 </div>
                             </div>
                         </DrawerContent>
                     </Drawer>
                 ) : (
-                    gridContent
+                    <div className="flex-1 h-full w-full p-4">
+                        {gridContent}
+                    </div>
                 )}
 
                 <DragOverlay>
