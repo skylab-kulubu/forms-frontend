@@ -55,7 +55,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
         return () => clearTimeout(timer);
     }, [userSearch]);
 
-    const { data: usersData, isLoading: isUsersLoading } = useUserByMailQuery({ email: debouncedSearch, roles: ["ADMIN", "YK", "DK", "EKIP"], enabled: (debouncedSearch.length > 2) });
+    const { data: usersData, isLoading: isUsersLoading } = useUserByMailQuery({ email: debouncedSearch, roles: ["ADMIN", "YK", "DK", "EKIP"], enabled: (debouncedSearch.length > 1) });
 
     const foundUsers = Array.isArray(usersData) ? usersData : (usersData?.data || []);
 
@@ -90,6 +90,20 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
         return linkableForms.filter((form) => form.title.toLowerCase().includes(q));
     }, [formSearch, linkableForms]);
 
+    const sortedEditors = useMemo(() => {
+        const byName = (editor) => {
+            const name = editor?.user?.fullName || editor?.user?.email || "";
+            return name.trim().toLocaleLowerCase("tr-TR");
+        };
+
+        return [...editors].sort((a, b) => {
+            const roleA = Number(a?.role) || 0;
+            const roleB = Number(b?.role) || 0;
+            if (roleA !== roleB) return roleB - roleA;
+            return byName(a).localeCompare(byName(b), "tr-TR");
+        });
+    }, [editors]);
+
     const chooseForm = (formId) => {
         setLinkedFormId && setLinkedFormId(formId);
         setShowFormPicker(false);
@@ -118,7 +132,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                 </div>
 
                 <div className="space-y-3">
-                    {editors.map((editor) => {
+                    {sortedEditors.map((editor) => {
                         const roleValue = Number(editor.role);
                         return (
                             <div key={editor.user.id || index} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
@@ -150,22 +164,22 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                                                 <ChevronDown size={12} className="opacity-70" />
                                             </button>
                                             {openMenuId === editor.user.id && (
-                                                <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-white/10 bg-neutral-950/95 p-1 shadow-2xl backdrop-blur">
+                                                <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-white/10 bg-neutral-900/80 p-1.5 shadow-xl backdrop-blur supports-backdrop-filter:bg-neutral-900/60">
                                                     <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.user.id, 2); setOpenMenuId(null); }}
-                                                        className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
+                                                        className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/30 ${roleValue === 2 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100" : "border-transparent text-neutral-200 hover:border-white/10 hover:bg-white/5"}`}
                                                     >
                                                         {roleValue === 2 ? <Check size={12} className="text-emerald-300" /> : <PencilLine size={12} className="shrink-0" />}
                                                         <span className="flex-1">Düzenleme</span>
                                                     </button>
                                                     <button type="button" onClick={() => { onChangeEditorRole && onChangeEditorRole(editor.user.id, 1); setOpenMenuId(null); }}
-                                                        className={`mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] transition-colors ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-200" : "text-neutral-200 hover:bg-white/5"}`}
+                                                        className={`mt-1 flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/30 ${roleValue === 1 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100" : "border-transparent text-neutral-200 hover:border-white/10 hover:bg-white/5"}`}
                                                     >
                                                         {roleValue === 1 ? <Check size={12} className="text-emerald-300" /> : <Eye size={12} className="shrink-0" />}
                                                         <span className="flex-1">Görüntüleme</span>
                                                     </button>
-                                                    <div className="my-1 h-px bg-neutral-900" />
+                                                    <div className="my-1 h-px bg-white/10" />
                                                     <button type="button" onClick={() => { handleRemoveEditor(editor); setOpenMenuId(null); }}
-                                                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[11px] text-red-300/80 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                                                        className="flex w-full items-center gap-2 rounded-lg border border-transparent px-2.5 py-2 text-[11px] text-red-300/80 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30"
                                                     >
                                                         <UserMinus size={12} className="shrink-0" />
                                                         <span className="flex-1">İzinleri kaldır</span>
@@ -215,7 +229,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                         </div>
 
                         <AnimatePresence>
-                            {showUserPicker && userSearch.length >= 3 && (
+                            {showUserPicker && userSearch.length >= 2 && (
                                 <SearchPicker searchValue={userSearch} onSearchChange={setUserSearch} items={foundUsers} itemsPerPage={4} 
                                     activeItemId={null} getItemId={(u) => u.id} onSelect={onSelectUser} 
                                     footerText={isUsersLoading ? "Aranıyor..." : "Listeden kullanıcı seçiniz."}
