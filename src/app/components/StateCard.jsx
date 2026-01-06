@@ -6,7 +6,7 @@ const cardVariants = {
     exit: { opacity: 0, y: -26, scale: 0.98, transition: { duration: 0.28, ease: [0.4, 0, 0.2, 1] } },
 };
 
-export default function StateCard({ title, description, Icon, isLoading }) {
+export default function StateCard({ title, description, Icon, isLoading, children }) {
     return (
         <div className="flex-1 flex items-center justify-center w-full">
             <motion.div variants={cardVariants} initial="initial" animate="animate" exit="exit"
@@ -17,6 +17,7 @@ export default function StateCard({ title, description, Icon, isLoading }) {
                     <p className="text-md font-semibold text-neutral-100">{title}</p>
                     <p className="text-xs text-neutral-400">{description}</p>
                 </div>
+                {children ? <div className="w-full">{children}</div> : null}
             </motion.div>
         </div>
     )

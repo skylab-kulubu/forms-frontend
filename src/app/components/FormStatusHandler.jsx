@@ -8,15 +8,16 @@ import LoginButton from "./utils/LoginButton";
 import StateCard from "./StateCard";
 
 const FORM_ACCESS_STATUS = {
-  AVAILABLE: 0,
-  PENDING_APPROVAL: 10,
-  REQUIRES_PARENT_APPROVAL: 11,
-  COMPLETED: 20,
-  DECLINED: 21,
-  UNAUTHORIZED: 40,
-  NOT_AUTHORIZED: 41,
-  NOT_FOUND: 44,
-  NOT_AVAILABLE: 45,
+    AVAILABLE: 0,
+    PENDING_APPROVAL: 10,
+    REQUIRES_PARENT_APPROVAL: 11,
+    COMPLETED: 20,
+    APPROVED: 21,
+    DECLINED: 22,
+    UNAUTHORIZED: 40,
+    NOT_AUTHORIZED: 41,
+    NOT_FOUND: 44,
+    NOT_AVAILABLE: 45,
 };
 
 const stateConfigs = {
@@ -25,7 +26,7 @@ const stateConfigs = {
         title: "Form yükleniyor",
         description: "Lütfen birkaç saniye bekleyin.",
     },
-    completed: { 
+    completed: {
         icon: FileCheckIcon,
         title: "Cevabınız kaydedildi",
         description: "Form cevaplarınız başarıyla gönderildi.",
@@ -95,15 +96,24 @@ const responseStateConfigs = {
     },
 };
 
-export function FormStatusDisplayer({ state, message, step, status, variant = "form" }) {
+const formatReviewDate = (value) => {
+    if (!value) return "--";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "--";
+    return date.toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+};
+
+export function FormStatusDisplayer({ state, message, step, status, reviewNote, reviewedAt, variant = "form" }) {
     const configSet = variant === "response" ? responseStateConfigs : stateConfigs;
     const config = configSet[state];
-    
+
     if (!config) return null;
 
     const Icon = config.icon;
     const description = message || config.description;
-    const showSignIn = state === "notAuthorized";
+    const showSignIn = state === "unAuthorized";
+    const normalizedReviewNote = typeof reviewNote === "string" ? reviewNote.trim() : "";
+    const showReviewDetails = (state === "approved" || state === "declined") && (normalizedReviewNote || reviewedAt);
 
     const handleSignIn = () => {
         const callbackUrl = typeof window !== "undefined" ? window.location.href : "/";
@@ -116,18 +126,36 @@ export function FormStatusDisplayer({ state, message, step, status, variant = "f
         >
             {step > 0 && state !== "loading" && (
                 <div className="w-full max-w-2xl mt-8 mb-auto">
-                     <FormResponseStatus step={step} status={status} />
+                    <FormResponseStatus step={step} status={status} />
                 </div>
             )}
 
-            <StateCard title={config.title} description={description} Icon={Icon} isLoading={state === "loading"} />
+            <StateCard title={config.title} description={description} Icon={Icon} isLoading={state === "loading"}>
+                {showReviewDetails && (
+                    <div className={`rounded-xl border mx-auto px-4 py-3 max-w-xs text-left bg-neutral-800/50 border-neutral-700`}>
+                        <div className="">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-neutral-400/90">
+                                    İnceleme Detayları
+                                </p>
+                                <p className="text-[11px] text-neutral-400">{formatReviewDate(reviewedAt)}</p>
+                            </div>
+                            {normalizedReviewNote && (
+                                <p className="mt-1 text-[12px] text-neutral-200 whitespace-pre-wrap leading-relaxed">
+                                    {normalizedReviewNote}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
 
-            {showSignIn && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.6 }}>
-                    <LoginButton onClick={handleSignIn} label="E-Skylab ile giriş yap"/>
-                </motion.div>
-            )}
-            
+                {showSignIn && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.6 }}>
+                        <LoginButton onClick={handleSignIn} label="E-Skylab ile giriş yap" />
+                    </motion.div>
+                )}
+            </StateCard>
+
             {step > 0 && state !== "loading" && <div className="mb-auto hidden sm:block h-10"></div>}
         </motion.div>
     );
@@ -135,7 +163,9 @@ export function FormStatusDisplayer({ state, message, step, status, variant = "f
 
 export function FormStatusHandler({ isLoading, error, data, renderForm, variant = "form" }) {
     const step = data?.data?.step ?? 0;
-    
+    const reviewNote = data?.data?.reviewNote ?? null;
+    const reviewedAt = data?.data?.reviewedAt ?? null;
+
     const getUiState = () => {
         if (isLoading) return "loading";
         if (error) {
@@ -160,6 +190,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
                 case FORM_ACCESS_STATUS.NOT_AVAILABLE:
                     return "notAvailable";
                 case FORM_ACCESS_STATUS.UNAUTHORIZED:
+                    return "unAuthorized";
                 case FORM_ACCESS_STATUS.NOT_AUTHORIZED:
                     return "notAuthorized";
                 case FORM_ACCESS_STATUS.REQUIRES_PARENT_APPROVAL:
@@ -177,6 +208,8 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
                 return "success";
             case FORM_ACCESS_STATUS.COMPLETED:
                 return "completed";
+            case FORM_ACCESS_STATUS.APPROVED:
+                return "approved";
             case FORM_ACCESS_STATUS.DECLINED:
                 return "declined";
             case FORM_ACCESS_STATUS.PENDING_APPROVAL:
@@ -196,7 +229,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
 
     return (
         <AnimatePresence mode="wait">
-            <FormStatusDisplayer key={uiState} state={uiState} step={step} status={status} variant={variant} />
+            <FormStatusDisplayer key={uiState} state={uiState} step={step} status={status} reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant} />
         </AnimatePresence>
     );
 }

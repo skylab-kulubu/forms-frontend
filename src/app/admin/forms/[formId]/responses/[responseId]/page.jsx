@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import ResponseDisplayer from "../components/response-displayer/ResponseDisplayer";
+import ResponseDisplayer from "../../../../components/response-displayer/ResponseDisplayer";
 import { useResponseQuery } from "@/lib/hooks/useResponse";
 import { FormStatusHandler } from "@/app/components/FormStatusHandler";
 
