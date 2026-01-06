@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp, Check, ChevronDown, ChevronsUpDown, Eye, PencilLine, Plus, UserMinus, X } from "lucide-react";
 import SearchPicker from "../../../../components/utils/SearchPicker";
+import { useUserByMailQuery } from "@/lib/hooks/useUser";
 
 const alertVariants = {
     hidden: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" },
@@ -13,6 +14,14 @@ function normalizeUserName(username) {
     return username?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ");
 }
 
+function formatFullName(firstName, lastName) {
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").toLocaleLowerCase("tr-TR");
+
+  if (!fullName) return "--";
+
+  return fullName.replace(/(^|\s)(\S)/g, (_, space, char) => space + char.toLocaleUpperCase("tr-TR"));
+};
+
 function getInitials(name, email) {
   const source = (name || email || "").trim();
   if (!source) return "?";
@@ -21,7 +30,7 @@ function getInitials(name, email) {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, handleRemoveEditor, newEditor, setNewEditor,
+export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, handleRemoveEditor,
     setLinkedFormId, linkedFormId, status, setStatus, allowAnonymousResponses,
     setAllowAnonymousResponses, allowMultipleResponses, setAllowMultipleResponses, linkableForms, currentUserRole
 }) {
@@ -33,6 +42,36 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
     const canRemoveReadersOnly = currentUserRole === 2;
 
     const linkedForm = linkableForms.find((form) => form.id === linkedFormId) ?? null;
+
+    const [showUserPicker, setShowUserPicker] = useState(false);
+    const [userSearch, setUserSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const userPickerRef = useRef(null);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(userSearch);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [userSearch]);
+
+    const { data: usersData, isLoading: isUsersLoading } = useUserByMailQuery({ email: debouncedSearch, roles: ["ADMIN", "YK", "DK", "EKIP"], enabled: (debouncedSearch.length > 2) });
+
+    const foundUsers = Array.isArray(usersData) ? usersData : (usersData?.data || []);
+
+    useEffect(() => {
+        const handleClick = (event) => {
+            if (userPickerRef.current && !userPickerRef.current.contains(event.target)) setShowUserPicker(false);
+        };
+        document.addEventListener("mousedown", handleClick);
+        return () => document.removeEventListener("mousedown", handleClick);
+    }, []);
+
+    const onSelectUser = (user) => {
+        handleAddEditor(user);
+        setShowUserPicker(false);
+        setUserSearch("");
+    }
 
     useEffect(() => {
         if (!showFormPicker) return;
@@ -82,7 +121,7 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                     {editors.map((editor) => {
                         const roleValue = Number(editor.role);
                         return (
-                            <div key={editor.user.id} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
+                            <div key={editor.user.id || index} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
                                 <div className="flex items-center gap-3 min-w-0 flex-1">
                                     <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950 text-xs font-semibold uppercase tracking-wide text-emerald-200">
                                         {editor.user?.profilePictureUrl ? (
@@ -160,20 +199,53 @@ export function LibrarySettings({ editors, onChangeEditorRole, handleAddEditor, 
                     })}
                 </div>
 
-                <form onSubmit={handleAddEditor} className="pt-1 flex gap-2">
+                <div className="pt-1 flex gap-2" ref={userPickerRef}>
                     <div className="relative flex-1">
-                        <input type="text" value={newEditor} onChange={(event) => setNewEditor(event.target.value)}
-                            placeholder="E-posta veya kullanıcı adı"
-                            className="w-full rounded-lg border border-white/10 bg-neutral-900/60 pr-11 pl-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-white/25 focus:ring-2 focus:ring-white/15"
-                        />
-                        <button type="submit" aria-label="Ekle"
-                            className="group absolute right-1 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-lg border border-emerald-900/80 bg-emerald-500/10 text-emerald-200 transition-colors hover:bg-emerald-500/20 hover:text-emerald-100"
-                        >
-                            <Plus size={16} className="transition-opacity duration-150 group-hover:hidden" />
-                            <ArrowUp size={16} className="hidden transition-opacity duration-150 group-hover:block" />
-                        </button>
+                        <div className="relative">
+                            <input type="text" value={userSearch}  onChange={(event) => { setUserSearch(event.target.value); if (!showUserPicker) setShowUserPicker(true); }}
+                                onFocus={() => setShowUserPicker(true)} placeholder="E-posta ile kullanıcı ara..."
+                                className="w-full rounded-lg border border-white/10 bg-neutral-900/60 pr-11 pl-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-white/25 focus:ring-2 focus:ring-white/15"
+                            />
+                            <button type="button" aria-label="Ekle"
+                                className="group absolute right-1 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-lg border border-emerald-900/80 bg-emerald-500/10 text-emerald-200 transition-colors hover:bg-emerald-500/20 hover:text-emerald-100"
+                            >
+                                <Plus size={16} className="transition-opacity duration-150 group-hover:hidden" />
+                                <ArrowUp size={16} className="hidden transition-opacity duration-150 group-hover:block" />
+                            </button>
+                        </div>
+
+                        <AnimatePresence>
+                            {showUserPicker && userSearch.length >= 3 && (
+                                <SearchPicker searchValue={userSearch} onSearchChange={setUserSearch} items={foundUsers} itemsPerPage={4} 
+                                    activeItemId={null} getItemId={(u) => u.id} onSelect={onSelectUser} 
+                                    footerText={isUsersLoading ? "Aranıyor..." : "Listeden kullanıcı seçiniz."}
+                                    showClear={false} className="absolute top-full left-0 mt-1 w-full [&>div>div:first-child]:hidden" 
+                                    renderItem={(user, { active, onSelect }) => {
+                                        const isAdded = editors.some(e => e.user.id === user.id);
+                                        return (
+                                            <button type="button" onClick={isAdded ? undefined : onSelect} disabled={isAdded}
+                                                className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition ${active ? "bg-white/10 text-neutral-100" : "text-neutral-200"} ${isAdded ? "opacity-50 cursor-default" : "hover:bg-white/5"}`}
+                                            >
+                                                <div className="grid h-8 w-8 place-items-center rounded-lg bg-neutral-800 border border-white/10 text-xs font-semibold text-neutral-400 shrink-0">
+                                                    {user.profilePictureUrl ? (
+                                                         <img src={user.profilePictureUrl} alt="" className="h-full w-full rounded-full object-cover" />
+                                                    ) : getInitials(user.fullName || user.email)}
+                                                </div>
+                                                
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium leading-tight truncate">{formatFullName(user.firstName, user.lastName)}</p>
+                                                    <p className="text-[11px] text-neutral-500 truncate">{user.email}</p>
+                                                </div>
+                                                
+                                                {isAdded && <span className="text-[10px] text-emerald-500">Ekli</span>}
+                                            </button>
+                                        );
+                                    }}
+                                />
+                            )}
+                        </AnimatePresence>
                     </div>
-                </form>
+                </div>
             </section>
 
             <section className="py-6 space-y-4 relative">

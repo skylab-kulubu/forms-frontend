@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { MousePointerClick, PackagePlus } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { Library } from "./components/Library";
@@ -16,10 +17,7 @@ import { Drawer, DrawerContent } from "../utils/Drawer";
 
 import { REGISTRY } from "../../../components/form-registry";
 
-const FIXED_USER_ID = "11111111-1111-1111-1111-111111111111";
 const formId = crypto.randomUUID();
-
-const INITIAL_EDITORS = [{ user: { userId: FIXED_USER_ID, fullName: "--", email: "--", role: 3, profilePictureUrl: null }, role: 3 }];
 
 function useMediaQuery(query) {
     const [matches, setMatches] = useState(() => {
@@ -47,7 +45,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     const [linkedFormId, setLinkedFormId] = useState(initialForm?.linkedFormId || "");
     const [allowMultipleResponses, setAllowMultipleResponses] = useState(initialForm?.allowMultipleResponses || false);
     const [allowAnonymousResponses, setAllowAnonymousResponses] = useState(initialForm?.allowAnonymousResponses || false);
-    const [editors, setEditors] = useState(initialForm?.collaborators || INITIAL_EDITORS);
+    const [editors, setEditors] = useState(initialForm?.collaborators || []);
     const [status, setStatus] = useState(initialForm?.status || 1);
     const currentUserRole = Number(initialForm?.userRole ?? 3);
     const isNewForm = !initialForm?.id;
@@ -65,6 +63,22 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
 
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: initialForm?.linkedFormId || "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
+
+    const { data: session } = useSession();
+
+    useEffect(() => {
+        if (isNewForm && editors.length === 0 && session?.user) {
+            setEditors([{
+                user: {
+                    id: session.user.id,
+                    fullName: session.user.fullName,
+                    email: session.user.email,
+                    profilePictureUrl: session.user.profilePictureUrl
+                },
+                role: 3
+            }]);
+        }
+    }, [session, isNewForm, editors.length]);
 
     const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
@@ -113,7 +127,13 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         setLinkedFormId(nextForm.linkedFormId || "");
         setAllowMultipleResponses(Boolean(nextForm.allowMultipleResponses));
         setAllowAnonymousResponses(Boolean(nextForm.allowAnonymousResponses));
-        setEditors(Array.isArray(nextForm.collaborators) && nextForm.collaborators.length > 0 ? nextForm.collaborators : INITIAL_EDITORS);
+        if (Array.isArray(nextForm.collaborators) && nextForm.collaborators.length > 0) { setEditors(nextForm.collaborators);
+        } else if (session?.user) {
+            setEditors([{
+                user: { id: session.user.id, fullName: session.user.fullName, email: session.user.email, profilePictureUrl: session.user.profilePictureUrl },
+                role: 3
+            }]);
+        } else { setEditors([]);}
         setStatus(Number.isFinite(nextForm.status) ? nextForm.status : 1);
         setNewEditor("");
         setNewEditorRole(1);
@@ -181,24 +201,21 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         });
     };
 
-    const handleAddEditor = (event) => {
-        event.preventDefault();
-        const rawValue = newEditor.trim();
-        if (!rawValue) return;
-
-        const normalized = rawValue.includes("@") ? rawValue.split("@")[0] : rawValue;
-        const formattedName = normalized.replace(/[\s._-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()).trim();
-        const fallbackEmail = rawValue.includes("@") ? rawValue : `${rawValue.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@paylasim.local`;
-        const userId = Math.random().toString(36).slice(2, 10);
-        const nextRole = currentUserRole === 2 ? 1 : (Number(newEditorRole) === 2 ? 2 : 1);
+    const handleAddEditor = (selectedUser) => {
+        if (editors.find((e) => e.user.id === selectedUser.id)) return;
+        const role = 1;
 
         const newCollaborator = {
-            user: { id: userId, fullName: formattedName, email: fallbackEmail, photoUrl: null },
-            role: nextRole
+            user: {
+                id: selectedUser.id,
+                fullName: selectedUser.firstName,
+                email: selectedUser.email,
+                profilePictureUrl: selectedUser.profilePictureUrl || null,
+            },
+            role: role
         };
 
         setEditors((prev) => [...prev, newCollaborator]);
-        setNewEditor("");
     };
 
     const handleRemoveEditor = (editor) => {
@@ -209,12 +226,12 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         } else if (currentUserRole !== 3) {
             return;
         }
-        setEditors((prev) => prev.filter((item) => item.userId !== editor.userId));
+        setEditors((prev) => prev.filter((item) => item.user?.id !== editor.user?.id));
     };
 
     const handleChangeEditorRole = (editorId, nextRole) => {
         if (currentUserRole !== 3) return;
-        setEditors((prev) => prev.map((item) => item.userId === editorId ? { ...item, role: nextRole } : item));
+        setEditors((prev) => prev.map((item) => item.user?.id === editorId ? { ...item, role: nextRole } : item));
     };
 
     const resetLinkOverlay = () => {

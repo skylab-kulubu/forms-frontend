@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-const ALLOWED_ROLES = ["ADMIN", "YK", "DK", "EKİP"];
+const ALLOWED_ROLES = ["ADMIN", "YK", "DK", "EKIP"];
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
