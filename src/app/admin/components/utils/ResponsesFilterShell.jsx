@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, CheckCircle2, Clock, SlidersHorizontal, User, UserX, Users, XCircle } from "lucide-react";
+import { Archive, ArchiveX, ArrowDown, ArrowUp, CheckCircle2, Clock, SlidersHorizontal, User, UserX, Users, XCircle } from "lucide-react";
 
 function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   const count = Math.max(options.length, 1);
@@ -35,6 +35,21 @@ function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   );
 }
 
+function TwoStateIconButton({ value = false, onChange, icon: Icon, label }) {
+  const nextValue = !value;
+
+  const stateClass = value ? "border-indigo-400/40 bg-indigo-500/15 text-indigo-100" : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-indigo-300";
+
+  return (
+    <button type="button" onClick={() => onChange?.(nextValue)} aria-label={label} title={label} aria-pressed={value}
+      className={`flex h-9 w-full items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 ${stateClass}`}
+    >
+      <Icon className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+}
+
+
 const panelVariants = {
   hidden: { opacity: 0, y: -8, scale: 0.98 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
@@ -51,7 +66,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, height: "auto", transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] } },
 };
 
-export default function ResponsesFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, className = "" }) {
+export default function ResponsesFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, showArchived = false, onShowArchivedChange, className = "" }) {
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -106,6 +121,15 @@ export default function ResponsesFilterShell({ open, anchorRef, onClose, sortVal
                   Tarih Sıralaması
                 </p>
                 <SegmentedControl options={sortOptions} value={sortValue} onChange={onSortChange} ariaLabel="Tarih Sıralaması" />
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="overflow-hidden">
+              <div className="space-y-2 pt-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
+                  Arşiv Durumu
+                </p>
+                <TwoStateIconButton value={showArchived} onChange={onShowArchivedChange} icon={showArchived ? ArchiveX : Archive} label={showArchived ? "Arşiv dahil" : "Arşiv hariç"}/>
               </div>
             </motion.div>
 

@@ -79,12 +79,12 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "des
   );
 }
 
-export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc",
+export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc", showArchived = false, onShowArchivedChange,
   onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, onEdit, stats = { averageTime: "--", responseCount: 0, pendingCount: 0 },
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [ sortValue !== "desc", statusValue !== "all", respondentValue !== "all" ].filter(Boolean).length;
+  const activeFilters = [ sortValue !== "desc", statusValue !== "all", respondentValue !== "all", showArchived !== false ].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
 
   return (
@@ -104,7 +104,7 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
             />
             <ResponsesFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)}
               sortValue={sortValue} onSortChange={onSortChange} statusValue={statusValue} onStatusChange={onStatusChange}
-              respondentValue={respondentValue} onRespondentChange={onRespondentChange}
+              respondentValue={respondentValue} onRespondentChange={onRespondentChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange}
             />
           </div>
           <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header"

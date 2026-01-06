@@ -20,11 +20,12 @@ export default function ResponsesPage() {
   const [sortValue, setSortValue] = useState("desc");
   const [statusValue, setStatusValue] = useState("all");
   const [respondentValue, setRespondentValue] = useState("all");
+  const [showArchived, setShowArchived] = useState(false);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     setPage((prev) => (prev === 1 ? prev : 1));
-  }, [sortValue, statusValue, respondentValue, searchValue, formId]);
+  }, [sortValue, statusValue, respondentValue, showArchived, searchValue, formId]);
 
   const statusParam = useMemo(() => {
     if (statusValue === "pending") return 1;
@@ -44,10 +45,10 @@ export default function ResponsesPage() {
 
   const { form: formInfo } = useFormContext();
 
-  const { data: responsesData , isLoading, error, refetch } = useFormResponsesQuery(formId, { page, status: statusParam, responderType: responderTypeParam, filterByUserId, sortingDirection });
+  const { data: responsesData, isLoading, error, refetch } = useFormResponsesQuery(formId, { page, status: statusParam, responderType: responderTypeParam, filterByUserId, showArchived, sortingDirection });
 
-   const formTitle = formInfo?.title?.trim() || "--";
-  const formIdLabel =  formId || "--";
+  const formTitle = formInfo?.title?.trim() || "--";
+  const formIdLabel = formId || "--";
 
   const responsesMeta = responsesData?.data ?? {};
   const responses = responsesMeta.items || [];
@@ -60,12 +61,12 @@ export default function ResponsesPage() {
   }, [formInfo?.responseCount, formInfo?.waitingResponses, responsesMeta.totalCount]);
 
   const hasError = Boolean(error);
-  const contentKey = `${sortValue}-${statusValue}-${respondentValue}-${searchValue}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
+  const contentKey = `${sortValue}-${statusValue}-${respondentValue}-${showArchived}-${searchValue}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
 
   return (
     <div className="flex h-[calc(100dvh-3rem)] flex-col gap-6 overflow-hidden p-6">
       <ResponsesHeader formTitle={formTitle} formId={formIdLabel} searchValue={searchValue} onSearchChange={setSearchValue}
-        sortValue={sortValue} onSortChange={setSortValue} statusValue={statusValue} onStatusChange={setStatusValue}
+        sortValue={sortValue} onSortChange={setSortValue} statusValue={statusValue} onStatusChange={setStatusValue} showArchived={showArchived} onShowArchivedChange={setShowArchived}
         respondentValue={respondentValue} onRespondentChange={setRespondentValue} onRefresh={() => refetch()} onEdit={() => router.push(`/admin/forms/${formId}/edit`)} stats={stats}
       />
 
@@ -81,7 +82,7 @@ export default function ResponsesPage() {
             <StateCard title={"Cevap bulunamadı"} Icon={TextSearch}
               description={searchValue !== "" ? "Aranan kişiye ait cevap bulunamadı."
                 : (statusValue !== "all" | respondentValue !== "all") ? "Verilen filtrelere uygun cevap bulunamadı."
-                : "Bu forma ait cevap henüz yok."
+                  : "Bu forma ait cevap henüz yok."
               } />
           ) : (
             <div className="flex min-h-0 flex-1 flex-col">
