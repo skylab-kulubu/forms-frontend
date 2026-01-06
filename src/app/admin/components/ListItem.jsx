@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, Clock, CornerDownRight, Eye, PencilLine, Repeat2, UserX, ChartColumn, XCircle, User2 } from "lucide-react";
+import { Clock, CornerDownRight, Eye, PencilLine, Repeat2, UserX, ChartColumn, Archive, User2 } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
-import { useResponseStatusMutation } from "@/lib/hooks/useResponse";
 
 const ROLE_STYLES = {
   3: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
@@ -59,9 +58,9 @@ export function ListItemSkeleton({ count = 4, className = "" }) {
 
             <div className="flex flex-wrap items-center gap-3 sm:ml-auto sm:justify-end">
               <div className="flex items-center gap-1">
-                <SkeletonBlock className="h-7 w-9 rounded-md" />
-                <SkeletonBlock className="h-7 w-7 rounded-md" />
-                <SkeletonBlock className="h-7 w-7 rounded-md" />
+                <SkeletonBlock className="h-6 w-8 rounded-md" />
+                <SkeletonBlock className="h-6 w-6 rounded-md" />
+                <SkeletonBlock className="h-6 w-6 rounded-md" />
               </div>
               <div className="flex items-center gap-2">
                 <SkeletonBlock className="h-8 w-8 rounded-md" />
@@ -144,6 +143,8 @@ export function ResponseListItemSkeleton({ count = 4, className = "" }) {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:ml-auto sm:justify-end">
+              <SkeletonBlock className="h-4 w-9 rounded-md" />
+              <SkeletonBlock className="h-6 w-6 rounded-md" />
               <SkeletonBlock className="h-8 w-8 rounded-md" />
             </div>
           </div>
@@ -174,8 +175,8 @@ export function ResponseListItem({ formId, response, className = "" }) {
             <div className="h-10 w-10 rounded-lg border shrink-0 border-white/10 bg-neutral-900/60 text-[10px] font-semibold uppercase text-neutral-400 grid place-items-center overflow-hidden">
               {photoUrl ? (
                 <img src={photoUrl} alt={userName} className="h-full w-full object-cover" />
-              ) : ( response.user?.fullName ? ( <span className="text-lg text-neutral-600">{initial}</span> 
-              ) : ( <User2 size={20} className="text-neutral-600" /> )
+              ) : (response.user?.fullName ? (<span className="text-lg text-neutral-600">{initial}</span>
+              ) : (<User2 size={20} className="text-neutral-600" />)
               )}
             </div>
             <div className="min-w-0">
@@ -215,6 +216,11 @@ export function ResponseListItem({ formId, response, className = "" }) {
               <Clock size={12} />
               {submittedAt}
             </span>
+          </div>
+          <div title={response.isArchived ? "Arşivlenmiş cevap" : "Arşivlenmemiş cevap"}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${response.isArchived ? "text-indigo-300/80" : "text-neutral-500/80"}`}
+          >
+            <Archive className="h-3.5 w-3.5" />
           </div>
           <ActionButton href={`/admin/forms/${formId}/responses/${response.id}`} icon={Eye} label="Görüntüle" />
         </div>

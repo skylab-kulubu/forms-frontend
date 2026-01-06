@@ -16,6 +16,13 @@ const fetchFormResponses = async (formId, { page = 1, status, responderType, sho
   return request(`/api/admin/forms/${formId}/responses${query ? `?${query}` : ""}`);
 };
 
+const postResponseArchive = async (responseId) => {
+  if (!responseId) throw new Error("responseId is required");
+  return request(`/api/admin/forms/responses/${responseId}/archive`, {
+    method: "POST",
+  });
+}
+
 const patchResponseStatus = async ({ responseId, newStatus, note }) => {
   if (!responseId) throw new Error("responseId is required");
   return request(`/api/admin/forms/responses/${responseId}/status`, {
@@ -48,12 +55,25 @@ export const useFormResponsesQuery = (formId, options = {}) => {
   });
 };
 
+export const useResponseArchiveMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: postResponseArchive,
+    onSuccess: (_data, responseId) => {
+      if (responseId) {
+        queryClient.invalidateQueries({ queryKey: ["response", responseId] });
+      }
+    }
+  })
+}
+
 export const useResponseStatusMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: patchResponseStatus,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       if (variables?.responseId) {
         queryClient.invalidateQueries({ queryKey: ["response", variables.responseId] });
       }
