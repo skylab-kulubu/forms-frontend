@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, LogOut, FilePlus, FileText, List, PencilLine } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const breadcrumbLabels = {
@@ -279,14 +279,31 @@ export default function Sidebar({ user, children }) {
         </div>
       </div>
 
-      <div className={`md:hidden ${open ? "fixed" : "hidden"} inset-0 z-50`}>
-        <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-        <div ref={panelRef} className={`absolute inset-y-0 left-0 w-72 backdrop-blu border-r border-neutral-950/70 bg-neutral-950/90 shadow-xl transition-transform duration-200 
-          ${open ? "translate-x-0" : "-translate-x-full"}`}
-        >
-          <SidebarContent user={resolvedUser} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} onItemClick={() => setOpen(false)} />
-        </div>
-      </div>
+      <AnimatePresence>
+        {open && (
+          <div className="md:hidden fixed inset-0 z-70">
+            <motion.div className="absolute inset-0 bg-black/40"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+            />
+            <motion.div
+              className="absolute inset-y-0 left-0 flex h-full pointer-events-none"
+              initial={{ x: "-100%" }} animate={{ x: "0%" }} exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
+            >
+              <div ref={panelRef} className="pointer-events-auto h-full w-72 border-r border-neutral-800 bg-[#070707] shadow-xl">
+                <SidebarContent user={resolvedUser} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} onItemClick={() => setOpen(false)} />
+              </div>
+              <button type="button" onClick={() => setOpen(false)}
+                className="group pointer-events-auto relative flex w-5 -ml-0.5 h-full flex-col items-center justify-center rounded-r-full border-y border-r border-neutral-800 bg-[#070707] text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"
+                title="Paneli kapat"
+              >
+                <ChevronsLeft size={14} strokeWidth={2.5} className="opacity-60 transition-transform duration-200 group-hover:scale-110 group-hover:opacity-100" />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <div>{children}</div>
     </div>
