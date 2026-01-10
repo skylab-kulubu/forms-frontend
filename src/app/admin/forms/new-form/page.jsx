@@ -8,6 +8,8 @@ const FormEditor = dynamic(() => import("../../components/form-editor/FormEditor
 
 export default function NewForm() {
     return (
-        <FormEditor />
+        <div className="px-6 pb-6">
+            <FormEditor />
+        </div>
     );
 }

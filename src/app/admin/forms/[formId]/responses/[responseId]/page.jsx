@@ -12,7 +12,7 @@ export default function ResponsePage() {
   const { data, isLoading, error } = useResponseQuery(responseId);
 
   return (
-    <div className="p-6">
+    <div className="px-6 pb-6">
       <FormStatusHandler isLoading={isLoading} error={error} data={data} variant="response"
         renderForm={(responseData) => ( <ResponseDisplayer response={responseData?.data ?? responseData ?? null} />)}
       />

@@ -28,7 +28,7 @@ function useMediaQuery(query) {
 
 const ActionTrigger = forwardRef((props, ref) => {
     return (
-        <div ref={ref} className="flex h-full items-center justify-end z-10 -mr-5.5">
+        <div ref={ref} className="flex h-full items-center justify-end z-10 -mr-6">
             <DrawerTrigger asChild>
                 <motion.button type="button" initial={{ x: 0 }} title="Paneli aç"
                     className="relative flex h-full w-5 items-center justify-center rounded-l-full border border-r-0 border-neutral-800 bg-[#121212] shadow-xl text-neutral-500 hover:text-neutral-200 transition-colors"
@@ -250,7 +250,7 @@ export default function ResponseDisplayer({ response }) {
                     <ActionTrigger />
                 </div>
 
-                <DrawerContent className="h-full" rootClassName="overflow-visible" wrapperClassName="-mr-5.5">
+                <DrawerContent className="h-full" rootClassName="overflow-visible" wrapperClassName="-mr-6">
                     {drawerContent}
                 </DrawerContent>
             </Drawer>

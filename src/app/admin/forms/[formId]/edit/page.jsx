@@ -11,9 +11,7 @@ export default function FormEditorPage() {
 
   return (
     <FormStatusHandler
-      isLoading={isLoading}
-      error={error}
-      data={data}
+      isLoading={isLoading} error={error} data={data}
       renderForm={(data) => ( <FormEditor initialForm={data.data} onRefresh={refetch} /> )}
     />
   );
