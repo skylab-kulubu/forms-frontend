@@ -7,6 +7,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboa
 import { MousePointerClick, PackagePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 
+import { useFormDnD } from "./hooks/useFormDnD";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
@@ -50,13 +51,10 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     const currentUserRole = Number(initialForm?.userRole ?? 3);
     const isNewForm = !initialForm?.id;
 
-    const [dragSource, setDragSource] = useState(null);
-    const [activeDragItem, setActiveDragItem] = useState(null);
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
     const editorRef = useRef(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const lastOverRef = useRef(null);
     const libraryDropElRef = useRef(null);
 
     const isLgUp = useMediaQuery("(min-width: 1024px)");
@@ -64,6 +62,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: initialForm?.linkedFormId || "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
 
+    const { dragSource, activeDragItem, handlers } = useFormDnD(schema, setSchema, libraryDropElRef);
     const { data: session } = useSession();
 
     useEffect(() => {
@@ -339,91 +338,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
     );
 
     return (
-        <DndContext collisionDetection={pointerWithin} sensors={sensors}
-            onDragStart={({ active }) => {
-                const from = active.data?.current?.from ?? null;
-                setDragSource(from);
-                setActiveDragItem(active);
-            }}
-            onDragEnd={({ active, over }) => {
-                const from = active.data?.current?.from;
-
-                const getSlotIndex = (candidate) => {
-                    if (!candidate?.id || typeof candidate.id !== "string") return null;
-                    if (!candidate.id.startsWith("slot-")) return null;
-                    const index = parseInt(candidate.id.split("slot-")[1], 10);
-                    return Number.isNaN(index) ? null : index;
-                };
-
-                const slotIndex = getSlotIndex(over);
-
-                if (from === "library") {
-                    const type = active.data.current.type;
-                    const id = Math.random().toString(36).slice(2, 10);
-                    const props = structuredClone(REGISTRY[type]?.defaults ?? {});
-                    if (over?.id !== "canvas" && slotIndex === null) return;
-                    setSchema((prev) => {
-                        if (slotIndex === null && over?.id === "canvas") {
-                            return [...prev, { id, type, props }];
-                        }
-                        const next = [...prev];
-                        next.splice(slotIndex, 0, { id, type, props });
-                        return next;
-                    });
-                }
-                const overId = over?.id ?? lastOverRef.current;
-                let isOverLibrary = overId === "library";
-
-                if (!isOverLibrary && from === "canvas" && libraryDropElRef.current) {
-                    const targetRect = libraryDropElRef.current.getBoundingClientRect();
-                    const activeRect = active.rect?.current?.translated ?? active.rect?.current;
-                    if (activeRect) {
-                        const intersects = activeRect.left < targetRect.right
-                            && activeRect.right > targetRect.left
-                            && activeRect.top < targetRect.bottom
-                            && activeRect.bottom > targetRect.top;
-                        if (intersects) {
-                            isOverLibrary = true;
-                        }
-                    }
-                }
-
-                if (from === "canvas" && isOverLibrary) {
-                    const fieldId = active.data.current.id;
-                    setSchema((prev) => prev.filter((field) => field.id !== fieldId));
-                }
-                if (from === "canvas" && slotIndex !== null) {
-                    setSchema((prev) => {
-                        const oldIndex = prev.findIndex((field) => field.id === active.id);
-                        if (oldIndex === -1) return prev;
-                        const item = prev[oldIndex];
-                        const base = prev.filter((_, idx) => idx !== oldIndex);
-                        const target = slotIndex > oldIndex ? slotIndex - 1 : slotIndex;
-                        base.splice(target, 0, item);
-                        return base;
-                    });
-                }
-                if (from === "canvas" && over?.id && active.id !== over.id) {
-                    setSchema((prev) => {
-                        const oldIndex = prev.findIndex((field) => field.id === active.id);
-                        const newIndex = prev.findIndex((field) => field.id === over.id);
-                        if (oldIndex === -1 || newIndex === -1) return prev;
-                        return arrayMove(prev, oldIndex, newIndex);
-                    });
-                }
-                setDragSource(null);
-                setActiveDragItem(null);
-                lastOverRef.current = null;
-            }}
-            onDragOver={({ over }) => {
-                lastOverRef.current = over?.id ?? null;
-            }}
-            onDragCancel={() => {
-                setDragSource(null);
-                setActiveDragItem(null);
-                lastOverRef.current = null;
-            }}
-        >
+        <DndContext collisionDetection={pointerWithin} sensors={sensors} {...handlers}>
             <div ref={editorRef} className="relative">
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
