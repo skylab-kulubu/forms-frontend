@@ -276,7 +276,8 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
 
     const formState = {
         schema, description, editors, status, linkedFormId, allowAnonymousResponses,
-        allowMultipleResponses, newEditor, newEditorRole, linkableForms: linkableForms ?? [], isChildForm: initialForm?.isChildForm
+        allowMultipleResponses, newEditor, newEditorRole, linkableForms: linkableForms ?? [],
+        isChildForm: initialForm?.isChildForm, isNewForm
     };
 
     const formActions = {
