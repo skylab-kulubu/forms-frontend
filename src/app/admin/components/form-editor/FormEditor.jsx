@@ -20,8 +20,6 @@ import { Drawer, DrawerContent } from "../utils/Drawer";
 
 import { REGISTRY } from "../../../components/form-registry";
 
-const tempFormId = crypto.randomUUID();
-
 function useMediaQuery(query) {
     const [matches, setMatches] = useState(() => {
         if (typeof window === "undefined") return false;
@@ -107,7 +105,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
 
     const handleSave = () => {
         const payload = {
-            Id: state.id || tempFormId || null,
+            Id: state.id || null,
             Title: state.title,
             Description: state.description,
             Schema: state.schema,
@@ -121,10 +119,14 @@ function FormEditorContent({ onRefresh, isNewForm }) {
             }))
         };
 
-        saveForm(payload, {
+        saveForm({
+            id: state.id,
+            payload: payload,
+            isUpdate: !isNewForm
+        }, {
             onSuccess: (data) => {
                 if (!isNewForm) return;
-                const nextId = data?.id ?? data?.data?.id;
+                const nextId = data?.data?.id ?? data?.id;
                 if (nextId) router.push(`/admin/forms/${nextId}/edit`);
             },
         });

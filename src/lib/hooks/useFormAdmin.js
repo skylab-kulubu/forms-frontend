@@ -5,9 +5,16 @@ const fetchFormById = async (formId) => {
   return request(`/api/admin/forms/${formId}`);
 };
 
-const upsertForm = async (payload) => {
+const createForm = async (payload) => {
   return request("/api/admin/forms", {
     method: "POST",
+    body: payload,
+  });
+};
+
+const updateForm = async ({ id, payload }) => {
+  return request(`/api/admin/forms/${id}`, {
+    method: "PUT",
     body: payload,
   });
 };
@@ -67,10 +74,16 @@ export const useFormMutation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: upsertForm,
+    mutationFn: ({ id, payload, isUpdate }) => {
+      if (isUpdate && id) {
+        return updateForm({ id, payload });
+      }
+      return createForm(payload);
+    },
     onSuccess: (data) => {
-      if (data?.id) {
-        queryClient.setQueryData(["form", data.id], data);
+      const createdId = data?.data?.id ?? data?.id;
+      if (createdId) {
+        queryClient.setQueryData(["form", createdId], data);
       }
     },
   });
