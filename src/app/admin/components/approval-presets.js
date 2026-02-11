@@ -60,6 +60,21 @@ export const APPROVAL_PRESETS = {
         rejectLabel: () => "İptal",
     },
 
+    "anonymous-toggle": {
+        variant: "delayed",
+        delaySeconds: 3,
+        requiredPhrase: "Onaylıyorum",
+        title: "Anonim yanıtları aç",
+        icon: Unlink,
+        highlights: () => [
+            "Anonim yanıtlar açıldığında form zinciri bozulur.",
+            "Mevcut 'Bağlı Form' ilişkisi otomatik olarak kaldırılacaktır.",
+            "Kullanıcı kimliği toplanmayacağı için kişiye özel akışlar çalışmayabilir."
+        ],
+        approveLabel: (ctx) => ctx.isPending ? "Kaldırılıyor..." : "Bağlantıyı kaldır",
+        rejectLabel: () => "Vazgeç",
+    },
+
     default: {
         variant: "phrase",
         requiredPhrase: "Onaylıyorum",

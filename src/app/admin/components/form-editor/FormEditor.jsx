@@ -7,6 +7,8 @@ import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboa
 import { MousePointerClick, PackagePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 
+import { useFormContext } from "../../providers";
+import { FormEditorProvider, useFormEditor } from "./FormEditorContext";
 import { useFormDnD } from "./hooks/useFormDnD";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { Library } from "./components/Library";
@@ -18,7 +20,7 @@ import { Drawer, DrawerContent } from "../utils/Drawer";
 
 import { REGISTRY } from "../../../components/form-registry";
 
-const formId = crypto.randomUUID();
+const tempFormId = crypto.randomUUID();
 
 function useMediaQuery(query) {
     const [matches, setMatches] = useState(() => {
@@ -38,109 +40,99 @@ function useMediaQuery(query) {
     return matches;
 }
 
-export default function FormEditor({ initialForm = null, onRefresh }) {
+function FormEditorContent({ onRefresh, isNewForm }) {
     const router = useRouter();
-    const [schema, setSchema] = useState(initialForm?.schema || []);
-    const [schemaTitle, setSchemaTitle] = useState(initialForm?.title || "Yeni Form");
-    const [description, setDescription] = useState(initialForm?.description || "");
-    const [linkedFormId, setLinkedFormId] = useState(initialForm?.linkedFormId || "");
-    const [allowMultipleResponses, setAllowMultipleResponses] = useState(initialForm?.allowMultipleResponses || false);
-    const [allowAnonymousResponses, setAllowAnonymousResponses] = useState(initialForm?.allowAnonymousResponses || false);
-    const [editors, setEditors] = useState(initialForm?.collaborators || []);
-    const [status, setStatus] = useState(initialForm?.status || 1);
-    const currentUserRole = Number(initialForm?.userRole ?? 3);
-    const isNewForm = !initialForm?.id;
+    const { data: session } = useSession();
+    const { setTitle: setGlobalTitle, setStatus: setGlobalStatus } = useFormContext();
+    const { state, dispatch } = useFormEditor();
 
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const [newEditor, setNewEditor] = useState("");
     const [newEditorRole, setNewEditorRole] = useState(1);
-    const editorRef = useRef(null);
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const libraryDropElRef = useRef(null);
-
-    const isLgUp = useMediaQuery("(min-width: 1024px)");
-
-    const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: initialForm?.linkedFormId || "", nextId: "", reason: null });
+    const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
 
-    const { dragSource, activeDragItem, handlers } = useFormDnD(schema, setSchema, libraryDropElRef);
-    const { data: session } = useSession();
+    const editorRef = useRef(null);
+    const libraryDropElRef = useRef(null);
+    const isLgUp = useMediaQuery("(min-width: 1024px)");
+
+    const { mutate: saveForm, isPending, isSuccess, isError, reset } = useFormMutation();
+    const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
+    const { data: linkableForms } = useLinkableFormsQuery(state.id);
+    const { shareStatus, handleShare } = useShareLink(state.id);
 
     useEffect(() => {
-        if (isNewForm && editors.length === 0 && session?.user) {
-            setEditors([{
-                user: {
-                    id: session.user.id,
-                    fullName: session.user.fullName,
-                    email: session.user.email,
-                    profilePictureUrl: session.user.profilePictureUrl
-                },
-                role: 3
-            }]);
-        }
-    }, [session, isNewForm, editors.length]);
+        setGlobalTitle(state.title);
+        setGlobalStatus(state.status);
+    }, [state.title, state.status, setGlobalTitle, setGlobalStatus]);
 
-    const { mutate: saveForm, isPending, error, isSuccess, isError, reset } = useFormMutation();
-    const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
-    const { data: linkableForms, isLoading: isLinkableFormsLoading } = useLinkableFormsQuery(initialForm?.id);
+    useEffect(() => {
+        if (isNewForm && state.editors.length === 0 && session?.user) {
+            dispatch({
+                type: "SET_EDITORS",
+                payload: [{
+                    user: {
+                        id: session.user.id,
+                        fullName: session.user.fullName,
+                        email: session.user.email,
+                        profilePictureUrl: session.user.profilePictureUrl
+                    },
+                    role: 3
+                }]
+            });
+        }
+    }, [session, isNewForm, state.editors.length, dispatch]);
 
     useEffect(() => {
         if (!isError && !isSuccess) return;
-
-        const timer = setTimeout(() => {
-            reset();
-        }, 2000);
-
+        const timer = setTimeout(() => reset(), 2000);
         return () => clearTimeout(timer);
     }, [isError, isSuccess, reset]);
 
     useEffect(() => {
-        if (isLgUp) {
-            setDrawerOpen(false);
+        if (typeof window !== "undefined") {
+            window.getFormSchema = () => structuredClone(state.schema);
         }
-    }, [isLgUp]);
+    }, [state.schema]);
 
-    const handleRequestLinkForm = (nextLinkedFormId, reason = "manual") => {
-        const nextId = nextLinkedFormId || "";
-        const currentId = linkedFormId || "";
-
-        let scenario = null;
-
-        if (!currentId && nextId) {
-            scenario = "link-add";
-        } else if (currentId && nextId && nextId !== currentId) {
-            scenario = "link-change";
-        } else if (currentId && !nextId) {
-            scenario = "link-remove";
+    const setSchemaBridge = useCallback((newSchemaOrUpdater) => {
+        if (typeof newSchemaOrUpdater === 'function') {
+            dispatch({ type: "SET_SCHEMA", payload: newSchemaOrUpdater(state.schema) });
         } else {
-            return;
+            dispatch({ type: "SET_SCHEMA", payload: newSchemaOrUpdater });
         }
+    }, [state.schema, dispatch]);
 
-        setLinkOverlay({ open: true, scenario, previousId: currentId, nextId, reason });
-    };
+    const { dragSource, activeDragItem, handlers } = useFormDnD(state.schema, setSchemaBridge, libraryDropElRef);
 
-    const applyFormState = (form) => {
-        const nextForm = form ?? {};
-        setSchema(Array.isArray(nextForm.schema) ? nextForm.schema : []);
-        setSchemaTitle(nextForm.title || "Yeni Form");
-        setDescription(nextForm.description || "");
-        setLinkedFormId(nextForm.linkedFormId || "");
-        setAllowMultipleResponses(Boolean(nextForm.allowMultipleResponses));
-        setAllowAnonymousResponses(Boolean(nextForm.allowAnonymousResponses));
-        if (Array.isArray(nextForm.collaborators) && nextForm.collaborators.length > 0) { setEditors(nextForm.collaborators);
-        } else if (session?.user) {
-            setEditors([{
-                user: { id: session.user.id, fullName: session.user.fullName, email: session.user.email, profilePictureUrl: session.user.profilePictureUrl },
-                role: 3
-            }]);
-        } else { setEditors([]);}
-        setStatus(Number.isFinite(nextForm.status) ? nextForm.status : 1);
-        setNewEditor("");
-        setNewEditorRole(1);
+    const handleSave = () => {
+        const payload = {
+            Id: state.id || tempFormId || null,
+            Title: state.title,
+            Description: state.description,
+            Schema: state.schema,
+            Status: state.status,
+            AllowMultipleResponses: state.allowAnonymousResponses ? true : state.allowMultipleResponses,
+            AllowAnonymousResponses: state.allowAnonymousResponses,
+            LinkedFormId: state.allowAnonymousResponses ? null : (state.linkedFormId || null),
+            Collaborators: state.editors.map((editor) => ({
+                UserId: editor.user.id,
+                Role: Number(editor.role)
+            }))
+        };
+
+        saveForm(payload, {
+            onSuccess: (data) => {
+                if (!isNewForm) return;
+                const nextId = data?.id ?? data?.data?.id;
+                if (nextId) router.push(`/admin/forms/${nextId}/edit`);
+            },
+        });
     };
 
     const handleRefresh = async () => {
         if (isNewForm) {
-            applyFormState(null);
+            dispatch({ type: "RESET_FORM" });
             return;
         }
         if (!onRefresh) return;
@@ -148,62 +140,13 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
             const result = await onRefresh();
             const refreshedForm = result?.data?.data ?? result?.data;
             if (refreshedForm) {
-                applyFormState(refreshedForm);
+                dispatch({ type: "LOAD_FORM", payload: refreshedForm });
             }
-        } catch {
-        }
-    };
-
-    const handleDeleteRequest = () => {
-        if (isNewForm) return;
-        setDeleteOverlayOpen(true);
-    };
-
-    const { shareStatus, handleShare } = useShareLink(initialForm?.id);
-
-    const handleSave = () => {
-        const payload = {
-            Id: initialForm?.id || formId || null,
-            Title: schemaTitle,
-            Description: description,
-            Schema: schema,
-            Status: status,
-            AllowMultipleResponses: allowAnonymousResponses ? true : allowMultipleResponses,
-            AllowAnonymousResponses: allowAnonymousResponses,
-            LinkedFormId: allowAnonymousResponses ? null : (linkedFormId || null),
-            Collaborators: editors.map((editor) => ({
-                UserId: editor.user.id,
-                Role: Number(editor.role)
-            }))
-        };
-        saveForm(payload, {
-            onSuccess: (data) => {
-                if (!isNewForm) return;
-                const nextId = data?.id ?? data?.data?.id;
-                if (nextId) {
-                    router.push(`/admin/forms/${nextId}/edit`);
-                }
-            },
-        });
-    };
-
-    const handleDeleteConfirm = () => {
-        if (!initialForm?.id || isDeletePending) return;
-        deleteForm(initialForm.id, {
-            onSuccess: () => {
-                setDeleteOverlayOpen(false);
-                router.push("/admin/forms");
-            },
-            onError: () => {
-                setDeleteOverlayOpen(false);
-            },
-        });
+        } catch (e) { console.error(e); }
     };
 
     const handleAddEditor = (selectedUser) => {
-        if (editors.find((e) => e.user.id === selectedUser.id)) return;
-        const role = 1;
-
+        if (state.editors.find((e) => e.user.id === selectedUser.id)) return;
         const newCollaborator = {
             user: {
                 id: selectedUser.id,
@@ -211,49 +154,37 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                 email: selectedUser.email,
                 profilePictureUrl: selectedUser.profilePictureUrl || null,
             },
-            role: role
+            role: 1
         };
-
-        setEditors((prev) => [...prev, newCollaborator]);
+        dispatch({ type: "SET_EDITORS", payload: [...state.editors, newCollaborator] });
     };
 
     const handleRemoveEditor = (editor) => {
-        const editorRoleValue = Number(editor.role);
-        if (editorRoleValue === 3) return;
-        if (currentUserRole === 2) {
-            if (editorRoleValue === 2) return;
-        } else if (currentUserRole !== 3) {
-            return;
-        }
-        setEditors((prev) => prev.filter((item) => item.user?.id !== editor.user?.id));
+        const nextEditors = state.editors.filter((item) => item.user?.id !== editor.user?.id);
+        dispatch({ type: "SET_EDITORS", payload: nextEditors });
     };
 
     const handleChangeEditorRole = (editorId, nextRole) => {
-        if (currentUserRole !== 3) return;
-        setEditors((prev) => prev.map((item) => item.user?.id === editorId ? { ...item, role: nextRole } : item));
+        const nextEditors = state.editors.map((item) => item.user?.id === editorId ? { ...item, role: nextRole } : item);
+        dispatch({ type: "SET_EDITORS", payload: nextEditors });
     };
-
-    const resetLinkOverlay = () => {
-        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
-    };
-
 
     const patchField = (id, nextProps) => {
-        setSchema((prev) => prev.map((field) => (field.id === id ? { ...field, props: nextProps } : field)));
+        const nextSchema = state.schema.map((field) => (field.id === id ? { ...field, props: nextProps } : field));
+        dispatch({ type: "SET_SCHEMA", payload: nextSchema });
     };
 
-    if (typeof window !== "undefined") {
-        window.getFormSchema = () => structuredClone(schema);
-    }
+    const handleLibrarySelect = (item) => {
+        const type = item?.type;
+        if (!type) return;
+        const id = Math.random().toString(36).slice(2, 10);
+        const props = structuredClone(REGISTRY[type]?.defaults ?? {});
+        dispatch({ type: "SET_SCHEMA", payload: [...state.schema, { id, type, props }] });
+    };
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: { distance: 5 }
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-            keyboardCodes: { start: ["Enter"], cancel: ["Escape"], end: ["Enter"] }
-        })
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
     const { setNodeRef: setLibraryDropNodeRef, isOver: isLibraryDropOver } = useDroppable({
@@ -266,55 +197,75 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         setLibraryDropNodeRef(node);
     }, [setLibraryDropNodeRef]);
 
-    const handleLibrarySelect = (item) => {
-        const type = item?.type;
-        if (!type) return;
-        const id = Math.random().toString(36).slice(2, 10);
-        const props = structuredClone(REGISTRY[type]?.defaults ?? {});
-        setSchema((prev) => [...prev, { id, type, props }]);
-    };
-
     const formState = {
-        schema, description, editors, status, linkedFormId, allowAnonymousResponses,
-        allowMultipleResponses, newEditor, newEditorRole, linkableForms: linkableForms ?? [],
-        isChildForm: initialForm?.isChildForm, isNewForm
+        schema: state.schema,
+        description: state.description,
+        editors: state.editors,
+        status: state.status,
+        linkedFormId: state.linkedFormId,
+        allowAnonymousResponses: state.allowAnonymousResponses,
+        allowMultipleResponses: state.allowMultipleResponses,
+        newEditor, newEditorRole,
+        linkableForms: linkableForms ?? [],
+        isChildForm: state.isChildForm,
+        isNewForm
     };
 
     const formActions = {
-        setDescription, handleSave, onRefresh: handleRefresh, onShare: handleShare, handleDeleteRequest, handleAddEditor,
-        handleRemoveEditor, handleChangeEditorRole, setNewEditor, setNewEditorRole, setLinkedFormId: handleRequestLinkForm,
-        setStatus, setAllowAnonymousResponses, setAllowMultipleResponses
+        setDescription: (val) => dispatch({ type: "SET_DESCRIPTION", payload: val }),
+        handleSave,
+        onRefresh: handleRefresh,
+        onShare: handleShare,
+        handleDeleteRequest: () => !isNewForm && setDeleteOverlayOpen(true),
+        handleAddEditor,
+        handleRemoveEditor,
+        handleChangeEditorRole,
+        setNewEditor,
+        setNewEditorRole,
+        setLinkedFormId: (nextId, reason) => {
+            if (reason === "manual" || !state.linkedFormId) {
+                dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: nextId || "" } });
+            } else {
+                let scenario = null;
+                if (!state.linkedFormId && nextId) scenario = "link-add";
+                else if (state.linkedFormId && nextId && nextId !== state.linkedFormId) scenario = "link-change";
+                else if (state.linkedFormId && !nextId) scenario = "link-remove";
+
+                setLinkOverlay({ open: true, scenario, previousId: state.linkedFormId, nextId, reason });
+            }
+        },
+        setStatus: (val) => dispatch({ type: "SET_STATUS", payload: val }),
+        setAllowAnonymousResponses: (val) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: val } }),
+        setAllowMultipleResponses: (val) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: val } })
     };
 
     const gridContent = (
         <div className="grid grid-cols-12 gap-4">
-            <Canvas dragSource={dragSource} schemaTitle={schemaTitle} setSchemaTitle={setSchemaTitle} span={isLgUp ? 8 : 11}>
-                {schema.length === 0 ? (
+            <Canvas
+                dragSource={dragSource}
+                schemaTitle={state.title}
+                setSchemaTitle={(val) => dispatch({ type: "SET_TITLE", payload: val })}
+                span={isLgUp ? 8 : 11}
+            >
+                {state.schema.length === 0 ? (
                     <div className="grid h-[80vh] place-items-center">
                         <div className="flex flex-col items-center gap-5 text-center px-6">
                             <div className="relative grid h-20 w-20 place-items-center rounded-3xl border-2 border-dashed border-neutral-800 bg-neutral-900/50 text-neutral-500">
-                                {isLgUp ? (
-                                    <MousePointerClick size={32} strokeWidth={1.5} className="opacity-80" />
-                                ) : (
-                                    <PackagePlus size={32} strokeWidth={1.5} className="opacity-80" />
-                                )}
+                                {isLgUp ? <MousePointerClick size={32} strokeWidth={1.5} className="opacity-80" /> : <PackagePlus size={32} strokeWidth={1.5} className="opacity-80" />}
                             </div>
-
                             <div className="space-y-1.5 max-w-xs mx-auto">
-                                <h3 className="text-lg font-semibold text-neutral-200">
-                                    Formunuzu oluşturmaya başlayın
-                                </h3>
+                                <h3 className="text-lg font-semibold text-neutral-200">Formunuzu oluşturmaya başlayın</h3>
                                 <p className="text-xs leading-relaxed text-neutral-500">
-                                    {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Formunuza yeni alanlar eklemek için bileşen panelini açın."}
+                                    {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Bileşen panelini açın."}
                                 </p>
                             </div>
                         </div>
                     </div>
                 ) : (
-                    <SortableContext items={schema.map((field) => field.id)} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={state.schema.map((field) => field.id)} strategy={verticalListSortingStrategy}>
                         <ul className="flex flex-col gap-2 max-w-2xl mx-auto mb-4">
                             <DropSlot index={0} enabled={dragSource === "library"} />
-                            {schema.map((field, index) => (
+                            {state.schema.map((field, index) => (
                                 <li key={field.id} className="flex flex-col">
                                     <CanvasItem field={field} index={index + 1} onPatch={patchField} />
                                     <DropSlot index={index + 1} enabled={dragSource === "library"} />
@@ -325,14 +276,20 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
                 )}
             </Canvas>
 
-            {!isLgUp && (
-                <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} />
-            )}
+            {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} />}
 
             {isLgUp && (
-                <Library layout="grid" formState={formState} formActions={formActions} isPending={isPending}
-                    isSuccess={isSuccess} isError={isError} shareStatus={shareStatus} currentUserRole={currentUserRole}
-                    isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
+                <Library layout="grid"
+                    onSave={handleSave}
+                    onRefresh={handleRefresh}
+                    onShare={handleShare}
+                    onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
+                    isPending={isPending}
+                    isSuccess={isSuccess}
+                    isError={isError}
+                    shareStatus={shareStatus}
+                    isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
+                    onLibrarySelect={handleLibrarySelect}
                 />
             )}
         </div>
@@ -343,46 +300,69 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
             <div ref={editorRef} className="relative">
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                        <div className="flex-1 h-full w-full p-4">
-                            {gridContent}
-                        </div>
-
+                        <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
-                            <div className="h-full flex flex-col">
-                                <div className="flex-1 min-h-0 px-1 py-1">
-                                    <Library layout="drawer" formState={formState} formActions={formActions} onLibrarySelect={handleLibrarySelect}
-                                        isPending={isPending} isSuccess={isSuccess} isError={isError} shareStatus={shareStatus}
-                                        currentUserRole={currentUserRole} isDeleteDisabled={isNewForm || isDeletePending || currentUserRole !== 3}
-                                    />
-                                </div>
-                            </div>
+                            <Library layout="drawer"
+                                onSave={handleSave}
+                                onRefresh={handleRefresh}
+                                onShare={handleShare}
+                                onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
+                                isPending={isPending}
+                                isSuccess={isSuccess}
+                                isError={isError}
+                                shareStatus={shareStatus}
+                                isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
+                                onLibrarySelect={handleLibrarySelect}
+                            />
                         </DrawerContent>
                     </Drawer>
                 ) : (
-                    <div className="flex-1 h-full w-full p-4">
-                        {gridContent}
-                    </div>
+                    <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                 )}
 
                 <DragOverlay>
-                    {activeDragItem ? <GhostComponent active={activeDragItem} schema={schema} /> : null}
+                    {activeDragItem ? <GhostComponent active={activeDragItem} schema={state.schema} /> : null}
                 </DragOverlay>
 
                 <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
                     onApprove={() => {
-                        if (!linkOverlay.scenario) { resetLinkOverlay(); return; }
-                        if (linkOverlay.scenario === "link-add" || linkOverlay.scenario === "link-change") { setLinkedFormId(linkOverlay.nextId); }
-                        else if (linkOverlay.scenario === "link-remove") { setLinkedFormId(""); }
-                        resetLinkOverlay();
+                        if (linkOverlay.scenario?.includes("link")) {
+                            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: linkOverlay.scenario === "link-remove" ? "" : linkOverlay.nextId } });
+                        }
+                        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
                     }}
-                    onReject={() => { if (linkOverlay.reason === "anonymous-toggle") setAllowAnonymousResponses(false); resetLinkOverlay(); }}
+                    onReject={() => {
+                        if (linkOverlay.reason === "anonymous-toggle") dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: false } });
+                        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
+                    }}
                 />
-                <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form"
-                    context={{ isPending: isDeletePending }}
-                    onApprove={handleDeleteConfirm}
+                <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form" context={{ isPending: isDeletePending }}
+                    onApprove={() => deleteForm(state.id, { onSuccess: () => router.push("/admin/forms"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
                 />
             </div>
         </DndContext>
+    );
+}
+
+export default function FormEditor({ initialForm = null, onRefresh }) {
+    const normalizedInitialData = initialForm ? {
+        id: initialForm.id,
+        schema: initialForm.schema || [],
+        title: initialForm.title || "Yeni Form",
+        description: initialForm.description || "",
+        linkedFormId: initialForm.linkedFormId || "",
+        allowMultipleResponses: initialForm.allowMultipleResponses || false,
+        allowAnonymousResponses: initialForm.allowAnonymousResponses || false,
+        editors: initialForm.collaborators || [],
+        status: initialForm.status || 1,
+        isChildForm: initialForm.isChildForm || false,
+        userRole: initialForm.userRole || 3
+    } : null;
+
+    return (
+        <FormEditorProvider initialData={normalizedInitialData}>
+            <FormEditorContent onRefresh={onRefresh} isNewForm={!initialForm?.id} />
+        </FormEditorProvider>
     );
 }

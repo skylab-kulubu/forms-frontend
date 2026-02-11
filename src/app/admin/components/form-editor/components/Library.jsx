@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { LibraryComponents } from "./LibraryComponents";
 import { LibrarySettings } from "./LibrarySettings";
+import { useFormEditor } from "../FormEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, CircleAlert, CircleGauge, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
@@ -8,46 +9,29 @@ import dynamic from "next/dynamic";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
 
-export function Library({layout = "grid", formState, formActions, onLibrarySelect, isPending, isError, isSuccess, shareStatus, currentUserRole, isDeleteDisabled }) {
+export function Library({ layout = "grid", onLibrarySelect, onSave, onRefresh, onShare, onDelete, isPending, isError, isSuccess, shareStatus, isDeleteDisabled }) {
     const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
     const from = active?.data?.current?.from;
     const showTrash = from === "canvas";
     const layoutClass = layout === "drawer" ? "h-full w-full" : "col-span-4 h-[93vh]";
-    
-    const { 
-        schema, description, editors, status, linkedFormId, 
-        allowAnonymousResponses, allowMultipleResponses, 
-        newEditor, newEditorRole, linkableForms, isChildForm, isNewForm 
-    } = formState;
 
-    const { 
-        setDescription, handleSave, onRefresh, onShare, handleDeleteRequest,
-        handleAddEditor, handleRemoveEditor, handleChangeEditorRole, 
-        setNewEditor, setNewEditorRole, setLinkedFormId, 
-        setStatus, setAllowAnonymousResponses, setAllowMultipleResponses 
-    } = formActions;
+    const { state } = useFormEditor();
+    const { isChildForm } = state;
+
     const showShare = true;
 
     const renderContent = () => {
         switch (activeTab) {
             case "components":
                 return <LibraryComponents layout={layout} onSelect={onLibrarySelect} />;
-            
+
             case "settings":
                 return (
                     <div className="relative h-full">
                         <div className={isChildForm ? "pointer-events-none opacity-40" : ""}>
-                            <LibrarySettings editors={editors} onChangeEditorRole={handleChangeEditorRole} 
-                                handleAddEditor={handleAddEditor} handleRemoveEditor={handleRemoveEditor} 
-                                newEditor={newEditor} setNewEditor={setNewEditor} newEditorRole={newEditorRole} 
-                                setNewEditorRole={setNewEditorRole} setLinkedFormId={setLinkedFormId}
-                                linkedFormId={linkedFormId} status={status} allowAnonymousResponses={allowAnonymousResponses}
-                                setAllowAnonymousResponses={setAllowAnonymousResponses} setStatus={setStatus} 
-                                allowMultipleResponses={allowMultipleResponses} setAllowMultipleResponses={setAllowMultipleResponses} 
-                                linkableForms={linkableForms ?? []} currentUserRole={currentUserRole} isNewForm={isNewForm}
-                            />
+                            <LibrarySettings />
                         </div>
                         {isChildForm && (
                             <div className="pointer-events-auto absolute inset-0 flex items-center justify-center">
@@ -71,12 +55,12 @@ export function Library({layout = "grid", formState, formActions, onLibrarySelec
                                 </p>
                             </div>
                             <div className="flex-1 min-h-0">
-                                <LibraryTipTap value={description} onChange={setDescription} />
+                                <LibraryTipTap />
                             </div>
                         </section>
                     </div>
                 );
-                
+
             default:
                 return null;
         }
@@ -125,12 +109,12 @@ export function Library({layout = "grid", formState, formActions, onLibrarySelec
                         >
                             <RotateCcw size={16} />
                         </button>
-                        <button type="button" aria-label="Formu sil" onClick={handleDeleteRequest} disabled={isDeleteDisabled}
+                        <button type="button" aria-label="Formu sil" onClick={onDelete} disabled={isDeleteDisabled}
                             className={`rounded-lg p-1.5 transition-colors ${isDeleteDisabled ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
                         >
                             <Trash2 size={16} />
                         </button>
-                        <button onClick={handleSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
+                        <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
                             {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-600" />) : isSuccess ? (<CheckCircle2 size={16} className="text-emerald-600" />) : (<CheckCircle2 size={16} />)}
                         </button>
                     </div>
