@@ -36,11 +36,11 @@ function clampStep(minute, step) {
   return Math.max(0, Math.min(59, r));
 }
 
-export function CreateFormTimePicker({ questionNumber, props, onPropsChange, readOnly }) {
+export function CreateFormTimePicker({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
   const {prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
-    <FieldShell number={questionNumber} title="Zaman Seçici" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
+    <FieldShell number={questionNumber} title="Zaman Seçici" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="tp-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni

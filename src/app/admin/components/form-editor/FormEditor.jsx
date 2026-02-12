@@ -45,8 +45,6 @@ function FormEditorContent({ onRefresh, isNewForm }) {
     const { state, dispatch } = useFormEditor();
 
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const [newEditor, setNewEditor] = useState("");
-    const [newEditorRole, setNewEditorRole] = useState(1);
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
 
@@ -56,7 +54,6 @@ function FormEditorContent({ onRefresh, isNewForm }) {
 
     const { mutate: saveForm, isPending, isSuccess, isError, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
-    const { data: linkableForms } = useLinkableFormsQuery(state.id);
     const { shareStatus, handleShare } = useShareLink(state.id);
 
     useEffect(() => {
@@ -147,32 +144,8 @@ function FormEditorContent({ onRefresh, isNewForm }) {
         } catch (e) { console.error(e); }
     };
 
-    const handleAddEditor = (selectedUser) => {
-        if (state.editors.find((e) => e.user.id === selectedUser.id)) return;
-        const newCollaborator = {
-            user: {
-                id: selectedUser.id,
-                fullName: selectedUser.firstName,
-                email: selectedUser.email,
-                profilePictureUrl: selectedUser.profilePictureUrl || null,
-            },
-            role: 1
-        };
-        dispatch({ type: "SET_EDITORS", payload: [...state.editors, newCollaborator] });
-    };
-
-    const handleRemoveEditor = (editor) => {
-        const nextEditors = state.editors.filter((item) => item.user?.id !== editor.user?.id);
-        dispatch({ type: "SET_EDITORS", payload: nextEditors });
-    };
-
-    const handleChangeEditorRole = (editorId, nextRole) => {
-        const nextEditors = state.editors.map((item) => item.user?.id === editorId ? { ...item, role: nextRole } : item);
-        dispatch({ type: "SET_EDITORS", payload: nextEditors });
-    };
-
-    const patchField = (id, nextProps) => {
-        const nextSchema = state.schema.map((field) => (field.id === id ? { ...field, props: nextProps } : field));
+    const updateField = (id, updates) => {
+        const nextSchema = state.schema.map((field) => (field.id === id ? { ...field, ...updates } : field));
         dispatch({ type: "SET_SCHEMA", payload: nextSchema });
     };
 
@@ -198,48 +171,6 @@ function FormEditorContent({ onRefresh, isNewForm }) {
         libraryDropElRef.current = node;
         setLibraryDropNodeRef(node);
     }, [setLibraryDropNodeRef]);
-
-    const formState = {
-        schema: state.schema,
-        description: state.description,
-        editors: state.editors,
-        status: state.status,
-        linkedFormId: state.linkedFormId,
-        allowAnonymousResponses: state.allowAnonymousResponses,
-        allowMultipleResponses: state.allowMultipleResponses,
-        newEditor, newEditorRole,
-        linkableForms: linkableForms ?? [],
-        isChildForm: state.isChildForm,
-        isNewForm
-    };
-
-    const formActions = {
-        setDescription: (val) => dispatch({ type: "SET_DESCRIPTION", payload: val }),
-        handleSave,
-        onRefresh: handleRefresh,
-        onShare: handleShare,
-        handleDeleteRequest: () => !isNewForm && setDeleteOverlayOpen(true),
-        handleAddEditor,
-        handleRemoveEditor,
-        handleChangeEditorRole,
-        setNewEditor,
-        setNewEditorRole,
-        setLinkedFormId: (nextId, reason) => {
-            if (reason === "manual" || !state.linkedFormId) {
-                dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: nextId || "" } });
-            } else {
-                let scenario = null;
-                if (!state.linkedFormId && nextId) scenario = "link-add";
-                else if (state.linkedFormId && nextId && nextId !== state.linkedFormId) scenario = "link-change";
-                else if (state.linkedFormId && !nextId) scenario = "link-remove";
-
-                setLinkOverlay({ open: true, scenario, previousId: state.linkedFormId, nextId, reason });
-            }
-        },
-        setStatus: (val) => dispatch({ type: "SET_STATUS", payload: val }),
-        setAllowAnonymousResponses: (val) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: val } }),
-        setAllowMultipleResponses: (val) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: val } })
-    };
 
     const gridContent = (
         <div className="grid grid-cols-12 gap-4">
@@ -269,7 +200,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                             <DropSlot index={0} enabled={dragSource === "library"} />
                             {state.schema.map((field, index) => (
                                 <li key={field.id} className="flex flex-col">
-                                    <CanvasItem field={field} index={index + 1} onPatch={patchField} />
+                                    <CanvasItem field={field} index={index + 1} onUpdate={updateField} schema={state.schema} />
                                     <DropSlot index={index + 1} enabled={dragSource === "library"} />
                                 </li>
                             ))}

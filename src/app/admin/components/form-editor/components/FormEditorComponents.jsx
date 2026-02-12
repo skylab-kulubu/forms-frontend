@@ -67,7 +67,7 @@ export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span
     )
 }
 
-export function CanvasItem({ field, index, onPatch }) {
+export function CanvasItem({ field, index, onUpdate, schema }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
         id: field.id,
         data: { from: "canvas", id: field.id },
@@ -76,6 +76,13 @@ export function CanvasItem({ field, index, onPatch }) {
     const style = { transform: CSS.Transform.toString(transform), transition };
     const entry = REGISTRY[field.type];
     const FormComponent = entry?.Create;
+
+    const availableFields = schema ? schema.slice(0, index - 1).map(f => ({
+            id: f.id,
+            title: f.props.question || "İsimsiz Soru",
+            type: f.type,
+            choices: f.props.choices || [] 
+          })) : [];
 
     const stopIfInteractive = (e) => {
         const el = e.target;
@@ -92,7 +99,12 @@ export function CanvasItem({ field, index, onPatch }) {
             className="cursor-grab active:cursor-grabbing"
         >
             {FormComponent ? (
-                <FormComponent questionNumber={index} props={field.props} onPropsChange={(next) => onPatch(field.id, next)} />
+                <FormComponent questionNumber={index} props={field.props} 
+                    onPropsChange={(next) => onUpdate(field.id, { props: next })} 
+                    condition={field.condition}
+                    onConditionChange={(cond) => onUpdate(field.id, { condition: cond })}
+                    availableFields={availableFields}
+                />
             ) : null}
         </div>
     );

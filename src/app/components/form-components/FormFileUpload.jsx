@@ -43,11 +43,11 @@ function fileMatchesAccept(file, acceptList) {
   });
 } 
 
-export function CreateFormFileUpload({ questionNumber, props, onPropsChange, readOnly }) {
+export function CreateFormFileUpload({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
   const { prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
-    <FieldShell number={questionNumber} title="Dosya Yükleme" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)}>
+    <FieldShell number={questionNumber} title="Dosya Yükleme" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="file-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
