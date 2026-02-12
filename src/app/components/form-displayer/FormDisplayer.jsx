@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { FormDisplayerHeader } from "./components/FormDisplayerComponents";
 import { FormResponseStatus } from "./components/FormResponseStatus";
 import { useSubmitFormMutation } from "@/lib/hooks/useForm";
 import { FormStatusDisplayer } from "../FormStatusHandler";
 import Background from "../Background";
+import { getVisibleFields } from "./components/conditionChecker";
 import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -37,6 +38,10 @@ export default function FormDisplayer({ form, step }) {
   const [missingFieldIds, setMissingFieldIds] = useState([]);
   const missingTimeoutRef = useRef(null);
 
+  const visibleFields = useMemo(() => {
+    return getVisibleFields(schema, formValues);
+  }, [schema, formValues]);
+
   const handleValueChange = (fieldId, value) => {
     setFormValues((prev) => ({ ...prev, [fieldId]: value }));
     if (errorMessage) setErrorMessage(null);
@@ -47,7 +52,8 @@ export default function FormDisplayer({ form, step }) {
 
     setTimeout(() => {
       const missingFields = [];
-      schema.forEach((field) => {
+
+      visibleFields.forEach((field) => {
         if (field.props?.required) {
           const val = formValues[field.id];
           let isEmpty = val === undefined || val === null;
@@ -89,7 +95,7 @@ export default function FormDisplayer({ form, step }) {
       }
       setMissingFieldIds([]);
 
-      const formattedResponses = schema.map((field) => {
+      const formattedResponses = visibleFields.map((field) => {
         let rawValue = formValues[field.id];
         if (rawValue === undefined || rawValue === null) rawValue = "";
         let finalAnswer = "";
@@ -185,22 +191,28 @@ export default function FormDisplayer({ form, step }) {
 
                 {hasSchema ? (
                   <>
-                    {schema.map((field, index) => {
-                      const entry = REGISTRY[field.type];
-                      const DisplayComponent = entry?.Display;
-                      if (!DisplayComponent) return null;
+                    <AnimatePresence mode="popLayout">
+                      {visibleFields.map((field, index) => {
+                        const entry = REGISTRY[field.type];
+                        const DisplayComponent = entry?.Display;
+                        if (!DisplayComponent) return null;
 
-                      const isLast = index === schema.length - 1;
-                      const isMissing = missingFieldIds.includes(field.id);
+                        const isLast = index === visibleFields.length - 1;
+                        const isMissing = missingFieldIds.includes(field.id);
 
-                      return (
-                        <motion.div key={field.id} id={field.id} variants={itemVariants} style={{ zIndex: schema.length - index }}
-                          className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
-                        >
-                          <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]} onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing} />
-                        </motion.div>
-                      );
-                    })}
+                        return (
+                          <motion.div key={field.id} id={field.id} layout variants={itemVariants} 
+                            initial="hidden" animate="show" exit="exit"
+                            style={{ zIndex: visibleFields.length - index }}
+                            className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
+                          >
+                            <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]} 
+                                onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing} 
+                            />
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
 
                     <motion.div variants={itemVariants} className="mt-6 flex justify-end">
                       <motion.button onClick={handleSubmit} disabled={submitMutation.isPending || errorMessage} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -237,3 +249,4 @@ export default function FormDisplayer({ form, step }) {
     </div>
   );
 }
+  

@@ -36,7 +36,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
             return [
                 { label: "Şunu seçerse", value: "equals" },
                 { label: "Şunu seçmezse", value: "not_equals" },
-                { label: "Cevaplanmamışsa", value: "is_set" },
+                { label: "Cevaplanmışsa", value: "is_set" },
             ];
         }
 
