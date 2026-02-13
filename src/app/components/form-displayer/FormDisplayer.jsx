@@ -60,6 +60,11 @@ export default function FormDisplayer({ form, step }) {
           if (!isEmpty) {
             if (typeof val === "string") isEmpty = val.trim() === "";
             else if (Array.isArray(val)) isEmpty = val.length === 0;
+            else if (field.type === "matrix" && typeof val === "object") {
+              const requiredRowsCount = field.props.rows?.length || 0;
+              const answeredRowsCount = Object.keys(val).length;
+              isEmpty = answeredRowsCount < requiredRowsCount;
+            }
           }
           if (isEmpty) missingFields.push(field.id);
         }
@@ -109,7 +114,7 @@ export default function FormDisplayer({ form, step }) {
                 if (!isNaN(numericIdx) && choices[numericIdx]) return choices[numericIdx];
                 return idx;
               }).join(", ");
-            } 
+            }
             else finalAnswer = Array.isArray(rawValue) ? rawValue.join(", ") : String(rawValue);
             break;
 
@@ -118,7 +123,7 @@ export default function FormDisplayer({ form, step }) {
               const numericIdx = Number(rawValue);
               if (rawValue !== "" && !isNaN(numericIdx) && field.props.choices[numericIdx]) finalAnswer = field.props.choices[numericIdx];
               else finalAnswer = String(rawValue);
-            } 
+            }
             else finalAnswer = String(rawValue);
             break;
 
@@ -126,13 +131,19 @@ export default function FormDisplayer({ form, step }) {
             if (rawValue instanceof File) finalAnswer = rawValue.name;
             else finalAnswer = "";
             break;
-          
+
+          case "matrix":
+            if (typeof rawValue === "object" && rawValue !== null) finalAnswer = JSON.stringify(rawValue);
+            else finalAnswer = String(rawValue);
+            
+            break;
+
           default:
             if (Array.isArray(rawValue)) finalAnswer = rawValue.join(", ");
             else finalAnswer = String(rawValue);
             break;
         }
-        return { id: field.id, question: field.props?.question || "", answer: finalAnswer };
+        return { id: field.id, type: field.type, question: field.props?.question || "", answer: finalAnswer };
       });
 
       const payload = { formId: form.id, responses: formattedResponses };
@@ -201,13 +212,13 @@ export default function FormDisplayer({ form, step }) {
                         const isMissing = missingFieldIds.includes(field.id);
 
                         return (
-                          <motion.div key={field.id} id={field.id} layout variants={itemVariants} 
+                          <motion.div key={field.id} id={field.id} layout variants={itemVariants}
                             initial="hidden" animate="show" exit="exit"
                             style={{ zIndex: visibleFields.length - index }}
                             className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
                           >
-                            <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]} 
-                                onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing} 
+                            <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]}
+                              onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing}
                             />
                           </motion.div>
                         );
@@ -249,4 +260,3 @@ export default function FormDisplayer({ form, step }) {
     </div>
   );
 }
-  

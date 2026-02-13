@@ -3,19 +3,31 @@
 const formatAnswer = (answer) => {
   if (answer == null) return "";
   if (Array.isArray(answer)) {
-    return answer
-      .map((item) => (item == null ? "" : String(item).trim()))
-      .filter(Boolean)
-      .join(", ");
+    return answer.map((item) => (item == null ? "" : String(item).trim())).filter(Boolean).join(", ");
   }
+
+  if (typeof answer === "object" && answer !== null) {
+    return Object.entries(answer).map(([key, value]) => `${key}: ${value}`).join("\n");
+  }
+
   return String(answer).trim();
 };
 
-export function ResponseListItem({ questionNumber, question, answer, className = "" }) {
+export function ResponseListItem({ questionNumber, question, answer, type, className = "" }) {
   const hasNumber = Number.isFinite(Number(questionNumber));
   const questionText = typeof question === "string" && question.trim().length > 0 ? question.trim() : "Soru";
+
+  let parsedMatrix = null;
+  if (type === "matrix" && answer) {
+    try {
+      parsedMatrix = typeof answer === "string" ? JSON.parse(answer) : answer;
+    } catch (e) {
+      console.error("Matris verisi çözülemedi:", e);
+    }
+  }
+
   const answerText = formatAnswer(answer);
-  const hasAnswer = answerText.length > 0;
+  const hasAnswer = parsedMatrix ? Object.keys(parsedMatrix).length > 0 : answerText.length > 0;
 
   return (
     <li className={`border-b border-white/10 last:border-b-0 bg-neutral-900/40 px-4 py-3 shadow-sm ${className}`}>
@@ -33,10 +45,30 @@ export function ResponseListItem({ questionNumber, question, answer, className =
       </div>
 
       <div className="mt-3 rounded-lg border border-white/10 bg-neutral-950/30 px-3 py-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500">Cevap</p>
-        <p className={`mt-1 text-sm wrap-break-word whitespace-pre-wrap ${hasAnswer ? "text-neutral-100" : "text-neutral-500 italic"}`}>
-          {hasAnswer ? answerText : "Cevap yok"}
-        </p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500 mb-1">Cevap</p>
+
+        {parsedMatrix && typeof parsedMatrix === 'object' ? (
+          <div className="mt-2 rounded-lg border border-white/10 overflow-hidden bg-neutral-900/50">
+            <table className="w-full text-left text-sm">
+              <tbody className="divide-y divide-white/5">
+                {Object.entries(parsedMatrix).map(([rowLabel, colLabel], idx) => (
+                  <tr key={idx}>
+                    <td className="px-3 py-2 font-medium text-neutral-300 border-r border-white/5 w-1/2">
+                      {rowLabel}
+                    </td>
+                    <td className="px-3 py-2 text-indigo-300 font-medium">
+                      {colLabel}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className={`text-sm wrap-break-word whitespace-pre-wrap ${hasAnswer ? "text-neutral-100" : "text-neutral-500 italic"}`}>
+            {hasAnswer ? answerText : "Cevap yok"}
+          </p>
+        )}
       </div>
     </li>
   );

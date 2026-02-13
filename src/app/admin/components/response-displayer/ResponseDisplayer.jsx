@@ -111,7 +111,7 @@ export default function ResponseDisplayer({ response }) {
     return (
       <ul className="space-y-3">
         {items.map((item, index) => (
-          <ResponseListItem key={item?.id ?? `${index}`} questionNumber={index + 1} question={item?.question} answer={item?.answer} />
+          <ResponseListItem key={item?.id ?? `${index}`} questionNumber={index + 1} question={item?.question} answer={item?.answer} type={item?.type} />
         ))}
       </ul>
     );
