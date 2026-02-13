@@ -5,11 +5,12 @@ import { useFormEditor } from "../FormEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, CircleAlert, CircleGauge, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
+import ErrorPopover from "@/app/components/utils/Popover";
 import dynamic from "next/dynamic";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
 
-export function Library({ layout = "grid", onLibrarySelect, onSave, onRefresh, onShare, onDelete, isPending, isError, isSuccess, shareStatus, isDeleteDisabled }) {
+export function Library({ layout = "grid", onLibrarySelect, onSave, onRefresh, onShare, onDelete, isPending, isError, error, isSuccess, shareStatus, isDeleteDisabled }) {
     const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
@@ -114,9 +115,11 @@ export function Library({ layout = "grid", onLibrarySelect, onSave, onRefresh, o
                         >
                             <Trash2 size={16} />
                         </button>
-                        <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
-                            {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-600" />) : isSuccess ? (<CheckCircle2 size={16} className="text-emerald-600" />) : (<CheckCircle2 size={16} />)}
-                        </button>
+                        <ErrorPopover open={isError} error={error} align="bottom-right" onClose={() => { }}>
+                            <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
+                                {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-600" />) : isSuccess ? (<CheckCircle2 size={16} className="text-emerald-600" />) : (<CheckCircle2 size={16} />)}
+                            </button>
+                        </ErrorPopover>
                     </div>
                 </div>
                 <div className={`flex-1 min-h-0 p-1 ${activeTab === "description" ? "overflow-hidden flex flex-col" : "overflow-y-auto overflow-x-hidden scrollbar"}`}>

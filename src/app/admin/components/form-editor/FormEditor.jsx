@@ -52,7 +52,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
     const libraryDropElRef = useRef(null);
     const isLgUp = useMediaQuery("(min-width: 1024px)");
 
-    const { mutate: saveForm, isPending, isSuccess, isError, reset } = useFormMutation();
+    const { mutate: saveForm, isPending, isSuccess, isError, error, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
     const { shareStatus, handleShare } = useShareLink(state.id);
 
@@ -174,9 +174,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
 
     const gridContent = (
         <div className="grid grid-cols-12 gap-4">
-            <Canvas
-                dragSource={dragSource}
-                schemaTitle={state.title}
+            <Canvas dragSource={dragSource} schemaTitle={state.title}
                 setSchemaTitle={(val) => dispatch({ type: "SET_TITLE", payload: val })}
                 span={isLgUp ? 8 : 11}
             >
@@ -220,6 +218,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                     isPending={isPending}
                     isSuccess={isSuccess}
                     isError={isError}
+                    error={error}
                     shareStatus={shareStatus}
                     isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                     onLibrarySelect={handleLibrarySelect}
