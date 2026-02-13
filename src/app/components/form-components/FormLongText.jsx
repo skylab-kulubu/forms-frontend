@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { FieldShell } from "./FieldShell";
-import { useProp } from "@/app/admin/components/form-editor/components/useProp";
+import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
 export function CreateFormLongText({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
   const {prop, bind, toggle} = useProp(props, onPropsChange, readOnly);

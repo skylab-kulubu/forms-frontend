@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ChevronsUpDown, Plus, X } from "lucide-react";
 import { FieldShell } from "./FieldShell";
-import { useProp } from "@/app/admin/components/form-editor/components/useProp";
+import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import SearchPicker from "@/app/components/utils/SearchPicker";
 
 function normalizeOptions(choices) {

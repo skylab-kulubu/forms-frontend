@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { FieldShell } from "./FieldShell";
-import { useProp } from "@/app/admin/components/form-editor/components/useProp";
+import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { AnimatePresence } from "framer-motion";
 import DatePicker from "../utils/DatePicker";
 

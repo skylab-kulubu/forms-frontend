@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Clock, X } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { FieldShell } from "./FieldShell";
-import { useProp } from "@/app/admin/components/form-editor/components/useProp";
+import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import TimePicker from "../utils/TimePicker";
 
 function pad2(n) {

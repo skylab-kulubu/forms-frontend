@@ -38,6 +38,29 @@ function useMediaQuery(query) {
     return matches;
 }
 
+class SmartKeyboardSensor extends KeyboardSensor {
+  static activators = [
+    {
+      eventName: "onKeyDown",
+      handler: (event, options, extra) => {
+        const target = event.nativeEvent.target;
+        
+        const isInput =
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable;
+
+        if (isInput) {
+          return false;
+        }
+
+        return KeyboardSensor.activators[0].handler(event, options, extra);
+      },
+    },
+  ];
+}
+
 function FormEditorContent({ onRefresh, isNewForm }) {
     const router = useRouter();
     const { data: session } = useSession();
@@ -159,7 +182,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+        useSensor(SmartKeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
     const { setNodeRef: setLibraryDropNodeRef, isOver: isLibraryDropOver } = useDroppable({

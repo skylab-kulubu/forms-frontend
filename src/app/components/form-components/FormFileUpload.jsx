@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { Upload, X, File as FileIcon } from "lucide-react";
 import { FieldShell } from "./FieldShell";
-import { useProp } from "@/app/admin/components/form-editor/components/useProp";
+import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes)) return "-";

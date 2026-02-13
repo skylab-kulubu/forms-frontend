@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Link as LinkIcon, Github, Linkedin, Instagram, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FieldShell } from "./FieldShell";
-import { useProp } from "@/app/admin/components/form-editor/components/useProp";
+import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
 function getProviderIcon(input) {
   if (!input || typeof input !== "string") return LinkIcon;
