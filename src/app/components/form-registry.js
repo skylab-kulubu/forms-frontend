@@ -8,14 +8,15 @@ import { CreateFormFileUpload, DisplayFormFileUpload } from "@/app/components/fo
 import { CreateFormLink, DisplayFormLink } from "@/app/components/form-components/FormLink";
 import { CreateFormSlider, DisplayFormSlider } from "@/app/components/form-components/FormSlider";
 import { CreateFormMatrix, DisplayFormMatrix } from "@/app/components/form-components/FormMatrix";
+import { CreateFormToggle, DisplayFormToggle } from "@/app/components/form-components/FormToggle";
 
-import { Type, AlignLeft, ChevronsUpDown, ListChecks, Calendar, Clock, Paperclip, Link, SlidersHorizontal, Grid3X3} from "lucide-react";
+import { Type, AlignLeft, ChevronsUpDown, ListChecks, Calendar, Clock, Paperclip, Link, SlidersHorizontal, Grid3X3, ToggleRight } from "lucide-react";
 
 export const REGISTRY = {
   short_text: {
     label: "Kısa Yanıt",
     svg: "/assets/components/short-text.svg",
-    defaults: { question: "", description: "", required: false },
+    defaults: { question: "", description: "", required: false, inputType: "text" },
     Create: CreateFormShortText, Display: DisplayFormShortText
   },
   long_text: {
@@ -23,6 +24,12 @@ export const REGISTRY = {
     svg: "/assets/components/long-text.svg",
     defaults: { question: "", description: "", required: false },
     Create: CreateFormLongText, Display: DisplayFormLongText
+  },
+  toggle: {
+    label: "Aç / Kapat (Switch)",
+    svg: "/assets/components/multi-choice.svg",
+    defaults: { question: "", description: "", required: false, trueLabel: "Evet", falseLabel: "Hayır" },
+    Create: CreateFormToggle, Display: DisplayFormToggle
   },
   combobox: {
     label: "Açılır Liste",
@@ -77,6 +84,7 @@ export const REGISTRY = {
 export const COMPONENTS = [
   { type: "short_text", label: "Kısa Yanıt", svg: "/assets/components/short-text.svg", icon: Type },
   { type: "long_text", label: "Uzun Yanıt", svg: "/assets/components/long-text.svg", icon: AlignLeft },
+  { type: "toggle", label: "Aç / Kapat", svg: "/assets/components/multi-choice.svg", icon: ToggleRight },
   { type: "combobox", label: "Açılır Liste", svg: "/assets/components/combobox.svg", icon: ChevronsUpDown },
   { type: "multi_choice", label: "Çoklu Seçim", svg: "/assets/components/multi-choice.svg", icon: ListChecks },
   { type: "date", label: "Tarih", svg: "/assets/components/date-picker.svg", icon: Calendar },

@@ -55,18 +55,6 @@ export function CreateFormDatePicker({ questionNumber, props, onPropsChange, rea
           placeholder="Açıklamanızı buraya yazın."
         />
       </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-          Örnek Cevap
-        </label>
-        <div className="rounded-lg border border-white/10 bg-neutral-900/60 p-3 text-center text-sm text-neutral-400">
-          <div className="mx-auto inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2">
-            <Calendar size={16} />
-            <span>Tarih seçici burada görünecek.</span>
-          </div>
-        </div>
-      </div>
     </FieldShell>
   );
 }

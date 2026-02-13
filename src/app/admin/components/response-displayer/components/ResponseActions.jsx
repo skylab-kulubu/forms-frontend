@@ -151,7 +151,7 @@ export function ResponseActions({ response }) {
               <Share2 size={16} />
             </button>
             <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
-              className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-600" : isSuccess ? "text-emerald-600" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+              className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-600" : isSuccess ? "text-indigo-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
             >
               <Archive size={16} />
             </button>

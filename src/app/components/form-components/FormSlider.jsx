@@ -52,19 +52,6 @@ export function CreateFormSlider({ questionNumber, props, onPropsChange, readOnl
           />
         </div>
       </div>
-
-      <div className="mt-2 flex flex-col gap-1.5 pt-4 border-t border-white/5 pointer-events-none opacity-80">
-        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-          Önizleme
-        </label>
-        <div className="flex items-center gap-4 rounded-lg border border-white/5 bg-neutral-900/40 p-3 mt-1">
-          <span className="text-xs font-medium text-neutral-400">{min}</span>
-          <input type="range" min={min} max={max} defaultValue={min + (max - min) / 2} 
-            className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none accent-indigo-500/50"
-          />
-          <span className="text-xs font-medium text-neutral-400">{max}</span>
-        </div>
-      </div>
     </FieldShell>
   );
 }

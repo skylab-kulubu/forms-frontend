@@ -90,20 +90,6 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
           <span className="px-0.5 text-[11px] text-neutral-500">0 ise sınır yok</span>
         </div>
       </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-          Örnek Cevap
-        </label>
-        <div className="rounded-lg border border-dashed border-white/10 bg-neutral-900/60 p-6 text-center text-sm text-neutral-400">
-          <div className="mx-auto grid size-10 place-items-center rounded-md bg-white/10 text-neutral-300">
-            <Upload size={18} />
-          </div>
-          <p className="mt-2 text-sm font-medium text-neutral-100">Dosya yükle</p>
-          <p className="text-xs text-neutral-400">Sürükleyip bırakın veya tıklayın</p>
-          <p className="mt-1 text-[11px] text-neutral-500">İzin verilen: {prop.acceptedFiles || "Tüm türler"} • {prop.maxSize > 0 ? `${prop.maxSize}MB sınır` : "Sınırsız boyut"}</p>
-        </div>
-      </div>
     </FieldShell>
   );
 }

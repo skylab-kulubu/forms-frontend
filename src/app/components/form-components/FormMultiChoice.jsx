@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { FieldShell } from "./FieldShell";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
@@ -67,9 +67,9 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
           ))}
           <div>
             <button type="button" onClick={addChoice}
-              className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
+               className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
             >
-              Seçenek Ekle
+              <Plus size={14} /> Seçenek Ekle
             </button>
           </div>
         </div>

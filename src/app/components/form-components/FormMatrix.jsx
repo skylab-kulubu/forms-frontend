@@ -50,39 +50,6 @@ export function CreateFormMatrix({ questionNumber, props, onPropsChange, readOnl
                     <button type="button" onClick={() => manageList('columns', 'add')} className="flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-neutral-300 hover:bg-white/10 mt-1"><Plus size={12} /> Sütun Ekle</button>
                 </div>
             </div>
-
-            <div className="mt-4 flex flex-col gap-2 pt-4 border-t border-white/5 pointer-events-none">
-                <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
-                    Önizleme
-                </label>
-                <div className="mt-1 w-full overflow-x-auto rounded-lg border border-white/5 bg-neutral-900/40 opacity-80">
-                    <table className="w-full text-left text-[11px] text-neutral-400">
-                        <thead className="border-b border-white/5 bg-white/5">
-                            <tr>
-                                <th className="p-2 font-medium"></th>
-                                {cols.map((col, cIdx) => (
-                                    <th key={cIdx} className="p-2 font-medium text-center truncate max-w-20">{col}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {rows.slice(0, 3).map((row, rIdx) => (
-                                <tr key={rIdx}>
-                                    <td className="p-2 font-medium truncate max-w-[120px]">{row}</td>
-                                    {cols.map((_, cIdx) => (
-                                        <td key={cIdx} className="p-2 text-center">
-                                            <div className="mx-auto w-3 h-3 rounded-full border border-white/20 bg-neutral-800"></div>
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                            {rows.length > 3 && (
-                                <tr><td colSpan={cols.length + 1} className="p-2 text-center italic text-neutral-500">... ({rows.length - 3} satır daha)</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </FieldShell>
     );
 }

@@ -94,30 +94,11 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
           ))}
           <div>
             <button type="button" onClick={addChoice}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
+              className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
             >
               <Plus size={14} /> Seçenek Ekle
             </button>
           </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-          Örnek Cevap
-        </label>
-        <div className="rounded-lg border border-white/10 bg-neutral-900/60 p-3 text-sm text-neutral-400">
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-              <ChevronsUpDown size={16} />
-            </span>
-            <button type="button" disabled
-              className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none"
-            >
-              <span className="text-neutral-500">Bir seçenek seçin</span>
-            </button>
-          </div>
-          <div className="mt-2 text-[11px] text-neutral-500">Tek seçenek seçilir {prop.allowCustom ? " • serbest giriş açık" : ""}</div>
         </div>
       </div>
     </FieldShell>

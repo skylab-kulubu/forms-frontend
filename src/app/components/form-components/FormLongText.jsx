@@ -28,18 +28,6 @@ export function CreateFormLongText({ questionNumber, props, onPropsChange, readO
           placeholder="Açıklamanızı buraya yazın."
         />
       </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="short-answer" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-          Cevap
-        </label>
-        <textarea id="short-answer" rows={2}
-          className="block w-full resize-y rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-center text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-70 disabled:border-white/5 disabled:bg-neutral-900/40"
-          placeholder="Cevap buraya yazılacak"
-          disabled
-        />
-        <span className="px-0.5 text-[11px] text-neutral-500">Uzun yanıt bekleniyor</span>
-      </div>
     </FieldShell>
   );
 }

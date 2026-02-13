@@ -65,30 +65,6 @@ export function CreateFormLink({ questionNumber, props, onPropsChange, readOnly,
           </button>
         </div>
       </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="link-answer" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-          Cevap
-        </label>
-        <div className="flex flex-col gap-2">
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-              <LinkIcon size={16} />
-            </span>
-            <input id="link-answer" type="url" disabled
-              className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-3 py-2 text-center text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-70 disabled:border-white/5 disabled:bg-neutral-900/40"
-              placeholder="https://ornek.com/profil"
-            />
-          </div>
-          {prop.allowMultiple && (
-            <input type="url" disabled
-              className="block w-full rounded-lg border border-white/10 bg-neutral-900/40 px-3 py-2 text-center text-sm text-neutral-100 placeholder-neutral-500 opacity-70"
-              placeholder="Yeni bağlantı eklenebilir"
-            />
-          )}
-        </div>
-        <span className="px-0.5 text-[11px] text-neutral-500">Profil ya da web sitesi bağlantısı bekleniyor</span>
-      </div>
     </FieldShell>
   );
 }
