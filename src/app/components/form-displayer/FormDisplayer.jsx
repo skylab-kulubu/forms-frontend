@@ -36,6 +36,7 @@ export default function FormDisplayer({ form, step }) {
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [missingFieldIds, setMissingFieldIds] = useState([]);
+  const [uploadingFields, setUploadingFields] = useState({});
   const missingTimeoutRef = useRef(null);
 
   const visibleFields = useMemo(() => {
@@ -46,6 +47,12 @@ export default function FormDisplayer({ form, step }) {
     setFormValues((prev) => ({ ...prev, [fieldId]: value }));
     if (errorMessage) setErrorMessage(null);
   };
+
+  const handleUploadStateChange = (fieldId, isUploading) => {
+    setUploadingFields((prev) => ({ ...prev, [fieldId]: isUploading }));
+  };
+
+  const isAnyFileUploading = Object.values(uploadingFields).some((status) => status === true);
 
   const handleSubmit = () => {
     setErrorMessage(null);
@@ -128,14 +135,13 @@ export default function FormDisplayer({ form, step }) {
             break;
 
           case "file":
-            if (rawValue instanceof File) finalAnswer = rawValue.name;
-            else finalAnswer = "";
+            finalAnswer = rawValue ? String(rawValue) : "";
             break;
 
           case "matrix":
             if (typeof rawValue === "object" && rawValue !== null) finalAnswer = JSON.stringify(rawValue);
             else finalAnswer = String(rawValue);
-            
+
             break;
 
           default:
@@ -219,6 +225,7 @@ export default function FormDisplayer({ form, step }) {
                           >
                             <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]}
                               onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing}
+                              onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
                             />
                           </motion.div>
                         );
@@ -226,7 +233,7 @@ export default function FormDisplayer({ form, step }) {
                     </AnimatePresence>
 
                     <motion.div variants={itemVariants} className="mt-6 flex justify-end">
-                      <motion.button onClick={handleSubmit} disabled={submitMutation.isPending || errorMessage} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      <motion.button onClick={handleSubmit} disabled={submitMutation.isPending || errorMessage || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none
                         ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : submitMutation.isPending ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-pink-300/30 border-pink-200/40 hover:bg-pink-200/60"}`}
                       >

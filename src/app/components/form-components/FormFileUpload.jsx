@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { Upload, X, File as FileIcon } from "lucide-react";
+import { useMemo, useRef, useState, useEffect } from "react";
+import { Upload, X, File as FileIcon, Loader2 } from "lucide-react";
 import { FieldShell } from "./FieldShell";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
+import { uploadWithProgress } from "@/lib/apiClient";
 
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes)) return "-";
@@ -15,9 +16,9 @@ function formatBytes(bytes) {
   return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${sizes[i]}`;
 }
 
-function parseAccept(accept) {
-  if (!accept || typeof accept !== "string") return [];
-  return accept
+function parseAccept(acceptedFiles) {
+  if (!acceptedFiles || typeof acceptedFiles !== "string") return [];
+  return acceptedFiles
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean)
@@ -41,10 +42,10 @@ function fileMatchesAccept(file, acceptList) {
     // Exact mime type
     return type === rule;
   });
-} 
+}
 
 export function CreateFormFileUpload({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
-  const { prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
+  const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
 
   return (
     <FieldShell number={questionNumber} title="Dosya Yükleme" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
@@ -94,28 +95,52 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
   );
 }
 
-export function DisplayFormFileUpload({ question, questionNumber, description, required = false, accept = "", maxSize = 0, value, onChange, missing = false }) {
-  const acceptList = useMemo(() => parseAccept(accept), [accept]);
+export function DisplayFormFileUpload({ question, questionNumber, description, required = false, acceptedFiles = "", maxSize = 0, value, onChange, missing = false, onUploadStateChange }) {
+  const acceptList = useMemo(() => parseAccept(acceptedFiles), [acceptedFiles]);
   const maxBytes = Number(maxSize) > 0 ? Number(maxSize) * 1024 * 1024 : Infinity;
+
   const [internalFile, setInternalFile] = useState(null);
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const inputRef = useRef(null);
 
-  const currentFile = value !== undefined ? value ?? null : internalFile;
+  const currentFile = internalFile;
 
-  const commit = (file) => {
-    if (onChange) {
-      onChange({ target: { value: file } });
-    } else {
-      setInternalFile(file);
+  const handleUpload = async (file) => {
+    setIsUploading(true);
+    if (onUploadStateChange) onUploadStateChange(true);
+    setUploadProgress(0);
+    setError("");
+    setInternalFile(file);
+
+    try {
+      const response = await uploadWithProgress("/api/images/", file, (percent) => {
+        setUploadProgress(percent);
+      });
+
+      const uploadedId = response?.data?.id;
+
+      if (onChange) {
+        onChange({ target: { value: uploadedId.toString() } });
+      }
+    } catch (err) {
+      setError("Dosya yüklenirken hata oluştu.");
+      setInternalFile(null);
+      if (onChange) onChange({ target: { value: null } });
+    } finally {
+      setIsUploading(false);
+      if (onUploadStateChange) onUploadStateChange(false);
     }
   };
 
   const validateAndSet = (f) => {
     setError("");
     if (!f) {
-      commit(null);
+      clear();
       return;
     }
     if (!fileMatchesAccept(f, acceptList)) {
@@ -126,7 +151,8 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
       setError("Dosya boyutu sınırı aşıldı.");
       return;
     }
-    commit(f);
+
+    handleUpload(f);
   };
 
   const handleInputChange = (e) => {
@@ -139,6 +165,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
     e.preventDefault();
     e.stopPropagation();
     setDragging(false);
+    if (isUploading) return;
     const f = e.dataTransfer?.files && e.dataTransfer.files[0] ? e.dataTransfer.files[0] : null;
     validateAndSet(f);
   };
@@ -158,73 +185,117 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
   const clear = () => {
     if (inputRef.current) inputRef.current.value = "";
     setError("");
-    commit(null);
+    setInternalFile(null);
+    setUploadProgress(0);
+    if (onChange) onChange({ target: { value: null } });
+    if (isUploading && onUploadStateChange) onUploadStateChange(false);
   };
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError("");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
+
         <div className="flex gap-3">
           {questionNumber != null && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
               {questionNumber}
             </div>
           )}
-
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
+              {question} {required && <span className="ml-1 text-red-400/80">*</span>}
             </p>
-            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
         </div>
 
-        <input
-          ref={inputRef}
-          type="file"
-          name="file"
-          accept={accept || undefined}
-          aria-required={required}
-          onChange={handleInputChange}
-          className="sr-only"
-        />
+        <input ref={inputRef} type="file" name="file" accept={acceptedFiles || undefined} aria-required={required} onChange={handleInputChange} className="sr-only" />
 
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") inputRef.current?.click(); }}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          className={`mt-3 rounded-lg border ${dragging ? "border-emerald-300/40 bg-emerald-500/10" : missing ? "border-dashed border-red-400/60 bg-red-900/60" : "border-dashed border-white/10 bg-neutral-900/60"} px-4 py-8 text-center transition-colors`}
+        <div role="button" tabIndex={0} onClick={() => !isUploading && inputRef.current?.click()}
+          onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !isUploading) inputRef.current?.click(); }}
+          onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
+          className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border h-16 px-4 py-3 transition-all duration-300 ${dragging ? "border-indigo-500/50 bg-indigo-500/10"
+              : missing && !currentFile && !error ? "border-dashed border-red-400/60 bg-red-900/20"
+                : currentFile || isUploading ? "border-solid border-white/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
+                  : "border-dashed border-white/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
+            }`}
         >
-          <div className="mx-auto grid size-10 place-items-center rounded-md bg-white/10 text-neutral-300">
-            <Upload size={18} />
-          </div>
-          <p className="mt-2 text-sm font-medium text-neutral-100">Dosya yükle</p>
-          <p className="text-xs text-neutral-400">Sürükleyip bırakın veya tıklayın</p>
-          <p className="mt-1 text-[11px] text-neutral-500">İzin verilen: {accept || "Tüm türler"}{maxBytes !== Infinity ? ` • ${Math.round(maxBytes / 1024 / 1024)}MB sınır` : ""}</p>
+          {!currentFile && !isUploading && (
+            <div className="flex items-center gap-4 w-full animate-in fade-in duration-300">
+              <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-indigo-500/20 text-indigo-400" : error ? "bg-red-500/20 text-red-400" : "bg-white/5 text-neutral-400"} transition-colors`}>
+                <Upload size={18} />
+              </div>
+              <div className="flex flex-col text-left">
+                <span className={`text-sm font-medium transition-colors duration-300 ${error ? "text-red-400" : "text-neutral-200"}`}>
+                  {error ? error : "Dosya yükle veya sürükle"}
+                </span>
+                <span className="mt-0.5 text-[11px] font-medium tracking-wide text-neutral-500 uppercase">
+                  {acceptedFiles ? acceptedFiles.replace(/,/g, ', ') : "TÜM TÜRLER"}
+                  {maxBytes !== Infinity ? ` • MAKS ${Math.round(maxBytes / 1024 / 1024)}MB` : ""}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {(currentFile || isUploading) && (
+            <div className="flex items-center justify-between w-full animate-in fade-in duration-300">
+
+              <div className="flex items-center gap-4 overflow-hidden">
+                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${isUploading ? 'bg-indigo-500/10 text-indigo-400' : 'bg-white/10 text-neutral-300'}`}>
+                  {isUploading ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
+                </div>
+
+                <div className="flex flex-col truncate text-left">
+                  <span className="truncate text-sm font-medium text-neutral-200" title={currentFile?.name}>
+                    {currentFile?.name}
+                  </span>
+                  <div className="mt-0.5 flex items-center gap-2 text-[11px] font-medium text-neutral-500">
+                    <span>{formatBytes(currentFile?.size)}</span>
+                    {isUploading ? (
+                      <>
+                        <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                        <span className="text-indigo-400/80">Yükleniyor... {uploadProgress}%</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                        <span className="text-neutral-400">Değiştirmek için tıkla</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {!isUploading && (
+                <button type="button" onClick={(e) => { e.stopPropagation(); clear(); }} aria-label="Dosyayı kaldır"
+                  className="ml-4 shrink-0 inline-flex items-center justify-center rounded-sm p-2 text-neutral-400 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              )}
+
+              {isUploading && (
+                <div className="absolute bottom-0 left-0 h-0.5 w-full bg-neutral-800/50">
+                  <div
+                    className="h-full bg-indigo-400 transition-all duration-300 ease-out"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {currentFile && (
-          <div className="mt-3 flex items-center justify-between rounded-md border border-white/10 bg-white/5 px-3 py-2">
-            <div className="flex items-center gap-2 text-sm text-neutral-200">
-              <FileIcon size={16} />
-              <span className="truncate max-w-56" title={currentFile.name}>{currentFile.name}</span>
-              <span className="text-neutral-400">• {formatBytes(currentFile.size)}</span>
-            </div>
-            <button type="button" onClick={clear}
-              className="inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1 text-neutral-300 hover:text-neutral-100"
-              aria-label="Dosyayı kaldır"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
-        {error && <span className="mt-2 px-0.5 text-[12px] text-red-400">{error}</span>}
-        {required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1">Zorunlu alan</span>}
+        {missing && !error && <span className="mt-2 px-1 text-[12px] font-medium text-red-400 animate-in fade-in">Bu alan zorunludur.</span>}
       </div>
     </div>
   );

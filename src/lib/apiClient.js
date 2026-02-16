@@ -42,3 +42,47 @@ export async function request(path, options = {}) {
 
   return data;
 }
+
+export async function uploadWithProgress(path, file, onProgress) {
+  let resolvedToken = null;
+  try {
+    const session = await getSession();
+    resolvedToken = session?.accessToken;
+  } catch {}
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${BASE_URL}${path}`);
+    
+    if (resolvedToken) {
+      xhr.setRequestHeader("Authorization", `Bearer ${resolvedToken}`);
+    }
+    
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        const percentComplete = Math.round((e.loaded / e.total) * 100);
+        onProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          resolve(response);
+        } catch {
+          resolve(xhr.responseText);
+        }
+      } else {
+        reject(new Error(`Yükleme başarısız: ${xhr.status}`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Network hatası"));
+
+    const formData = new FormData();
+    formData.append("image", file); 
+    
+    xhr.send(formData);
+  });
+}
