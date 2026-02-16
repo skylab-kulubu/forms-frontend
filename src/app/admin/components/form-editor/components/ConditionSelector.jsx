@@ -127,9 +127,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
 
                 <div className="col-span-12 sm:col-span-4 flex flex-col gap-1.5">
                     <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Buna Bağlı:</label>
-                    <Dropdown
-                        value={current.fieldId}
-                        onChange={(val) => handleChange("fieldId", val)}
+                    <Dropdown value={current.fieldId} onChange={(val) => handleChange("fieldId", val)}
                         options={availableFields.map(q => ({
                             value: q.id,
                             label: `${availableFields.indexOf(q) + 1}. ${q.title ? (q.title.length > 25 ? q.title.substring(0, 25) + "..." : q.title) : "İsimsiz Soru"}`

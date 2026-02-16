@@ -39,7 +39,7 @@ export function Dropdown({ value, onChange, options = [], placeholder = "Seçini
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 4, scale: 0.98 }}
                         transition={{ duration: 0.1 }}
-                        className="absolute left-0 top-full z-30 mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] shadow-xl backdrop-blur-xl"
+                        className="absolute left-0 top-full z-30 mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] shadow-xl backdrop-blur-xl scrollbar"
                     >
                         <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent p-1">
                             {options.length > 0 ? options.map((option, idx) => {

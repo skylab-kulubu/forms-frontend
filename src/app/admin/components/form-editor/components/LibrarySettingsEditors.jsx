@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp, Check, ChevronDown, Eye, PencilLine, Plus, User2, UserMinus } from "lucide-react";
 import SearchPicker from "../../../../components/utils/SearchPicker";
 import { useUserByMailQuery } from "@/lib/hooks/useUser";
@@ -54,7 +54,7 @@ export function LibrarySettingsEditors() {
 
     const handleAddEditor = (selectedUser) => {
         if (editorsList.find((e) => e.user.id === selectedUser.id)) return;
-        
+
         const newCollaborator = {
             user: {
                 id: selectedUser.id,
@@ -110,7 +110,7 @@ export function LibrarySettingsEditors() {
                         <div key={editor.user.id || index} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950 text-xs font-semibold uppercase tracking-wide text-emerald-200">
-                                    {editor.user?.profilePictureUrl ? (<img src={editor.user?.profilePictureUrl} alt={editor.user.fullName} className="h-full w-full object-cover" />) : (editor.user?.fullName ? (<span>{getInitials(editor.user.fullName)}</span>) : (<User2 size={20}/>))}
+                                    {editor.user?.profilePictureUrl ? (<img src={editor.user?.profilePictureUrl} alt={editor.user.fullName} className="h-full w-full object-cover" />) : (editor.user?.fullName ? (<span>{getInitials(editor.user.fullName)}</span>) : (<User2 size={20} />))}
                                 </div>
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-neutral-50 truncate">{normalizeUserName(editor.user.fullName) || "--"}</p>
@@ -122,24 +122,50 @@ export function LibrarySettingsEditors() {
                                 {roleValue === 3 ? (
                                     <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300">Sahip</span>
                                 ) : canManageRoles ? (
-                                    <div className="relative">
-                                        <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.user.id ? null : editor.user.id)} className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition-colors hover:border-white/20 hover:text-neutral-50">
-                                            {roleValue === 2 ? "Editör" : "Okuyucu"} <ChevronDown size={12} className="opacity-70" />
+                                    <div className="relative w-26" style={{ zIndex: openMenuId === editor.user.id ? 50 : 10 }}>
+                                        <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.user.id ? null : editor.user.id)}
+                                            className={`flex w-full items-center justify-between gap-1 border px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-colors focus:outline-none 
+                                            ${openMenuId === editor.user.id ? 'rounded-t-lg border-white/20 border-b-transparent bg-[#1e1e1e] text-neutral-50'
+                                            : 'rounded-lg border-white/10 bg-white/5 text-neutral-300 hover:border-white/20 hover:text-neutral-50 hover:bg-white/10'}`}
+                                        >
+                                            <span>{roleValue === 2 ? "Editör" : "Okuyucu"}</span>
+                                            <ChevronDown size={12} className={`opacity-70 transition-transform duration-200 ${openMenuId === editor.user.id ? "rotate-180" : ""}`} />
                                         </button>
-                                        {openMenuId === editor.user.id && (
-                                            <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-white/10 bg-neutral-900/80 p-1.5 shadow-xl backdrop-blur supports-backdrop-filter:bg-neutral-900/60">
-                                                <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 2); setOpenMenuId(null); }} className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] transition-colors focus-visible:outline-none ${roleValue === 2 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100" : "border-transparent text-neutral-200 hover:border-white/10 hover:bg-white/5"}`}>
-                                                    {roleValue === 2 ? <Check size={12} className="text-emerald-300" /> : <PencilLine size={12} className="shrink-0" />} <span className="flex-1">Düzenleme</span>
-                                                </button>
-                                                <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 1); setOpenMenuId(null); }} className={`mt-1 flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] transition-colors focus-visible:outline-none ${roleValue === 1 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100" : "border-transparent text-neutral-200 hover:border-white/10 hover:bg-white/5"}`}>
-                                                    {roleValue === 1 ? <Check size={12} className="text-emerald-300" /> : <Eye size={12} className="shrink-0" />} <span className="flex-1">Görüntüleme</span>
-                                                </button>
-                                                <div className="my-1 h-px bg-white/10" />
-                                                <button type="button" onClick={() => { handleRemoveEditor(editor); setOpenMenuId(null); }} className="flex w-full items-center gap-2 rounded-lg border border-transparent px-2.5 py-2 text-[11px] text-red-300/80 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-200">
-                                                    <UserMinus size={12} className="shrink-0" /> <span className="flex-1">İzinleri kaldır</span>
-                                                </button>
-                                            </div>
-                                        )}
+
+                                        <AnimatePresence>
+                                            {openMenuId === editor.user.id && (
+                                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15, ease: "easeInOut" }}
+                                                    className="absolute left-0 top-full w-full overflow-hidden rounded-b-lg border border-white/20 border-t-0 bg-[#1e1e1e] shadow-xl backdrop-blur-xl"
+                                                >
+                                                    <div className="flex flex-col p-1.5">
+                                                        <div className="my-1 mx-1 h-px bg-white/10" />
+
+                                                        <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 2); setOpenMenuId(null); }}
+                                                            className={`flex w-full items-center  gap-2 rounded-md px-1 py-2 text-[11px] transition-colors focus-visible:outline-none ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
+                                                        >
+                                                            {roleValue === 2 ? <Check size={12} className="shrink-0" /> : <PencilLine size={12} className="shrink-0" />}
+                                                            <span className="flex-1 text-left">Düzenleme</span>
+                                                        </button>
+
+                                                        <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 1); setOpenMenuId(null); }}
+                                                            className={`flex w-full items-center gap-2 rounded-md px-1 py-2 text-[11px] transition-colors focus-visible:outline-none ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
+                                                        >
+                                                            {roleValue === 1 ? <Check size={12} className="shrink-0" /> : <Eye size={12} className="shrink-0" />}
+                                                            <span className="flex-1 text-left">Görüntüleme</span>
+                                                        </button>
+
+                                                        <div className="my-1 mx-1 h-px bg-white/10" />
+
+                                                        <button type="button" onClick={() => { handleRemoveEditor(editor); setOpenMenuId(null); }}
+                                                            className="flex w-full items-center gap-2 rounded-md px-1 py-2 text-[11px] text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                                                        >
+                                                            <UserMinus size={12} className="shrink-0" />
+                                                            <span className="flex-1 text-left">İzni kaldır</span>
+                                                        </button>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 ) : (
                                     <div className="flex items-center">
@@ -160,14 +186,14 @@ export function LibrarySettingsEditors() {
             <div className="pt-1 flex gap-2" ref={userPickerRef}>
                 <div className="relative flex-1">
                     <div className="relative">
-                        <input type="text" value={userSearch}  onChange={(event) => { setUserSearch(event.target.value); if (!showUserPicker) setShowUserPicker(true); }} onFocus={() => setShowUserPicker(true)} placeholder="E-posta ile kullanıcı ara..." className="w-full rounded-lg border border-white/10 bg-neutral-900/60 pr-11 pl-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-white/25 focus:ring-2 focus:ring-white/15" />
+                        <input type="text" value={userSearch} onChange={(event) => { setUserSearch(event.target.value); if (!showUserPicker) setShowUserPicker(true); }} onFocus={() => setShowUserPicker(true)} placeholder="E-posta ile kullanıcı ara..." className="w-full rounded-lg border border-white/10 bg-neutral-900/60 pr-11 pl-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-white/25 focus:ring-2 focus:ring-white/15" />
                         <button type="button" aria-label="Ekle" className="group absolute right-1 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-lg border border-emerald-900/80 bg-emerald-500/10 text-emerald-200 transition-colors hover:bg-emerald-500/20 hover:text-emerald-100">
                             <Plus size={16} className="transition-opacity duration-150 group-hover:hidden" /> <ArrowUp size={16} className="hidden transition-opacity duration-150 group-hover:block" />
                         </button>
                     </div>
                     <AnimatePresence>
                         {showUserPicker && userSearch.length >= 2 && (
-                            <SearchPicker searchValue={userSearch} onSearchChange={setUserSearch} items={foundUsers} itemsPerPage={4} activeItemId={null} getItemId={(u) => u.id} onSelect={handleAddEditor} footerText={isUsersLoading ? "Aranıyor..." : "Listeden kullanıcı seçiniz."} showClear={false} className="absolute top-full left-0 mt-1 w-full [&>div>div:first-child]:hidden" 
+                            <SearchPicker searchValue={userSearch} onSearchChange={setUserSearch} items={foundUsers} itemsPerPage={4} activeItemId={null} getItemId={(u) => u.id} onSelect={handleAddEditor} footerText={isUsersLoading ? "Aranıyor..." : "Listeden kullanıcı seçiniz."} showClear={false} className="absolute top-full left-0 mt-1 w-full [&>div>div:first-child]:hidden"
                                 renderItem={(user, { active, onSelect }) => {
                                     const isAdded = editorsList.some(e => e.user.id === user.id);
                                     return (

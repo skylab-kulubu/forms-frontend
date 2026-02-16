@@ -70,7 +70,7 @@ export function FieldShell({ number, title, required, onRequiredChange, children
               Opsiyonel
             </button>
             <button type="button" aria-pressed={required} onClick={() => onRequiredChange(true)}
-              className={`px-2 py-1 text-[11px] rounded-lg ${required ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}>
+              className={`px-2 py-1 text-[11px] rounded-lg ${required ? "bg-indigo-400/20 text-indigo-200" : "text-neutral-300 hover:text-neutral-200"}`}>
               Zorunlu
             </button>
           </div>

@@ -100,7 +100,7 @@ export function Library({ layout = "grid", onLibrarySelect, onSave, onRefresh, o
                     <div className="ml-auto flex items-center gap-1 text-neutral-500">
                         {showShare ? (
                             <button type="button" aria-label="Formu paylas" onClick={onShare} disabled={!onShare}
-                                className={`rounded-lg p-1.5 transition-colors ${onShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-emerald-500" : shareStatus === "error" ? "text-red-500" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+                                className={`rounded-lg p-1.5 transition-colors ${onShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-indigo-400" : shareStatus === "error" ? "text-red-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
                             >
                                 <Share2 size={16} />
                             </button>
@@ -117,7 +117,7 @@ export function Library({ layout = "grid", onLibrarySelect, onSave, onRefresh, o
                         </button>
                         <ErrorPopover open={isError} error={error} align="bottom-right" onClose={() => { }}>
                             <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
-                                {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-600" />) : isSuccess ? (<CheckCircle2 size={16} className="text-emerald-600" />) : (<CheckCircle2 size={16} />)}
+                                {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-400" />) : isSuccess ? (<CheckCircle2 size={16} className="text-indigo-400" />) : (<CheckCircle2 size={16} />)}
                             </button>
                         </ErrorPopover>
                     </div>

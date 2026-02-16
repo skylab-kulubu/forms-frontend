@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, ClockCheckIcon, Loader2, PencilLine, Share2, Trash2, Undo2, X, User2, Archive } from "lucide-react";
 import { useResponseStatusMutation, useResponseArchiveMutation } from "@/lib/hooks/useResponse";
 import { useShareLink } from "@/app/admin/hooks/useShareLink";
+import ErrorPopover from "@/app/components/utils/Popover";
 
 const STATUS_META = {
   2: { label: "Onaylandı", style: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200" },
@@ -46,7 +47,7 @@ export function ResponseActions({ response }) {
   const responseFormId = response?.formId || response?.form?.id || null;
   const prevResponseIdRef = useRef(responseId);
   const { mutate, isPending } = useResponseStatusMutation();
-  const { mutate: archiveMutate, isPending: isArchivePending, isSuccess, isError, reset } = useResponseArchiveMutation();
+  const { mutate: archiveMutate, isPending: isArchivePending, isSuccess, isError, error, reset } = useResponseArchiveMutation();
   const sharePath = responseFormId && responseId ? `admin/${responseFormId}/responses/${responseId}` : null;
   const { shareStatus, handleShare } = useShareLink(sharePath);
   const canShare = Boolean(sharePath);
@@ -150,11 +151,13 @@ export function ResponseActions({ response }) {
             >
               <Share2 size={16} />
             </button>
-            <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
-              className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-600" : isSuccess ? "text-indigo-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-            >
-              <Archive size={16} />
-            </button>
+            <ErrorPopover open={isError} error={error} align="bottom-right" onClose={() => { }}>
+              <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
+                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-indigo-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+              >
+                <Archive size={16} />
+              </button>
+            </ErrorPopover>
           </div>
         </div>
         <div className="px-4 pb-5 pt-4 space-y-5">
