@@ -81,7 +81,8 @@ export function CanvasItem({ field, index, onUpdate, schema }) {
             id: f.id,
             title: f.props.question || "İsimsiz Soru",
             type: f.type,
-            choices: f.props.choices || [] 
+            choices: f.props.choices || [],
+            inputType: f.props.inputType || "text"
           })) : [];
 
     const stopIfInteractive = (e) => {

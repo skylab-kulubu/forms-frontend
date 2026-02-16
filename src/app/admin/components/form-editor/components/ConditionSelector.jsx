@@ -1,6 +1,62 @@
 import { Trash2, AlertCircle } from "lucide-react";
 import { Dropdown } from "@/app/components/utils/Dropdown";
 
+export const FIELD_OPERATORS = {
+    text: [
+        { label: "Eşittir", value: "equals" },
+        { label: "Eşit Değildir", value: "not_equals" },
+        { label: "İçeriyorsa", value: "contains" },
+        { label: "Cevaplanmışsa", value: "is_set" }
+    ],
+    long_text: [
+        { label: "İçeriyorsa", value: "contains" },
+        { label: "Cevaplanmışsa", value: "is_set" }
+    ],
+    link: [
+        { label: "İçeriyorsa", value: "contains" }
+    ],
+    phone: [
+        { label: "Cevaplanmışsa", value: "is_set" }
+    ],
+    email: [
+        { label: "İçeriyorsa", value: "contains" },
+        { label: "Cevaplanmışsa", value: "is_set" }
+    ],
+    number: [
+        { label: "Eşittir", value: "equals" },
+        { label: "Büyüktür", value: "greater_than" },
+        { label: "Küçüktür", value: "less_than" },
+        { label: "Cevaplanmışsa", value: "is_set" }
+    ],
+    link: [
+        { label: "İçeriyorsa", value: "contains" },
+        { label: "Cevaplanmışsa", value: "is_set" }
+    ],
+    date: [
+        { label: "Şu tarihte", value: "equals" },
+        { label: "Önce", value: "before" },
+        { label: "Sonra", value: "after" },
+        { label: "Cevaplanmışsa", value: "is_set" }
+    ],
+    choice: [
+        { label: "Şunu seçerse", value: "equals" },
+        { label: "Şunu seçmezse", value: "not_equals" },
+        { label: "Cevaplanmışsa", value: "is_set" }
+    ],
+    boolean: [
+        { label: "Açıksa (Evet)", value: "is_true" },
+        { label: "Kapalıysa (Hayır)", value: "is_false" }
+    ],
+    file: [
+        { label: "Dosya yüklendiyse", value: "is_set" },
+        { label: "Dosya yüklenmediyse", value: "is_empty" }
+    ],
+    matrix: [
+        { label: "En az 1 satır cevaplandıysa", value: "is_set" },
+        { label: "Hiçbir satır cevaplanmadıysa", value: "is_empty" }
+    ]
+};
+
 export function ConditionSelector({ condition, onUpdate, availableFields }) {
     if (!availableFields || availableFields.length === 0) {
         return (
@@ -22,38 +78,42 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
     const getOperators = () => {
         if (!selectedTarget) return [];
 
-        if (isDate || isTime) {
-            return [
-                { label: "Eşitse", value: "equals" },
-                { label: "Eşit Değilse", value: "not_equals" },
-                { label: "Önce", value: "before" },
-                { label: "Sonra", value: "after" },
-                { label: "Cevaplanmışsa", value: "is_set" },
-            ];
+        switch (selectedTarget.type) {
+            case "file": return FIELD_OPERATORS.file;
+            case "matrix": return FIELD_OPERATORS.matrix;
+            case "link": return FIELD_OPERATORS.link
+            case "long_text": return FIELD_OPERATORS.long_text;
+            case "toggle": return FIELD_OPERATORS.boolean;
+            case "multi_choice":
+            case "combobox": return FIELD_OPERATORS.choice;
+            case "date":
+            case "time": return FIELD_OPERATORS.date;
+            case "short_text":
+                if (selectedTarget.inputType === "number") return FIELD_OPERATORS.number;
+                if (selectedTarget.inputType === "phone") return FIELD_OPERATORS.phone;
+                if (selectedTarget.inputType === "email") return FIELD_OPERATORS.email;
+                return FIELD_OPERATORS.text;
+            case "slider": return FIELD_OPERATORS.number;
+            default: return FIELD_OPERATORS.text;
         }
-
-        if (hasChoices) {
-            return [
-                { label: "Şunu seçerse", value: "equals" },
-                { label: "Şunu seçmezse", value: "not_equals" },
-                { label: "Cevaplanmışsa", value: "is_set" },
-            ];
-        }
-
-        return [
-            { label: "Eşittir", value: "equals" },
-            { label: "Eşit Değildir", value: "not_equals" },
-            { label: "Cevaplanmışsa", value: "is_set" },
-        ];
     };
 
     const operators = getOperators();
 
-    const showValueInput = current.operator && !["is_set", ""].includes(current.operator);
+    const showValueInput = current.operator && !["is_set", "is_empty", "is_true", "is_false"].includes(current.operator);
 
     const handleChange = (key, val) => {
         if (key === "fieldId") {
-            onUpdate({ fieldId: val, operator: "", value: "" });
+            const newTarget = availableFields.find((f) => f.id === val);
+            let defaultOp = "";
+            if (newTarget?.type === "link" || newTarget?.type === "long_text") {
+                defaultOp = "contains";
+            } else if (newTarget?.type === "short_text") {
+                if (newTarget.props?.inputType === "phone") defaultOp = "is_set";
+                else if (newTarget.props?.inputType === "email") defaultOp = "contains";
+            }
+
+            onUpdate({ fieldId: val, operator: defaultOp, value: "" });
         } else if (key === "operator") {
             onUpdate({ ...current, operator: val });
         } else {
