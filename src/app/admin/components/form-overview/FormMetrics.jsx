@@ -62,14 +62,14 @@ function TrendChart({ hourlyData, dailyData }) {
 
       <div className="w-full h-24">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 5, bottom: 0, left: 5 }}>
+          <AreaChart data={data} margin={{ top: 5, right: 10, bottom: -2, left: 10 }}>
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="rgb(99,102,241)" stopOpacity={0.35} />
                 <stop offset="100%" stopColor="rgb(99,102,241)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} dy={4}/>
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} interval={0} dy={4}/>
             <YAxis hide domain={[0, "auto"]} />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgb(129,140,248)", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
             <Area type="monotone" dataKey="count" stroke="rgb(129,140,248)" strokeWidth={2} fill="url(#colorCount)"
@@ -145,31 +145,19 @@ function FormInfoGrid({ formData }) {
   );
 }
 
-export default function FormMetrics({ formData, placeholderStats, isLoading }) {
-  if (isLoading) {
-    return (
-      <div className="flex h-full flex-col p-2">
-        <div className="space-y-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="shimmer h-14 w-full rounded-xl" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
+export default function FormMetrics({ formData, placeholderStats }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto p-2 scrollbar space-y-5">
         <motion.div {...fadeIn}>
-          <div className="rounded-xl border border-white/10 bg-black/15 p-4">
+          <div className="rounded-xl border border-white/7 bg-black/10 p-4">
             <TrendChart hourlyData={placeholderStats?.hourlyTrend ?? []} dailyData={placeholderStats?.dailyTrend ?? []} />
           </div>
         </motion.div>
 
         <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }}>
           <SectionTitle>Ortalama Süre</SectionTitle>
-          <div className="rounded-xl border border-white/10 bg-black/15 p-3 flex items-center justify-center gap-3">
+          <div className="rounded-xl border border-white/7 bg-black/10 p-3 flex items-center justify-center gap-3">
             <Timer size={16} className="text-indigo-300 opacity-60" />
             <p className="text-lg font-bold text-neutral-100">{formatDuration(placeholderStats?.averageCompletionTime)}</p>
           </div>
@@ -177,7 +165,7 @@ export default function FormMetrics({ formData, placeholderStats, isLoading }) {
 
         <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }}>
           <SectionTitle>Kaynak Dağılımı</SectionTitle>
-          <div className="rounded-xl border border-white/10 bg-black/15 p-3">
+          <div className="rounded-xl border border-white/7 bg-black/10 p-3">
             <SourceBreakdownBar
               registered={placeholderStats?.sourceBreakdown?.registered ?? 0}
               anonymous={placeholderStats?.sourceBreakdown?.anonymous ?? 0}
@@ -187,7 +175,7 @@ export default function FormMetrics({ formData, placeholderStats, isLoading }) {
 
         <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.15 }}>
           <SectionTitle>Form Bilgileri</SectionTitle>
-          <div className="rounded-xl border border-white/10 bg-black/15 p-3">
+          <div className="rounded-xl border border-white/7 bg-black/10 p-3">
             <FormInfoGrid formData={formData} />
           </div>
         </motion.div>
