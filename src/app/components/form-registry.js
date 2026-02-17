@@ -26,8 +26,8 @@ export const REGISTRY = {
     Create: CreateFormLongText, Display: DisplayFormLongText
   },
   toggle: {
-    label: "Aç / Kapat (Switch)",
-    svg: "/assets/components/multi-choice.svg",
+    label: "Anahtar",
+    svg: "/assets/components/toggle.svg",
     defaults: { question: "", description: "", required: false, trueLabel: "Evet", falseLabel: "Hayır" },
     Create: CreateFormToggle, Display: DisplayFormToggle
   },
@@ -69,14 +69,14 @@ export const REGISTRY = {
   },
   slider: {
     label: "Aralık",
-    svg: "/assets/components/short-text.svg",
+    svg: "/assets/components/slider.svg",
     defaults: { question: "", description: "", required: false, min: 0, max: 100, step: 1 },
     Create: CreateFormSlider, Display: DisplayFormSlider
   },
   matrix: {
     label: "Matris / Tablo",
-    svg: "/assets/components/multi-choice.svg",
-    defaults: { question: "", description: "", required: false, rows: ["Satır 1", "Satır 2"], columns: ["Sütun 1", "Sütun 2", "Sütun 3"] },
+    svg: "/assets/components/matrix.svg",
+    defaults: { question: "", description: "", required: false, rows: ["Satır 1", "Satır 2", "Satır 3"], columns: ["Sütun 1", "Sütun 2", "Sütun 3"] },
     Create: CreateFormMatrix, Display: DisplayFormMatrix
   }
 };

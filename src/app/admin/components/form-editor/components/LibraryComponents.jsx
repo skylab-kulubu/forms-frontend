@@ -67,7 +67,7 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
             className="cursor-grab active:cursor-grabbing relative rounded-xl overflow-hidden"
         >
             {justAdded && (
-                <motion.div layoutId="added-flash" className="absolute inset-0 z-10 rounded-xl bg-emerald-500/20 border-2 border-emerald-500/50 pointer-events-none"
+                <motion.div layoutId="added-flash" className="absolute inset-0 z-10 roundedbg-emerald-500/20 border-2 border-emerald-500/50 pointer-events-none"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 />
             )}
