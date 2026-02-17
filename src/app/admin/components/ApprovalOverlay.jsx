@@ -54,86 +54,77 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
   return (
     <AnimatePresence>
       {open && (
-        <motion.div key="approval-overlay"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/80 backdrop-blur"
+        <motion.div key="approval-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 flex h-dvh w-dvw items-center justify-center bg-neutral-950/20 backdrop-blur-sm px-4"
         >
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-emerald-950/10 via-blue-900/5 to-transparent" aria-hidden />
-
-          <div className="relative w-full max-w-3xl px-4 sm:px-6">
-            <motion.div key="approval-card" 
-              initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.985 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/90 shadow-2xl"
-            >
-              <div className="flex items-start justify-between gap-4 border-b border-white/5 px-6 py-3">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-xl border border-indigo-400/40 bg-indigo-500/10 text-indigo-100 shadow-inner">
-                    <Icon size={20} />
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold text-neutral-50">{title}</p>
-                  </div>
+          
+          <motion.div key="approval-card" 
+            initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }} transition={{ duration: 0.2 }}
+            className="relative w-full max-w-2xl overflow-hidden rounded-xl border border-white/10 bg-[#121212] shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-white/5 px-5 py-2">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-400/20 bg-indigo-400/10 text-indigo-400">
+                  <Icon size={16} />
                 </div>
-
-                <button type="button" onClick={() => onReject?.()} aria-label="Kapat"
-                  className="rounded-lg p-2 text-neutral-400 transition hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-                >
-                  <X size={16} />
-                </button>
+                <h2 className="text-base font-medium text-neutral-100">{title}</h2>
               </div>
 
-              <div className="space-y-5 px-6 py-6">
-                <div className={`rounded-xl border border-white/10 bg-neutral-950/60 px-4 py-3 ${mode === "phrase" ? "block" : "hidden"}`}>
-                  <p className="text-sm font-semibold text-neutral-100">
-                    Yazılı Onay
-                  </p>
-                  <p className="mt-1 text-[13px] text-neutral-400">
-                    Devam etmek için aşağıdaki ifadeyi eksiksiz olarak yazın:
-                  </p>
-                  {mode === "phrase" && (
-                    <div className="mt-3 space-y-2">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-[12px] font-semibold text-indigo-100">
-                        <Keyboard size={14} />
-                        <span>{requiredPhrase}</span>
-                      </div>
-                      <input type="text" value={typedValue} onChange={(event) => setTypedValue(event.target.value)} placeholder={requiredPhrase}
-                        className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-900/70 px-3 py-2.5 text-sm text-neutral-50 outline-none transition focus:border-indigo-100/50 focus:ring-2 focus:ring-indigo-100/20"
-                      />
+              <button type="button" onClick={() => onReject?.()} aria-label="Kapat"
+                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 py-5 space-y-6">
+              <div>
+                <h3 className="text-sm font-medium text-neutral-200">İşlem Özeti</h3>
+                <ul className="mt-3 space-y-2">
+                  {checklist.map((item, index) => (
+                    <li key={index} className="flex items-start gap-2.5 text-sm text-neutral-400">
+                      <Dot size={16} className="mt-0.5 shrink-0 text-indigo-400/70" />
+                      <span className="leading-relaxed">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {mode === "phrase" && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-neutral-200">
+                      Yazılı Onay
+                    </label>
+                    <div className="inline-flex items-center gap-1.5 text-[12px] text-neutral-400">
+                      <Keyboard size={14} />
+                      <span>Gereken metin: <span className="font-semibold text-neutral-300 select-all">{requiredPhrase}</span></span>
                     </div>
-                  )}
+                  </div>
+                  <input type="text" value={typedValue} onChange={(event) => setTypedValue(event.target.value)} placeholder={requiredPhrase}
+                    className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition-all focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/50"
+                  />
                 </div>
+              )}
+            </div>
 
-                <div className="rounded-xl border border-white/10 bg-neutral-950/60 px-4 py-4">
-                  <p className="text-sm font-semibold text-neutral-100">İşlem Özeti</p>
-                  <ul className="mt-2 space-y-2 text-sm text-neutral-300">
-                    {checklist.map((item, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <Dot size={16} className="mt-1 text-indigo-300" />
-                        <span className="leading-relaxed">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 border-t border-white/5 bg-neutral-900/70 px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                  <button type="button" onClick={() => onReject?.()}
-                    className="rounded-lg border border-white/10 bg-neutral-800/50 px-4 py-2 text-sm font-semibold text-neutral-200 transition hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-                  >
-                    {rejectLabel}
-                  </button>
-                  <button type="button" disabled={!canApprove} onClick={() => { if (!canApprove) return; onApprove?.();}}
-                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/40 ${canApprove ? "border border-indigo-400/40 bg-indigo-500/30 text-indigo-100 hover:border-indigo-300/60 hover:bg-indigo-400/50" : "cursor-not-allowed border border-white/20 bg-neutral-800 text-neutral-500"}`}
-                  >
-                    {mode === "delayed" && remaining > 0 ? `${approveLabel} (${remaining}s)` : approveLabel}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+            <div className="flex items-center justify-end gap-3 border-t border-white/5 bg-neutral-900/30 px-5 py-4">
+              <button type="button" onClick={() => onReject?.()}
+                className="h-9 rounded-lg px-4 text-sm font-medium text-neutral-300 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              >
+                {rejectLabel}
+              </button>
+              
+              <button type="button" disabled={!canApprove} onClick={() => { if (!canApprove) return; onApprove?.();}}
+                className={`h-9 rounded-lg px-4 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 ${
+                  canApprove ? "border border-indigo-400/30 bg-indigo-400/10 text-indigo-300 hover:bg-indigo-400/20" 
+                  : "cursor-not-allowed border border-white/5 bg-neutral-800/50 text-neutral-500"
+                }`}
+              >
+                {mode === "delayed" && remaining > 0 ? `${approveLabel} (${remaining}s)` : approveLabel}
+              </button>
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
