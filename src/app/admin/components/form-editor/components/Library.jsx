@@ -3,14 +3,14 @@ import { LibraryComponents } from "./LibraryComponents";
 import { LibrarySettings } from "./LibrarySettings";
 import { useFormEditor } from "../FormEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, CircleAlert, CircleGauge, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleGauge, Eye, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import ErrorPopover from "@/app/components/utils/Popover";
 import dynamic from "next/dynamic";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
 
-export function Library({ layout = "grid", onLibrarySelect, onSave, onRefresh, onShare, onDelete, isPending, isError, error, isSuccess, shareStatus, isDeleteDisabled }) {
+export function Library({ layout = "grid", onLibrarySelect, onPreview, onSave, onRefresh, onShare, onDelete, isPending, isError, error, isSuccess, shareStatus, isDeleteDisabled }) {
     const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
@@ -98,6 +98,11 @@ export function Library({ layout = "grid", onLibrarySelect, onSave, onRefresh, o
                         </button>
                     </div>
                     <div className="ml-auto flex items-center gap-1 text-neutral-500">
+                        <button type="button" aria-label="Önizleme" onClick={onPreview} disabled={!onPreview}
+                            className={`rounded-lg p-1.5 transition-colors ${onPreview ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
+                        >
+                            <Eye size={16} />
+                        </button>
                         {showShare ? (
                             <button type="button" aria-label="Formu paylas" onClick={onShare} disabled={!onShare}
                                 className={`rounded-lg p-1.5 transition-colors ${onShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-indigo-400" : shareStatus === "error" ? "text-red-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}

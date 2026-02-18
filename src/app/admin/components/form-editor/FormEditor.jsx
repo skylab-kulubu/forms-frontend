@@ -17,6 +17,7 @@ import { useDeleteFormMutation, useFormMutation, useLinkableFormsQuery } from "@
 import { useShareLink } from "@/app/admin/hooks/useShareLink";
 import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
+import { FormPreview } from "./components/FormPreview";
 
 import { REGISTRY } from "../../../components/form-registry";
 
@@ -70,6 +71,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
 
     const editorRef = useRef(null);
     const libraryDropElRef = useRef(null);
@@ -234,6 +236,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
 
             {isLgUp && (
                 <Library layout="grid"
+                    onPreview={() => setPreviewOpen(true)}
                     onSave={handleSave}
                     onRefresh={handleRefresh}
                     onShare={handleShare}
@@ -258,6 +261,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
                             <Library layout="drawer"
+                                onPreview={() => setPreviewOpen(true)}
                                 onSave={handleSave}
                                 onRefresh={handleRefresh}
                                 onShare={handleShare}
@@ -295,6 +299,8 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                     onApprove={() => deleteForm(state.id, { onSuccess: () => router.push("/admin/forms"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
                 />
+
+                <FormPreview open={previewOpen} onClose={() => setPreviewOpen(false)} />
             </div>
         </DndContext>
     );

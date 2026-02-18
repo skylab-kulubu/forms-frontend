@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Timer, User2, ToggleLeft, ToggleRight, Link2, Hash, Shield } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -145,39 +145,54 @@ function FormInfoGrid({ formData }) {
   );
 }
 
-export default function FormMetrics({ formData, placeholderStats }) {
+function StatBlock({ label, value }) {
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto p-2 scrollbar space-y-5">
-        <motion.div {...fadeIn}>
-          <div className="rounded-xl border border-white/7 bg-black/10 p-4">
-            <TrendChart hourlyData={placeholderStats?.hourlyTrend ?? []} dailyData={placeholderStats?.dailyTrend ?? []} />
-          </div>
+    <div className="text-center">
+      <p className="text-[9px] uppercase tracking-wide text-neutral-500">{label}</p>
+      <p className="text-sm font-semibold text-neutral-100">{value ?? 0}</p>
+    </div>
+  );
+}
+
+export default function FormMetrics({ formData, placeholderStats, stats }) {
+  return (
+    <div className="flex h-full flex-col rounded-xl p-2 overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-2 scrollbar">
+        {stats && (
+          <motion.div {...fadeIn} className="p-4 border-b border-white/5">
+            <SectionTitle>Cevap İstatistikleri</SectionTitle>
+            <div className="flex items-center justify-around">
+              <StatBlock label="Toplam" value={stats.totalResponses} />
+              <StatBlock label="Bekleyen" value={stats.pendingCount} />
+              <StatBlock label="Onaylanan" value={stats.approvedCount} />
+              <StatBlock label="Reddedilen" value={stats.rejectedCount} />
+            </div>
+          </motion.div>
+        )}
+
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
+          <TrendChart hourlyData={placeholderStats?.hourlyTrend ?? []} dailyData={placeholderStats?.dailyTrend ?? []} />
         </motion.div>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }}>
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
           <SectionTitle>Ortalama Süre</SectionTitle>
-          <div className="rounded-xl border border-white/7 bg-black/10 p-3 flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3">
             <Timer size={16} className="text-indigo-300 opacity-60" />
             <p className="text-lg font-bold text-neutral-100">{formatDuration(placeholderStats?.averageCompletionTime)}</p>
           </div>
         </motion.div>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }}>
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }} className="p-4 border-b border-white/5">
           <SectionTitle>Kaynak Dağılımı</SectionTitle>
-          <div className="rounded-xl border border-white/7 bg-black/10 p-3">
-            <SourceBreakdownBar
-              registered={placeholderStats?.sourceBreakdown?.registered ?? 0}
-              anonymous={placeholderStats?.sourceBreakdown?.anonymous ?? 0}
-            />
-          </div>
+          <SourceBreakdownBar
+            registered={placeholderStats?.sourceBreakdown?.registered ?? 0}
+            anonymous={placeholderStats?.sourceBreakdown?.anonymous ?? 0}
+          />
         </motion.div>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.15 }}>
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.15 }} className="p-4">
           <SectionTitle>Form Bilgileri</SectionTitle>
-          <div className="rounded-xl border border-white/7 bg-black/10 p-3">
-            <FormInfoGrid formData={formData} />
-          </div>
+          <FormInfoGrid formData={formData} />
         </motion.div>
       </div>
     </div>
