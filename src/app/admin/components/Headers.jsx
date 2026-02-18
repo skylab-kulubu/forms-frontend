@@ -106,7 +106,7 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "des
 }
 
 export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc", showArchived = false, onShowArchivedChange,
-  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, onEdit, stats = { averageTime: "--", responseCount: 0, pendingCount: 0 },
+  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, onEdit, stats = { averageTimeSpent: "--", responseCount: 0, pendingCount: 0 },
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
@@ -144,7 +144,7 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
         <div className="flex flex-wrap items-center gap-3 text-center -mt-2.5 shrink-0 md:ml-auto">
           <div className="px-3 py-2 text-[11px] text-neutral-400">
             <p className="text-[10px] uppercase tracking-wide text-neutral-500">Ortalama Süre</p>
-            <p className="text-sm font-semibold text-neutral-100">{stats.averageTime ?? "--"}</p>
+            <p className="text-sm font-semibold text-neutral-100">{stats.averageTimeSpent?? "--"}</p>
           </div>
           <div className="px-3 py-2 text-[11px] text-neutral-400">
             <p className="text-[10px] uppercase tracking-wide text-neutral-500">Cevap Sayısı</p>
@@ -159,8 +159,6 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
     </HeaderShell>
   );
 }
-
-
 
 export function OverviewHeader({ formTitle, formId, formStatus, onEdit, onViewResponses, onRefresh }) {
   const isActive = formStatus === 1;

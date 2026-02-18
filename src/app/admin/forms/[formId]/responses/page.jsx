@@ -11,6 +11,17 @@ import { useFormContext } from "../../../providers";
 import StateCard from "@/app/components/StateCard";
 import { ListX, TextSearch } from "lucide-react";
 
+const formatTimeSpent = (totalSeconds) => {
+  if (totalSeconds === null || totalSeconds === undefined) return "--";
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  if (minutes > 0) {
+    return `${minutes} dk ${seconds > 0 ? `${seconds} sn` : ''}`;
+  }
+  return `${seconds} sn`;
+};
+
 export default function ResponsesPage() {
   const params = useParams();
   const formId = params?.formId;
@@ -50,15 +61,17 @@ export default function ResponsesPage() {
   const formTitle = formInfo?.title?.trim() || "--";
   const formIdLabel = formId || "--";
 
-  const responsesMeta = responsesData?.data ?? {};
+  const responsesMeta = responsesData?.data?.paginationData ?? {};
   const responses = responsesMeta.items || [];
+  const averageTimeSpent = responsesData?.data?.averageTimeSpent ?? null;
 
   const stats = useMemo(() => {
     return {
       responseCount: formInfo?.responseCount ?? responsesMeta.totalCount ?? 0,
       pendingCount: formInfo?.waitingResponses ?? 0,
+      averageTimeSpent: formatTimeSpent(averageTimeSpent),
     };
-  }, [formInfo?.responseCount, formInfo?.waitingResponses, responsesMeta.totalCount]);
+  }, [formInfo?.responseCount, formInfo?.waitingResponses, responsesMeta.totalCount, averageTimeSpent]);
 
   const hasError = Boolean(error);
   const contentKey = `${sortValue}-${statusValue}-${respondentValue}-${showArchived}-${searchValue}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;

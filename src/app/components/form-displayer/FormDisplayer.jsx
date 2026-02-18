@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { FormDisplayerHeader } from "./components/FormDisplayerComponents";
 import { FormResponseStatus } from "./components/FormResponseStatus";
@@ -38,6 +38,12 @@ export default function FormDisplayer({ form, step }) {
   const [missingFieldIds, setMissingFieldIds] = useState([]);
   const [uploadingFields, setUploadingFields] = useState({});
   const missingTimeoutRef = useRef(null);
+
+  const startTimeRef = useRef(null);
+
+  useEffect(() => {
+    startTimeRef.current = Date.now();
+  }, []);
 
   const visibleFields = useMemo(() => {
     return getVisibleFields(schema, formValues);
@@ -152,7 +158,9 @@ export default function FormDisplayer({ form, step }) {
         return { id: field.id, type: field.type, question: field.props?.question || "", answer: finalAnswer };
       });
 
-      const payload = { formId: form.id, responses: formattedResponses };
+      const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+
+      const payload = { formId: form.id, responses: formattedResponses, timeSpent: timeSpentInSeconds};
 
       submitMutation.mutate(payload, {
         onSuccess: (response) => {
