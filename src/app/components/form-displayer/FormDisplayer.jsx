@@ -144,10 +144,17 @@ export default function FormDisplayer({ form, step }) {
             finalAnswer = rawValue ? String(rawValue) : "";
             break;
 
+          case "toggle":
+            if (rawValue === true) {
+              finalAnswer = field.props?.trueLabel || "Evet";
+            } else {
+              finalAnswer = field.props?.falseLabel || "Hayır";
+            }
+            break;
+
           case "matrix":
             if (typeof rawValue === "object" && rawValue !== null) finalAnswer = JSON.stringify(rawValue);
             else finalAnswer = String(rawValue);
-
             break;
 
           default:
@@ -160,7 +167,7 @@ export default function FormDisplayer({ form, step }) {
 
       const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
 
-      const payload = { formId: form.id, responses: formattedResponses, timeSpent: timeSpentInSeconds};
+      const payload = { formId: form.id, responses: formattedResponses, timeSpent: timeSpentInSeconds };
 
       submitMutation.mutate(payload, {
         onSuccess: (response) => {

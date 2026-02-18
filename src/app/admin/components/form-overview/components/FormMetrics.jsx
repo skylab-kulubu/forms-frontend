@@ -92,18 +92,18 @@ function SourceBreakdownBar({ registered, anonymous }) {
       <div className="flex h-2 w-full overflow-hidden rounded-full bg-neutral-800">
         {total > 0 ? (
           <>
-            {regPct > 0 && <div style={{ width: `${regPct}%` }} className="bg-indigo-300 transition-all duration-500" />}
-            {anonPct > 0 && <div style={{ width: `${anonPct}%` }} className="bg-rose-300 transition-all duration-500" />}
+            {regPct > 0 && <div style={{ width: `${regPct}%` }} className="bg-indigo-400 transition-all duration-500" />}
+            {anonPct > 0 && <div style={{ width: `${anonPct}%` }} className="bg-violet-400 transition-all duration-500" />}
           </>
         ) : null}
       </div>
       <div className="flex gap-3 mt-1.5 justify-center">
         <div className="flex items-center gap-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-indigo-300" />
+          <div className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
           <span className="text-[9px] text-neutral-500">Kayıtlı ({registered})</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-rose-300" />
+          <div className="h-1.5 w-1.5 rounded-full bg-violet-400" />
           <span className="text-[9px] text-neutral-500">Anonim ({anonymous})</span>
         </div>
       </div>
@@ -179,7 +179,7 @@ export default function FormMetrics({ formData, metrics }) {
         <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
           <SectionTitle>Ortalama Süre</SectionTitle>
           <div className="flex items-center justify-center gap-3">
-            <Timer size={16} className="text-indigo-300 opacity-60" />
+            <Timer size={16} className="text-indigo-300" />
             <p className="text-lg font-bold text-neutral-100">
               {formatDuration(metrics?.averageCompletionTime)}
             </p>
