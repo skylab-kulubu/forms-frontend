@@ -36,7 +36,11 @@ const fetchUserForms = async ({ page = 1, pageSize, search, role, allowAnonymous
 const fetchLinkableUserForms = async (formId) => {
   const response = await request(`/api/admin/forms/${formId}/linkable-forms`);
   return response?.data ?? [];
-}
+};
+
+const fetchFormMetrics = async (formId) => {
+  return request(`/api/admin/forms/${formId}/metrics`);
+};
 
 const deleteForm = async (formId) => {
   return request(`/api/admin/forms/${formId}`, {
@@ -62,13 +66,23 @@ export const useFormQuery = (formId) =>
     retry: false,
   });
 
-export const useLinkableFormsQuery = (formId) => 
+export const useLinkableFormsQuery = (formId) =>
   useQuery({
     queryKey: ["linkable-forms", formId],
     queryFn: () => fetchLinkableUserForms(formId),
     enabled: !!formId,
     retry: false,
-  })
+  });
+
+export const useFormMetricsQuery = (formId, options = {}) => {
+  return useQuery({
+    queryKey: ["form-metrics", formId],
+    queryFn: () => fetchFormMetrics(formId),
+    enabled: options.enabled ?? !!formId,
+    retry: options.retry ?? false,
+    ...options,
+  });
+};
 
 export const useFormMutation = () => {
   const queryClient = useQueryClient();

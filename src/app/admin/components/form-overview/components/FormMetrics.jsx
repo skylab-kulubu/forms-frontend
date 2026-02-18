@@ -69,7 +69,7 @@ function TrendChart({ hourlyData, dailyData }) {
                 <stop offset="100%" stopColor="rgb(99,102,241)" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} interval={0} dy={4}/>
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} interval={0} dy={4} />
             <YAxis hide domain={[0, "auto"]} />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgb(129,140,248)", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
             <Area type="monotone" dataKey="count" stroke="rgb(129,140,248)" strokeWidth={2} fill="url(#colorCount)"
@@ -154,39 +154,43 @@ function StatBlock({ label, value }) {
   );
 }
 
-export default function FormMetrics({ formData, placeholderStats, stats }) {
-  return (
+export default function FormMetrics({ formData, metrics }) {
+  return(
     <div className="flex h-full flex-col rounded-xl p-2 overflow-hidden">
       <div className="flex-1 overflow-y-auto p-2 scrollbar">
-        {stats && (
-          <motion.div {...fadeIn} className="p-4 border-b border-white/5">
-            <SectionTitle>Cevap İstatistikleri</SectionTitle>
-            <div className="flex items-center justify-around">
-              <StatBlock label="Toplam" value={stats.totalResponses} />
-              <StatBlock label="Bekleyen" value={stats.pendingCount} />
-              <StatBlock label="Onaylanan" value={stats.approvedCount} />
-              <StatBlock label="Reddedilen" value={stats.rejectedCount} />
-            </div>
-          </motion.div>
-        )}
+
+        <motion.div {...fadeIn} className="p-4 border-b border-white/5">
+          <SectionTitle>Cevap İstatistikleri</SectionTitle>
+          <div className="flex items-center justify-around">
+            <StatBlock label="Toplam" value={metrics?.totalResponses ?? 0} />
+            <StatBlock label="Bekleyen" value={metrics?.pendingCount ?? 0} />
+            <StatBlock label="Onaylanan" value={metrics?.approvedCount ?? 0} />
+            <StatBlock label="Reddedilen" value={metrics?.rejectedCount ?? 0} />
+          </div>
+        </motion.div>
 
         <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
-          <TrendChart hourlyData={placeholderStats?.hourlyTrend ?? []} dailyData={placeholderStats?.dailyTrend ?? []} />
+          <TrendChart
+            hourlyData={metrics?.hourlyTrend ?? []}
+            dailyData={metrics?.dailyTrend ?? []}
+          />
         </motion.div>
 
         <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
           <SectionTitle>Ortalama Süre</SectionTitle>
           <div className="flex items-center justify-center gap-3">
             <Timer size={16} className="text-indigo-300 opacity-60" />
-            <p className="text-lg font-bold text-neutral-100">{formatDuration(placeholderStats?.averageCompletionTime)}</p>
+            <p className="text-lg font-bold text-neutral-100">
+              {formatDuration(metrics?.averageCompletionTime)}
+            </p>
           </div>
         </motion.div>
 
         <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }} className="p-4 border-b border-white/5">
           <SectionTitle>Kaynak Dağılımı</SectionTitle>
           <SourceBreakdownBar
-            registered={placeholderStats?.sourceBreakdown?.registered ?? 0}
-            anonymous={placeholderStats?.sourceBreakdown?.anonymous ?? 0}
+            registered={metrics?.sourceBreakdown?.registered ?? 0}
+            anonymous={metrics?.sourceBreakdown?.anonymous ?? 0}
           />
         </motion.div>
 
@@ -194,6 +198,7 @@ export default function FormMetrics({ formData, placeholderStats, stats }) {
           <SectionTitle>Form Bilgileri</SectionTitle>
           <FormInfoGrid formData={formData} />
         </motion.div>
+
       </div>
     </div>
   );
