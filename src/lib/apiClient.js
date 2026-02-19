@@ -81,7 +81,7 @@ export async function uploadWithProgress(path, file, onProgress) {
     xhr.onerror = () => reject(new Error("Network hatası"));
 
     const formData = new FormData();
-    formData.append("image", file); 
+    formData.append("file", file); 
     
     xhr.send(formData);
   });

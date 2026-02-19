@@ -1,5 +1,7 @@
 "use client";
 
+import { FilePreview } from "./FilePreview";
+
 const formatAnswer = (answer) => {
   if (answer == null) return "";
   if (Array.isArray(answer)) {
@@ -44,10 +46,12 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
         </div>
       </div>
 
-      <div className="mt-3 rounded-lg border border-white/10 bg-neutral-950/30 px-3 py-2">
+      <div className="mt-3 px-3 py-2">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500 mb-1">Cevap</p>
 
-        {parsedMatrix && typeof parsedMatrix === 'object' ? (
+        {type === "file" && answerText ? (
+          <FilePreview mediaId={answerText} />
+        ) : parsedMatrix && typeof parsedMatrix === 'object' ? (
           <div className="mt-2 rounded-lg border border-white/10 overflow-hidden bg-neutral-900/50">
             <table className="w-full text-left text-sm">
               <tbody className="divide-y divide-white/5">

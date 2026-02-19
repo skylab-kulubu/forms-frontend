@@ -118,7 +118,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
     setInternalFile(file);
 
     try {
-      const response = await uploadWithProgress("/api/images/", file, (percent) => {
+      const response = await uploadWithProgress("/api/media", file, (percent) => {
         setUploadProgress(percent);
       });
 
