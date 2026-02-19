@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FieldShell } from "./FieldShell";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
@@ -47,6 +47,12 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
     const [internalValue, setInternalValue] = useState(value === true);
     const currentValue = value !== undefined ? (value === true) : internalValue;
     const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
+
+    useEffect(() => {
+        if (value === undefined && onChange) {
+            onChange({ target: { value: false } });
+        }
+    }, []);
 
     const handleToggle = () => {
         const next = !currentValue;

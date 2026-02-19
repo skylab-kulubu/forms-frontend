@@ -223,7 +223,7 @@ export default function FormDisplayer({ form, step }) {
 
                 {hasSchema ? (
                   <>
-                    <AnimatePresence mode="popLayout">
+                    <AnimatePresence mode="sync" initial={false}>
                       {visibleFields.map((field, index) => {
                         const entry = REGISTRY[field.type];
                         const DisplayComponent = entry?.Display;
@@ -233,9 +233,12 @@ export default function FormDisplayer({ form, step }) {
                         const isMissing = missingFieldIds.includes(field.id);
 
                         return (
-                          <motion.div key={field.id} id={field.id} layout variants={itemVariants}
-                            initial="hidden" animate="show" exit="exit"
-                            style={{ zIndex: visibleFields.length - index }}
+                          <motion.div key={field.id} id={field.id} layout="position"
+                            transition={{ layout: { type: "spring", stiffness: 300, damping: 30 } }}
+                            initial={{ opacity: 0, height: 0, scale: 0.97 }}
+                            animate={{ opacity: 1, height: "auto", scale: 1, transition: { duration: 0.35, ease: "easeOut", height: { duration: 0.3 }, opacity: { duration: 0.25, delay: 0.1 } } }}
+                            exit={{ opacity: 0, height: 0, scale: 0.97, transition: { duration: 0.25, ease: "easeIn", height: { duration: 0.3, delay: 0.05 }, opacity: { duration: 0.15 } } }}
+                            style={{ zIndex: visibleFields.length - index, overflow: "hidden" }}
                             className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
                           >
                             <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]}
@@ -284,7 +287,7 @@ export default function FormDisplayer({ form, step }) {
                   <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
                   <span className="text-[14px] font-semibold uppercase tracking-wide text-[#efe3fe]">SKY LAB Forms</span>
                 </a>
-                <span className="text-neutral-600">by WEBLAB</span> 
+                <span className="text-neutral-600">by WEBLAB</span>
               </div>
 
               <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
