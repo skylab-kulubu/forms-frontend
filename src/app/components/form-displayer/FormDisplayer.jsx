@@ -203,7 +203,7 @@ export default function FormDisplayer({ form, step }) {
         )}
       </AnimatePresence>
 
-      <div className={`relative z-10 flex min-h-full w-full flex-col items-center ${isFinished ? "justify-start" : "justify-center py-12 px-4 sm:px-6"}`}>
+      <div className={`relative z-10 flex min-h-full w-full flex-col items-center ${isFinished ? "justify-start" : "justify-center pt-12 pb-8 px-4 sm:px-6"}`}>
 
         <AnimatePresence mode="wait">
           {!isFinished ? (
@@ -273,11 +273,41 @@ export default function FormDisplayer({ form, step }) {
         </AnimatePresence>
 
         {!isFinished && (
-          <div className="mt-8 text-xs text-neutral-500 font-medium">
-            footer gelcek
-          </div>
-        )}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }}
+            className="mt-12 mb-8 flex flex-col items-center gap-4 text-xs font-medium text-neutral-500"
+          >
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex items-center gap-2">
+                <a href="https://skylab.yildiz.edu.tr" target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100"
+                >
+                  <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
+                  <span className="text-[14px] font-semibold uppercase tracking-wide text-[#efe3fe]">SKY LAB Forms</span>
+                </a>
+                <span className="text-neutral-600">by WEBLAB</span> 
+              </div>
 
+              <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
+                className="text-[10px] text-neutral-600/50 hover:text-neutral-400 -mt-1 transition-colors">
+                Developed by Fatih Naz
+              </a>
+            </div>
+
+            <div className="flex items-center gap-3 md:gap-4 text-[11px]">
+              <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
+                Kullanım Koşulları
+              </a>
+              <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
+              <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
+                Gizlilik Politikası
+              </a>
+              <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
+              <a href="mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi" className="transition-colors hover:text-[#efe3fe]">
+                Sorun Bildir
+              </a>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
