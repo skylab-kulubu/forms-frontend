@@ -71,7 +71,8 @@ export default function FormDisplayer({ form, step }) {
           const val = formValues[field.id];
           let isEmpty = val === undefined || val === null;
           if (!isEmpty) {
-            if (typeof val === "string") isEmpty = val.trim() === "";
+            if (field.type === "toggle") isEmpty = val !== true;
+            else if (typeof val === "string") isEmpty = val.trim() === "";
             else if (Array.isArray(val)) isEmpty = val.length === 0;
             else if (field.type === "matrix" && typeof val === "object") {
               const requiredRowsCount = field.props.rows?.length || 0;
@@ -207,7 +208,7 @@ export default function FormDisplayer({ form, step }) {
 
         <AnimatePresence mode="wait">
           {!isFinished ? (
-            <motion.div key="form-card" className="w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-black/20 shadow-2xl"
+            <motion.div key="form-card" className="w-full max-w-2xl rounded-3xl border border-white/10 bg-black/20 shadow-2xl"
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.3 } }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
             >
@@ -233,12 +234,27 @@ export default function FormDisplayer({ form, step }) {
                         const isMissing = missingFieldIds.includes(field.id);
 
                         return (
-                          <motion.div key={field.id} id={field.id} layout="position"
+                          <motion.div key={field.id} id={field.id}
+                            layout="position"
                             transition={{ layout: { type: "spring", stiffness: 300, damping: 30 } }}
                             initial={{ opacity: 0, height: 0, scale: 0.97 }}
-                            animate={{ opacity: 1, height: "auto", scale: 1, transition: { duration: 0.35, ease: "easeOut", height: { duration: 0.3 }, opacity: { duration: 0.25, delay: 0.1 } } }}
-                            exit={{ opacity: 0, height: 0, scale: 0.97, transition: { duration: 0.25, ease: "easeIn", height: { duration: 0.3, delay: 0.05 }, opacity: { duration: 0.15 } } }}
-                            style={{ zIndex: visibleFields.length - index, overflow: "hidden" }}
+                            animate={{
+                              opacity: 1, height: "auto", scale: 1,
+                              transition: { duration: 0.35, ease: "easeOut", height: { duration: 0.3 }, opacity: { duration: 0.25, delay: 0.1 } }
+                            }}
+                            exit={{
+                              opacity: 0, height: 0, scale: 0.97,
+                              transition: { duration: 0.25, ease: "easeIn", height: { duration: 0.3, delay: 0.05 }, opacity: { duration: 0.15 } }
+                            }}
+                            onAnimationStart={() => {
+                              const el = document.getElementById(field.id);
+                              if (el) el.style.overflow = "hidden";
+                            }}
+                            onAnimationComplete={() => {
+                              const el = document.getElementById(field.id);
+                              if (el) el.style.overflow = "visible";
+                            }}
+                            style={{ zIndex: visibleFields.length - index }}
                             className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
                           >
                             <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]}
@@ -287,7 +303,7 @@ export default function FormDisplayer({ form, step }) {
                   <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
                   <span className="text-[14px] font-semibold uppercase tracking-wide text-[#efe3fe]">SKY LAB Forms</span>
                 </a>
-                <span className="text-neutral-600">by WEBLAB</span>
+                <span className="text-neutral-600">by WEBLAB</span> 
               </div>
 
               <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
