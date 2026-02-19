@@ -16,7 +16,7 @@ export function Library({ layout = "grid", onLibrarySelect, onPreview, onSave, o
     const { active } = useDndContext();
     const from = active?.data?.current?.from;
     const showTrash = from === "canvas";
-    const layoutClass = layout === "drawer" ? "h-full w-full" : "col-span-4 h-[93vh]";
+    const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[93vh]";
 
     const { state } = useFormEditor();
     const { isChildForm } = state;
@@ -77,7 +77,7 @@ export function Library({ layout = "grid", onLibrarySelect, onPreview, onSave, o
                 transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
-                <div className="min-h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 pb-2 lg:pb-0 text-sm tracking-wide border-b border-neutral-800">
+                <div className="h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 text-sm tracking-wide border-b border-neutral-800 overflow-visible">
                     <div className="flex items-center grow justify-center sm:justify-start mr-4">
                         <button type="button" onClick={() => setActiveTab("components")}
                             className={`font-semibold w-full transition-colors ${activeTab === "components" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}

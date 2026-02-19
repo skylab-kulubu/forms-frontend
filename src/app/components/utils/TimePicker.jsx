@@ -60,7 +60,7 @@ export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm
 
         <motion.div variants={itemVariants} className="mt-2 grid grid-cols-2 gap-1.5">
           
-          <div className="max-h-40 overflow-auto rounded-md border border-white/10 bg-white/5 p-1 no-scrollbar" ref={hourContainerRef}>
+          <div className="max-h-40 overflow-auto rounded-md border border-white/10 bg-white/5 p-1 scrollbar" ref={hourContainerRef}>
             {hours.map((h) => (
               <button key={h} data-active={h === hour} type="button" onClick={() => onChange(h, minute)}
                 className={`block w-full rounded-md px-1.5 py-1 text-left text-xs transition hover:bg-white/10 ${h === hour ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
@@ -70,7 +70,7 @@ export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm
             ))}
           </div>
 
-          <div className="max-h-40 overflow-auto rounded-md border border-white/10 bg-white/5 p-1 no-scrollbar" ref={minuteContainerRef}>
+          <div className="max-h-40 overflow-auto rounded-md border border-white/10 bg-white/5 p-1 scrollbar" ref={minuteContainerRef}>
             {minutes.map((m) => (
               <button key={m} data-active={m === minute} type="button" onClick={() => onChange(hour, m)}
                 className={`block w-full rounded-md px-1.5 py-1 text-left text-xs transition hover:bg-white/10 ${m === minute ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
