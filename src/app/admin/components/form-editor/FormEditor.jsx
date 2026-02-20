@@ -13,7 +13,7 @@ import { useFormDnD } from "./hooks/useFormDnD";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
-import { useDeleteFormMutation, useFormMutation, useLinkableFormsQuery } from "@/lib/hooks/useFormAdmin";
+import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useShareLink } from "@/app/admin/hooks/useShareLink";
 import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
@@ -134,6 +134,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
             Status: state.status,
             AllowMultipleResponses: state.allowAnonymousResponses ? true : state.allowMultipleResponses,
             AllowAnonymousResponses: state.allowAnonymousResponses,
+            RequiresManualReview: state.requiresManualReview,
             LinkedFormId: state.allowAnonymousResponses ? null : (state.linkedFormId || null),
             Collaborators: state.editors.map((editor) => ({
                 UserId: editor.user.id,
@@ -315,6 +316,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
         linkedFormId: initialForm.linkedFormId || "",
         allowMultipleResponses: initialForm.allowMultipleResponses || false,
         allowAnonymousResponses: initialForm.allowAnonymousResponses || false,
+        requiresManualReview: initialForm.requiresManualReview || false,
         editors: initialForm.collaborators || [],
         status: initialForm.status || 1,
         isChildForm: initialForm.isChildForm || false,

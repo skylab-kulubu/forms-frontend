@@ -10,6 +10,7 @@ const initialFormState = {
     linkedFormId: "",
     allowMultipleResponses: false,
     allowAnonymousResponses: false,
+    requiresManualReview: false,
     editors: [],
     status: 1,
     isChildForm: false,

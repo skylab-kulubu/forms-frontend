@@ -33,7 +33,7 @@ const stateConfigs = {
     },
     pending: {
         icon: FileClock,
-        title: "İşlem bekleniyor",
+        title: "Cevabınız kaydedildi",
         description: "Form cevabınız şu an inceleniyor.",
     },
     approved: {

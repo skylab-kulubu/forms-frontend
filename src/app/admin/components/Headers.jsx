@@ -55,11 +55,11 @@ function HeaderShell({ title, description, label, labelType = 1, actions, childr
 export default HeaderShell;
 
 export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange, allowAnonymous = null,
-  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, onRefresh, onCreate, stats = { count: 0 }
+  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange, onRefresh, onCreate, stats = { count: 0 }
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, hasLinkedForm !== null].filter(Boolean).length;
+  const activeFilters = [sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, hasLinkedForm !== null, requiresManualReview !== null].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
 
   return (
@@ -82,6 +82,7 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "des
               allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
               allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
               hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={onHasLinkedFormChange}
+              requiresManualReview={requiresManualReview} onRequiresManualReviewChange={onRequiresManualReviewChange}
             />
           </div>
           <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header"

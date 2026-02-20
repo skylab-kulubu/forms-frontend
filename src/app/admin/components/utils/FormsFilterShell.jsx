@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, CornerDownRight, Crown, Eye, PencilLine, Repeat2, UserX, Users } from "lucide-react";
+import { ArrowDown, ArrowUp, ClipboardCheck, CornerDownRight, Crown, Eye, PencilLine, Repeat2, UserX, Users } from "lucide-react";
 
 function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   const count = Math.max(options.length, 1);
@@ -67,7 +67,8 @@ const itemVariants = {
 };
 
 export default function FormsFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange,
-  allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, className = ""
+  allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange,
+  requiresManualReview = null, onRequiresManualReviewChange, className = ""
 }) {
   const panelRef = useRef(null);
 
@@ -138,6 +139,7 @@ export default function FormsFilterShell({ open, anchorRef, onClose, sortValue =
                   <TriStateIconButton value={allowAnonymous} onChange={onAllowAnonymousChange} icon={UserX} label="Anonim cevap" />
                   <TriStateIconButton value={allowMultiple} onChange={onAllowMultipleChange} icon={Repeat2} label="Coklu cevap" />
                   <TriStateIconButton value={hasLinkedForm} onChange={onHasLinkedFormChange} icon={CornerDownRight} label="Bagli form" />
+                  <TriStateIconButton value={requiresManualReview} onChange={onRequiresManualReviewChange} icon={ClipboardCheck} label="Manuel onay" />
                 </div>
               </div>
             </motion.div>

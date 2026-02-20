@@ -13,15 +13,15 @@ const alertVariants = {
 
 export function LibrarySettings() {
     const { state, dispatch } = useFormEditor();
-    const { id, status, allowAnonymousResponses, allowMultipleResponses, linkedFormId } = state;
-    
+    const { id, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, linkedFormId } = state;
+
     const [anonymousWarningOpen, setAnonymousWarningOpen] = useState(false);
 
     const isNewForm = !id;
 
     const handleAnonymousToggle = () => {
         const nextValue = !allowAnonymousResponses;
-        
+
         if (nextValue && linkedFormId) {
             setAnonymousWarningOpen(true);
         } else {
@@ -36,14 +36,14 @@ export function LibrarySettings() {
         dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: "" } });
         dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: true } });
         dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: true } });
-        
+
         setAnonymousWarningOpen(false);
     };
 
     return (
         <div className="flex flex-col divide-y divide-neutral-800/60 p-4 text-sm text-neutral-200">
-             <ApprovalOverlay 
-                open={anonymousWarningOpen} 
+            <ApprovalOverlay
+                open={anonymousWarningOpen}
                 preset="anonymous-toggle"
                 onApprove={confirmAnonymousToggle}
                 onReject={() => setAnonymousWarningOpen(false)}
@@ -103,6 +103,15 @@ export function LibrarySettings() {
                         </div>
                         <button type="button" disabled={allowAnonymousResponses} onClick={() => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: !allowMultipleResponses } })} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${allowMultipleResponses ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
                             <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${allowMultipleResponses ? "translate-x-5" : "translate-x-0"}`} />
+                        </button>
+                    </div>
+                    <div className={`flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5 transition-opacity duration-300 ${allowAnonymousResponses ? "opacity-20" : ""}`}>
+                        <div>
+                            <p className="text-sm font-semibold text-neutral-100">Cevap kontrolü</p>
+                            <p className="text-[10px] text-neutral-500">Cevapların onaylanması için manuel eylem gerekli olsun.</p>
+                        </div>
+                        <button type="button" disabled={allowAnonymousResponses} onClick={() => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "requiresManualReview", value: !requiresManualReview } })} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${requiresManualReview ? "border-emerald-400/60 bg-emerald-500/20" : "border-white/10 bg-white/5"}`}>
+                            <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${requiresManualReview ? "translate-x-5" : "translate-x-0"}`} />
                         </button>
                     </div>
                 </div>

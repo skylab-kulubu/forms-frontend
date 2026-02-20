@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, CornerDownRight, Eye, PencilLine, Repeat2, UserX, ChartColumn, Archive, User2 } from "lucide-react";
+import { Clock, ClipboardCheck, CornerDownRight, Eye, PencilLine, Repeat2, UserX, ChartColumn, Archive, User2 } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 
 const ROLE_STYLES = {
@@ -162,7 +162,7 @@ export function ResponseListItem({ formId, response, className = "" }) {
   const userId = response.user?.id || "";
   const photoUrl = response.user?.profilePictureUrl || null;
   const reviewedBy = response.reviewedBy || null;
-  const reviewerName = reviewedBy?.name || "--";
+  const reviewerName = reviewedBy?.fullName.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "--";
   const submittedAt = formatDate(response.submittedAt);
 
   const initial = getInitial(userName);
@@ -232,7 +232,8 @@ export function ResponseListItem({ formId, response, className = "" }) {
 export default function ListItem({ form, linkedForm, viewHref, editHref, onViewResponses, onEdit, className = "" }) {
   if (!form) return null;
 
-  const linkedId = linkedForm?.id || form.linkedFormId;
+  const linkedId = linkedForm?.id;
+  const linkedTitle = linkedForm?.title || "--";
   const hasLinked = Boolean(linkedId);
   const responsesLabel = "Responses";
 
@@ -256,7 +257,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
             >
               <CornerDownRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-300" />
               <div className="min-w-0">
-                <p className="font-medium leading-tight truncate">Bağlı Form</p>
+                <p className="font-medium leading-tight truncate">{linkedTitle}</p>
                 <p className="text-[10px] text-neutral-200/70 truncate">{linkedId}</p>
               </div>
             </Link>
@@ -278,6 +279,11 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
               className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.allowAnonymousResponses ? "text-indigo-300/80" : "text-neutral-500/80"}`}
             >
               <UserX className="h-3.5 w-3.5" />
+            </div>
+            <div title={form.requiresManualReview ? "Manuel onay açık" : "Manuel onay kapalı"}
+              className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.requiresManualReview ? "text-indigo-300/80" : "text-neutral-500/80"}`}
+            >
+              <ClipboardCheck className="h-3.5 w-3.5" />
             </div>
           </div>
 
