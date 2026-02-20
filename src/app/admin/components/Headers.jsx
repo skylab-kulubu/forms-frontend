@@ -162,7 +162,7 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
 }
 
 export function OverviewHeader({ formTitle, formId, formStatus, onEdit, onViewResponses, onRefresh }) {
-  const isActive = formStatus === 1;
+  const isActive = formStatus === 2;
   const statusLabel = isActive ? "Aktif" : "Pasif";
   const statusStyle = isActive ? 1 : 2;
 

@@ -21,7 +21,7 @@ const ROLE_LABELS = {
 function formatDuration(seconds) {
   if (seconds === null || seconds === undefined) return "--";
   const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
+  const s = Math.round(seconds % 60);
   return `${m}dk ${s}sn`;
 }
 

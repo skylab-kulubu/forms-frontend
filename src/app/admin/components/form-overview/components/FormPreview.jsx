@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { FileQuestion } from "lucide-react";
 import { REGISTRY } from "@/app/components/form-registry";
-import { getVisibleFields } from "@/app/components/form-displayer/components/conditionChecker";
 import StateCard from "@/app/components/StateCard";
 import DOMPurify from "isomorphic-dompurify";
 
@@ -21,12 +20,10 @@ export default function FormPreview({ form }) {
   const description = form?.data?.description ?? "";
   const sanitizedDescription = description ? DOMPurify.sanitize(description) : "";
 
-  const visibleFields = useMemo(() => getVisibleFields(schema, {}), [schema]);
-
   return (
     <div className="flex h-full flex-col rounded-xl p-2 overflow-hidden">
       <div className="flex-1 overflow-y-auto p-2 scrollbar">
-        {visibleFields.length === 0 ? (
+        {schema.length === 0 ? (
           <StateCard title="Bu formda soru bulunmuyor" description="Form düzenleyicisinden soru ekleyebilirsiniz." Icon={FileQuestion} />
         ) : (
           <div className="pointer-events-none select-none">
@@ -44,13 +41,15 @@ export default function FormPreview({ form }) {
             }
 
             <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4">
-              {visibleFields.map((field, index) => {
+              {schema.map((field, index) => {
                 const entry = REGISTRY[field.type];
                 const DisplayComponent = entry?.Display;
                 if (!DisplayComponent) return null;
 
+                const hasCondition = Boolean(field.condition?.fieldId);
+
                 return (
-                  <motion.div key={field.id} variants={itemVariants}>
+                  <motion.div key={field.id} variants={itemVariants} className={hasCondition ? "!opacity-40" : ""}>
                     <DisplayComponent {...field.props} questionNumber={index + 1} />
                   </motion.div>
                 );
