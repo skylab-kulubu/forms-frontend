@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { X, Plus } from "lucide-react";
+import { X, Plus, ChevronsUpDown } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { FieldShell } from "./FieldShell";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
 export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
-  const { prop, bind, toggle, patch} = useProp(props, onPropsChange, readOnly);
+  const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
+  const [choicesOpen, setChoicesOpen] = useState(true);
 
   const addChoice = () => {
-    const next = [...(prop.choices ?? []), `Seçenek ${((prop.choices ?? []).length +1)}`];
-    patch({ choices: next});
+    const next = [...(prop.choices ?? []), `Seçenek ${((prop.choices ?? []).length + 1)}`];
+    patch({ choices: next });
   };
   const updateChoice = (index, value) => {
     const next = [...(prop.choices) ?? []];
@@ -19,8 +21,18 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
   };
   const removeChoice = (index) => {
     const array = prop.choices ?? [];
-    const next = array.length > 1 ? array.filter((_,i) => i !== index) : array;
+    const next = array.length > 1 ? array.filter((_, i) => i !== index) : array;
     patch({ choices: next });
+  };
+
+  const handlePaste = (e, index) => {
+    const text = e.clipboardData.getData("text");
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length <= 1) return;
+    e.preventDefault();
+    const before = (prop.choices ?? []).slice(0, index);
+    const after = (prop.choices ?? []).slice(index + 1);
+    patch({ choices: [...before, ...lines, ...after] });
   };
 
   return (
@@ -46,33 +58,50 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
-          Seçenekler
-        </label>
-        <div className="flex flex-col gap-2">
-          {prop.choices.map((choice, idx) => (
-            <div key={idx} className="flex items-center gap-2">
-              <input type="text"
-                className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
-                placeholder={`Seçenek ${idx + 1}`}
-                value={choice} onChange={(e) => updateChoice(idx, e.target.value)}
-              />
-              <button type="button"
-                className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[11px] text-neutral-300 hover:text-neutral-100 disabled:opacity-50"
-                disabled={prop.choices.length <= 1} onClick={() => removeChoice(idx)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-          ))}
-          <div>
-            <button type="button" onClick={addChoice}
-               className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
+        <button type="button" onClick={() => setChoicesOpen((s) => !s)}
+          className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 transition hover:bg-white/10"
+        >
+          <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+            Seçenekler
+            <span className="ml-1.5 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-300">
+              {(prop.choices ?? []).length}
+            </span>
+          </span>
+          <ChevronsUpDown size={14} className={`text-neutral-400 transition-transform ${choicesOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        <AnimatePresence initial={false}>
+          {choicesOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }} className="overflow-hidden"
             >
-              <Plus size={14} /> Seçenek Ekle
-            </button>
-          </div>
-        </div>
+              <div className="flex flex-col gap-2 pt-0.5">
+                {prop.choices.map((choice, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input type="text"
+                      className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                      placeholder={`Seçenek ${idx + 1}`}
+                      value={choice} onChange={(e) => updateChoice(idx, e.target.value)} onPaste={(e) => handlePaste(e, idx)}
+                    />
+                    <button type="button"
+                      className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[11px] text-neutral-300 hover:text-neutral-100 disabled:opacity-50"
+                      disabled={prop.choices.length <= 1} onClick={() => removeChoice(idx)}
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                ))}
+                <div>
+                  <button type="button" onClick={addChoice}
+                    className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
+                  >
+                    <Plus size={14} /> Seçenek Ekle
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </FieldShell>
   );
@@ -118,7 +147,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
             <p className="text-sm font-medium text-neutral-100">
               {question}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
-            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
         </div>
 
