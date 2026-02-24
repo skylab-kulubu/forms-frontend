@@ -68,7 +68,7 @@ export function FormPreview({ open, onClose }) {
 
                                             return (
                                                 <motion.div key={field.id} variants={itemVariants}
-                                                    className={`relative ${hasCondition ? "opacity-40" : ""} ${isLast ? "" : "border-b border-white/5 pb-6"}`}
+                                                    className={`relative ${hasCondition ? "opacity-40!" : ""} ${isLast ? "" : "border-b border-white/5 pb-6"}`}
                                                 >
                                                     <DisplayComponent {...field.props} questionNumber={index + 1}/>
                                                 </motion.div>

@@ -6,13 +6,14 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
   "/admin/forms": "Formlar",
-  "/admin/forms/new-form": "Yeni Form"
+  "/admin/forms/new-form": "Yeni Form",
+  "/admin/how-to-use": "Nasıl Kullanılır"
 };
 
 function SectionLabel({ children }) {
@@ -224,7 +225,9 @@ function SidebarContent({ user, pathname, onItemClick, status, formId, form, for
         />
       </div>
 
-      <div className="mt-auto px-1 text-[10px] text-zinc-400 select-none">v0.1</div>
+      <div className="mt-auto space-y-2">
+        <NavItem href="/admin/how-to-use" icon={BookOpen} label="Nasıl Kullanılır" active={pathname === "/admin/how-to-use"} onClick={onItemClick} />
+      </div>
     </div>
   );
 }
