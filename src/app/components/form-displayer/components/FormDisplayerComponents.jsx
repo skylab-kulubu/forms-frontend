@@ -1,6 +1,34 @@
 "use client";
 
 import DOMPurify from "isomorphic-dompurify";
+import { useSession } from "next-auth/react";
+import { UserRoundX, UserRound } from "lucide-react";
+
+export function FormRespondentBadge() {
+  const { data: session, status } = useSession();
+  const isAuthed = status === "authenticated";
+  const user = session?.user;
+
+  if (status === "loading") return null;
+
+  if (!isAuthed) {
+    return (
+      <div className="flex ml-4 items-center gap-1.5 text-[11px] text-neutral-500 px-1">
+        <UserRoundX size={12} className="shrink-0" />
+        <span>Anonim olarak yanıtlıyorsunuz</span>
+      </div>
+    );
+  }
+
+  const fullName = user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Kullanıcı";
+
+  return (
+    <div className="flex ml-4 items-center gap-1.5 text-[11px] text-neutral-500 px-1">
+      <UserRound size={12} className="shrink-0" />
+      <span><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
+    </div>
+  );
+}
 
 export function FormDisplayerHeader({ title, description }) {
   const hasTitle = typeof title === "string" && title.trim().length > 0;

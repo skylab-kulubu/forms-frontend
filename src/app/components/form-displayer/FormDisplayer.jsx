@@ -2,7 +2,7 @@
 
 import { useRef, useState, useMemo, useEffect } from "react";
 import { REGISTRY } from "@/app/components/form-registry";
-import { FormDisplayerHeader } from "./components/FormDisplayerComponents";
+import { FormDisplayerHeader, FormRespondentBadge } from "./components/FormDisplayerComponents";
 import { FormResponseStatus } from "./components/FormResponseStatus";
 import { useSubmitFormMutation } from "@/lib/hooks/useForm";
 import { FormStatusDisplayer } from "../FormStatusHandler";
@@ -27,6 +27,7 @@ export default function FormDisplayer({ form, step }) {
   const schema = Array.isArray(form?.schema) ? form.schema : [];
   const title = form?.title ?? "";
   const description = form?.description ?? "";
+  const isAnonymous = form?.allowAnonymousResponses === true;
   const hasSchema = schema.length > 0;
 
   const submitMutation = useSubmitFormMutation();
@@ -197,7 +198,7 @@ export default function FormDisplayer({ form, step }) {
       <AnimatePresence>
         {!isFinished && (
           <motion.div key="background-layer" className="fixed inset-0 z-0 pointer-events-none"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
           >
             <Background />
           </motion.div>
@@ -208,10 +209,18 @@ export default function FormDisplayer({ form, step }) {
 
         <AnimatePresence mode="wait">
           {!isFinished ? (
-            <motion.div key="form-card" className="w-full max-w-2xl rounded-3xl border border-white/10 bg-black/20 shadow-2xl"
+            <motion.div key="form-wrapper" className="w-full max-w-2xl flex flex-col items-center"
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.3 } }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
             >
+              <motion.div className="w-full mb-3"
+                initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+              >
+                <FormRespondentBadge />
+              </motion.div>
+
+            <div className="w-full rounded-3xl border border-white/10 bg-black/20 shadow-2xl">
               <motion.div className="flex flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
 
                 <motion.div variants={itemVariants}>
@@ -281,6 +290,7 @@ export default function FormDisplayer({ form, step }) {
                   </motion.div>
                 )}
               </motion.div>
+            </div>
             </motion.div>
           ) : (
             <motion.div key="success-screen" className="w-full"
