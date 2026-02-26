@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { LogOut } from "lucide-react";
+import { LogOut, LayoutDashboard } from "lucide-react";
+import Link from "next/link";
 import LoginButton from "./utils/LoginButton";
 import HoverCard from "./utils/HoverCard";
 
@@ -21,6 +22,9 @@ export default function MainHeader() {
 
   const initial = useMemo(() => getInitial(user?.name, user?.email), [user]);
 
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  const isAdmin = roles.some(role => role.toLowerCase() === "admin");
+
   const handleLogin = () => {
     const callbackUrl =
       typeof window !== "undefined" ? window.location.href : "/admin";
@@ -33,33 +37,47 @@ export default function MainHeader() {
   };
 
   return (
-    <header className={`w-full px-4 py-3 md:px-6`}>
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2">
-        <div className="flex items-center gap-3 py-1">
-          <img src="/skylab.svg" alt="Skylab Logo" className="h-10 w-10 object-contain p-0.5" />
-          <div>
-            <p className="text-[18px] font-semibold text-[#e0c8e5] uppercase tracking-[6px] -mt-1">Forms</p>
-          </div>
+    <motion.header initial={{ y: -100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed top-6 left-[calc(50%-5px)] -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-6xl pointer-events-none"
+    >
+      <div className="pointer-events-auto flex items-center justify-between w-full px-5 py-2 rounded-2xl bg-neutral-900/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+        <div className="flex items-center gap-3.5">
+          <img src="/skylab.svg" alt="Skylab Logo" className="h-9 w-9 object-contain" />
+          <p className="text-lg font-sans text-skylab-500 tracking-[3px] -ml-1">
+            FORMS
+          </p>
         </div>
 
-        <div className="flex items-center gap-3 py-1">
-          {status === "loading" ? null : !isAuthed ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className="-mt-1">
-              <LoginButton onClick={handleLogin} disabled={status === "loading"} label="Giriş Yap"/>
+        <div className="flex items-center gap-3">
+          {status === "loading" ? (
+            <div className="w-24 h-10 rounded-xl bg-white/5 animate-pulse" />
+          ) : !isAuthed ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+              <LoginButton onClick={handleLogin} disabled={status === "loading"} label="Giriş Yap" />
             </motion.div>
           ) : (
             <>
-              <HoverCard user={user}>
-                <div className="flex items-center gap-2 rounded-xl bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5 -mt-1">
-                  <motion.div initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
-                    className="text-right block"
+              {isAdmin && (
+                <Link href="/admin">
+                  <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }} title="Admin Paneli"
+                    className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 text-neutral-400 p-2.25 sm:px-2.5 sm:py-1.5 text-[11px] font-medium hover:bg-white/10 hover:text-neutral-200 transition-colors"
                   >
-                    <p className="text-[12.5px] font-semibold text-neutral-100">
+                    <LayoutDashboard size={13} />
+                    <span className="hidden sm:inline">Admin</span>
+                  </motion.div>
+                </Link>
+              )}
+              <HoverCard user={user}>
+                <div className="flex items-center gap-2 rounded-xl bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5">
+                  <motion.div initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
+                    className="text-right hidden min-[400px]:inline"
+                  >
+                    <p className="text-[12.5px] font-semibold text-neutral-100 truncate max-w-[140px]">
                       Merhaba, {name}
                     </p>
                   </motion.div>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
-                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-neutral-800 text-xs font-semibold text-neutral-200"
+                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-neutral-800 text-xs font-semibold text-neutral-200"
                   >
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
@@ -78,6 +96,6 @@ export default function MainHeader() {
           )}
         </div>
       </div>
-    </header>
+    </motion.header>
   );
 }

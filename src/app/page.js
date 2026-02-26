@@ -10,6 +10,7 @@ import TeamBento from "./components/landing/TeamBento";
 import HowWeWork from "./components/landing/HowWeWork";
 import FAQ from "./components/landing/FAQ";
 import Marquee from "./components/landing/Marquee";
+import Footer from "./components/Footer";
 
 function CountUp({ value, suffix, delay }) {
   const motionVal = useMotionValue(0);
@@ -73,7 +74,7 @@ export default function Home() {
 
   return (
     <main ref={scrollRef} onScroll={handleScroll}
-      className="relative h-screen overflow-y-auto overflow-x-hidden scroll-smooth   scrollbar bg-neutral-950 text-white selection:bg-violet-500 selection:text-white font-sans"
+      className="relative h-screen overflow-y-auto overflow-x-hidden scroll-smooth scrollbar bg-neutral-950 text-white selection:bg-skylab-500 selection:text-white font-sans"
     >
       <div ref={bgRef} className="will-change-[opacity]" style={{ opacity: 0.5 }}>
         <Background />
@@ -82,7 +83,7 @@ export default function Home() {
       <div className="relative z-10">
         <MainHeader />
 
-        <section className="relative px-5 md:px-10 pt-20 md:pt-30 pb-24">
+        <section className="relative px-5 md:px-10 pt-20 md:pt-30 pb-24 min-h-screen">
           <div className="absolute top-[55%] -translate-y-1/2 right-0 translate-x-1/2 w-[90vw] h-[90vw] max-w-[900px] max-h-[900px] md:max-w-[1050px] md:max-h-[1050px] lg:max-w-[1200px] lg:max-h-[1200px] pointer-events-none select-none transition-opacity duration-100"
             style={{ "--fill-0": "#43313a" }}
           >
@@ -91,11 +92,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative z-10 max-w-6xl mx-auto min-h-[70vh]">
+          <div className="relative z-10 max-w-6xl mx-auto mt-[5vh]">
             <motion.div variants={container} initial="hidden" animate="show">
               <motion.div variants={item} className="flex items-center gap-3 mb-10">
                 <div className="px-3 py-1 rounded-full border border-skylab-500/25 text-skylab-500 font-mono text-[11px]">
-                  Bilgisayar Bilimleri Kulübü
+                  SKY LAB - Bilgisayar Bilimleri Kulübü
                 </div>
                 <div className="hidden sm:block w-16 h-px bg-neutral-800" />
                 <span className="hidden sm:block text-neutral-600 font-mono text-[11px]">
@@ -137,21 +138,21 @@ export default function Home() {
                 </div>
               </motion.div>
 
-              <motion.div variants={item} className="flex items-center gap-4 mt-12">
-                <a href="#" className="group inline-flex items-center gap-3 px-8 py-3.5 bg-neutral-900 border border-neutral-800 text-neutral-300 rounded-xl font-medium text-sm hover:text-white hover:border-skylab-500/50 hover:bg-neutral-800 transition-all duration-300 hover:shadow-[0_0_20px_rgba(224,200,229,0.15)]">
+              <motion.div variants={item} className="flex items-center gap-2 sm:gap-4 mt-8 sm:mt-12">
+                <a href="#" className="group inline-flex items-center gap-2 sm:gap-3 px-5 sm:px-8 py-2.5 sm:py-3.5 bg-neutral-900 border border-neutral-800 text-neutral-300 rounded-xl font-medium text-xs sm:text-sm hover:text-white hover:border-skylab-500/50 hover:bg-neutral-800 transition-all duration-300 hover:shadow-[0_0_20px_rgba(224,200,229,0.15)]">
                   <span>Başvuru Yap</span>
-                  <ArrowUpRight strokeWidth={2} className="w-5 h-5 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-px group-hover:text-skylab-500"/>
+                  <ArrowUpRight strokeWidth={2} className="w-4 h-4 sm:w-5 sm:h-5 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-px group-hover:text-skylab-500"/>
                 </a>
 
-                <a href="#ekipler" className="group inline-flex items-center gap-2 px-6 py-3.5 text-neutral-400 font-medium text-xs hover:text-white transition-colors duration-300">
+                <a href="#ekipler" className="group inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3.5 text-neutral-400 font-medium text-[10px] sm:text-xs hover:text-white transition-colors duration-300">
                   <span>Ekiplere Göz At</span>
-                  <ArrowDown strokeWidth={2} className="w-3 h-3 transition-transform duration-300 group-hover:translate-y-1"/>
+                  <ArrowDown strokeWidth={2} className="w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform duration-300 group-hover:translate-y-1"/>
                 </a>
               </motion.div>
             </motion.div>
           </div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] }} className="-mt-20 md:-mt-20 relative z-20">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] }} className="mt-12 md:mt-20 relative z-20">
             <Marquee />
           </motion.div>
         </section>
@@ -167,7 +168,7 @@ export default function Home() {
           <FAQ />
         </div>
 
-        {/* will add footer here */}
+        <Footer />
       </div>
     </main>
   );

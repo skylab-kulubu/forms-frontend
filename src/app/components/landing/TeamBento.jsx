@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { Brain, Globe, Shield, Smartphone, Gamepad2, Cpu, Link2, Code2, Users } from "lucide-react";
 
@@ -81,20 +81,30 @@ const teams = [
 
 export default function TeamBento() {
   const [expanded, setExpanded] = useState(null);
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const displayTeams = useMemo(() => {
     const lastTeamId = teams[teams.length - 1].id;
-    
-    if (expanded === lastTeamId) {
+
+    if (expanded === lastTeamId && isDesktop) {
       const newTeams = [...teams];
       const last = newTeams[newTeams.length - 1];
       newTeams[newTeams.length - 1] = newTeams[newTeams.length - 2];
       newTeams[newTeams.length - 2] = last;
       return newTeams;
     }
-    
+
     return teams;
-  }, [expanded]);
+  }, [expanded, isDesktop]);
 
   return (
     <section className="px-5 md:px-10 pb-32">
@@ -104,76 +114,90 @@ export default function TeamBento() {
           <div className="flex-1 border-b border-dashed border-neutral-800" />
         </div>
 
-        <LayoutGroup>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-flow-dense gap-3">
-            {displayTeams.map((team) => {
-              const Icon = team.icon;
-              const isOpen = expanded === team.id;
-              
-              return (
-                <motion.button key={team.id} layoutId={team.id} layout="position"
-                  onClick={() => setExpanded(isOpen ? null : team.id)}
-                  transition={{ layout: { duration: 0.35, ease: [0.4, 0, 0.2, 1] } }}
-                  className={`relative text-left rounded-xl border overflow-hidden cursor-pointer backdrop-blur-sm transition-colors duration-300 flex flex-col ${
-                    isOpen ? "border-skylab-600/25 bg-skylab-600/4 lg:col-span-2 row-span-2 p-8"
-                    : "border-white/6 bg-neutral-950/50 hover:border-neutral-700 hover:bg-neutral-900/70 p-6"
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-flow-dense gap-3">
+          {displayTeams.map((team) => {
+            const Icon = team.icon;
+            const isOpen = expanded === team.id;
+            const isSibling = expanded !== null && !isOpen;
+
+            const isLastOddItem = team.id === "organizasyon";
+
+            return (
+              <motion.button key={team.id} layout
+                animate={{ opacity: isSibling ? 0.7 : 1, scale: isSibling ? 0.95 : 1, filter: isSibling ? "blur(2px)" : "blur(0px)", }}
+                transition={{
+                  layout: { type: "spring", bounce: 0.15, duration: 0.5 },
+                  opacity: { duration: 0.3, ease: "easeInOut" },
+                  scale: { duration: 0.3, ease: "easeInOut" },
+                  filter: { duration: 0.3, ease: "easeInOut" },
+                }}
+                onClick={() => setExpanded(isOpen ? null : team.id)}
+                className={`relative text-left rounded-xl border overflow-hidden cursor-pointer backdrop-blur-sm transition-colors flex flex-col 
+                  ${isOpen ? "border-skylab-600/25 bg-skylab-600/4 md:col-span-2 lg:col-span-2 row-span-2 p-8 shadow-2xl z-20"
+                  : `border-white/6 bg-neutral-950/50 hover:border-neutral-700 hover:bg-neutral-900/70 p-6 z-10 
+                  ${isLastOddItem ? "md:col-span-2 lg:col-span-1" : ""}`
                   }`}
-                >
-                  <Icon className={`absolute -bottom-4 -right-4 text-white/3 pointer-events-none transition-all duration-300 ${isOpen ? "w-40 h-40" : "w-28 h-28"}`}
-                    strokeWidth={1}
-                  />
 
-                  <div className="relative z-10 flex flex-col h-full w-full">
-                    <div>
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-5 border transition-colors duration-300 ${isOpen ? "bg-skylab-600/15 border-skylab-600/30" : "bg-skylab-600/10 border-skylab-600/20"}`}>
-                        <Icon className="w-5 h-5 text-skylab-600" />
-                      </div>
-                      <h3 className={`text-white font-semibold mb-2 transition-all duration-300 ${isOpen ? "text-xl" : "text-base"}`}>
-                        {team.name}
-                      </h3>
-                      <p className="text-neutral-500 text-sm leading-[1.6] mb-4">{team.desc}</p>
+              >
+                <Icon className={`absolute -bottom-4 -right-4 text-white/3 pointer-events-none transition-all duration-500 ${isOpen ? "w-40 h-40" : "w-28 h-28"}`}
+                  strokeWidth={1}
+                />
+
+                <div className="relative z-10 flex flex-col h-full w-full">
+                  <div>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-5 border transition-colors duration-300 
+                    ${isOpen ? "bg-skylab-600/15 border-skylab-600/30" : "bg-skylab-600/10 border-skylab-600/20"}`}>
+                      <Icon className="w-5 h-5 text-skylab-600" />
                     </div>
-
-                    <AnimatePresence initial={false}>
-                      {isOpen && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: "easeInOut" }}
-                          className="overflow-hidden flex-1"
-                        >
-                          <p className="text-neutral-400 text-sm leading-[1.8] mb-5">{team.longDesc}</p>
-
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {team.stack.map((s) => (
-                              <span key={s} className="rounded-md border border-white/6 bg-white/3 px-2.5 py-0.5 text-neutral-400 font-mono text-xs">
-                                {s}
-                              </span>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <AnimatePresence>
-                      {isOpen && (
-                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                          transition={{ delay: 0.1 }} className="mt-auto pt-6 hidden md:block"
-                        >
-                          <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-black font-semibold text-sm hover:bg-neutral-200 transition-colors">
-                            Ekibe Başvur
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                          </span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <h3 className={`text-white font-semibold mb-2 transition-all duration-300 ${isOpen ? "text-xl" : "text-base"}`}>
+                      {team.name}
+                    </h3>
+                    <p className="text-neutral-500 text-sm leading-[1.6] mb-4">
+                      {team.desc}
+                    </p>
                   </div>
 
-                  <div className={`absolute bottom-0 left-0 right-0 h-px transition-all duration-500 ${isOpen ? "bg-linear-to-r from-skylab-500 to-skylab-500/0" : "bg-transparent"}`}/>
-                </motion.button>
-              );
-            })}
-          </div>
-        </LayoutGroup>
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {isOpen && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden flex-1"
+                      >
+                        <p className="text-neutral-400 text-sm leading-[1.8] mb-5">
+                          {team.longDesc}
+                        </p>
+
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {team.stack.map((s) => (
+                            <span key={s} className="rounded-md border border-white/6 bg-white/3 px-2.5 py-0.5 text-neutral-400 font-mono text-xs">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                        transition={{ delay: 0.1 }} className="mt-auto pt-6 hidden md:block"
+                      >
+                        <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-black font-semibold text-sm hover:bg-neutral-200 transition-colors">
+                          Ekibe Başvur
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
+                        </span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className={`absolute bottom-0 left-0 right-0 h-px transition-all duration-500 ${isOpen ? "bg-linear-to-r from-skylab-500 to-skylab-500/0" : "bg-transparent"}`}/>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
