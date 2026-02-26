@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-skylab-300: #f3e8f5;
+  --color-skylab-400: #ebd5ee;
+  --color-skylab-500: #e0c8e5;
+  --color-skylab-600: #c8a4ce;
+  --color-skylab-700: #ae7eb6;
+}
+
 :root {
   --sb-size: 10px;
   --sb-radius: 9999px;
