@@ -193,7 +193,7 @@ function SidebarContent({ user, pathname, onItemClick, status, formId, form, for
             </motion.div>
             <motion.button type="button" onClick={handleLogout}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.6 }}
-              className="rounded-lg bg-transparent text-xs py-1  ml-auto font-semibold text-neutral-500 transition hover:text-indigo-300"
+              className="rounded-lg bg-transparent text-xs py-1  ml-auto font-semibold text-neutral-500 transition hover:text-skylab-500"
             >
               <LogOut size={16} />
             </motion.button>

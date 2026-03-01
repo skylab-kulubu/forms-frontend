@@ -5,7 +5,7 @@ export default function ActionButton({ href, onClick, icon: Icon, label, variant
   const ringClass = tone === "header" ? "focus-visible:ring-neutral-700" : "focus-visible:ring-white/30";
   let variantClass = "";
   if (variant === "primary") {
-    variantClass = "border-indigo-400/40 bg-indigo-500/10 text-indigo-100 hover:border-indigo-300/60 hover:bg-indigo-400/20";
+    variantClass = "border-skylab-400/40 bg-skylab-500/10 text-skylab-300 hover:border-skylab-300/60 hover:bg-skylab-400/20";
   } else if (tone === "header") {
     variantClass = "border-neutral-900/80 text-neutral-200 hover:border-neutral-800 hover:bg-neutral-900/60";
   } else {

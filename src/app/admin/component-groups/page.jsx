@@ -43,7 +43,7 @@ function GroupCard({ group, index: cardIndex, onDelete }) {
             <Trash2 size={12} />
           </button>
           <a href={`/admin/component-groups/${group.id}`}
-            className="inline-flex h-6 w-6 items-center justify-center rounded-md text-neutral-500 hover:text-indigo-300 hover:bg-white/5 transition-colors"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-md text-neutral-500 hover:text-skylab-500 hover:bg-white/5 transition-colors"
             title="Düzenle"
           >
             <PencilLine size={12} />
