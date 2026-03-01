@@ -6,14 +6,16 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
   "/admin/forms": "Formlar",
   "/admin/forms/new-form": "Yeni Form",
-  "/admin/how-to-use": "Nasıl Kullanılır"
+  "/admin/how-to-use": "Nasıl Kullanılır",
+  "/admin/groups": "Gruplar",
+  "/admin/groups/new-group": "Yeni Grup",
 };
 
 function SectionLabel({ children }) {
@@ -221,6 +223,13 @@ function SidebarContent({ user, pathname, onItemClick, status, formId, form, for
               label: "Formları Görüntüle"
             },
             ...(activeFormItem ? [activeFormItem] : []),
+          ]}
+        />
+        <NavGroup icon={Layers} label="Gruplar"
+          pathname={pathname} onItemClick={onItemClick}
+          items={[
+            { href: "/admin/groups/new-group", icon: Plus, label: "Yeni Grup" },
+            { href: "/admin/groups", icon: List, label: "Grupları Görüntüle" },
           ]}
         />
       </div>
