@@ -52,10 +52,8 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onRefre
                         <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
                             Grup Açıklaması
                         </label>
-                        <textarea value={state.description}
-                            onChange={(e) => dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })}
-                            placeholder="Bu grup hakkında kısa bir açıklama..."
-                            rows={2}
+                        <textarea value={state.description} onChange={(e) => dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })}
+                            placeholder="Bu grup hakkında kısa bir açıklama..." rows={2}
                             className="mt-1 w-full resize-none rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-700 focus:outline-none"
                         />
                     </div>

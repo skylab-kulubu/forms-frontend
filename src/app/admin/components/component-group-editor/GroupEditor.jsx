@@ -96,7 +96,7 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
                 if (!isNewGroup) return;
                 const group = data?.data ?? data;
                 const nextId = group?.id;
-                if (nextId) router.push(`/admin/groups/${nextId}/edit`);
+                if (nextId) router.push(`/admin/component-groups/${nextId}`);
             },
         });
     };
@@ -226,7 +226,7 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
                 </DragOverlay>
 
                 <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form" context={{ isPending: isDeletePending }}
-                    onApprove={() => deleteGroup(state.id, { onSuccess: () => router.push("/admin/groups"), onError: () => setDeleteOverlayOpen(false) })}
+                    onApprove={() => deleteGroup(state.id, { onSuccess: () => router.push("/admin/component-groups"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
                 />
             </div>

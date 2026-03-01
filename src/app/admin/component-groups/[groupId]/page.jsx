@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useGroupQuery } from "@/lib/hooks/useGroupAdmin";
 import { Loader2 } from "lucide-react";
 
-const GroupEditor = dynamic(() => import("../../../components/component-group-editor/GroupEditor"), { ssr: false });
+const GroupEditor = dynamic(() => import("../../components/component-group-editor/GroupEditor"), { ssr: false });
 
 export default function EditGroupPage() {
     const { groupId } = useParams();

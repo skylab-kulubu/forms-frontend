@@ -183,6 +183,17 @@ function FormEditorContent({ onRefresh, isNewForm }) {
         dispatch({ type: "SET_SCHEMA", payload: [...state.schema, { id, type, props }] });
     };
 
+    const handleGroupSelect = (group) => {
+        const groupSchema = Array.isArray(group?.schema) ? group.schema : [];
+        if (groupSchema.length === 0) return;
+        const newFields = groupSchema.map((field) => ({
+            ...field,
+            id: Math.random().toString(36).slice(2, 10),
+            props: structuredClone(field.props ?? REGISTRY[field.type]?.defaults ?? {}),
+        }));
+        dispatch({ type: "SET_SCHEMA", payload: [...state.schema, ...newFields] });
+    };
+
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(SmartKeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -249,6 +260,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                     shareStatus={shareStatus}
                     isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                     onLibrarySelect={handleLibrarySelect}
+                    onGroupSelect={handleGroupSelect}
                 />
             )}
         </div>
@@ -273,6 +285,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                                 shareStatus={shareStatus}
                                 isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                                 onLibrarySelect={handleLibrarySelect}
+                                onGroupSelect={handleGroupSelect}
                             />
                         </DrawerContent>
                     </Drawer>

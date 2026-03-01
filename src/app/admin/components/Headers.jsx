@@ -161,6 +161,33 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
   );
 }
 
+export function GroupsHeader({ searchValue = "", onSearchChange, onRefresh, onCreate, stats = { count: 0 } }) {
+  return (
+    <HeaderShell title="Bileşen Grupları" description="Bileşen grupları oluşturun ve forma hızlıca ekleyin.">
+      <div className="flex flex-wrap items-center gap-3 w-full md:flex-nowrap">
+        <div className="relative flex-1 min-w-[220px] md:min-w-[280px] max-w-md">
+          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-500" />
+          <input type="search" value={searchValue} onChange={(event) => onSearchChange?.(event.target.value)} placeholder="Grup ara"
+            className="h-9 w-full border rounded-lg border-white/10 bg-transparent pl-7 pr-3 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-700 focus:outline-none"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header" title="Yenile" aria-label="Yenile" />
+          <ActionButton icon={Plus} variant="primary" onClick={onCreate} size="md" tone="header" title="Yeni grup ekle" aria-label="Yeni grup ekle" />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 -mt-2.5 text-center shrink-0 md:ml-auto">
+          <div className="px-3 py-2 text-[11px] text-neutral-400">
+            <p className="text-[10px] uppercase tracking-wide text-neutral-500">Toplam Grup</p>
+            <p className="text-sm font-semibold text-neutral-100">{stats.count ?? "--"}</p>
+          </div>
+        </div>
+      </div>
+    </HeaderShell>
+  );
+}
+
 export function OverviewHeader({ formTitle, formId, formStatus, onEdit, onViewResponses, onRefresh }) {
   const isActive = formStatus === 2;
   const statusLabel = isActive ? "Aktif" : "Pasif";

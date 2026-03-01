@@ -14,8 +14,8 @@ const breadcrumbLabels = {
   "/admin/forms": "Formlar",
   "/admin/forms/new-form": "Yeni Form",
   "/admin/how-to-use": "Nasıl Kullanılır",
-  "/admin/groups": "Gruplar",
-  "/admin/groups/new-group": "Yeni Grup",
+  "/admin/component-groups": "Bileşen Grupları",
+  "/admin/component-groups/new-group": "Yeni Grup",
 };
 
 function SectionLabel({ children }) {
@@ -228,8 +228,8 @@ function SidebarContent({ user, pathname, onItemClick, status, formId, form, for
         <NavGroup icon={Layers} label="Gruplar"
           pathname={pathname} onItemClick={onItemClick}
           items={[
-            { href: "/admin/groups/new-group", icon: Plus, label: "Yeni Grup" },
-            { href: "/admin/groups", icon: List, label: "Grupları Görüntüle" },
+            { href: "/admin/component-groups/new-group", icon: Plus, label: "Yeni Grup" },
+            { href: "/admin/component-groups", icon: List, label: "Grupları Görüntüle" },
           ]}
         />
       </div>

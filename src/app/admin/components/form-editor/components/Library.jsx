@@ -10,7 +10,7 @@ import dynamic from "next/dynamic";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
 
-export function Library({ layout = "grid", onLibrarySelect, onPreview, onSave, onRefresh, onShare, onDelete, isPending, isError, error, isSuccess, shareStatus, isDeleteDisabled }) {
+export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPreview, onSave, onRefresh, onShare, onDelete, isPending, isError, error, isSuccess, shareStatus, isDeleteDisabled }) {
     const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
@@ -26,7 +26,7 @@ export function Library({ layout = "grid", onLibrarySelect, onPreview, onSave, o
     const renderContent = () => {
         switch (activeTab) {
             case "components":
-                return <LibraryComponents layout={layout} onSelect={onLibrarySelect} />;
+                return <LibraryComponents layout={layout} onSelect={onLibrarySelect} onGroupSelect={onGroupSelect} />;
 
             case "settings":
                 return (
