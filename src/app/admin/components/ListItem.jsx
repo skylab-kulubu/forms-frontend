@@ -45,9 +45,11 @@ function FeatureIcon({ active, title, children }) {
 
 export function ListItemSkeleton({ count = 4, className = "" }) {
   return (
-    <div className={`divide-y divide-white/6 ${className}`}>
+    <div className={className}>
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="w-full px-4 py-2.5">
+        <div key={i}>
+          {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+          <div className="w-full px-4 py-2.5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="min-w-0">
@@ -77,6 +79,7 @@ export function ListItemSkeleton({ count = 4, className = "" }) {
               </div>
               <SkeletonBlock className="h-4 w-4 rounded" />
             </div>
+          </div>
           </div>
         </div>
       ))}
@@ -125,29 +128,32 @@ const formatDate = (value) => {
 
 export function ResponseListItemSkeleton({ count = 4, className = "" }) {
   return (
-    <div className={`divide-y divide-white/6 ${className}`}>
+    <div className={className}>
       {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="w-full px-4 py-2">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3 sm:w-48 shrink-0">
-              <SkeletonBlock className="h-9 w-9 rounded-lg" />
-              <div>
-                <SkeletonBlock className="h-3.5 w-24 rounded-md" />
-                <SkeletonBlock className="mt-1.5 h-2.5 w-32 rounded-md" />
+        <div key={i}>
+          {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+          <div className="w-full px-4 py-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="flex items-center gap-3 sm:w-48 shrink-0">
+                <SkeletonBlock className="h-9 w-9 rounded-lg" />
+                <div>
+                  <SkeletonBlock className="h-3.5 w-24 rounded-md" />
+                  <SkeletonBlock className="mt-1.5 h-2.5 w-32 rounded-md" />
+                </div>
               </div>
-            </div>
-            <Divider />
-            <div className="flex flex-1 items-center gap-3">
-              <SkeletonBlock className="h-3 w-36 rounded-md" />
-              <SkeletonBlock className="h-4 w-16 rounded-md" />
-              <SkeletonBlock className="h-3 w-24 rounded-md" />
-            </div>
-            <div className="flex items-center gap-2 sm:ml-auto">
               <Divider />
-              <SkeletonBlock className="h-3 w-20 rounded-md" />
-              <SkeletonBlock className="h-6 w-6 rounded-md" />
-              <SkeletonBlock className="h-8 w-8 rounded-md" />
-              <SkeletonBlock className="h-4 w-4 rounded" />
+              <div className="flex flex-1 items-center gap-3">
+                <SkeletonBlock className="h-3 w-36 rounded-md" />
+                <SkeletonBlock className="h-4 w-16 rounded-md" />
+                <SkeletonBlock className="h-3 w-24 rounded-md" />
+              </div>
+              <div className="flex items-center gap-2 sm:ml-auto">
+                <Divider />
+                <SkeletonBlock className="h-3 w-20 rounded-md" />
+                <SkeletonBlock className="h-6 w-6 rounded-md" />
+                <SkeletonBlock className="h-8 w-8 rounded-md" />
+                <SkeletonBlock className="h-4 w-4 rounded" />
+              </div>
             </div>
           </div>
         </div>
@@ -177,7 +183,7 @@ export function ResponseListItem({ formId, response, className = "" }) {
   const responseHref = `/admin/forms/${formId}/responses/${response.id}`;
 
   return (
-    <div className={`group/row relative w-full px-4 py-2 border-b border-white/6 last:border-b-0 transition-colors hover:bg-white/5 ${className}`}>
+    <div className={`group/row relative w-full px-4 py-2 transition-colors hover:bg-white/5 rounded-lg ${className}`}>
       <Link href={responseHref} className="absolute inset-0 z-0" aria-label={userName} tabIndex={-1} />
       <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3 min-w-0 sm:w-48 shrink-0">
@@ -216,7 +222,9 @@ export function ResponseListItem({ formId, response, className = "" }) {
             <Archive className="h-3.5 w-3.5" />
           </div>
           <ActionButton href={responseHref} icon={LayoutList} label="Görüntüle" />
-          <ChevronRight className="h-4 w-4 text-neutral-600 transition-transform duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
+          <Link href={responseHref} className="relative z-10 inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-white/10" aria-label="Cevabı görüntüle">
+            <ChevronRight className="h-4 w-4 text-neutral-600 transition-transform duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
+          </Link>
         </div>
       </div>
     </div>
@@ -232,7 +240,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
   const responsesHref = viewHref ? `${viewHref}/responses` : undefined;
 
   return (
-    <div className={`group/row relative w-full px-4 py-2.5 border-b border-white/6 last:border-b-0 transition-colors hover:bg-white/5 ${className}`}>
+    <div className={`group/row relative w-full px-4 py-2.5 transition-colors hover:bg-white/5 rounded-lg ${className}`}>
       {viewHref && <Link href={viewHref} className="absolute inset-0 z-0" aria-label={form.title ?? "Form"} tabIndex={-1} />}
       <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center">
 
@@ -282,7 +290,9 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
             <ActionButton href={responsesHref} onClick={onViewResponses} icon={LayoutList} label="Cevaplar" />
             <ActionButton href={editHref} onClick={onEdit} icon={PencilLine} label="Düzenle" variant="primary" />
           </div>
-          <ChevronRight className="h-4 w-4 text-neutral-600 transition-transform duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
+          <Link href={responsesHref || viewHref || "#"} className="relative z-10 inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-white/10" aria-label="Cevapları görüntüle">
+            <ChevronRight className="h-4 w-4 text-neutral-600 transition-transform duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
+          </Link>
         </div>
 
       </div>

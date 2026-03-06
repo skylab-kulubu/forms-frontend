@@ -84,13 +84,16 @@ export default function FormsPage() {
           ) : (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex-1 overflow-y-auto pr-1 scrollbar">
-              <div className="space-y-1.5">
-                {forms.map((form) => {
+              <div>
+                {forms.map((form, i) => {
                   const linkedForm = form?.linkedForm || null;
                   return (
-                    <ListItem key={form.id} form={form} linkedForm={linkedForm}
-                      viewHref={`/admin/forms/${form.id}`} editHref={`/admin/forms/${form.id}/edit`}
-                    />
+                    <div key={form.id}>
+                      {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+                      <ListItem form={form} linkedForm={linkedForm}
+                        viewHref={`/admin/forms/${form.id}`} editHref={`/admin/forms/${form.id}/edit`}
+                      />
+                    </div>
                   );
                 })}
               </div>

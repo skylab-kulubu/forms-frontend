@@ -1,4 +1,6 @@
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getSession } from "next-auth/react";
 import { request } from "../apiClient";
 
 const fetchFormById = async (formId) => {
@@ -116,4 +118,37 @@ export const useDeleteFormMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["user-forms"] });
     },
   });
+};
+
+export const useExportResponses = (formId) => {
+  const [loading, setLoading] = useState(false);
+
+  const exportToExcel = useCallback(async () => {
+    if (loading || !formId) return;
+    setLoading(true);
+    try {
+      const session = await getSession();
+      const token = session?.accessToken;
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+      const res = await fetch(`${baseUrl}/api/admin/forms/${formId}/responses/export`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error(`Export başarısız: ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `FormCevaplari_${formId.substring(0, 8)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Excel export hatası:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [formId, loading]);
+
+  return { exportToExcel, loading };
 };

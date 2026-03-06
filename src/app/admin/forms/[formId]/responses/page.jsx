@@ -7,6 +7,7 @@ import { ResponsesHeader } from "../../../components/Headers";
 import { ResponseListItem, ResponseListItemSkeleton } from "../../../components/ListItem";
 import Pagination from "../../../components/utils/Pagination";
 import { useFormResponsesQuery } from "@/lib/hooks/useResponse";
+import { useExportResponses } from "@/lib/hooks/useFormAdmin";
 import { useFormContext } from "../../../providers";
 import StateCard from "@/app/components/StateCard";
 import { ListX, TextSearch } from "lucide-react";
@@ -54,6 +55,8 @@ export default function ResponsesPage() {
   const sortingDirection = sortValue === "asc" ? "ascending" : "descending";
   const filterByUserId = "";
 
+  const { exportToExcel, loading: exportLoading } = useExportResponses(formId);
+
   const { form: formInfo } = useFormContext();
 
   const { data: responsesData, isLoading, error, refetch } = useFormResponsesQuery(formId, { page, status: statusParam, responderType: responderTypeParam, filterByUserId, showArchived, sortingDirection });
@@ -80,7 +83,7 @@ export default function ResponsesPage() {
     <div className="flex h-[calc(100dvh-3rem)] flex-col gap-6 overflow-hidden p-6">
       <ResponsesHeader formTitle={formTitle} formId={formIdLabel} searchValue={searchValue} onSearchChange={setSearchValue}
         sortValue={sortValue} onSortChange={setSortValue} statusValue={statusValue} onStatusChange={setStatusValue} showArchived={showArchived} onShowArchivedChange={setShowArchived}
-        respondentValue={respondentValue} onRespondentChange={setRespondentValue} onRefresh={() => refetch()} onEdit={() => router.push(`/admin/forms/${formId}/edit`)} stats={stats}
+        respondentValue={respondentValue} onRespondentChange={setRespondentValue} onRefresh={() => refetch()} onEdit={() => router.push(`/admin/forms/${formId}/edit`)} onExport={exportToExcel} exportLoading={exportLoading} stats={stats}
       />
 
       <AnimatePresence mode="wait">
@@ -100,9 +103,12 @@ export default function ResponsesPage() {
           ) : (
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="flex-1 overflow-y-auto pr-1 scrollbar">
-                <div className="space-y-1.5">
-                  {responses.map((response) => (
-                    <ResponseListItem key={response.id} formId={formId} response={response} />
+                <div>
+                  {responses.map((response, i) => (
+                    <div key={response.id}>
+                      {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+                      <ResponseListItem formId={formId} response={response} />
+                    </div>
                   ))}
                 </div>
               </div>

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { Download, List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
 import FormsFilterShell from "./utils/FormsFilterShell";
@@ -104,7 +104,7 @@ export function FormsHeader({ searchValue = "", onSearchChange, sortValue = "des
 }
 
 export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue = "", onSearchChange, sortValue = "desc", showArchived = false, onShowArchivedChange,
-  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, onEdit, stats = { averageTimeSpent: "--", responseCount: 0, pendingCount: 0 },
+  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, onEdit, onExport, exportLoading = false, stats = { averageTimeSpent: "--", responseCount: 0, pendingCount: 0 },
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
@@ -125,7 +125,8 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
           />
         </div>
         <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={PencilLine} variant="primary" onClick={onEdit} size="md" tone="header" title="Düzenle" aria-label="Düzenle" />
+        <ActionButton icon={PencilLine} onClick={onEdit} size="md" tone="header" title="Düzenle" aria-label="Düzenle" />
+        <ActionButton icon={Download} variant="primary" onClick={onExport} disabled={exportLoading} size="md" tone="header" title="Excel İndir" aria-label="Excel İndir" />
       </div>
       <div className="flex items-center gap-5 ml-auto shrink-0">
         <Stat label="Ort. Süre" value={stats.averageTimeSpent} />
