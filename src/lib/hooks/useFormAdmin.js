@@ -45,6 +45,10 @@ const fetchFormMetrics = async (formId) => {
   return request(`/api/admin/forms/${formId}/metrics`);
 };
 
+const fetchServiceMetrics = async () => {
+  return request("/api/admin/forms/metrics");
+};
+
 const deleteForm = async (formId) => {
   return request(`/api/admin/forms/${formId}`, {
     method: "DELETE",
@@ -76,6 +80,15 @@ export const useLinkableFormsQuery = (formId) =>
     enabled: !!formId,
     retry: false,
   });
+
+export const useServiceMetricsQuery = (options = {}) => {
+  return useQuery({
+    queryKey: ["service-metrics"],
+    queryFn: fetchServiceMetrics,
+    retry: options.retry ?? false,
+    ...options,
+  });
+};
 
 export const useFormMetricsQuery = (formId, options = {}) => {
   return useQuery({

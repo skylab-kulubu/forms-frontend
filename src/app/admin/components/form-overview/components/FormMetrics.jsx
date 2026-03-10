@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Timer, User2, ToggleLeft, ToggleRight, Link2, Hash, Shield } from "lucide-react";
+import { Timer, User2, ToggleLeft, ToggleRight, Link2, Hash, Shield, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 
 const fadeIn = {
@@ -29,15 +29,32 @@ function SectionTitle({ children }) {
   return <h3 className="text-[10px] uppercase tracking-wide text-neutral-500 mb-2">{children}</h3>;
 }
 
-function TrendChart({ hourlyData, dailyData }) {
+function TrendBadge({ value }) {
+  if (value === null || value === undefined) return null;
+  const rounded = Math.round(value * 10) / 10;
+  const isUp = rounded > 0;
+  const isDown = rounded < 0;
+  const Icon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
+  const color = isUp ? "text-emerald-400" : isDown ? "text-red-400" : "text-neutral-400";
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 -mt-2.5 -ml-2 text-[10px] font-medium ${color}`}>
+      <Icon size={10} />
+      {isUp ? "+" : ""}{rounded}%
+    </span>
+  );
+}
+
+function TrendChart({ hourlyData, dailyData, dailyTrendPercentage, hourlyTrendPercentage }) {
   const [mode, setMode] = useState("daily");
   const data = mode === "hourly" ? hourlyData : dailyData;
+  const trendValue = mode === "hourly" ? hourlyTrendPercentage : dailyTrendPercentage;
 
   const CustomTooltip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     return (
       <div className="bg-neutral-900/90 border border-white/10 rounded-md px-2.5 py-1.5 shadow-xl">
-        <span className="text-[11px] text-indigo-300 font-medium">{payload[0].value}</span>
+        <span className="text-[11px] text-skylab-300 font-medium">{payload[0].value}</span>
       </div>
     );
   };
@@ -45,7 +62,10 @@ function TrendChart({ hourlyData, dailyData }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <SectionTitle>Cevap Trendi</SectionTitle>
+        <div className="flex items-center gap-2">
+          <SectionTitle>Cevap Trendi</SectionTitle>
+          <TrendBadge value={trendValue} />
+        </div>
         <div className="flex items-center gap-0.5 rounded-md border border-white/10 bg-white/5 p-0.5">
           <button type="button" onClick={() => setMode("hourly")}
             className={`px-2 py-0.5 text-[10px] rounded transition ${mode === "hourly" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
@@ -65,15 +85,15 @@ function TrendChart({ hourlyData, dailyData }) {
           <AreaChart data={data} margin={{ top: 5, right: 10, bottom: -2, left: 10 }}>
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgb(99,102,241)" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="rgb(99,102,241)" stopOpacity={0} />
+                <stop offset="0%" stopColor="#e0c8e5" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#e0c8e5" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} interval={0} dy={4} />
             <YAxis hide domain={[0, "auto"]} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgb(129,140,248)", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
-            <Area type="monotone" dataKey="count" stroke="rgb(129,140,248)" strokeWidth={2} fill="url(#colorCount)"
-              dot={{ r: 2.5, fill: "rgb(129,140,248)", strokeWidth: 0 }} activeDot={{ r: 4, fill: "rgb(165,180,252)", strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out"
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#e0c8e5", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
+            <Area type="monotone" dataKey="count" stroke="#e0c8e5" strokeWidth={2} fill="url(#colorCount)"
+              dot={{ r: 2.5, fill: "#e0c8e5", strokeWidth: 0 }} activeDot={{ r: 4, fill: "#f3e8f5", strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out"
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -92,18 +112,18 @@ function SourceBreakdownBar({ registered, anonymous }) {
       <div className="flex h-2 w-full overflow-hidden rounded-full bg-neutral-800">
         {total > 0 ? (
           <>
-            {regPct > 0 && <div style={{ width: `${regPct}%` }} className="bg-indigo-400 transition-all duration-500" />}
-            {anonPct > 0 && <div style={{ width: `${anonPct}%` }} className="bg-violet-400 transition-all duration-500" />}
+            {regPct > 0 && <div style={{ width: `${regPct}%` }} className="bg-skylab-600 transition-all duration-500" />}
+            {anonPct > 0 && <div style={{ width: `${anonPct}%` }} className="bg-skylab-300 transition-all duration-500" />}
           </>
         ) : null}
       </div>
       <div className="flex gap-3 mt-1.5 justify-center">
         <div className="flex items-center gap-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+          <div className="h-1.5 w-1.5 rounded-full bg-skylab-600" />
           <span className="text-[9px] text-neutral-500">Kayıtlı ({registered})</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+          <div className="h-1.5 w-1.5 rounded-full bg-skylab-300" />
           <span className="text-[9px] text-neutral-500">Anonim ({anonymous})</span>
         </div>
       </div>
@@ -173,13 +193,15 @@ export default function FormMetrics({ formData, metrics }) {
           <TrendChart
             hourlyData={metrics?.hourlyTrend ?? []}
             dailyData={metrics?.dailyTrend ?? []}
+            dailyTrendPercentage={metrics?.dailyTrendPercentage}
+            hourlyTrendPercentage={metrics?.hourlyTrendPercentage}
           />
         </motion.div>
 
         <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
           <SectionTitle>Ortalama Süre</SectionTitle>
           <div className="flex items-center justify-center gap-3">
-            <Timer size={16} className="text-indigo-300" />
+            <Timer size={16} className="text-skylab-300" />
             <p className="text-lg font-bold text-neutral-100">
               {formatDuration(metrics?.averageCompletionTime)}
             </p>
