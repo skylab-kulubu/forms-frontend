@@ -8,8 +8,13 @@ import {
   Calendar, Clock, Upload, Link2, SlidersHorizontal, Table,
   Eye, EyeOff, UserPlus, Users, ShieldCheck,
   Archive, Filter, GitBranch, CheckCircle, XCircle,
-  CircleDot, MessageSquare, ArrowRightLeft
+  CircleDot, MessageSquare, ArrowRightLeft,
 } from "lucide-react";
+import {
+  DemoFormCreate, DemoDragDrop, DemoConditional, DemoSettings,
+  DemoFormLink, DemoCollaboration, DemoResponses, DemoApproval,
+  DemoArchive, DemoFilter,
+} from "./components/Demo";
 
 const sections = [
   { id: "form-olusturma", label: "Form Oluşturma" },
@@ -26,36 +31,18 @@ const sections = [
 ];
 
 const componentTypes = [
-  { icon: Type, name: "Kısa Metin", desc: "Tek satırlık metin girişi. E-posta, telefon, sayı gibi alt türleri vardır." },
-  { icon: AlignLeft, name: "Uzun Metin", desc: "Çok satırlı metin alanı. Açık uçlu sorular için idealdir." },
-  { icon: ToggleRight, name: "Toggle", desc: "Evet/Hayır seçimi. Özel etiketler tanımlanabilir." },
-  { icon: ChevronDown, name: "Açılır Liste", desc: "Tek seçimlik açılır menü. Özel seçenekler eklenir." },
-  { icon: ListChecks, name: "Çoklu Seçim", desc: "Birden fazla seçenek işaretlenebilir." },
-  { icon: Calendar, name: "Tarih", desc: "Tarih seçici. Belirli bir tarih bilgisi toplamak için kullanılır." },
-  { icon: Clock, name: "Saat", desc: "Saat seçici. Zaman bilgisi toplamak için kullanılır." },
-  { icon: Upload, name: "Dosya Yükleme", desc: "Dosya yükletme alanı. Dosya türü ve boyut kısıtlaması ayarlanabilir." },
-  { icon: Link2, name: "Link", desc: "URL girişi. Tekli veya çoklu link kabul edebilir." },
-  { icon: SlidersHorizontal, name: "Kaydırıcı", desc: "Sayısal aralık seçici. Min, max ve adım değerleri ayarlanır." },
-  { icon: Table, name: "Matris / Tablo", desc: "Satır ve sütunlardan oluşan grid yapı. Anket tarzı sorular için uygundur." },
+  { icon: Type, name: "Kısa Metin", desc: "Tek satırlık metin girişi" },
+  { icon: AlignLeft, name: "Uzun Metin", desc: "Çok satırlı metin alanı" },
+  { icon: ToggleRight, name: "Toggle", desc: "Evet/Hayır seçimi" },
+  { icon: ChevronDown, name: "Açılır Liste", desc: "Tek seçimlik menü" },
+  { icon: ListChecks, name: "Çoklu Seçim", desc: "Birden fazla seçenek" },
+  { icon: Calendar, name: "Tarih", desc: "Tarih seçici" },
+  { icon: Clock, name: "Saat", desc: "Saat seçici" },
+  { icon: Upload, name: "Dosya Yükleme", desc: "Dosya yükletme alanı" },
+  { icon: Link2, name: "Link", desc: "URL girişi" },
+  { icon: SlidersHorizontal, name: "Kaydırıcı", desc: "Sayısal aralık seçici" },
+  { icon: Table, name: "Matris / Tablo", desc: "Grid yapı, anket soruları" },
 ];
-
-function SectionCard({ id, title, icon: Icon, children }) {
-  return (
-    <section id={id} className="scroll-mt-6">
-      <div className="rounded-xl border border-white/10 bg-white/2 p-6">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 border border-indigo-400/20">
-            <Icon className="h-5 w-5 text-indigo-400" strokeWidth={1.75} />
-          </div>
-          <h2 className="text-lg font-semibold text-neutral-100">{title}</h2>
-        </div>
-        <div className="space-y-3 text-sm text-neutral-300 leading-relaxed">
-          {children}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function Tip({ children }) {
   return (
@@ -77,10 +64,10 @@ function Warning({ children }) {
 
 function BulletList({ items }) {
   return (
-    <ul className="space-y-1.5 pl-1">
+    <ul className="space-y-1 pl-1">
       {items.map((item, i) => (
-        <li key={i} className="flex gap-2">
-          <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-neutral-500" />
+        <li key={i} className="flex gap-2 text-sm text-neutral-400">
+          <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-neutral-600" />
           <span>{item}</span>
         </li>
       ))}
@@ -88,24 +75,46 @@ function BulletList({ items }) {
   );
 }
 
-function SettingRow({ icon: Icon, name, description, color = "indigo" }) {
-  const colors = {
-    indigo: "bg-indigo-500/10 border-indigo-400/20 text-indigo-400",
-    violet: "bg-violet-500/10 border-violet-400/20 text-violet-400",
-  };
-
+function SectionHeader({ icon: Icon, title }) {
   return (
-    <div className="flex gap-3 rounded-lg border border-white/5 bg-white/2 px-3 py-3">
-      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${colors[color]}`}>
-        <Icon className="h-4 w-4" strokeWidth={1.75} />
+    <div className="flex items-center gap-3 mb-4">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-skylab-500/10 border border-skylab-400/20">
+        <Icon className="h-4 w-4 text-skylab-400" strokeWidth={1.75} />
       </div>
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-neutral-200">{name}</p>
-        <p className="mt-0.5 text-xs text-neutral-400">{description}</p>
-      </div>
+      <h2 className="text-base font-semibold text-neutral-100">{title}</h2>
     </div>
   );
 }
+
+function SectionBlock({ id, icon, title, children, demo }) {
+  return (
+    <section id={id} className="scroll-mt-6">
+      <SectionHeader icon={icon} title={title} />
+      <div className="flex flex-col gap-5 lg:flex-row lg:gap-8">
+        <div className="flex-1 space-y-3 text-sm text-neutral-300 leading-relaxed min-w-0">
+          {children}
+        </div>
+        {demo && (
+          <div className="w-full lg:w-72 shrink-0 flex items-start">
+            <div className="sticky top-6 w-full rounded-xl border border-white/6 bg-white/2 p-4 overflow-hidden">
+              {demo}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+const operators = [
+  { type: "Metin", ops: "Eşittir, Eşit Değildir, İçerir, Doldurulmuş mu" },
+  { type: "Sayı / Kaydırıcı", ops: "Eşittir, Büyüktür, Küçüktür, Doldurulmuş mu" },
+  { type: "Tarih / Saat", ops: "Eşittir, Önce, Sonra, Doldurulmuş mu" },
+  { type: "Liste / Çoklu Seçim", ops: "Eşittir, Eşit Değildir, Doldurulmuş mu" },
+  { type: "Toggle", ops: "Evet (True), Hayır (False)" },
+  { type: "Dosya / Matris", ops: "Doldurulmuş mu, Boş mu" },
+];
+
 
 export default function HowToUsePage() {
   const [activeSection, setActiveSection] = useState(sections[0].id);
@@ -116,14 +125,13 @@ export default function HowToUsePage() {
     if (!container) return;
 
     const handleScroll = () => {
-      const scrollTop = container.scrollTop;
+      const containerRect = container.getBoundingClientRect();
       let current = sections[0].id;
-
       for (const section of sections) {
         const el = document.getElementById(section.id);
         if (el) {
-          const offset = el.offsetTop - container.offsetTop - 32;
-          if (scrollTop >= offset) current = section.id;
+          const elTop = el.getBoundingClientRect().top - containerRect.top;
+          if (elTop <= 48) current = section.id;
         }
       }
       setActiveSection(current);
@@ -144,262 +152,272 @@ export default function HowToUsePage() {
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] overflow-hidden">
-      <motion.nav initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.05 }}
-        className="hidden lg:flex w-52 shrink-0 flex-col border-r border-white/6 px-4 py-5"
-      >
-        <p className="mb-3 px-2 text-[10px] font-semibold text-neutral-500 tracking-[0.15em] uppercase">İçindekiler</p>
-        <div className="space-y-0.5">
-          {sections.map((s, i) => (
-            <button key={s.id} onClick={() => scrollToSection(s.id)}
-              className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
-                activeSection === s.id ? "bg-indigo-500/10 text-indigo-300 font-medium" : "text-neutral-500 hover:text-neutral-300 hover:bg-white/4"}`}
-            >
-              <span className="text-[10px] text-neutral-600 w-4 text-right tabular-nums">{i + 1}</span>
-              <span>{s.label}</span>
-            </button>
-          ))}
-        </div>
-      </motion.nav>
-
       <motion.div ref={scrollRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.1 }} className="flex-1 overflow-y-auto scrollbar">
-        <div className="mx-auto max-w-3xl space-y-5 px-6 py-5 pb-16">
+        <div className="mx-auto max-w-5xl px-6 py-6 pb-30">
+          <div className="flex gap-10">
+            <motion.nav initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.05 }} className="hidden lg:block w-40 shrink-0">
+              <div className="sticky top-6 space-y-0.5">
+                <p className="mb-2 text-[9px] font-semibold text-neutral-600 tracking-[0.15em] uppercase">İçindekiler</p>
+                {sections.map((s, i) => (
+                  <button key={s.id} onClick={() => scrollToSection(s.id)}
+                    className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] transition-colors ${
+                      activeSection === s.id ? "text-skylab-300 font-medium" : "text-neutral-600 hover:text-neutral-400"
+                    }`}
+                  >
+                    <span className="text-[9px] text-neutral-700 w-3 text-right tabular-nums">{i + 1}</span>
+                    <span>{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.nav>
 
-            <SectionCard id="form-olusturma" title="Form Oluşturma" icon={FilePlus}>
-              <p>Yeni bir form oluşturmak için Formlar &gt; <strong className="text-neutral-100">Yeni Form</strong> seçeneğine tıklayın. Karşınıza çıkan alanda formunuza bir başlık verin ve düzenlemeye başlayın.</p>
+            <div className="flex-1 min-w-0">
+          <div className="mb-8">
+            <h1 className="text-xl font-bold text-neutral-100">Nasıl Kullanılır</h1>
+            <p className="mt-1 text-sm text-neutral-500">Platform özellikleri ve kullanım rehberi</p>
+          </div>
+
+          <div className="space-y-10">
+
+            {/* 1 - Form Oluşturma */}
+            <SectionBlock id="form-olusturma" icon={FilePlus} title="Form Oluşturma" demo={<DemoFormCreate />}>
+              <p>Yeni bir form oluşturmak için Formlar &gt; <strong className="text-neutral-100">Yeni Form</strong> seçeneğine tıklayın.</p>
               <BulletList items={[
                 "Yan menüden Formlar > \"Yeni Form\" seçeneğine tıklayın.",
                 "Form başlığını girin.",
-                "Bileşen kütüphanesindeki onaylama butonuna tıklayarak formu oluşturun.",
-                "Form oluşturulduktan sonra otomatik olarak düzenleme sayfasına yönlendirilirsiniz.",
+                "Onaylama butonuna tıklayarak formu oluşturun.",
+                "Otomatik olarak düzenleme sayfasına yönlendirilirsiniz.",
               ]} />
+            </SectionBlock>
 
-            </SectionCard>
+            <div className="h-px bg-white/5" />
 
-            <SectionCard id="form-duzenleme" title="Form Düzenleme" icon={GripVertical}>
-              <p>Form düzenleme sayfasında sağ taraftaki bileşen kütüphanesinden soruları <strong className="text-neutral-100">sürükle-bırak</strong> ile form alanına ekleyebilirsiniz.</p>
+            {/* 2 - Form Düzenleme */}
+            <SectionBlock id="form-duzenleme" icon={GripVertical} title="Form Düzenleme" demo={<DemoDragDrop />}>
+              <p>Sağ taraftaki bileşen kütüphanesinden soruları <strong className="text-neutral-100">sürükle-bırak</strong> ile form alanına ekleyin.</p>
               <BulletList items={[
-                "Sağ paneldeki bileşen kütüphanesinden istediğiniz soru türünü form alanına sürükleyin.",
+                "Bileşen kütüphanesinden istediğiniz soru türünü sürükleyin.",
                 "Eklenen soruları sürükleyerek sıralarını değiştirin.",
-                "Bir soruyu silmek için sürükleyip çöp kutusu alanına bırakın.",
-                "Bir soruya tıklayarak başlık, açıklama ve zorunluluk gibi ayarlarını düzenleyin.",
-                "Mobilde bileşen paneli çekmece olarak sağ taraftan açılır.",
-                "Değişikliklerinizi kaydetmek için sağ üstteki \"Onaylama\" butonuna tıklayın.",
+                "Silmek için çöp kutusu alanına bırakın.",
+                "Bir soruya tıklayarak ayarlarını düzenleyin.",
+                "Değişikliklerinizi kaydetmek için onaylama butonuna tıklayın.",
               ]} />
               <Tip>Sağ üstte bulunan göz butonuna basarak formunuzun önizlemesini görebilirsiniz.</Tip>
+            </SectionBlock>
 
-            </SectionCard>
+            <div className="h-px bg-white/5" />
 
-            <SectionCard id="bilesen-turleri" title="Bileşen Türleri" icon={ListChecks}>
-              <p>Form düzenleyicisinde kullanabileceğiniz <strong className="text-neutral-100">11 farklı bileşen türü</strong> bulunmaktadır:</p>
-              <div className="grid gap-2 sm:grid-cols-2">
+            {/* 3 - Bileşen Türleri */}
+            <section id="bilesen-turleri" className="scroll-mt-6">
+              <SectionHeader icon={ListChecks} title="Bileşen Türleri" />
+              <p className="text-sm text-neutral-400 mb-4">Form düzenleyicisinde kullanabileceğiniz <strong className="text-neutral-200">11 farklı bileşen türü</strong>:</p>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {componentTypes.map((comp) => (
-                  <div key={comp.name} className="flex gap-3 rounded-lg border border-white/5 bg-white/2 px-3 py-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-violet-500/10 border border-violet-400/20">
-                      <comp.icon className="h-4 w-4 text-violet-400" strokeWidth={1.75} />
-                    </div>
+                  <div key={comp.name} className="flex items-center gap-3 rounded-lg border border-white/6 bg-white/2 px-3 py-2.5">
+                    <comp.icon className="h-4 w-4 text-skylab-400 shrink-0" strokeWidth={1.75} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-neutral-200">{comp.name}</p>
-                      <p className="mt-0.5 text-[11px] text-neutral-500 leading-relaxed">{comp.desc}</p>
+                      <p className="text-[10px] text-neutral-500">{comp.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </SectionCard>
+            </section>
 
-            <SectionCard id="kosullama" title="Koşullama (Koşullu Sorular)" icon={GitBranch}>
-              <p>Bir sorunun yalnızca belirli bir koşul sağlandığında görünmesini sağlayabilirsiniz. Örneğin, <em>&quot;Evet&quot;</em> yanıtı verildiğinde ek bir soru gösterilebilir.</p>
+            <div className="h-px bg-white/5" />
 
-              <p className="font-medium text-neutral-200">Nasıl eklenir?</p>
+            {/* 4 - Koşullama */}
+            <SectionBlock id="kosullama" icon={GitBranch} title="Koşullama (Koşullu Sorular)" demo={<DemoConditional />}>
+              <p>Bir sorunun yalnızca belirli bir koşul sağlandığında görünmesini sağlayabilirsiniz.</p>
+
+              <p className="font-medium text-neutral-200 text-xs">Nasıl eklenir?</p>
               <BulletList items={[
                 "Koşul eklemek istediğiniz soruyu seçin.",
                 "\"Koşul Ekle\" butonuna tıklayın.",
-                "Hangi sorunun cevabına bağlı olacağını seçin (yalnızca önceki sorular seçilebilir).",
-                "Operatörü seçin (eşittir, içerir, büyüktür vb.).",
-                "Beklenen değeri girin.",
+                "Hangi sorunun cevabına bağlı olacağını seçin.",
+                "Operatörü seçin ve beklenen değeri girin.",
               ]} />
 
-              <p className="font-medium text-neutral-200">Soru türüne göre kullanılabilecek operatörler:</p>
-              <div className="space-y-1.5">
-                <div className="rounded-lg border border-white/5 bg-white/2 px-3 py-2">
-                  <p className="text-xs"><span className="font-medium text-neutral-200">Metin:</span> <span className="text-neutral-400">Eşittir, Eşit Değildir, İçerir, Doldurulmuş mu</span></p>
-                </div>
-                <div className="rounded-lg border border-white/5 bg-white/2 px-3 py-2">
-                  <p className="text-xs"><span className="font-medium text-neutral-200">Sayı / Kaydırıcı:</span> <span className="text-neutral-400">Eşittir, Büyüktür, Küçüktür, Doldurulmuş mu</span></p>
-                </div>
-                <div className="rounded-lg border border-white/5 bg-white/2 px-3 py-2">
-                  <p className="text-xs"><span className="font-medium text-neutral-200">Tarih / Saat:</span> <span className="text-neutral-400">Eşittir, Önce, Sonra, Doldurulmuş mu</span></p>
-                </div>
-                <div className="rounded-lg border border-white/5 bg-white/2 px-3 py-2">
-                  <p className="text-xs"><span className="font-medium text-neutral-200">Açılır Liste / Çoklu Seçim:</span> <span className="text-neutral-400">Eşittir, Eşit Değildir, Doldurulmuş mu</span></p>
-                </div>
-                <div className="rounded-lg border border-white/5 bg-white/2 px-3 py-2">
-                  <p className="text-xs"><span className="font-medium text-neutral-200">Toggle:</span> <span className="text-neutral-400">Evet (True), Hayır (False)</span></p>
-                </div>
-                <div className="rounded-lg border border-white/5 bg-white/2 px-3 py-2">
-                  <p className="text-xs"><span className="font-medium text-neutral-200">Dosya Yükleme / Matris:</span> <span className="text-neutral-400">Doldurulmuş mu, Boş mu</span></p>
-                </div>
+              <p className="font-medium text-neutral-200 text-xs mt-2">Operatörler:</p>
+              <div className="space-y-1">
+                {operators.map((op) => (
+                  <div key={op.type} className="flex gap-2 text-xs">
+                    <span className="font-medium text-neutral-300 shrink-0 w-28">{op.type}</span>
+                    <span className="text-neutral-500">{op.ops}</span>
+                  </div>
+                ))}
               </div>
 
               <Tip>İlk soruya koşul eklenemez çünkü bağımlı olacağı önceki bir soru yoktur.</Tip>
+            </SectionBlock>
 
-            </SectionCard>
+            <div className="h-px bg-white/5" />
 
-            <SectionCard id="form-ayarlari" title="Form Ayarları" icon={Settings}>
-              <p>Form düzenleyicisinin sağ panelindeki <strong className="text-neutral-100">Ayarlar</strong> sekmesinden formunuzun davranışını kontrol edebilirsiniz.</p>
+            {/* 5 - Form Ayarları */}
+            <SectionBlock id="form-ayarlari" icon={Settings} title="Form Ayarları" demo={<DemoSettings />}>
+              <p>Düzenleyicinin <strong className="text-neutral-100">Ayarlar</strong> sekmesinden formunuzun davranışını kontrol edin.</p>
 
-              <div className="space-y-2">
-                <SettingRow icon={Eye} name="Form Durumu (Yayında / Duraklatıldı)" color="violet"
-                  description="Yayında: Form yanıt kabul eder. Duraklatıldı: Form görüntülenebilir ama yanıt gönderilemez."
-                />
-                <SettingRow icon={EyeOff} name="Anonim Yanıtlar" color="violet"
-                  description="Açıldığında kullanıcılar giriş yapmadan form doldurabilir. Dikkat: Bu ayar açıldığında çoklu yanıtlar otomatik aktif olur, bağlı form kaldırılır ve manuel inceleme devre dışı kalır."
-                />
-                <SettingRow icon={Users} name="Çoklu Yanıtlar" color="violet"
-                  description="Aynı kullanıcının birden fazla yanıt göndermesine izin verir. Anonim yanıtlar açıkken otomatik aktiftir."
-                />
-                <SettingRow icon={ShieldCheck} name="Manuel İnceleme" color="violet"
-                  description="Gelen yanıtlar otomatik kabul edilmez; bir editör tarafından onaylanması veya reddedilmesi gerekir."
-                />
+              <div className="space-y-2.5">
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><Eye size={12} className="text-skylab-400" /> Form Durumu</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Yayında: yanıt kabul eder. Duraklatıldı: görüntülenebilir ama yanıt gönderilemez.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><EyeOff size={12} className="text-skylab-400" /> Anonim Yanıtlar</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Kullanıcılar giriş yapmadan form doldurabilir. Çoklu yanıtlar otomatik aktif olur.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><Users size={12} className="text-skylab-400" /> Çoklu Yanıtlar</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Aynı kullanıcı birden fazla yanıt gönderebilir.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><ShieldCheck size={12} className="text-skylab-400" /> Manuel İnceleme</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Yanıtlar bir editör tarafından onaylanmalıdır.</p>
+                </div>
               </div>
 
-              <Warning>Anonim yanıtları açmak birden fazla ayarı etkiler. Bağlı formunuz varsa kaldırılır ve manuel inceleme devre dışı kalır.</Warning>
+              <Warning>Anonim yanıtları açmak birden fazla ayarı etkiler. Bağlı form kaldırılır ve manuel inceleme devre dışı kalır.</Warning>
+            </SectionBlock>
 
-            </SectionCard>
+            <div className="h-px bg-white/5" />
 
-            <SectionCard id="form-baglama" title="Form Bağlama" icon={ArrowRightLeft}>
-              <p>Bir formu başka bir formla <strong className="text-neutral-100">zincirleyerek</strong> kullanıcıların ilk formu tamamladıktan sonra otomatik olarak ikinci forma yönlendirilmesini sağlayabilirsiniz.</p>
+            {/* 6 - Form Bağlama */}
+            <SectionBlock id="form-baglama" icon={ArrowRightLeft} title="Form Bağlama" demo={<DemoFormLink />}>
+              <p>Bir formu başka bir formla <strong className="text-neutral-100">zincirleyerek</strong> kullanıcıların otomatik yönlendirilmesini sağlayın.</p>
 
-              <p className="font-medium text-neutral-200">Bağlama süreci (Formun sahibi iseniz):</p>
+              <p className="font-medium text-neutral-200 text-xs">Bağlama süreci:</p>
               <BulletList items={[
-                "Ayarlar panelindeki \"Bağlı Form\" bölümüne gidin.",
-                "Arama alanından hedef formu bulun ve seçin.",
-                "Onay ekranında bağlantı detaylarını inceleyin.",
-                "Onaylayarak bağlantıyı kurun.",
+                "Ayarlar > \"Bağlı Form\" bölümüne gidin.",
+                "Hedef formu bulun ve seçin.",
+                "Onay ekranında detayları inceleyin ve onaylayın.",
               ]} />
 
-              <p className="font-medium text-neutral-200">Bağlantı sonrası ne olur?</p>
+              <p className="font-medium text-neutral-200 text-xs">Bağlantı sonrası:</p>
               <BulletList items={[
                 "Ana formun ayarları ve editörleri bağlı forma senkronize edilir.",
-                "Kullanıcı ana formu tamamlayıp yanıtı onaylandığında otomatik olarak bağlı forma yönlendirilir.",
-                "Bağlı formun ayarları kilitlenir ve \"Ayarlar ana form tarafından yönetiliyor\" mesajı gösterilir.",
-                "Bağlantı daha sonra değiştirilebilir veya kaldırılabilir.",
+                "Kullanıcı ana formu tamamlayıp yanıtı onaylandığında bağlı forma yönlendirilir.",
+                "Bağlı formun ayarları kilitlenir.",
               ]} />
 
-              <Warning>Bir formu başka forma bağlamak için iki formun da sahibi olmanız gerekir. Editörler bu zinciri bozamaz. Anonim yanıtlar açıkken form bağlama kullanılamaz.</Warning>
+              <Warning>İki formun da sahibi olmanız gerekir. Anonim yanıtlar açıkken form bağlama kullanılamaz.</Warning>
+            </SectionBlock>
 
-            </SectionCard>
+            <div className="h-px bg-white/5" />
 
-            <SectionCard id="editor-isbirligi" title="Editör ve İşbirliği" icon={UserPlus}>
-              <p>Formunuza başka kullanıcıları <strong className="text-neutral-100">editör</strong> veya <strong className="text-neutral-100">görüntüleyici</strong> olarak ekleyerek birlikte çalışabilirsiniz.</p>
+            {/* 7 - Editör ve İşbirliği */}
+            <SectionBlock id="editor-isbirligi" icon={UserPlus} title="Editör ve İşbirliği" demo={<DemoCollaboration />}>
+              <p>Formunuza başka kullanıcıları <strong className="text-neutral-100">editör</strong> veya <strong className="text-neutral-100">görüntüleyici</strong> olarak ekleyin.</p>
 
-              <p className="font-medium text-neutral-200">Roller ve yetkileri:</p>
               <div className="space-y-2">
-                <SettingRow icon={ShieldCheck} name="Sahip (Owner)" color="violet"
-                  description="Tam kontrol. Formu silebilir, tüm ayarları değiştirebilir. Her formun yalnızca bir sahibi vardır ve kaldırılamaz."
-                />
-                <SettingRow icon={Users} name="Editör (Editor)" color="violet"
-                  description="Formu ve ayarlarını düzenleyebilir. Görüntüleyici ekleyip kaldırabilir. Formu silemez."
-                />
-                <SettingRow icon={Eye} name="Görüntüleyici (Viewer)" color="violet"
-                  description="Formu ve yanıtları yalnızca görüntüleyebilir. Düzenleme yapamaz."
-                />
-              </div>
-
-              <p className="font-medium text-neutral-200">Kullanıcı ekleme:</p>
-              <BulletList items={[
-                "Ayarlar panelindeki \"Editörler\" sekmesine gidin.",
-                "En az 2 karakter yazarak kullanıcıları e-posta ile arayın.",
-                "Kullanıcıyı seçip rolünü belirleyin.",
-                "Eklenen kullanıcıların rollerini daha sonra değiştirebilirsiniz.",
-              ]} />
-
-            </SectionCard>
-
-            <SectionCard id="yanitlari-goruntuleme" title="Yanıtları Görüntüleme" icon={MessageSquare}>
-              <p>Form yanıtlarını görüntülemek için formun <strong className="text-neutral-100">Cevaplar</strong> sayfasına gidin. Sol panelde yanıt listesi, sağ panelde seçili yanıtın detayları gösterilir.</p>
-
-              <BulletList items={[
-                "Her yanıt için gönderim tarihi, form üzerinde harcanan süre ve yanıt durumu görüntülenir.",
-                "Yanıtı gönderen kullanıcının adı, e-postası ve profil fotoğrafı gösterilir (anonim değilse).",
-                "Bağlı formlar arasındaki yanıtlar arasında ok butonları ile geçiş yapabilirsiniz (ana yanıt ↔ bağlı yanıt).",
-                "Mobilde yanıt detayları çekmece olarak sağ taraftan açılır.",
-              ]} />
-
-            </SectionCard>
-
-            <SectionCard id="yanit-onaylama" title="Yanıt Onaylama / Reddetme" icon={CheckCircle}>
-              <p><strong className="text-neutral-100">Manuel İnceleme</strong> ayarı açık olan formlarda gelen yanıtlar otomatik kabul edilmez; bir editör tarafından incelenmesi gerekir.</p>
-
-              <p className="font-medium text-neutral-200">Yanıt durumları:</p>
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-                  <CircleDot className="h-4 w-4 text-amber-400" strokeWidth={1.75} />
-                  <span className="text-xs text-amber-200">Bekliyor — Henüz incelenmemiş</span>
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><ShieldCheck size={12} className="text-skylab-400" /> Sahip</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Tam kontrol. Formu silebilir, tüm ayarları değiştirebilir.</p>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
-                  <CheckCircle className="h-4 w-4 text-emerald-400" strokeWidth={1.75} />
-                  <span className="text-xs text-emerald-200">Onaylandı — İnceleme sonucu kabul edildi</span>
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><Users size={12} className="text-skylab-400" /> Editör</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Formu düzenleyebilir, görüntüleyici ekleyebilir. Silemez.</p>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2">
-                  <XCircle className="h-4 w-4 text-red-400" strokeWidth={1.75} />
-                  <span className="text-xs text-red-200">Reddedildi — İnceleme sonucu reddedildi</span>
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><Eye size={12} className="text-skylab-400" /> Görüntüleyici</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Yalnızca görüntüleyebilir, düzenleme yapamaz.</p>
                 </div>
               </div>
 
-              <p className="font-medium text-neutral-200">Onaylama süreci:</p>
               <BulletList items={[
-                "Yanıt detaylarında \"Onayla\" (yeşil) veya \"Reddet\" (kırmızı) butonuna tıklayın.",
-                "İsteğe bağlı olarak bir açıklama notu ekleyin.",
-                "Kararınızı gönderin. İncelemeyi yapan kişi, tarih ve not kaydedilir.",
-                "Kararı daha sonra düzenleyebilirsiniz (arşivlenmemiş yanıtlarda).",
+                "Ayarlar > \"Editörler\" sekmesine gidin.",
+                "E-posta ile kullanıcı arayın ve rolünü belirleyin.",
+                "Eklenen kullanıcıların rollerini sonradan değiştirebilirsiniz.",
+              ]} />
+            </SectionBlock>
+
+            <div className="h-px bg-white/5" />
+
+            {/* 8 - Yanıtları Görüntüleme */}
+            <SectionBlock id="yanitlari-goruntuleme" icon={MessageSquare} title="Yanıtları Görüntüleme" demo={<DemoResponses />}>
+              <p>Formun <strong className="text-neutral-100">Cevaplar</strong> sayfasından yanıtları görüntüleyin.</p>
+              <BulletList items={[
+                "Her yanıt için gönderim tarihi, süre ve durum görüntülenir.",
+                "Yanıtlayan kullanıcının adı ve profili gösterilir.",
+                "Bağlı formlar arasında ok butonları ile geçiş yapabilirsiniz.",
+                "Mobilde yanıt detayları çekmece olarak açılır.",
+              ]} />
+            </SectionBlock>
+
+            <div className="h-px bg-white/5" />
+
+            {/* 9 - Yanıt Onaylama */}
+            <SectionBlock id="yanit-onaylama" icon={CheckCircle} title="Yanıt Onaylama / Reddetme" demo={<DemoApproval />}>
+              <p><strong className="text-neutral-100">Manuel İnceleme</strong> açık formlarda yanıtlar editör tarafından incelenir.</p>
+
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1 text-[11px] text-amber-300">
+                  <CircleDot size={10} /> Bekliyor
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-[11px] text-emerald-300">
+                  <CheckCircle size={10} /> Onaylandı
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-[11px] text-red-300">
+                  <XCircle size={10} /> Reddedildi
+                </span>
+              </div>
+
+              <BulletList items={[
+                "\"Onayla\" veya \"Reddet\" butonuna tıklayın.",
+                "İsteğe bağlı açıklama notu ekleyin.",
+                "İncelemeyi yapan kişi, tarih ve not kaydedilir.",
+                "Kararı daha sonra düzenleyebilirsiniz.",
               ]} />
 
               <Tip>Bağlı form varsa, onaylanan yanıtın kullanıcısı otomatik olarak bağlı forma yönlendirilir.</Tip>
+            </SectionBlock>
 
-            </SectionCard>
+            <div className="h-px bg-white/5" />
 
-            <SectionCard id="arsivleme" title="Arşivleme" icon={Archive}>
-              <p>Artık aktif olmayan yanıtları <strong className="text-neutral-100">arşivleyerek</strong> listeden gizleyebilirsiniz. Arşivleme kalıcı silme değildir; arşivlenen yanıtlar filtreleme ile tekrar görüntülenebilir.</p>
-
+            {/* 10 - Arşivleme */}
+            <SectionBlock id="arsivleme" icon={Archive} title="Arşivleme" demo={<DemoArchive />}>
+              <p>Yanıtları <strong className="text-neutral-100">arşivleyerek</strong> listeden gizleyin. Arşivleme kalıcı silme değildir.</p>
               <BulletList items={[
-                "Yanıt detaylarındaki arşiv ikonuna tıklayarak yanıtı arşivleyin.",
+                "Yanıt detaylarındaki arşiv ikonuna tıklayın.",
                 "Arşivleyen kişi ve tarih bilgisi kaydedilir.",
-                "Arşivlenmiş yanıtlar varsayılan olarak listede gizlenir.",
-                "Yanıt filtresindeki \"Arşivlenenleri Göster\" butonu ile arşivlenmiş yanıtları görüntüleyebilirsiniz.",
+                "\"Arşivlenenleri Göster\" ile tekrar görüntüleyin.",
               ]} />
-              <Tip>Birden fazla yanıt seçeneği açık ise bir cevabı arşivlemeniz o kullanıcının tekrar cevap verebilmesini sağlar.</Tip>
+              <Tip>Çoklu yanıt açıksa arşivleme kullanıcının tekrar cevap verebilmesini sağlar.</Tip>
+            </SectionBlock>
 
-            </SectionCard>
+            <div className="h-px bg-white/5" />
 
-            <SectionCard id="filtreleme" title="Formları Filtreleme" icon={Filter}>
-              <p>Form listesinde çeşitli filtreler kullanarak aradığınız formu hızlıca bulabilirsiniz.</p>
+            {/* 11 - Filtreleme */}
+            <SectionBlock id="filtreleme" icon={Filter} title="Formları Filtreleme" demo={<DemoFilter />}>
+              <p>Form listesinde çeşitli filtreler kullanarak aradığınız formu hızlıca bulun.</p>
 
-              <p className="font-medium text-neutral-200">Kullanılabilir filtreler:</p>
+              <p className="font-medium text-neutral-200 text-xs">Kullanılabilir filtreler:</p>
               <BulletList items={[
-                "Başlığa göre arama yapabilirsiniz.",
-                "Tarih sıralaması: Yeniden eskiye veya eskiden yeniye.",
-                "Rol filtresi: Tümü, Sahip, Editör veya Görüntüleyici.",
+                "Başlığa göre arama",
+                "Tarih sıralaması: Yeniden eskiye veya eskiden yeniye",
+                "Rol filtresi: Tümü, Sahip, Editör, Görüntüleyici",
               ]} />
 
-              <p className="font-medium text-neutral-200">Üç durumlu özellik filtreleri:</p>
-              <p>Aşağıdaki filtreler üç durumlu çalışır: <span className="text-neutral-400">Hepsi (nötr)</span> → <span className="text-indigo-300">Sadece açık olanlar</span> → <span className="text-red-300">Sadece kapalı olanlar</span></p>
+              <p className="font-medium text-neutral-200 text-xs">Üç durumlu özellik filtreleri:</p>
+              <p className="text-xs text-neutral-500">
+                <span className="text-neutral-400">Hepsi</span> → <span className="text-skylab-300">Sadece açık</span> → <span className="text-red-300">Sadece kapalı</span>
+              </p>
               <BulletList items={[
-                "Anonim yanıtlar",
-                "Çoklu yanıtlar",
-                "Bağlı form",
-                "Manuel inceleme",
+                "Anonim yanıtlar, Çoklu yanıtlar, Bağlı form, Manuel inceleme",
               ]} />
 
-              <p className="font-medium text-neutral-200">Yanıt filtreleri:</p>
+              <p className="font-medium text-neutral-200 text-xs">Yanıt filtreleri:</p>
               <BulletList items={[
-                "Durum filtresi: Tümü, Bekliyor, Onaylanmış, Reddedilmiş.",
-                "Yanıtlayan türü: Tümü, Anonim, Kayıtlı.",
-                "Arşiv durumu: Arşivlenenleri dahil et veya etme.",
+                "Durum: Tümü, Bekliyor, Onaylanmış, Reddedilmiş",
+                "Yanıtlayan: Tümü, Anonim, Kayıtlı",
+                "Arşiv durumu: Dahil et veya etme",
               ]} />
-            </SectionCard>
+            </SectionBlock>
 
           </div>
-        </motion.div>
-      </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
