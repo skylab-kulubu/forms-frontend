@@ -16,7 +16,7 @@ export default function FormOverviewPage() {
   const handleRefresh = () => { refetchForm(); refetchMetrics(); };
 
   return (
-    <FormStatusHandler isLoading={formLoading} error={formError} variant="form" data={{ status: 0 }}
+    <FormStatusHandler isLoading={formLoading} error={formError} data={formData} variant="form"
       renderForm={() => (<FormOverview formId={formId} formData={formData} metrics={metricsData?.data} metricsLoading={metricsLoading} onRefresh={handleRefresh} />)}
     />
   );

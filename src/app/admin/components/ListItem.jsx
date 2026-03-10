@@ -290,7 +290,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
             <ActionButton href={responsesHref} onClick={onViewResponses} icon={LayoutList} label="Cevaplar" />
             <ActionButton href={editHref} onClick={onEdit} icon={PencilLine} label="Düzenle" variant="primary" />
           </div>
-          <Link href={responsesHref || viewHref || "#"} className="relative z-10 inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-white/10" aria-label="Cevapları görüntüle">
+          <Link href={viewHref || "#"} className="relative z-10 inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-white/10" aria-label="Cevapları görüntüle">
             <ChevronRight className="h-4 w-4 text-neutral-600 transition-transform duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
           </Link>
         </div>

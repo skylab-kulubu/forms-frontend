@@ -8,16 +8,16 @@ import LoginButton from "./utils/LoginButton";
 import StateCard from "./StateCard";
 
 const FORM_ACCESS_STATUS = {
-    AVAILABLE: 0,
-    PENDING_APPROVAL: 10,
-    REQUIRES_PARENT_APPROVAL: 11,
-    COMPLETED: 20,
-    APPROVED: 21,
-    DECLINED: 22,
-    UNAUTHORIZED: 40,
-    NOT_AUTHORIZED: 41,
-    NOT_FOUND: 44,
-    NOT_AVAILABLE: 45,
+    AVAILABLE: 200,
+    PENDING_APPROVAL: 600,
+    REQUIRES_PARENT_APPROVAL: 603,
+    COMPLETED: 201, 
+    APPROVED: 601,
+    DECLINED: 602,
+    UNAUTHORIZED: 401,
+    NOT_AUTHORIZED: 403,
+    NOT_FOUND: 404,
+    NOT_AVAILABLE: 410,
 };
 
 const stateConfigs = {
