@@ -307,7 +307,7 @@ export default function FormDisplayer({ form, step }) {
           >
             <div className="flex flex-col items-center gap-1.5">
               <div className="flex items-center gap-2">
-                <a href="https://skylab.yildiz.edu.tr" target="_blank" rel="noopener noreferrer"
+                <a href="https://forms.yildizskylab.com" target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100"
                 >
                   <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />

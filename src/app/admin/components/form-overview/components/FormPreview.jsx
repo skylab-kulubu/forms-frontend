@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { FileQuestion } from "lucide-react";
 import { REGISTRY } from "@/app/components/form-registry";
 import StateCard from "@/app/components/StateCard";
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify from "dompurify";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -49,7 +49,7 @@ export default function FormPreview({ form }) {
                 const hasCondition = Boolean(field.condition?.fieldId);
 
                 return (
-                  <motion.div key={field.id} variants={itemVariants} className={hasCondition ? "!opacity-40" : ""}>
+                  <motion.div key={field.id} variants={itemVariants} className={hasCondition ? "opacity-40!" : ""}>
                     <DisplayComponent {...field.props} questionNumber={index + 1} />
                   </motion.div>
                 );

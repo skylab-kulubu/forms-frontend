@@ -1,6 +1,6 @@
 "use client";
 
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify from "dompurify";
 import { useSession } from "next-auth/react";
 import { UserRoundX, UserRound } from "lucide-react";
 

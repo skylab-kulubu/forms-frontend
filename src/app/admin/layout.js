@@ -2,7 +2,8 @@ import { FormProvider } from "./providers";
 import Sidebar from "./components/Sidebar";
 
 export const metadata = {
-    title: "Forms | Admin",
+    title: "Admin Paneli",
+    robots: { index: false, follow: false },
 };
 
 export default function AdminLayout({ children }) {
