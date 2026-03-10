@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import SkylabLoader from "./SkylabLoader";
 
 const cardVariants = {
     initial: { opacity: 0, y: 28, scale: 0.98 },
@@ -12,7 +13,11 @@ export default function StateCard({ title, description, Icon, isLoading, childre
             <motion.div variants={cardVariants} initial="initial" animate="animate" exit="exit"
                 className="mx-auto flex w-full max-w-lg flex-col items-center gap-5 px-6 text-center"
             >
-                <Icon className={`text-neutral-200 h-10 w-10 drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] ${isLoading ? "animate-spin" : ""}`} />
+                {isLoading ? (
+                    <SkylabLoader size={80} color="#e5e5e5" />
+                ) : (
+                    <Icon className="text-neutral-200 h-10 w-10 drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)]" />
+                )}
                 <div className="flex flex-col gap-2 text-balance">
                     <p className="text-md font-semibold text-neutral-100">{title}</p>
                     <p className="text-xs text-neutral-400">{description}</p>

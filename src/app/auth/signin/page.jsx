@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
-import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import SkylabLoader from "@/app/components/SkylabLoader";
 
 function SignInLogic() {
   const searchParams = useSearchParams();
@@ -15,7 +15,7 @@ function SignInLogic() {
 
   return (
     <div className="grid h-screen place-items-center">
-      <Loader2 className="h-10 w-10 animate-spin text-neutral-600" />
+      <SkylabLoader size={64} color="#525252" />
     </div>
   );
 }
@@ -24,7 +24,7 @@ export default function SignInRedirect() {
   return (
     <Suspense fallback={
       <div className="grid h-screen place-items-center">
-        <Loader2 className="h-10 w-10 text-neutral-600" />
+        <SkylabLoader size={64} color="#525252" />
       </div>
     }>
       <SignInLogic />

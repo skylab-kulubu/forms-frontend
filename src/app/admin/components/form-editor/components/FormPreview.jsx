@@ -35,7 +35,7 @@ export function FormPreview({ open, onClose }) {
                 <motion.div key="form-preview-overlay" className="absolute inset-0 md:-left-8 z-50 flex flex-col bg-neutral-900"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }}
                 >
-                    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" style={{ transform: "translateZ(0)" }}>
+                    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-50" style={{ transform: "translateZ(0)" }}>
                         <Background />
                     </div>
 

@@ -87,9 +87,34 @@ export default function Breadcrumbs({ segments, labels = {}, includeRoot = true,
     items = computed;
   }
 
+  const prev = items?.length > 1 ? items[items.length - 2] : null;
+  const current = items?.[items.length - 1];
+
   return (
     <nav aria-label="Breadcrumb" className={cn("text-sm text-neutral-500", className)}>
-      <ol role="list" className="flex items-center">
+      {items?.length > 1 && (
+        <div className="flex items-center gap-1.5 min-w-0 md:hidden">
+          {prev && (
+            <Link href={prev.href} className="inline-flex items-center gap-1 rounded-md py-1 text-neutral-400 transition-colors hover:text-neutral-100">
+              <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+              <span className="truncate max-w-[120px] text-xs">{prev.label}</span>
+            </Link>
+          )}
+          <ChevronRight className="h-3.5 w-3.5 text-neutral-600 shrink-0" />
+          <span aria-current="page" className="truncate max-w-40 text-xs font-medium text-neutral-200" title={current?.label}>
+            {current?.label}
+          </span>
+        </div>
+      )}
+      {items?.length === 1 && (
+        <div className="md:hidden">
+          <span aria-current="page" className="truncate max-w-[200px] text-xs font-medium text-neutral-200" title={current?.label}>
+            {current?.label}
+          </span>
+        </div>
+      )}
+
+      <ol role="list" className="hidden md:flex items-center">
         {items?.map((item, idx) => {
           const isLast = idx === items.length - 1;
           return (

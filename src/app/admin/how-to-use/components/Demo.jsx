@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   GitBranch, ArrowRightLeft, Grip, Archive,
   CircleDot, CheckCircle, XCircle,
@@ -109,22 +109,14 @@ export function DemoConditional() {
             />
           </motion.div>
         </div>
-        <AnimatePresence>
-          {toggled && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="flex items-center gap-2 rounded-md border border-skylab-400/20 bg-skylab-500/5 px-2.5 py-1.5">
-                <GitBranch size={10} className="text-skylab-400 shrink-0" />
-                <span className="text-[11px] text-skylab-300">Kaç yıl deneyiminiz var?</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="grid grid-rows-[0fr] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ gridTemplateRows: toggled ? "1fr" : "0fr" }}>
+          <div className="overflow-hidden">
+            <div className="flex items-center gap-2 rounded-md border border-skylab-400/20 bg-skylab-500/5 px-2.5 py-1.5">
+              <GitBranch size={10} className="text-skylab-400 shrink-0" />
+              <span className="text-[11px] text-skylab-300">Kaç yıl deneyiminiz var?</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -239,23 +231,15 @@ export function DemoCollaboration() {
             <span className="text-[9px] text-neutral-500">{u.role}</span>
           </div>
         ))}
-        <AnimatePresence>
-          {showThird && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden"
-            >
-              <div className="flex items-center gap-2 rounded-md border border-skylab-400/20 bg-skylab-500/5 px-2.5 py-1.5">
-                <div className="h-5 w-5 rounded-full bg-emerald-600 grid place-items-center text-[8px] font-bold text-white">EK</div>
-                <span className="text-[11px] text-skylab-300 flex-1">EK</span>
-                <span className="text-[9px] text-skylab-400">Görüntüleyici</span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="grid transition-all duration-300 ease-out" style={{ gridTemplateRows: showThird ? "1fr" : "0fr" }}>
+          <div className="overflow-hidden">
+            <div className="flex items-center gap-2 rounded-md border border-skylab-400/20 bg-skylab-500/5 px-2.5 py-1.5">
+              <div className="h-5 w-5 rounded-full bg-emerald-600 grid place-items-center text-[8px] font-bold text-white">EK</div>
+              <span className="text-[11px] text-skylab-300 flex-1">EK</span>
+              <span className="text-[9px] text-skylab-400">Görüntüleyici</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -322,7 +306,6 @@ export function DemoApproval() {
       <p className="text-[9px] uppercase tracking-wider text-neutral-600">Onay Durumu</p>
       <motion.div
         className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-3 ${c.color}`}
-        layout
       >
         <motion.div key={status} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
           <c.icon size={16} className={c.text} />
@@ -360,13 +343,11 @@ export function DemoArchive() {
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
           <span className="flex-1">Ayşe Y.</span>
         </div>
-        <AnimatePresence>
-          {!archived && (
+        <div className="grid transition-all duration-350 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ gridTemplateRows: !archived ? "1fr" : "0fr" }}>
+          <div className="overflow-hidden">
             <motion.div
-              initial={{ opacity: 1, x: 0, height: "auto" }}
-              exit={{ opacity: 0, x: 40, height: 0 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
+              animate={{ opacity: !archived ? 1 : 0, x: !archived ? 0 : 40 }}
+              transition={{ duration: 0.3 }}
             >
               <div className="flex items-center gap-2 rounded-md border border-white/8 bg-white/3 px-2.5 py-1.5 text-[11px] text-neutral-300">
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-400" />
@@ -374,8 +355,8 @@ export function DemoArchive() {
                 <Archive size={10} className="text-neutral-600" />
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </div>
+        </div>
         <div className="flex items-center gap-2 rounded-md border border-white/8 bg-white/3 px-2.5 py-1.5 text-[11px] text-neutral-300">
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
           <span className="flex-1">Elif S.</span>
