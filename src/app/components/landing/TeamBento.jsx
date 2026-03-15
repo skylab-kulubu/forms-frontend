@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { Brain, Globe, Shield, Smartphone, Gamepad2, Cpu, Link2, Code2, Users } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Brain, Globe, Shield, Smartphone, Gamepad2, Cpu, Link2, Code2, Users, ExternalLink } from "lucide-react";
 
 const teams = [
   {
@@ -28,6 +28,7 @@ const teams = [
     longDesc: "Local pentesting, red teaming ve blue team senaryoları üzerine çalışıyoruz. TryHackMe, HackTheBox gibi platformlarda YTÜ'yü temsil ediyor, SKYDAYS CTF ile siber güvenliğin merkezini üniversitemize taşıyoruz. Bilgisayar bilimleri mottosuyla SKY LAB sistemlerine güvenlik otomasyonları yazıyoruz.",
     stack: ["Pentesting", "Red Teaming", "Blue Teaming", "CTF"],
     icon: Shield,
+    github: "https://github.com/skylab-kulubu",
   },
   {
     id: "mobilab",
@@ -52,6 +53,7 @@ const teams = [
     longDesc: "Ulaşımda, sağlıkta ve Türkçe doğal dil işlemede yapay zeka yarışmalarına katılıyoruz. Kaggle ve datathonlarda deneyim kazanıyor, ARTLAB etkinliğimizde sergilemek üzere yapay zeka projeleri geliştiriyoruz.",
     stack: ["Machine Learning", "Deep Learning", "NLP", "Python"],
     icon: Brain,
+    website: "https://airlab.yildizskylab.com",
   },
   {
     id: "chainlab",
@@ -81,6 +83,7 @@ const teams = [
 
 export default function TeamBento() {
   const [expanded, setExpanded] = useState(null);
+  const [layoutId, setLayoutId] = useState(null);
   const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
@@ -92,10 +95,25 @@ export default function TeamBento() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const handleToggle = useCallback((teamId) => {
+    if (expanded === teamId) {
+      setExpanded(null);
+    } else {
+      setExpanded(teamId);
+      setLayoutId(teamId);
+    }
+  }, [expanded]);
+
+  const handleExitComplete = useCallback(() => {
+    if (expanded === null) {
+      setLayoutId(null);
+    }
+  }, [expanded]);
+
   const displayTeams = useMemo(() => {
     const lastTeamId = teams[teams.length - 1].id;
 
-    if (expanded === lastTeamId && isDesktop) {
+    if (layoutId === lastTeamId && isDesktop) {
       const newTeams = [...teams];
       const last = newTeams[newTeams.length - 1];
       newTeams[newTeams.length - 1] = newTeams[newTeams.length - 2];
@@ -104,7 +122,7 @@ export default function TeamBento() {
     }
 
     return teams;
-  }, [expanded, isDesktop]);
+  }, [layoutId, isDesktop]);
 
   return (
     <section className="px-5 md:px-10 pb-32">
@@ -117,39 +135,38 @@ export default function TeamBento() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-flow-dense gap-3">
           {displayTeams.map((team) => {
             const Icon = team.icon;
-            const isOpen = expanded === team.id;
-            const isSibling = expanded !== null && !isOpen;
-
+            const isContentOpen = expanded === team.id;
+            const isLayoutOpen = layoutId === team.id;
+            const isSibling = layoutId !== null && !isLayoutOpen;
             const isLastOddItem = team.id === "organizasyon";
 
             return (
               <motion.button key={team.id} layout
-                animate={{ opacity: isSibling ? 0.7 : 1, scale: isSibling ? 0.95 : 1, filter: isSibling ? "blur(2px)" : "blur(0px)", }}
+                animate={{ opacity: isSibling ? 0.7 : 1, scale: isSibling ? 0.95 : 1, filter: isSibling ? "blur(2px)" : "blur(0px)" }}
                 transition={{
-                  layout: { type: "spring", bounce: 0.15, duration: 0.5 },
-                  opacity: { duration: 0.3, ease: "easeInOut" },
-                  scale: { duration: 0.3, ease: "easeInOut" },
-                  filter: { duration: 0.3, ease: "easeInOut" },
+                  layout: { type: "spring", bounce: 0, duration: 0.4 },
+                  opacity: { duration: 0.25, ease: "easeOut" },
+                  scale: { duration: 0.25, ease: "easeOut" },
+                  filter: { duration: 0.25, ease: "easeOut" },
                 }}
-                onClick={() => setExpanded(isOpen ? null : team.id)}
-                className={`relative text-left rounded-xl border overflow-hidden cursor-pointer backdrop-blur-sm transition-colors flex flex-col 
-                  ${isOpen ? "border-skylab-600/25 bg-skylab-600/4 md:col-span-2 lg:col-span-2 row-span-2 p-8 shadow-2xl z-20"
-                  : `border-white/6 bg-neutral-950/50 hover:border-neutral-700 hover:bg-neutral-900/70 p-6 z-10 
+                onClick={() => handleToggle(team.id)}
+                className={`relative text-left rounded-xl border overflow-hidden cursor-pointer backdrop-blur-sm transition-colors flex flex-col p-6
+                  ${isLayoutOpen ? "border-skylab-600/25 bg-skylab-600/4 md:col-span-2 lg:col-span-2 row-span-2 shadow-2xl z-20"
+                  : `border-white/6 bg-neutral-950/50 hover:border-neutral-700 hover:bg-neutral-900/70 z-10
                   ${isLastOddItem ? "md:col-span-2 lg:col-span-1" : ""}`
                   }`}
-
               >
-                <Icon className={`absolute -bottom-4 -right-4 text-white/3 pointer-events-none transition-all duration-500 ${isOpen ? "w-40 h-40" : "w-28 h-28"}`}
+                <Icon className={`absolute -bottom-4 -right-4 text-white/3 pointer-events-none transition-all duration-500 ${isLayoutOpen ? "w-40 h-40" : "w-28 h-28"}`}
                   strokeWidth={1}
                 />
 
                 <div className="relative z-10 flex flex-col h-full w-full">
                   <div>
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-5 border transition-colors duration-300 
-                    ${isOpen ? "bg-skylab-600/15 border-skylab-600/30" : "bg-skylab-600/10 border-skylab-600/20"}`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-5 border transition-colors duration-300
+                    ${isLayoutOpen ? "bg-skylab-600/15 border-skylab-600/30" : "bg-skylab-600/10 border-skylab-600/20"}`}>
                       <Icon className="w-5 h-5 text-skylab-600" />
                     </div>
-                    <h3 className={`text-white font-semibold mb-2 transition-all duration-300 ${isOpen ? "text-xl" : "text-base"}`}>
+                    <h3 className={`text-white font-semibold mb-2 transition-all duration-300 ${isLayoutOpen ? "text-xl" : "text-base"}`}>
                       {team.name}
                     </h3>
                     <p className="text-neutral-500 text-sm leading-[1.6] mb-4">
@@ -157,10 +174,14 @@ export default function TeamBento() {
                     </p>
                   </div>
 
-                  <AnimatePresence initial={false} mode="popLayout">
-                    {isOpen && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }} className="overflow-hidden flex-1"
+                  <AnimatePresence initial={false} onExitComplete={handleExitComplete}>
+                    {isContentOpen && (
+                      <motion.div className="overflow-hidden flex-1"
+                        initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                        transition={{
+                          height: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
+                          opacity: { duration: 0.15 },
+                        }}
                       >
                         <p className="text-neutral-400 text-sm leading-[1.8] mb-5">
                           {team.longDesc}
@@ -173,27 +194,41 @@ export default function TeamBento() {
                             </span>
                           ))}
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
 
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                        transition={{ delay: 0.1 }} className="mt-auto pt-6 hidden md:block"
-                      >
-                        <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-black font-semibold text-sm hover:bg-neutral-200 transition-colors">
-                          Ekibe Başvur
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </svg>
-                        </span>
+                        <div className="pt-6 flex flex-wrap items-center gap-2.5">
+                          <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-black font-semibold text-sm hover:bg-neutral-200 transition-colors">
+                            Ekibe Başvur
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                          </span>
+
+                          {team.website && (
+                            <span onClick={(e) => { e.stopPropagation(); window.open(team.website, "_blank"); }}
+                              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-neutral-300 text-sm font-medium hover:bg-white/10 hover:text-white transition-colors"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                              Web Sitesi
+                            </span>
+                          )}
+
+                          {team.github && (
+                            <span onClick={(e) => { e.stopPropagation(); window.open(team.github, "_blank"); }}
+                              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-neutral-300 text-sm font-medium hover:bg-white/10 hover:text-white transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                              </svg>
+                              GitHub
+                            </span>
+                          )}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
 
-                <div className={`absolute bottom-0 left-0 right-0 h-px transition-all duration-500 ${isOpen ? "bg-linear-to-r from-skylab-500 to-skylab-500/0" : "bg-transparent"}`}/>
+                <div className={`absolute bottom-0 left-0 right-0 h-px transition-all duration-500 ${isLayoutOpen ? "bg-linear-to-r from-skylab-500 to-skylab-500/0" : "bg-transparent"}`}/>
               </motion.button>
             );
           })}
