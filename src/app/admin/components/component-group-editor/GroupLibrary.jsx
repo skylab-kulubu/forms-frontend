@@ -3,7 +3,7 @@ import { useGroupEditor } from "./GroupEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, CircleAlert, CircleGauge, RotateCcw, Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
-import ErrorPopover from "@/app/components/utils/Popover";
+import Popover from "@/app/components/utils/Popover";
 
 export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onRefresh, onDelete, isPending, isError, error, isSuccess, isDeleteDisabled }) {
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
@@ -39,11 +39,11 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onRefre
                         >
                             <Trash2 size={16} />
                         </button>
-                        <ErrorPopover open={isError} error={error} align="bottom-right" onClose={() => { }}>
+                        <Popover open={isError} error={error} variant="error" align="bottom-right">
                             <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
                                 {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-400" />) : isSuccess ? (<CheckCircle2 size={16} className="text-indigo-400" />) : (<CheckCircle2 size={16} />)}
                             </button>
-                        </ErrorPopover>
+                        </Popover>
                     </div>
                 </div>
 

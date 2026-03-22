@@ -14,6 +14,8 @@ import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormE
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
+import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
+import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
 import { useShareLink } from "@/app/admin/hooks/useShareLink";
 import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
@@ -62,7 +64,7 @@ class SmartKeyboardSensor extends KeyboardSensor {
   ];
 }
 
-function FormEditorContent({ onRefresh, isNewForm }) {
+function FormEditorContent({ isNewForm, draft, onRefresh }) {
     const router = useRouter();
     const { data: session } = useSession();
     const { setTitle: setGlobalTitle, setStatus: setGlobalStatus } = useFormContext();
@@ -80,6 +82,19 @@ function FormEditorContent({ onRefresh, isNewForm }) {
     const { mutate: saveForm, isPending, isSuccess, isError, error, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
     const { shareStatus, handleShare } = useShareLink(state.id);
+
+    useDraftAutoSave(isNewForm ? null : state.id, state);
+    const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
+    const [hasDraft, setHasDraft] = useState(!!draft);
+    const [draftNotice, setDraftNotice] = useState(false);
+
+    useEffect(() => {
+        if (!draft) return;
+        dispatch({ type: "LOAD_DRAFT", payload: draft });
+        setDraftNotice(true);
+        const timer = setTimeout(() => setDraftNotice(false), 4000);
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         setGlobalTitle(state.title);
@@ -155,19 +170,23 @@ function FormEditorContent({ onRefresh, isNewForm }) {
         });
     };
 
-    const handleRefresh = async () => {
-        if (isNewForm) {
-            dispatch({ type: "RESET_FORM" });
-            return;
-        }
-        if (!onRefresh) return;
-        try {
-            const result = await onRefresh();
-            const refreshedForm = result?.data?.data ?? result?.data;
-            if (refreshedForm) {
-                dispatch({ type: "LOAD_FORM", payload: refreshedForm });
-            }
-        } catch (e) { console.error(e); }
+    const handleUndo = () => dispatch({ type: "UNDO" });
+    const canUndo = state._history.length > 0;
+
+    const handleDiscardDraft = () => {
+        if (!state.id) return;
+        deleteDraft(state.id, {
+            onSuccess: async () => {
+                setHasDraft(false);
+                setDraftNotice(false);
+                if (!onRefresh) return;
+                try {
+                    const result = await onRefresh();
+                    const refreshedForm = result?.data?.data ?? result?.data;
+                    if (refreshedForm) dispatch({ type: "LOAD_FORM", payload: refreshedForm });
+                } catch (e) { console.error(e); }
+            },
+        });
     };
 
     const updateField = (id, updates) => {
@@ -250,7 +269,11 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                 <Library layout="grid"
                     onPreview={() => setPreviewOpen(true)}
                     onSave={handleSave}
-                    onRefresh={handleRefresh}
+                    onUndo={handleUndo}
+                    canUndo={canUndo}
+                    hasDraft={hasDraft}
+                    onDiscardDraft={handleDiscardDraft}
+                    isDiscardingDraft={isDiscardingDraft}
                     onShare={handleShare}
                     onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
                     isPending={isPending}
@@ -261,6 +284,8 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                     isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                     onLibrarySelect={handleLibrarySelect}
                     onGroupSelect={handleGroupSelect}
+                    draftNotice={draftNotice}
+                    onDraftNoticeClose={() => setDraftNotice(false)}
                 />
             )}
         </div>
@@ -276,7 +301,11 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                             <Library layout="drawer"
                                 onPreview={() => setPreviewOpen(true)}
                                 onSave={handleSave}
-                                onRefresh={handleRefresh}
+                                onUndo={handleUndo}
+                                canUndo={canUndo}
+                                hasDraft={hasDraft}
+                                onDiscardDraft={handleDiscardDraft}
+                                isDiscardingDraft={isDiscardingDraft}
                                 onShare={handleShare}
                                 onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
                                 isPending={isPending}
@@ -286,6 +315,8 @@ function FormEditorContent({ onRefresh, isNewForm }) {
                                 isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                                 onLibrarySelect={handleLibrarySelect}
                                 onGroupSelect={handleGroupSelect}
+                                draftNotice={draftNotice}
+                                onDraftNoticeClose={() => setDraftNotice(false)}
                             />
                         </DrawerContent>
                     </Drawer>
@@ -320,7 +351,7 @@ function FormEditorContent({ onRefresh, isNewForm }) {
     );
 }
 
-export default function FormEditor({ initialForm = null, onRefresh }) {
+export default function FormEditor({ initialForm = null, draft = null, onRefresh }) {
     const normalizedInitialData = initialForm ? {
         id: initialForm.id,
         schema: initialForm.schema || [],
@@ -338,7 +369,7 @@ export default function FormEditor({ initialForm = null, onRefresh }) {
 
     return (
         <FormEditorProvider initialData={normalizedInitialData}>
-            <FormEditorContent onRefresh={onRefresh} isNewForm={!initialForm?.id} />
+            <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} />
         </FormEditorProvider>
     );
 }

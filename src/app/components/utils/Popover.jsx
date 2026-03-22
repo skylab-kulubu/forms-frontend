@@ -1,11 +1,29 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 
-export default function ErrorPopover({ open, error, children, align = "top-center", className = "" }) {
-  const errorData = error?.response?.data || error?.data;
-  const errorMessage = errorData?.message || error?.message || "Beklenmeyen bir hata oluştu.";
+const variantStyles = {
+  error: {
+    container: "border-red-500/20 bg-[#1f1414]",
+    arrow: "bg-[#1f1414] border-red-500/20",
+    iconClass: "text-red-200/30",
+    Icon: AlertCircle,
+  },
+  info: {
+    container: "border-neutral-500/20 bg-neutral-700",
+    arrow: "bg-neutral-700 border-neutral-500/20",
+    iconClass: "text-neutral-300/50",
+    Icon: Info,
+  },
+};
+
+export default function Popover({ open, error, message, variant = "error", children, align = "top-center", className = "", onClose }) {
+  const displayMessage = message || error?.response?.data?.message || error?.data?.message || error?.message || "Beklenmeyen bir hata olustu.";
+  const shouldShow = open && (message || error);
+
+  const style = variantStyles[variant] || variantStyles.error;
+  const IconComponent = style.Icon;
 
   const isTop = align.startsWith("top");
 
@@ -37,15 +55,17 @@ export default function ErrorPopover({ open, error, children, align = "top-cente
     <div className={`relative inline-flex ${className}`}>
       {children}
       <AnimatePresence>
-        {open && error ? (
+        {shouldShow ? (
           <motion.div variants={variants} initial="hidden" animate="visible" exit="exit"
-            className={`absolute z-50 flex w-max max-w-[220px] items-center gap-1.5 rounded-lg border border-red-500/20 bg-[#1f1414] px-2.5 py-1.5 shadow-xl ${positionClasses}`}
+            className={`absolute z-50 flex w-max max-w-[220px] items-center gap-1.5 rounded-lg border px-2.5 py-1.5 shadow-xl ${style.container} ${positionClasses}`}
+            onClick={onClose}
+            style={onClose ? { cursor: "pointer" } : undefined}
           >
-            <div className={`absolute h-2.5 w-2.5 rotate-45 rounded-[2.5px] bg-[#1f1414] border-red-500/20 ${arrowClasses}`} style={{ zIndex: -1 }}/>
+            <div className={`absolute h-2.5 w-2.5 rotate-45 rounded-[2.5px] ${style.arrow} ${arrowClasses}`} style={{ zIndex: -1 }}/>
 
-            <AlertCircle size={13} strokeWidth={2.5} className="shrink-0 text-red-200/30" />
+            <IconComponent size={13} strokeWidth={2.5} className={`shrink-0 ${style.iconClass}`} />
             <span className="text-[10px] font-medium leading-snug text-neutral-200 wrap-break-word">
-              {errorMessage}
+              {displayMessage}
             </span>
           </motion.div>
         ) : null}

@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Clock, Loader2, PencilLine, Share2, Undo2, X, User2, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import { useResponseStatusMutation, useResponseArchiveMutation } from "@/lib/hooks/useResponse";
 import { useShareLink } from "@/app/admin/hooks/useShareLink";
-import ErrorPopover from "@/app/components/utils/Popover";
+import Popover from "@/app/components/utils/Popover";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -205,13 +205,13 @@ export function ResponseActions({ response }) {
                 >
                   <Share2 size={15} />
                 </button>
-                <ErrorPopover open={isError} error={error} align="bottom-right" onClose={() => { }}>
+                <Popover open={isError} error={error} variant="error" align="bottom-right">
                   <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
                     className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-indigo-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
                   >
                     <Archive size={15} />
                   </button>
-                </ErrorPopover>
+                </Popover>
               </div>
             </motion.div>
 

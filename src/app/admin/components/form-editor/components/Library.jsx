@@ -3,14 +3,14 @@ import { LibraryComponents } from "./LibraryComponents";
 import { LibrarySettings } from "./LibrarySettings";
 import { useFormEditor } from "../FormEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, CircleAlert, CircleGauge, Eye, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleGauge, Eye, Undo2, ClipboardX, Share2, Trash, Trash2, Loader2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
-import ErrorPopover from "@/app/components/utils/Popover";
+import Popover from "@/app/components/utils/Popover";
 import dynamic from "next/dynamic";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
 
-export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPreview, onSave, onRefresh, onShare, onDelete, isPending, isError, error, isSuccess, shareStatus, isDeleteDisabled }) {
+export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPreview, onSave, onUndo, onShare, onDelete, isPending, isError, error, isSuccess, shareStatus, isDeleteDisabled, canUndo, hasDraft, onDiscardDraft, isDiscardingDraft, draftNotice, onDraftNoticeClose }) {
     const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
@@ -110,21 +110,32 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
                                 <Share2 size={16} />
                             </button>
                         ) : null}
-                        <button type="button" aria-label="Yenile" onClick={onRefresh} disabled={!onRefresh}
-                            className={`rounded-lg p-1.5 transition-colors ${onRefresh ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
-                        >
-                            <RotateCcw size={16} />
-                        </button>
+                        {hasDraft && !canUndo ? (
+                            <button type="button" aria-label="Taslagi sil" onClick={onDiscardDraft} disabled={isDiscardingDraft}
+                                className={`rounded-lg p-1.5 transition-colors ${isDiscardingDraft ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+                            >
+                                {isDiscardingDraft ? <Loader2 size={16} className="animate-spin" /> : <ClipboardX size={16} />}
+                            </button>
+                        ) : (
+                            <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo}
+                                className={`rounded-lg p-1.5 transition-colors ${canUndo ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
+                            >
+                                <Undo2 size={16} />
+                            </button>
+                        )}
                         <button type="button" aria-label="Formu sil" onClick={onDelete} disabled={isDeleteDisabled}
                             className={`rounded-lg p-1.5 transition-colors ${isDeleteDisabled ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
                         >
                             <Trash2 size={16} />
                         </button>
-                        <ErrorPopover open={isError} error={error} align="bottom-right" onClose={() => { }}>
+                        <Popover open={isError || (draftNotice && !isError)} error={isError ? error : null}
+                            message={!isError && draftNotice ? "Veriler taslaklardan geldi" : null} variant={isError ? "error" : "info"} align="bottom-right"
+                            onClose={!isError && draftNotice ? onDraftNoticeClose : undefined}
+                        >
                             <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
                                 {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-400" />) : isSuccess ? (<CheckCircle2 size={16} className="text-indigo-400" />) : (<CheckCircle2 size={16} />)}
                             </button>
-                        </ErrorPopover>
+                        </Popover>
                     </div>
                 </div>
                 <div className={`flex-1 min-h-0 p-1 ${activeTab === "description" ? "overflow-hidden flex flex-col" : "overflow-y-auto overflow-x-hidden scrollbar"}`}>
