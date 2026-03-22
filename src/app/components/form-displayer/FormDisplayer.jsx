@@ -1,14 +1,17 @@
 "use client";
 
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useRef, useState, useMemo, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { FormDisplayerHeader, FormRespondentBadge } from "./components/FormDisplayerComponents";
 import { FormResponseStatus } from "./components/FormResponseStatus";
 import { useSubmitFormMutation } from "@/lib/hooks/useForm";
+import { useDeleteResponseDraftMutation } from "@/lib/hooks/useDraft";
+import { useResponseDraftAutoSave } from "./hooks/useResponseDraftAutoSave";
 import { FormStatusDisplayer } from "../FormStatusHandler";
 import Background from "../Background";
 import { getVisibleFields } from "./components/conditionChecker";
-import { Loader2 } from "lucide-react";
+import { Loader2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -23,14 +26,46 @@ const itemVariants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } }
 };
 
-export default function FormDisplayer({ form, step }) {
+function formatSavedAt(date) {
+  if (!date) return null;
+  return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function DraftPrompt({ savedAt, onDiscard, isDiscarding }) {
+  const formattedTime = savedAt ? new Date(savedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" }) : null;
+
+  return (
+    <motion.div className="overflow-hidden"
+      initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/3 px-4 py-3">
+        <div className="flex items-center gap-2 text-xs text-neutral-400">
+          <span className="text-neutral-300 font-medium">Taslağınız yüklendi</span>
+          {formattedTime && (
+            <span className="text-neutral-600">&middot; {formattedTime}</span>
+          )}
+        </div>
+        <button type="button" onClick={onDiscard} disabled={isDiscarding}
+          className="shrink-0 rounded-lg border border-white/10 px-3 py-1 text-[11px] font-medium text-neutral-500 transition-colors hover:text-neutral-200 hover:border-white/20 disabled:opacity-50"
+        >
+          {isDiscarding ? <Loader2 size={12} className="animate-spin" /> : "Sıfırla"}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+export default function FormDisplayer({ form, step, draft = null }) {
   const schema = Array.isArray(form?.schema) ? form.schema : [];
   const title = form?.title ?? "";
   const description = form?.description ?? "";
-  const isAnonymous = form?.allowAnonymousResponses === true;
   const hasSchema = schema.length > 0;
 
+  const { status } = useSession();
+  const isAuthed = status === "authenticated";
+
   const submitMutation = useSubmitFormMutation();
+  const { mutate: deleteDraft, isPending: isDiscarding } = useDeleteResponseDraftMutation();
 
   const [formValues, setFormValues] = useState({});
   const [submissionState, setSubmissionState] = useState(null);
@@ -38,6 +73,8 @@ export default function FormDisplayer({ form, step }) {
   const [errorMessage, setErrorMessage] = useState(null);
   const [missingFieldIds, setMissingFieldIds] = useState([]);
   const [uploadingFields, setUploadingFields] = useState({});
+  const [draftPromptVisible, setDraftPromptVisible] = useState(false);
+  const draftAppliedRef = useRef(false);
   const missingTimeoutRef = useRef(null);
 
   const startTimeRef = useRef(null);
@@ -46,6 +83,26 @@ export default function FormDisplayer({ form, step }) {
     startTimeRef.current = Date.now();
   }, []);
 
+  useEffect(() => {
+    if (draftAppliedRef.current || !draft?.responses) return;
+    draftAppliedRef.current = true;
+    const restored = {};
+    draft.responses.forEach((r) => {
+      try { restored[r.id] = JSON.parse(r.answer); }
+      catch { restored[r.id] = r.answer; }
+    });
+    setFormValues(restored);
+    setDraftPromptVisible(true);
+    if (draft.timeSpent && startTimeRef.current) {
+      startTimeRef.current = Date.now() - draft.timeSpent * 1000;
+    }
+  }, [draft]);
+
+  const { lastSavedAt } = useResponseDraftAutoSave(
+    form.id, formValues, schema, startTimeRef,
+    isAuthed && !draftPromptVisible && !submissionState
+  );
+
   const visibleFields = useMemo(() => {
     return getVisibleFields(schema, formValues);
   }, [schema, formValues]);
@@ -53,6 +110,7 @@ export default function FormDisplayer({ form, step }) {
   const handleValueChange = (fieldId, value) => {
     setFormValues((prev) => ({ ...prev, [fieldId]: value }));
     if (errorMessage) setErrorMessage(null);
+    if (draftPromptVisible) setDraftPromptVisible(false);
   };
 
   const handleUploadStateChange = (fieldId, isUploading) => {
@@ -60,6 +118,15 @@ export default function FormDisplayer({ form, step }) {
   };
 
   const isAnyFileUploading = Object.values(uploadingFields).some((status) => status === true);
+
+  const handleDiscardDraft = useCallback(() => {
+    setFormValues({});
+    startTimeRef.current = Date.now();
+    deleteDraft(form.id, {
+      onSuccess: () => setDraftPromptVisible(false),
+      onError: () => setDraftPromptVisible(false),
+    });
+  }, [form.id, deleteDraft]);
 
   const handleSubmit = () => {
     setErrorMessage(null);
@@ -231,6 +298,12 @@ export default function FormDisplayer({ form, step }) {
                   <FormDisplayerHeader title={title} description={description} />
                 </motion.div>
 
+                <AnimatePresence>
+                  {draftPromptVisible && (
+                    <DraftPrompt savedAt={draft?.savedAt} onDiscard={handleDiscardDraft} isDiscarding={isDiscarding}/>
+                  )}
+                </AnimatePresence>
+
                 {hasSchema ? (
                   <>
                     <AnimatePresence mode="sync" initial={false}>
@@ -275,13 +348,19 @@ export default function FormDisplayer({ form, step }) {
                       })}
                     </AnimatePresence>
 
-                    <motion.div variants={itemVariants} className="mt-6 flex justify-end">
+                    <motion.div variants={itemVariants} className="mt-6 flex flex-col items-end gap-2">
                       <motion.button onClick={handleSubmit} disabled={submitMutation.isPending || errorMessage || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none
                         ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : submitMutation.isPending ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-pink-300/30 border-pink-200/40 hover:bg-pink-200/60"}`}
                       >
                         {errorMessage ? (errorMessage) : submitMutation.isPending ? (<Loader2 className="animate-spin" size={16} />) : ("Yanıtları Gönder")}
                       </motion.button>
+                      {isAuthed && (
+                        <p className={`flex items-center gap-1 text-[10px] mr-1 transition-opacity duration-300 ${lastSavedAt ? "text-neutral-500 opacity-100" : "opacity-0 pointer-events-none"}`}>
+                          <Clock size={10} className="shrink-0" />
+                          {lastSavedAt ? <>Taslak kaydedildi &middot; {formatSavedAt(lastSavedAt)}</> : "\u00A0"}
+                        </p>
+                      )}
                     </motion.div>
                   </>
                 ) : (
@@ -313,7 +392,7 @@ export default function FormDisplayer({ form, step }) {
                   <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
                   <span className="text-[14px] font-semibold uppercase tracking-wide text-[#efe3fe]">SKY LAB Forms</span>
                 </a>
-                <span className="text-neutral-600">by WEBLAB</span> 
+                <span className="text-neutral-600">by WEBLAB</span>
               </div>
 
               <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
