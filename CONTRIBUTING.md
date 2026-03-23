@@ -47,6 +47,7 @@ src/
 │   │   │
 │   │   └── components/                # Admin UI components
 │   │       ├── form-editor/           # Form builder
+│   │       │   └── hooks/             # Editor-specific hooks
 │   │       ├── form-overview/         # Form analytics
 │   │       ├── response-displayer/    # Response viewer
 │   │       └── component-group-editor/# Group builder
@@ -54,6 +55,7 @@ src/
 │   ├── components/                    # Shared components
 │   │   ├── form-components/           # Field type components
 │   │   ├── form-displayer/            # Public form renderer
+│   │   │   └── hooks/                 # Displayer hooks
 │   │   ├── landing/                   # Landing page sections
 │   │   └── form-registry.js           # Field type registry
 │   │
@@ -66,7 +68,8 @@ src/
 │       ├── useFormAdmin.js            # Form CRUD mutations
 │       ├── useResponse.js             # Response management
 │       ├── useGroupAdmin.js           # Component group operations
-│       ├── useForm.js                 # Public form submission
+│       ├── useForm.js                 # Public form display & submission
+│       ├── useDraft.js                # Draft queries & mutations
 │       ├── useUser.js                 # User session
 │       └── useMedia.js               # Responsive breakpoints
 │

@@ -8,7 +8,7 @@ import {
   Calendar, Clock, Upload, Link2, SlidersHorizontal, Table,
   Eye, EyeOff, UserPlus, Users, ShieldCheck,
   Archive, Filter, GitBranch, CheckCircle, XCircle,
-  CircleDot, MessageSquare, ArrowRightLeft,
+  CircleDot, MessageSquare, ArrowRightLeft, Save,
 } from "lucide-react";
 import {
   DemoFormCreate, DemoDragDrop, DemoConditional, DemoSettings,
@@ -28,6 +28,7 @@ const sections = [
   { id: "yanit-onaylama", label: "Yanıt Onaylama" },
   { id: "arsivleme", label: "Arşivleme" },
   { id: "filtreleme", label: "Formları Filtreleme" },
+  { id: "taslaklar", label: "Taslak ve Otomatik Kayıt" },
 ];
 
 const componentTypes = [
@@ -411,6 +412,31 @@ export default function HowToUsePage() {
                 "Yanıtlayan: Tümü, Anonim, Kayıtlı",
                 "Arşiv durumu: Dahil et veya etme",
               ]} />
+            </SectionBlock>
+
+            <div className="h-px bg-white/5" />
+
+            {/* 12 - Taslak ve Otomatik Kayıt */}
+            <SectionBlock id="taslaklar" icon={Save} title="Taslak ve Otomatik Kayıt">
+              <p>Hem form düzenleyicisi hem de form yanıtlama tarafında <strong className="text-neutral-100">otomatik taslak kaydetme</strong> özelliği bulunur.</p>
+
+              <p className="font-medium text-neutral-200 text-xs">Editör taslakları:</p>
+              <BulletList items={[
+                "Form düzenleyicisinde yaptığınız değişiklikler belirli bir süre sonra otomatik olarak kaydedilir.",
+                "Düzenleyiciyi tekrar açtığınızda taslak varsa otomatik yüklenir ve bildirim gösterilir.",
+                "Taslağı silmek için kütüphanedeki sil butonunu kullanabilirsiniz.",
+                "Geri alma (undo) özelliği ile son değişikliklerinizi geri alabilirsiniz.",
+              ]} />
+
+              <p className="font-medium text-neutral-200 text-xs mt-2">Yanıt taslakları:</p>
+              <BulletList items={[
+                "Giriş yapmış kullanıcılar için yanıtlar otomatik olarak taslak olarak kaydedilir.",
+                "Formu tekrar açtığınızda önceki yanıtlarınız otomatik yüklenir.",
+                "İsterseniz taslağı sıfırlayıp baştan başlayabilirsiniz.",
+                "Gönder butonunun yanında son kayıt zamanı gösterilir.",
+              ]} />
+
+              <Tip>Yanıt taslakları yalnızca giriş yapmış kullanıcılar için çalışır. Anonim yanıtlarda taslak kaydedilmez.</Tip>
             </SectionBlock>
 
           </div>

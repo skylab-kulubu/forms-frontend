@@ -33,11 +33,18 @@
 - **Conditional logic** - Show or hide fields based on user responses
 - **Form linking** - Link fields to other forms for nested submissions
 - **Live preview** - See your form as you build it
+- **Auto-save drafts** - Editor changes are automatically saved as drafts with debounced caching; restore or discard on next session
+- **Undo system** - Debounced history tracking with one-click undo
 
 ### Reusable Component Groups
 - Save commonly used field sets as **reusable templates**
 - Import component groups into any form
 - Manage and update groups from a dedicated panel
+
+### Response Drafts
+- **Auto-save for respondents** - Logged-in users' in-progress responses are automatically saved as drafts
+- **Draft restore prompt** - On revisit, saved answers are auto-loaded with an option to discard and start fresh
+- **Last saved indicator** - Timestamp shown near the submit button
 
 ### Response Management
 - View, filter, and search responses with pagination
@@ -66,7 +73,7 @@
 - Fully responsive design with Framer Motion animations
 
 ### Documentation
-- Built-in **"How to Use"** guide with 11 interactive tutorial sections
+- Built-in **"How to Use"** guide with 12 interactive tutorial sections
 - Covers form creation, editing, conditional logic, response management, and more
 
 ---
