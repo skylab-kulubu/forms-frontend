@@ -187,7 +187,7 @@ export default function ComponentGroupsPage() {
         </motion.div>
       </AnimatePresence>
 
-      <ApprovalOverlay open={Boolean(deleteTarget)} preset="delete-form" context={{ isPending: isDeletePending }}
+      <ApprovalOverlay open={Boolean(deleteTarget)} preset="delete-group" context={{ isPending: isDeletePending }}
         onApprove={() => deleteGroup(deleteTarget?.id, { onSuccess: () => { setDeleteTarget(null); refetch(); }, onError: () => setDeleteTarget(null) })}
         onReject={() => setDeleteTarget(null)}
       />

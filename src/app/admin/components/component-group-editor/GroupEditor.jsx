@@ -225,7 +225,7 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
                     {activeDragItem ? <GhostComponent active={activeDragItem} schema={state.schema} /> : null}
                 </DragOverlay>
 
-                <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form" context={{ isPending: isDeletePending }}
+                <ApprovalOverlay open={deleteOverlayOpen} preset="delete-group" context={{ isPending: isDeletePending }}
                     onApprove={() => deleteGroup(state.id, { onSuccess: () => router.push("/admin/component-groups"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
                 />

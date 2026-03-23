@@ -16,6 +16,7 @@ const initialFormState = {
     title: "Yeni Form",
     description: "",
     linkedFormId: "",
+    linkedFormTitle: "",
     allowMultipleResponses: false,
     allowAnonymousResponses: false,
     requiresManualReview: false,

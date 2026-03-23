@@ -34,6 +34,7 @@ export function LibrarySettings() {
 
     const confirmAnonymousToggle = () => {
         dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: "" } });
+        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormTitle", value: "" } });
         dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: true } });
         dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: true } });
 

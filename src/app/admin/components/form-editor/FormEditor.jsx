@@ -331,7 +331,9 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
                     onApprove={() => {
                         if (linkOverlay.scenario?.includes("link")) {
-                            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: linkOverlay.scenario === "link-remove" ? "" : linkOverlay.nextId } });
+                            const isRemove = linkOverlay.scenario === "link-remove";
+                            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: isRemove ? "" : linkOverlay.nextId } });
+                            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormTitle", value: isRemove ? "" : (linkOverlay.nextTitle || "") } });
                         }
                         setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
                     }}
@@ -357,7 +359,8 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
         schema: initialForm.schema || [],
         title: initialForm.title || "Yeni Form",
         description: initialForm.description || "",
-        linkedFormId: initialForm.linkedFormId || "",
+        linkedFormId: initialForm.linkedForm?.id || initialForm.linkedFormId || "",
+        linkedFormTitle: initialForm.linkedForm?.title || "",
         allowMultipleResponses: initialForm.allowMultipleResponses || false,
         allowAnonymousResponses: initialForm.allowAnonymousResponses || false,
         requiresManualReview: initialForm.requiresManualReview || false,

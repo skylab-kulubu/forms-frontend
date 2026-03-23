@@ -14,7 +14,7 @@ const alertVariants = {
 
 export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) {
     const { state, dispatch } = useFormEditor();
-    const { id, linkedFormId, allowAnonymousResponses, userRole } = state;
+    const { id, linkedFormId, linkedFormTitle, allowAnonymousResponses, userRole } = state;
 
     const { data: linkableForms } = useLinkableFormsQuery(id);
     const forms = Array.isArray(linkableForms) ? linkableForms : [];
@@ -28,7 +28,7 @@ export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) 
     const variants = alertVariantsProp || alertVariants;
     const canEditLinkedForm = Number(userRole) === 3;
 
-    const linkedForm = forms.find((form) => form.id === linkedFormId) ?? null;
+    const hasLinkedForm = Boolean(linkedFormId);
 
     useEffect(() => {
         if (!showFormPicker) return;
@@ -45,7 +45,7 @@ export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) 
         return forms.filter((form) => form.title.toLowerCase().includes(q));
     }, [formSearch, forms]);
 
-    const handleRequestLink = (nextId) => {
+    const handleRequestLink = (nextId, nextTitle = "") => {
         setShowFormPicker(false);
         setFormSearch("");
 
@@ -62,15 +62,13 @@ export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) 
             return;
         }
 
-        setLinkOverlay({ open: true, scenario, previousId: currentId, nextId: nextId || "" });
+        setLinkOverlay({ open: true, scenario, previousId: currentId, nextId: nextId || "", nextTitle });
     };
 
     const confirmLinkChange = () => {
-        dispatch({
-            type: "UPDATE_SETTINGS",
-            payload: { key: "linkedFormId", value: linkOverlay.nextId }
-        });
-        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "" });
+        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: linkOverlay.nextId } });
+        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormTitle", value: linkOverlay.nextTitle || "" } });
+        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", nextTitle: "" });
     };
 
     if (!canEditLinkedForm) {
@@ -83,10 +81,10 @@ export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) 
                     </div>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-neutral-900/40 px-4 py-3 text-xs text-neutral-200">
-                    {linkedForm || linkedFormId ? (
+                    {hasLinkedForm ? (
                         <div className="space-y-1">
                             <p className="text-[11px] text-neutral-500 uppercase tracking-wide">Bağlı Form</p>
-                            <p className="text-[10px] text-neutral-500">{linkedFormId}</p>
+                            <p className="text-sm font-semibold text-neutral-50">{linkedFormTitle || linkedFormId}</p>
                         </div>
                     ) : (
                         <div className="space-y-1">
@@ -120,15 +118,15 @@ export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) 
                     <div className="relative">
                         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"><ChevronsUpDown size={14} /></span>
                         <button type="button" aria-haspopup="dialog" aria-expanded={showFormPicker} onClick={() => !allowAnonymousResponses && setShowFormPicker((prev) => !prev)} className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 shadow-sm outline-none transition hover:bg-white/5 focus:border-white/25 focus:ring-2 focus:ring-white/15">
-                            <span className={linkedForm ? "text-neutral-100" : "text-neutral-500"}>{linkedForm ? linkedForm.title : "Bağlantı seçin"}</span>
-                            {linkedForm && (<span onClick={(event) => { event.stopPropagation(); handleRequestLink(""); }} className="ml-2 text-neutral-500 transition-colors hover:text-neutral-200"><X size={14} /></span>)}
+                            <span className={hasLinkedForm ? "text-neutral-100" : "text-neutral-500"}>{hasLinkedForm ? (linkedFormTitle || linkedFormId) : "Bağlantı seçin"}</span>
+                            {hasLinkedForm && (<span onClick={(event) => { event.stopPropagation(); handleRequestLink(""); }} className="ml-2 text-neutral-500 transition-colors hover:text-neutral-200"><X size={14} /></span>)}
                         </button>
                     </div>
 
                     <AnimatePresence>
                         {showFormPicker ? (
-                            <SearchPicker searchValue={formSearch} onSearchChange={setFormSearch} autoFocus items={filteredForms} itemsPerPage={4} activeItemId={linkedForm?.id} getItemId={(form) => form.id}
-                                onSelect={(form) => handleRequestLink(form.id)} footerText="Bu form tamamlandığında seçilen forma geçilir." showClear={Boolean(linkedForm)} onClear={() => handleRequestLink("")}
+                            <SearchPicker searchValue={formSearch} onSearchChange={setFormSearch} autoFocus items={filteredForms} itemsPerPage={4} activeItemId={linkedFormId || undefined} getItemId={(form) => form.id}
+                                onSelect={(form) => handleRequestLink(form.id, form.title)} footerText="Bu form tamamlandığında seçilen forma geçilir." showClear={hasLinkedForm} onClear={() => handleRequestLink("")}
                                 renderItem={(form, { active, onSelect }) => (
                                     <button type="button" onClick={onSelect} className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}>
                                         <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
@@ -141,10 +139,10 @@ export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) 
                 </div>
 
                 <AnimatePresence>
-                    {linkedForm && (
+                    {hasLinkedForm && (
                         <motion.div key={"linked-form-alert"} variants={variants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3, ease: "easeInOut" }}>
                             <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
-                                <span>{linkedForm.title} ile eşleştirildi.</span>
+                                <span className="truncate">{linkedFormId} ile eşleştirildi.</span>
                                 <button type="button" className="text-emerald-100/80 transition-colors hover:text-emerald-50" onClick={() => handleRequestLink("")}>Kaldır</button>
                             </div>
                         </motion.div>
