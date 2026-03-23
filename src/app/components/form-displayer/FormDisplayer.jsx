@@ -1,16 +1,11 @@
 "use client";
 
-import { useRef, useState, useMemo, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { FormDisplayerHeader, FormRespondentBadge } from "./components/FormDisplayerComponents";
 import { FormResponseStatus } from "./components/FormResponseStatus";
-import { useSubmitFormMutation } from "@/lib/hooks/useForm";
-import { useDeleteResponseDraftMutation } from "@/lib/hooks/useDraft";
-import { useResponseDraftAutoSave } from "./hooks/useResponseDraftAutoSave";
+import { useFormDisplayer } from "./hooks/useFormDisplayer";
 import { FormStatusDisplayer } from "../FormStatusHandler";
 import Background from "../Background";
-import { getVisibleFields } from "./components/conditionChecker";
 import { Loader2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -56,81 +51,20 @@ function DraftPrompt({ savedAt, onDiscard, isDiscarding }) {
 }
 
 export default function FormDisplayer({ form, step, draft = null }) {
-  const schema = Array.isArray(form?.schema) ? form.schema : [];
-  const title = form?.title ?? "";
-  const description = form?.description ?? "";
+  const {
+    state, schema, visibleFields,
+    isAuthed, isDiscarding, isAnyFileUploading, isSubmitting, lastSavedAt,
+    handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields,
+  } = useFormDisplayer(form, step, draft);
+
+  const { form: activeForm, step: activeStep, values: formValues, submissionState, submissionStatus, errorMessage, missingFieldIds, draftPromptVisible } = state;
+
+  const title = activeForm?.title ?? "";
+  const description = activeForm?.description ?? "";
   const hasSchema = schema.length > 0;
+  const isFinished = submissionState !== null;
 
-  const { status } = useSession();
-  const isAuthed = status === "authenticated";
-
-  const submitMutation = useSubmitFormMutation();
-  const { mutate: deleteDraft, isPending: isDiscarding } = useDeleteResponseDraftMutation();
-
-  const [formValues, setFormValues] = useState({});
-  const [submissionState, setSubmissionState] = useState(null);
-  const [submissionStatus, setSubmissionStatus] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [missingFieldIds, setMissingFieldIds] = useState([]);
-  const [uploadingFields, setUploadingFields] = useState({});
-  const [draftPromptVisible, setDraftPromptVisible] = useState(false);
-  const draftAppliedRef = useRef(false);
-  const missingTimeoutRef = useRef(null);
-
-  const startTimeRef = useRef(null);
-
-  useEffect(() => {
-    startTimeRef.current = Date.now();
-  }, []);
-
-  useEffect(() => {
-    if (draftAppliedRef.current || !draft?.responses) return;
-    draftAppliedRef.current = true;
-    const restored = {};
-    draft.responses.forEach((r) => {
-      try { restored[r.id] = JSON.parse(r.answer); }
-      catch { restored[r.id] = r.answer; }
-    });
-    setFormValues(restored);
-    setDraftPromptVisible(true);
-    if (draft.timeSpent && startTimeRef.current) {
-      startTimeRef.current = Date.now() - draft.timeSpent * 1000;
-    }
-  }, [draft]);
-
-  const { lastSavedAt } = useResponseDraftAutoSave(
-    form.id, formValues, schema, startTimeRef,
-    isAuthed && !draftPromptVisible && !submissionState
-  );
-
-  const visibleFields = useMemo(() => {
-    return getVisibleFields(schema, formValues);
-  }, [schema, formValues]);
-
-  const handleValueChange = (fieldId, value) => {
-    setFormValues((prev) => ({ ...prev, [fieldId]: value }));
-    if (errorMessage) setErrorMessage(null);
-    if (draftPromptVisible) setDraftPromptVisible(false);
-  };
-
-  const handleUploadStateChange = (fieldId, isUploading) => {
-    setUploadingFields((prev) => ({ ...prev, [fieldId]: isUploading }));
-  };
-
-  const isAnyFileUploading = Object.values(uploadingFields).some((status) => status === true);
-
-  const handleDiscardDraft = useCallback(() => {
-    setFormValues({});
-    startTimeRef.current = Date.now();
-    deleteDraft(form.id, {
-      onSuccess: () => setDraftPromptVisible(false),
-      onError: () => setDraftPromptVisible(false),
-    });
-  }, [form.id, deleteDraft]);
-
-  const handleSubmit = () => {
-    setErrorMessage(null);
-
+  const onSubmit = () => {
     setTimeout(() => {
       const missingFields = [];
 
@@ -153,34 +87,13 @@ export default function FormDisplayer({ form, step, draft = null }) {
       });
 
       if (missingFields.length > 0) {
-        setErrorMessage("Eksik alanları doldurunuz!");
-
-        if (missingTimeoutRef.current) {
-          clearTimeout(missingTimeoutRef.current);
-        }
-        setMissingFieldIds(missingFields);
-        missingTimeoutRef.current = setTimeout(() => {
-          setMissingFieldIds([]);
-          missingTimeoutRef.current = null;
-        }, 2000);
-
+        showMissingFields(missingFields);
         setTimeout(() => {
-          const firstMissingId = missingFields[0];
-          const element = document.getElementById(firstMissingId);
+          const element = document.getElementById(missingFields[0]);
           if (element) element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
         }, 150);
-
-        setTimeout(() => {
-          setErrorMessage(null);
-        }, 2000);
         return;
       }
-
-      if (missingTimeoutRef.current) {
-        clearTimeout(missingTimeoutRef.current);
-        missingTimeoutRef.current = null;
-      }
-      setMissingFieldIds([]);
 
       const formattedResponses = visibleFields.map((field) => {
         let rawValue = formValues[field.id];
@@ -234,30 +147,9 @@ export default function FormDisplayer({ form, step, draft = null }) {
         return { id: field.id, type: field.type, question: field.props?.question || "", answer: finalAnswer };
       });
 
-      const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-
-      const payload = { formId: form.id, responses: formattedResponses, timeSpent: timeSpentInSeconds };
-
-      submitMutation.mutate(payload, {
-        onSuccess: (response) => {
-          if (response?.status === 10) {
-            setSubmissionState("pending");
-            setSubmissionStatus(10);
-          } else {
-            setSubmissionState("completed");
-          }
-        },
-        onError: () => {
-          setErrorMessage("Bir hata oluştu.");
-          setTimeout(() => {
-            setErrorMessage(null);
-          }, 2000);
-        },
-      });
+      handleSubmit(formattedResponses);
     }, 100);
   };
-
-  const isFinished = submissionState !== null;
 
   return (
     <div className="relative h-screen w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
@@ -274,6 +166,12 @@ export default function FormDisplayer({ form, step, draft = null }) {
 
       <div className={`relative z-10 flex min-h-full w-full flex-col items-center ${isFinished ? "justify-start" : "justify-center pt-12 pb-8 px-4 sm:px-6"}`}>
 
+        {activeStep > 0 && (
+          <div className="w-full max-w-2xl mt-8 mb-4">
+            <FormResponseStatus step={activeStep} status={submissionStatus} />
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {!isFinished ? (
             <motion.div key="form-wrapper" className="w-full max-w-2xl flex flex-col items-center"
@@ -289,10 +187,6 @@ export default function FormDisplayer({ form, step, draft = null }) {
 
             <div className="w-full rounded-3xl border border-white/10 bg-black/20 shadow-2xl">
               <motion.div className="flex flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
-
-                <motion.div variants={itemVariants}>
-                  <FormResponseStatus step={step} />
-                </motion.div>
 
                 <motion.div variants={itemVariants}>
                   <FormDisplayerHeader title={title} description={description} />
@@ -349,11 +243,11 @@ export default function FormDisplayer({ form, step, draft = null }) {
                     </AnimatePresence>
 
                     <motion.div variants={itemVariants} className="mt-6 flex flex-col items-end gap-2">
-                      <motion.button onClick={handleSubmit} disabled={submitMutation.isPending || errorMessage || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      <motion.button onClick={onSubmit} disabled={isSubmitting || errorMessage || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none
-                        ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : submitMutation.isPending ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-pink-300/30 border-pink-200/40 hover:bg-pink-200/60"}`}
+                        ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-pink-300/30 border-pink-200/40 hover:bg-pink-200/60"}`}
                       >
-                        {errorMessage ? (errorMessage) : submitMutation.isPending ? (<Loader2 className="animate-spin" size={16} />) : ("Yanıtları Gönder")}
+                        {errorMessage ? (errorMessage) : isSubmitting ? (<Loader2 className="animate-spin" size={16} />) : ("Yanıtları Gönder")}
                       </motion.button>
                       {isAuthed && (
                         <p className={`flex items-center gap-1 text-[10px] mr-1 transition-opacity duration-300 ${lastSavedAt ? "text-neutral-500 opacity-100" : "opacity-0 pointer-events-none"}`}>
@@ -375,7 +269,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
             <motion.div key="success-screen" className="w-full"
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <FormStatusDisplayer state={submissionState} step={step} status={submissionStatus} />
+              <FormStatusDisplayer state={submissionState} step={activeStep} />
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,13 +1,12 @@
 "use client";
 
-import { FormResponseStatus } from "./form-displayer/components/FormResponseStatus";
 import { AnimatePresence, motion } from "framer-motion";
 import { signIn } from "next-auth/react";
 import { FilePenLine, FileCheckIcon, FileClock, FileLock2, Loader2, Shredder, FileSearchCorner, FileXCorner } from "lucide-react";
 import LoginButton from "./utils/LoginButton";
 import StateCard from "./StateCard";
 
-const FORM_ACCESS_STATUS = {
+export const FORM_ACCESS_STATUS = {
     AVAILABLE: 200,
     PENDING_APPROVAL: 600,
     REQUIRES_PARENT_APPROVAL: 603,
@@ -103,7 +102,7 @@ const formatReviewDate = (value) => {
     return date.toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
 };
 
-export function FormStatusDisplayer({ state, message, step, status, reviewNote, reviewedAt, variant = "form" }) {
+export function FormStatusDisplayer({ state, message, step, reviewNote, reviewedAt, variant = "form" }) {
     const configSet = variant === "response" ? responseStateConfigs : stateConfigs;
     const config = configSet[state];
 
@@ -124,12 +123,6 @@ export function FormStatusDisplayer({ state, message, step, status, reviewNote, 
         <motion.div key={state} className="flex min-h-[85vh] w-full flex-col items-center p-4"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
         >
-            {step > 0 && state !== "loading" && (
-                <div className="w-full max-w-2xl mt-8 mb-auto">
-                    <FormResponseStatus step={step} status={status} />
-                </div>
-            )}
-
             <StateCard title={config.title} description={description} Icon={Icon} isLoading={state === "loading"}>
                 {showReviewDetails && (
                     <div className={`rounded-xl border mx-auto px-4 py-3 max-w-xs text-left bg-neutral-800/50 border-neutral-700`}>
@@ -156,7 +149,7 @@ export function FormStatusDisplayer({ state, message, step, status, reviewNote, 
                 )}
             </StateCard>
 
-            {step > 0 && state !== "loading" && <div className="mb-auto hidden sm:block h-10"></div>}
+            {step > 0 && <div className="mb-auto hidden sm:block h-10"></div>}
         </motion.div>
     );
 }
@@ -221,7 +214,6 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
     };
 
     const uiState = getUiState();
-    const status = data?.status;
 
     if (uiState === "success") {
         return renderForm(data);
@@ -229,8 +221,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
 
     return (
         <AnimatePresence mode="wait">
-            <FormStatusDisplayer key={uiState} state={uiState} step={step} status={status} reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant} />
+            <FormStatusDisplayer key={uiState} state={uiState} step={step} reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant} />
         </AnimatePresence>
     );
 }
-

@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Timer, X } from "lucide-react";
+import { FORM_ACCESS_STATUS } from "../../FormStatusHandler";
 
 const steps = [
   { key: "parent", label: "Ana Form" },
@@ -13,7 +14,7 @@ export function FormResponseStatus({ step, status }) {
 
   if (currentStep <= 0) return null;
 
-  const activeIndex = Math.min(currentStep - 1, steps.length - 1);
+  const activeIndex = currentStep <= 2 ? 0 : currentStep <= 4 ? 1 : 2;
 
   return (
     <div className="w-full rounded-xl px-4 py-4">
@@ -28,7 +29,7 @@ export function FormResponseStatus({ step, status }) {
             <li key={step.key} className={`flex items-center ${isLastStep ? "w-auto" : "w-full"}`}>
               <div className="flex items-center gap-3 relative">
                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-all duration-300 text-white ${ isOn ? "border-indigo-500 bg-indigo-400" : "border-neutral-700 bg-neutral-900 text-neutral-500" }`}>
-                  {isCompleted || (isActive && isLastStep && currentStep === 3) ? ( <Check className="h-4 w-4" /> ) : (isActive && status === 10) ? ( <Timer className="h-4 w-4" /> ) : (isActive && status === 21) ? (<X className="h-4 w-4"/>) : ( idx + 1 )}
+                  {isCompleted || (isActive && isLastStep && currentStep >= 5) ? ( <Check className="h-4 w-4" /> ) : (isActive && status === FORM_ACCESS_STATUS.PENDING_APPROVAL) ? ( <Timer className="h-4 w-4" /> ) : (isActive && status === FORM_ACCESS_STATUS.DECLINED) ? (<X className="h-4 w-4"/>) : ( idx + 1 )}
                 </span>
                 <span className={`whitespace-nowrap text-sm font-medium transition-colors ${ isOn ? "text-neutral-100" : "text-neutral-500"} ${ isActive ? "block" : "hidden sm:block" }`}>
                   {step.label}
