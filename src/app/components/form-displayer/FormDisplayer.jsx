@@ -164,17 +164,16 @@ export default function FormDisplayer({ form, step, draft = null }) {
         )}
       </AnimatePresence>
 
-      <div className={`relative z-10 flex min-h-full w-full flex-col items-center ${isFinished ? "justify-start" : "justify-center pt-12 pb-8 px-4 sm:px-6"}`}>
+      <div className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6">
 
-        {activeStep > 0 && (
-          <div className="w-full max-w-2xl mt-8 mb-4">
-            <FormResponseStatus step={activeStep} status={submissionStatus} />
-          </div>
-        )}
+        <div className="w-full max-w-2xl mt-8 mb-4 shrink-0">
+          <FormResponseStatus step={activeStep} status={submissionStatus} />
+        </div>
 
+        <div className="flex-1 w-full flex flex-col items-center">
         <AnimatePresence mode="wait">
           {!isFinished ? (
-            <motion.div key="form-wrapper" className="w-full max-w-2xl flex flex-col items-center"
+            <motion.div key="form-wrapper" className="w-full max-w-2xl flex flex-1 flex-col items-center"
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.3 } }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
             >
@@ -185,8 +184,8 @@ export default function FormDisplayer({ form, step, draft = null }) {
                 <FormRespondentBadge />
               </motion.div>
 
-            <div className="w-full rounded-3xl border border-white/10 bg-black/20 shadow-2xl">
-              <motion.div className="flex flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
+            <div className="w-full flex-1 flex flex-col rounded-3xl border border-white/10 bg-black/20 shadow-2xl">
+              <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
 
                 <motion.div variants={itemVariants}>
                   <FormDisplayerHeader title={title} description={description} />
@@ -200,6 +199,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
 
                 {hasSchema ? (
                   <>
+                    <div className="flex-1 flex flex-col justify-center">
                     <AnimatePresence mode="sync" initial={false}>
                       {visibleFields.map((field, index) => {
                         const entry = REGISTRY[field.type];
@@ -210,10 +210,8 @@ export default function FormDisplayer({ form, step, draft = null }) {
                         const isMissing = missingFieldIds.includes(field.id);
 
                         return (
-                          <motion.div key={field.id} id={field.id}
-                            layout="position"
-                            transition={{ layout: { type: "spring", stiffness: 300, damping: 30 } }}
-                            initial={{ opacity: 0, height: 0, scale: 0.97 }}
+                          <motion.div key={field.id} id={field.id} layout="position"
+                            transition={{ layout: { type: "spring", stiffness: 300, damping: 30 } }} initial={{ opacity: 0, height: 0, scale: 0.97 }}
                             animate={{
                               opacity: 1, height: "auto", scale: 1,
                               transition: { duration: 0.35, ease: "easeOut", height: { duration: 0.3 }, opacity: { duration: 0.25, delay: 0.1 } }
@@ -241,8 +239,9 @@ export default function FormDisplayer({ form, step, draft = null }) {
                         );
                       })}
                     </AnimatePresence>
+                    </div>
 
-                    <motion.div variants={itemVariants} className="mt-6 flex flex-col items-end gap-2">
+                    <motion.div variants={itemVariants} className="mt-auto flex flex-col items-end gap-2">
                       <motion.button onClick={onSubmit} disabled={isSubmitting || errorMessage || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none
                         ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-pink-300/30 border-pink-200/40 hover:bg-pink-200/60"}`}
@@ -258,7 +257,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
                     </motion.div>
                   </>
                 ) : (
-                  <motion.div variants={itemVariants} className="flex min-h-[30vh] items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 text-sm text-neutral-400">
+                  <motion.div variants={itemVariants} className="flex flex-1 min-h-[30vh] items-center justify-center text-sm text-neutral-400">
                     Bu formda gösterilecek soru yok.
                   </motion.div>
                 )}
@@ -266,50 +265,50 @@ export default function FormDisplayer({ form, step, draft = null }) {
             </div>
             </motion.div>
           ) : (
-            <motion.div key="success-screen" className="w-full"
+            <motion.div key="success-screen" className="w-full flex-1 flex flex-col"
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
             >
               <FormStatusDisplayer state={submissionState} step={activeStep} />
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
 
-        {!isFinished && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }}
-            className="mt-12 mb-8 flex flex-col items-center gap-4 text-xs font-medium text-neutral-500"
-          >
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="flex items-center gap-2">
-                <a href="https://forms.yildizskylab.com" target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100"
-                >
-                  <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
-                  <span className="text-[14px] font-semibold uppercase tracking-wide text-[#efe3fe]">SKY LAB Forms</span>
-                </a>
-                <span className="text-neutral-600">by WEBLAB</span>
-              </div>
-
-              <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
-                className="text-[10px] text-neutral-600/50 hover:text-neutral-400 -mt-1 transition-colors">
-                Developed by Fatih Naz
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }}
+          className={`shrink-0 mt-12 mb-8 flex flex-col items-center gap-4 text-xs font-medium text-neutral-500 ${isFinished ? "invisible" : ""}`}
+          aria-hidden={isFinished || undefined}
+        >
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="flex items-center gap-2">
+              <a href="https://forms.yildizskylab.com" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100"
+              >
+                <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
+                <span className="text-[14px] font-semibold uppercase tracking-wide text-[#efe3fe]">SKY LAB Forms</span>
               </a>
+              <span className="text-neutral-600">by WEBLAB</span>
             </div>
 
-            <div className="flex items-center gap-3 md:gap-4 text-[11px]">
-              <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
-                Kullanım Koşulları
-              </a>
-              <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
-              <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
-                Gizlilik Politikası
-              </a>
-              <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
-              <a href="mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi" className="transition-colors hover:text-[#efe3fe]">
-                Sorun Bildir
-              </a>
-            </div>
-          </motion.div>
-        )}
+            <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
+              className="text-[10px] text-neutral-600/50 hover:text-neutral-400 -mt-1 transition-colors">
+              Developed by Fatih Naz
+            </a>
+          </div>
+
+          <div className="flex items-center gap-3 md:gap-4 text-[11px]">
+            <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
+              Kullanım Koşulları
+            </a>
+            <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
+            <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
+              Gizlilik Politikası
+            </a>
+            <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
+            <a href="mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi" className="transition-colors hover:text-[#efe3fe]">
+              Sorun Bildir
+            </a>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

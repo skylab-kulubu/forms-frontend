@@ -13,6 +13,7 @@ export const FORM_ACCESS_STATUS = {
     COMPLETED: 201, 
     APPROVED: 601,
     DECLINED: 602,
+    FULLY_COMPLETED: 604,
     UNAUTHORIZED: 401,
     NOT_AUTHORIZED: 403,
     NOT_FOUND: 404,
@@ -44,6 +45,11 @@ const stateConfigs = {
         icon: Shredder,
         title: "Cevabınız reddedildi",
         description: "Form cevabınız yetkili tarafından reddedildi.",
+    },
+    fullyCompleted: {
+        icon: FileCheckIcon,
+        title: "Tamamlandı",
+        description: "Tüm form adımları başarıyla tamamlandı.",
     },
     requiresParent: {
         icon: FilePenLine,
@@ -207,6 +213,8 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
                 return "declined";
             case FORM_ACCESS_STATUS.PENDING_APPROVAL:
                 return "pending";
+            case FORM_ACCESS_STATUS.FULLY_COMPLETED:
+                return "fullyCompleted";
 
             default:
                 return "genericError";

@@ -12,6 +12,7 @@ function getSubmissionState(status) {
     case FORM_ACCESS_STATUS.PENDING_APPROVAL: return "pending";
     case FORM_ACCESS_STATUS.APPROVED:         return "approved";
     case FORM_ACCESS_STATUS.DECLINED:         return "declined";
+    case FORM_ACCESS_STATUS.FULLY_COMPLETED:  return "fullyCompleted";
     default:                                  return "completed";
   }
 }
@@ -92,6 +93,14 @@ export function useFormDisplayer(form, step, draft) {
 
   useEffect(() => {
     if (!linkedFormData?.data) return;
+    if (linkedFormData?.status === FORM_ACCESS_STATUS.FULLY_COMPLETED) {
+      dispatch({
+        type: "SUBMIT_SUCCESS",
+        status: linkedFormData.status,
+        step: linkedFormData.data?.step,
+      });
+      return;
+    }
     dispatch({ type: "LOAD_LINKED_FORM", form: linkedFormData.data.form, step: linkedFormData.data.step });
     draftAppliedRef.current = false;
     startTimeRef.current = Date.now();
