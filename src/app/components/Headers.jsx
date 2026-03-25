@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { LogOut, LayoutDashboard } from "lucide-react";
+import { LogOut } from "lucide-react";
 import Link from "next/link";
 import LoginButton from "./utils/LoginButton";
 import HoverCard from "./utils/HoverCard";
@@ -55,44 +55,38 @@ export default function MainHeader() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
               <LoginButton onClick={handleLogin} disabled={status === "loading"} label="Giriş Yap" />
             </motion.div>
+          ) : isAdmin ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+              <Link href="/admin">
+                <LoginButton label="Admin Paneli" hoverIcon="arrow" />
+              </Link>
+            </motion.div>
           ) : (
-            <>
-              {isAdmin && (
-                <Link href="/admin">
-                  <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }} title="Admin Paneli"
-                    className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 text-neutral-400 p-2.25 sm:px-2.5 sm:py-1.5 text-[11px] font-medium hover:bg-white/10 hover:text-neutral-200 transition-colors"
-                  >
-                    <LayoutDashboard size={13} />
-                    <span className="hidden sm:inline">Admin</span>
-                  </motion.div>
-                </Link>
-              )}
-              <HoverCard user={user}>
-                <div className="flex items-center gap-2 rounded-xl bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5">
-                  <motion.div initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
-                    className="text-right hidden min-[400px]:inline"
-                  >
-                    <p className="text-[12.5px] font-semibold text-neutral-100 truncate max-w-[140px]">
-                      Merhaba, {name}
-                    </p>
-                  </motion.div>
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
-                    className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-neutral-800 text-xs font-semibold text-neutral-200"
-                  >
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
-                    ) : (
-                      <span>{initial}</span>
-                    )}
-                  </motion.div>
-                  <motion.button type="button" onClick={handleLogout} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
-                    className="rounded-lg bg-transparent text-xs py-1 font-semibold text-neutral-400 transition hover:text-pink-200"
-                  >
-                    <LogOut size={14} />
-                  </motion.button>
-                </div>
-              </HoverCard>
-            </>
+            <HoverCard user={user}>
+              <div className="flex items-center gap-2 rounded-xl bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5">
+                <motion.div initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
+                  className="text-right hidden min-[400px]:inline"
+                >
+                  <p className="text-[12.5px] font-semibold text-neutral-100 truncate max-w-[140px]">
+                    Merhaba, {name}
+                  </p>
+                </motion.div>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
+                  className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-neutral-800 text-xs font-semibold text-neutral-200"
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span>{initial}</span>
+                  )}
+                </motion.div>
+                <motion.button type="button" onClick={handleLogout} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
+                  className="rounded-lg bg-transparent text-xs py-1 font-semibold text-neutral-400 transition hover:text-pink-200"
+                >
+                  <LogOut size={14} />
+                </motion.button>
+              </div>
+            </HoverCard>
           )}
         </div>
       </div>
