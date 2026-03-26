@@ -5,10 +5,10 @@ import { motion } from "framer-motion";
 import {
   FilePlus, GripVertical, Settings,
   Type, AlignLeft, ToggleRight, ChevronDown, ListChecks,
-  Calendar, Clock, Upload, Link2, SlidersHorizontal, Table,
+  Calendar, Clock, Upload, Link2, SlidersHorizontal, Table, SeparatorHorizontal,
   Eye, EyeOff, UserPlus, Users, ShieldCheck,
   Archive, Filter, GitBranch, CheckCircle, XCircle,
-  CircleDot, MessageSquare, ArrowRightLeft, Save,
+  CircleDot, MessageSquare, ArrowRightLeft, Save, UserRound,
 } from "lucide-react";
 import {
   DemoFormCreate, DemoDragDrop, DemoConditional, DemoSettings,
@@ -32,7 +32,7 @@ const sections = [
 ];
 
 const componentTypes = [
-  { icon: Type, name: "Kısa Metin", desc: "Tek satırlık metin girişi" },
+  { icon: Type, name: "Kısa Metin", desc: "Tek satırlık metin girişi (metin, isim, e-posta, telefon, sayı)" },
   { icon: AlignLeft, name: "Uzun Metin", desc: "Çok satırlı metin alanı" },
   { icon: ToggleRight, name: "Toggle", desc: "Evet/Hayır seçimi" },
   { icon: ChevronDown, name: "Açılır Liste", desc: "Tek seçimlik menü" },
@@ -43,6 +43,7 @@ const componentTypes = [
   { icon: Link2, name: "Link", desc: "URL girişi" },
   { icon: SlidersHorizontal, name: "Kaydırıcı", desc: "Sayısal aralık seçici" },
   { icon: Table, name: "Matris / Tablo", desc: "Grid yapı, anket soruları" },
+  { icon: SeparatorHorizontal, name: "Ayıraç", desc: "Bölüm ayırıcı başlık ve açıklama" },
 ];
 
 function Tip({ children }) {
@@ -211,7 +212,7 @@ export default function HowToUsePage() {
             {/* 3 - Bileşen Türleri */}
             <section id="bilesen-turleri" className="scroll-mt-6">
               <SectionHeader icon={ListChecks} title="Bileşen Türleri" />
-              <p className="text-sm text-neutral-400 mb-4">Form düzenleyicisinde kullanabileceğiniz <strong className="text-neutral-200">11 farklı bileşen türü</strong>:</p>
+              <p className="text-sm text-neutral-400 mb-4">Form düzenleyicisinde kullanabileceğiniz <strong className="text-neutral-200">12 farklı bileşen türü</strong>:</p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {componentTypes.map((comp) => (
                   <div key={comp.name} className="flex items-center gap-3 rounded-lg border border-white/6 bg-white/2 px-3 py-2.5">
@@ -222,6 +223,17 @@ export default function HowToUsePage() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-5 space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><SeparatorHorizontal size={12} className="text-skylab-400" /> Ayıraç</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Formunuzu bölümlere ayırmak için kullanın. Sadece başlık ve açıklama alır, soru numarası almaz ve yanıtlara dahil edilmez. Koşula bağlanabilir ancak başka bir koşulun kaynağı olamaz.</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-neutral-200 flex items-center gap-1.5"><UserRound size={12} className="text-skylab-400" /> Otomatik Doldurma (İsim & E-posta)</p>
+                  <p className="text-xs text-neutral-500 ml-[18px]">Kısa metin bileşeninde veri tipi olarak "İsim" veya "E-posta" seçildiğinde, giriş yapmış kullanıcıların bilgileri oturumdan otomatik doldurulur. İsim alanı salt okunurdur, e-posta alanı düzenlenebilir.</p>
+                </div>
               </div>
             </section>
 
@@ -249,7 +261,7 @@ export default function HowToUsePage() {
                 ))}
               </div>
 
-              <Tip>İlk soruya koşul eklenemez çünkü bağımlı olacağı önceki bir soru yoktur.</Tip>
+              <Tip>İlk soruya koşul eklenemez çünkü bağımlı olacağı önceki bir soru yoktur. Ayıraç bileşenleri koşul kaynağı olarak seçilemez.</Tip>
             </SectionBlock>
 
             <div className="h-px bg-white/5" />

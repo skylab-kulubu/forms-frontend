@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Clock, X } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { FieldShell } from "./FieldShell";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import TimePicker from "../utils/TimePicker";
 
@@ -45,7 +46,7 @@ export function CreateFormTimePicker({ questionNumber, props, onPropsChange, rea
         <label htmlFor="tp-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
-        <input id="tp-question" type="text" {...bind("question")}
+        <AutoResizeTextarea id="tp-question" {...bind("question")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Sorunuzu buraya yazın."
         />
@@ -55,7 +56,7 @@ export function CreateFormTimePicker({ questionNumber, props, onPropsChange, rea
         <label htmlFor="tp-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
-        <input id="tp-description" type="text" {...bind("description")}
+        <AutoResizeTextarea id="tp-description" {...bind("description")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Açıklamanızı buraya yazın."
         />

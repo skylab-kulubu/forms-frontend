@@ -9,8 +9,9 @@ import { CreateFormLink, DisplayFormLink } from "@/app/components/form-component
 import { CreateFormSlider, DisplayFormSlider } from "@/app/components/form-components/FormSlider";
 import { CreateFormMatrix, DisplayFormMatrix } from "@/app/components/form-components/FormMatrix";
 import { CreateFormToggle, DisplayFormToggle } from "@/app/components/form-components/FormToggle";
+import { CreateFormSeparator, DisplayFormSeparator } from "@/app/components/form-components/FormSeparator";
 
-import { Type, AlignLeft, ChevronsUpDown, ListChecks, Calendar, Clock, Paperclip, Link, SlidersHorizontal, Grid3X3, ToggleRight } from "lucide-react";
+import { Type, AlignLeft, ChevronsUpDown, ListChecks, Calendar, Clock, Paperclip, Link, SlidersHorizontal, Grid3X3, ToggleRight, SeparatorHorizontal } from "lucide-react";
 
 export const REGISTRY = {
   short_text: {
@@ -78,6 +79,12 @@ export const REGISTRY = {
     svg: "/assets/components/matrix.svg",
     defaults: { question: "", description: "", required: false, rows: ["Satır 1", "Satır 2", "Satır 3"], columns: ["Sütun 1", "Sütun 2", "Sütun 3"] },
     Create: CreateFormMatrix, Display: DisplayFormMatrix
+  },
+  separator: {
+    label: "Ayıraç",
+    svg: "/assets/components/separator.svg",
+    defaults: { title: "", description: "" },
+    Create: CreateFormSeparator, Display: DisplayFormSeparator
   }
 };
 
@@ -93,4 +100,5 @@ export const COMPONENTS = [
   { type: "link", label: "Bağlantı", svg: "/assets/components/link.svg", icon: Link },
   { type: "slider", label: "Aralık (Slider)", svg: "/assets/components/slider.svg", icon: SlidersHorizontal },
   { type: "matrix", label: "Matris Tablo", svg: "/assets/components/matrix.svg", icon: Grid3X3 },
+  { type: "separator", label: "Ayıraç", svg: "/assets/components/separator.svg", icon: SeparatorHorizontal },
 ];

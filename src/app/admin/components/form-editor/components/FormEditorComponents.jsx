@@ -77,7 +77,11 @@ export function CanvasItem({ field, index, onUpdate, schema }) {
     const entry = REGISTRY[field.type];
     const FormComponent = entry?.Create;
 
-    const availableFields = schema ? schema.slice(0, index - 1).map(f => ({
+    const isSeparator = field.type === "separator";
+    const questionNumber = isSeparator ? "—" : schema ? schema.slice(0, index).filter(f => f.type !== "separator").length : index;
+
+    const availableFields = schema ? schema.slice(0, index - 1).filter(f => f.type !== "separator")
+          .map(f => ({
             id: f.id,
             title: f.props.question || "İsimsiz Soru",
             type: f.type,
@@ -100,7 +104,7 @@ export function CanvasItem({ field, index, onUpdate, schema }) {
             className="cursor-grab active:cursor-grabbing"
         >
             {FormComponent ? (
-                <FormComponent questionNumber={index} props={field.props} 
+                <FormComponent questionNumber={questionNumber} props={field.props}
                     onPropsChange={(next) => onUpdate(field.id, { props: next })} 
                     condition={field.condition}
                     onConditionChange={(cond) => onUpdate(field.id, { condition: cond })}

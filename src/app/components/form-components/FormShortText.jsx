@@ -1,16 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { FieldShell } from "./FieldShell";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { Type, Mail, Phone, Hash } from "lucide-react";
+import { Type, Mail, Phone, Hash, UserRound } from "lucide-react";
 
 const INPUT_TYPES = [
   { id: "text", label: "Düz Metin", icon: Type, placeholder: "Yanıtınızı yazın." },
+  { id: "name", label: "İsim", icon: UserRound, placeholder: "Adınızı yazın." },
   { id: "email", label: "E-Posta", icon: Mail, placeholder: "ornek@mail.com" },
   { id: "phone", label: "Telefon", icon: Phone, placeholder: "+90 512 345 67 89" },
   { id: "number", label: "Sayı", icon: Hash, placeholder: "Sayı girin." }
 ];
+
+function normalizeName(name) {
+  if (!name) return "";
+  return name.trim().split(/\s+/).map(w => w.charAt(0).toLocaleUpperCase("tr-TR") + w.slice(1).toLocaleLowerCase("tr-TR")).join(" ");
+}
 
 export function CreateFormShortText({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
@@ -20,17 +28,17 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
     <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
-        <input type="text" {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30" placeholder="Sorunuzu buraya yazın." />
+        <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30" placeholder="Sorunuzu buraya yazın." />
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
-        <input type="text" {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30" placeholder="Açıklamanızı buraya yazın." />
+        <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30" placeholder="Açıklamanızı buraya yazın." />
       </div>
 
       <div className="flex flex-col gap-1.5 pt-2">
         <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Geçerli Veri Tipi</label>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {INPUT_TYPES.map((type) => {
             const Icon = type.icon;
             const isActive = currentType === type.id;
@@ -50,16 +58,37 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
 }
 
 export function DisplayFormShortText({ question, questionNumber, description, required = false, inputType = "text", value, onChange, missing = false }) {
+  const { data: session, status } = useSession();
+  const isAuthed = status === "authenticated";
+
+  const autoFilled = isAuthed && inputType === "name" && session?.user?.fullName ? normalizeName(session.user.fullName) : null;
+
+  const autoDefault = isAuthed && inputType === "email" && session?.user?.email ? session.user.email : null;
+
   const [internalValue, setInternalValue] = useState(value || "");
+  const [wasAutoFilled, setWasAutoFilled] = useState(false);
   const currentValue = value !== undefined ? value : internalValue;
+  const isReadOnly = !!autoFilled;
+
+  useEffect(() => {
+    const initial = autoFilled || autoDefault;
+    if (initial && onChange && value !== initial) {
+      onChange({ target: { value: initial } });
+      if (autoDefault) setWasAutoFilled(true);
+    }
+  }, [autoFilled, autoDefault]);
+
   const inputBorderClass = missing ? "border-red-400/60 focus:border-red-400 focus:ring-red-400/20" : "border-white/10 focus:border-white/30 focus:ring-white/20";
 
   const currentTypeObj = INPUT_TYPES.find(t => t.id === inputType) || INPUT_TYPES[0];
   const Icon = currentTypeObj.icon;
   const placeholderText = currentTypeObj.placeholder;
+  const htmlInputType = inputType === "name" ? "text" : inputType;
 
   const commit = (e) => {
+    if (isReadOnly) return;
     const next = e.target.value;
+    if (wasAutoFilled) setWasAutoFilled(false);
     if (onChange) onChange({ target: { value: next } });
     else setInternalValue(next);
   };
@@ -88,13 +117,14 @@ export function DisplayFormShortText({ question, questionNumber, description, re
               <Icon size={16} strokeWidth={2} />
             </div>
 
-            <input type={inputType} value={currentValue} onChange={commit} placeholder={placeholderText}
-              className={`block w-full rounded-lg border ${inputBorderClass} bg-neutral-900/60 pl-10 pr-4 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition focus:ring-2`}
+            <input type={htmlInputType} value={autoFilled || currentValue} onChange={commit} readOnly={isReadOnly} placeholder={placeholderText}
+              className={`block w-full rounded-lg border ${inputBorderClass} bg-neutral-900/60 pl-10 pr-4 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition focus:ring-2 ${isReadOnly ? "cursor-default opacity-70" : ""}`}
             />
           </div>
+          {(isReadOnly || wasAutoFilled) && <span className="px-0.5 text-[11px] text-neutral-500">Oturumunuzdan otomatik dolduruldu</span>}
         </div>
 
-        {required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1.5">Zorunlu alan</span>}
+        {required && !isReadOnly && <span className="px-0.5 text-[11px] text-neutral-500 mt-1.5">Zorunlu alan</span>}
       </div>
     </div>
   );

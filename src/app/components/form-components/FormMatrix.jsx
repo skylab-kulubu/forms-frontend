@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Plus } from "lucide-react";
 import { FieldShell } from "./FieldShell";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
 export function CreateFormMatrix({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
@@ -24,7 +25,7 @@ export function CreateFormMatrix({ questionNumber, props, onPropsChange, readOnl
         <FieldShell number={questionNumber} title="Matris / Tablo" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
             <div className="flex flex-col gap-1.5">
                 <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
-                <input type="text" {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30" placeholder="Sorunuzu buraya yazın." />
+                <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30" placeholder="Sorunuzu buraya yazın." />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { FieldShell } from "./FieldShell";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
 export function CreateFormLongText({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
@@ -13,7 +14,7 @@ export function CreateFormLongText({ questionNumber, props, onPropsChange, readO
         <label htmlFor="short-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
-        <input id="short-question" type="text" {...bind("question")}
+        <AutoResizeTextarea id="short-question" {...bind("question")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Sorunuzu buraya yazın."
         />
@@ -23,7 +24,7 @@ export function CreateFormLongText({ questionNumber, props, onPropsChange, readO
         <label htmlFor="short-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
-        <input id="short-description" type="text" {...bind("description")}
+        <AutoResizeTextarea id="short-description" {...bind("description")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Açıklamanızı buraya yazın."
         />

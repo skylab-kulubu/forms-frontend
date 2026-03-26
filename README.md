@@ -27,7 +27,7 @@
 ## Features
 
 ### Form Builder
-- **13 field types** - Short text, long text, toggle, dropdown, multi-choice, date picker, time picker, file upload, link, slider, matrix, and more
+- **12 field types** - Short text, long text, toggle, dropdown, multi-choice, date picker, time picker, file upload, link, slider, matrix, separator, and more
 - **Drag-and-drop** reordering with smooth animations (dnd-kit)
 - **Rich text editor** for form descriptions (TipTap)
 - **Conditional logic** - Show or hide fields based on user responses
@@ -35,6 +35,7 @@
 - **Live preview** - See your form as you build it
 - **Auto-save drafts** - Editor changes are automatically saved as drafts with debounced caching; restore or discard on next session
 - **Undo system** - Debounced history tracking with one-click undo
+- **Session auto-fill** - Name and email fields are automatically populated from the user's session
 
 ### Reusable Component Groups
 - Save commonly used field sets as **reusable templates**
@@ -127,7 +128,7 @@
 
 | #  | Type             | Description                                    |
 | -- | ---------------- | ---------------------------------------------- |
-| 1  | **Short Text**   | Single-line text input                         |
+| 1  | **Short Text**   | Single-line input with session auto-fill       |
 | 2  | **Long Text**    | Multi-line textarea                            |
 | 3  | **Toggle**       | Boolean yes/no switch                          |
 | 4  | **Combobox**     | Dropdown select with custom option support     |
@@ -138,9 +139,10 @@
 | 9  | **Link**         | URL input with validation                      |
 | 10 | **Slider**       | Numeric range selector with min/max/step       |
 | 11 | **Matrix**       | Grid/table for survey-style rating questions   |
+| 12 | **Separator**    | Section divider with title & description       |
 
 Each field type supports:
-- Required / optional validation
+- Required / optional validation (except separator)
 - Custom placeholder text
 - Conditional display logic
 - Linking to other forms

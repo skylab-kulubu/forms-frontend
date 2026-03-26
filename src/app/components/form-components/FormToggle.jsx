@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { FieldShell } from "./FieldShell";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
 export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
     const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
 
     return (
-        <FieldShell number={questionNumber} title="Aç / Kapat (Switch)" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
+        <FieldShell number={questionNumber} title="Anahtar" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
             <div className="flex flex-col gap-1.5">
                 <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
-                <input type="text" {...bind("question")}
+                <AutoResizeTextarea {...bind("question")}
                     className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
                     placeholder="Sorunuzu buraya yazın."
                 />
@@ -19,7 +20,7 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
 
             <div className="flex flex-col gap-1.5">
                 <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
-                <input type="text" {...bind("description")}
+                <AutoResizeTextarea {...bind("description")}
                     className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
                     placeholder="Açıklamanızı buraya yazın."
                 />

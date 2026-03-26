@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsUpDown, Plus, X } from "lucide-react";
 import { FieldShell } from "./FieldShell";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import SearchPicker from "@/app/components/utils/SearchPicker";
 
@@ -54,7 +55,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
         <label htmlFor="cb-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
-        <input id="cb-question" type="text" {...bind("question")}
+        <AutoResizeTextarea id="cb-question" {...bind("question")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Sorunuzu buraya yazın."
         />
@@ -64,7 +65,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
         <label htmlFor="cb-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
-        <input id="cb-description" type="text" {...bind("description")}
+        <AutoResizeTextarea id="cb-description" {...bind("description")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Açıklamanızı buraya yazın."
         />

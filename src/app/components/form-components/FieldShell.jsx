@@ -5,7 +5,7 @@ import { GitBranch } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConditionSelector } from "../../admin/components/form-editor/components/ConditionSelector";
 
-export function FieldShell({ number, title, required, onRequiredChange, children, condition, onConditionChange, availableFields }) {
+export function FieldShell({ number, title, required, onRequiredChange, children, condition, onConditionChange, availableFields, hideRequired = false }) {
   const [showLogic, setShowLogic] = useState(false);
   const [isOverflowVisible, setIsOverflowVisible] = useState(false);
 
@@ -61,19 +61,22 @@ export function FieldShell({ number, title, required, onRequiredChange, children
             {hasActiveCondition ? "Aktif" : "Koşul"}
           </button>
 
-          <div className="h-5 w-px bg-white/10 mx-2"></div>
+          {!hideRequired && (
+            <>
+              <div className="h-5 w-px bg-white/10 mx-2"></div>
 
-
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-            <button type="button" aria-pressed={!required} onClick={() => onRequiredChange(false)}
-              className={`px-2 py-1 text-[11px] rounded-lg ${!required ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}>
-              Opsiyonel
-            </button>
-            <button type="button" aria-pressed={required} onClick={() => onRequiredChange(true)}
-              className={`px-2 py-1 text-[11px] rounded-lg ${required ? "bg-indigo-400/20 text-indigo-200" : "text-neutral-300 hover:text-neutral-200"}`}>
-              Zorunlu
-            </button>
-          </div>
+              <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+                <button type="button" aria-pressed={!required} onClick={() => onRequiredChange(false)}
+                  className={`px-2 py-1 text-[11px] rounded-lg ${!required ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}>
+                  Opsiyonel
+                </button>
+                <button type="button" aria-pressed={required} onClick={() => onRequiredChange(true)}
+                  className={`px-2 py-1 text-[11px] rounded-lg ${required ? "bg-indigo-400/20 text-indigo-200" : "text-neutral-300 hover:text-neutral-200"}`}>
+                  Zorunlu
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

@@ -69,6 +69,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
       const missingFields = [];
 
       visibleFields.forEach((field) => {
+        if (field.type === "separator") return;
         if (field.props?.required) {
           const val = formValues[field.id];
           let isEmpty = val === undefined || val === null;
@@ -95,7 +96,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
         return;
       }
 
-      const formattedResponses = visibleFields.map((field) => {
+      const formattedResponses = visibleFields.filter((field) => field.type !== "separator").map((field) => {
         let rawValue = formValues[field.id];
         if (rawValue === undefined || rawValue === null) rawValue = "";
         let finalAnswer = "";
@@ -201,43 +202,49 @@ export default function FormDisplayer({ form, step, draft = null }) {
                   <>
                     <div className="flex-1 flex flex-col justify-center">
                     <AnimatePresence mode="sync" initial={false}>
-                      {visibleFields.map((field, index) => {
-                        const entry = REGISTRY[field.type];
-                        const DisplayComponent = entry?.Display;
-                        if (!DisplayComponent) return null;
+                      {(() => {
+                        let questionCounter = 0;
+                        return visibleFields.map((field, index) => {
+                          const entry = REGISTRY[field.type];
+                          const DisplayComponent = entry?.Display;
+                          if (!DisplayComponent) return null;
 
-                        const isLast = index === visibleFields.length - 1;
-                        const isMissing = missingFieldIds.includes(field.id);
+                          const isSeparator = field.type === "separator";
+                          if (!isSeparator) questionCounter++;
 
-                        return (
-                          <motion.div key={field.id} id={field.id} layout="position"
-                            transition={{ layout: { type: "spring", stiffness: 300, damping: 30 } }} initial={{ opacity: 0, height: 0, scale: 0.97 }}
-                            animate={{
-                              opacity: 1, height: "auto", scale: 1,
-                              transition: { duration: 0.35, ease: "easeOut", height: { duration: 0.3 }, opacity: { duration: 0.25, delay: 0.1 } }
-                            }}
-                            exit={{
-                              opacity: 0, height: 0, scale: 0.97,
-                              transition: { duration: 0.25, ease: "easeIn", height: { duration: 0.3, delay: 0.05 }, opacity: { duration: 0.15 } }
-                            }}
-                            onAnimationStart={() => {
-                              const el = document.getElementById(field.id);
-                              if (el) el.style.overflow = "hidden";
-                            }}
-                            onAnimationComplete={() => {
-                              const el = document.getElementById(field.id);
-                              if (el) el.style.overflow = "visible";
-                            }}
-                            style={{ zIndex: visibleFields.length - index }}
-                            className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}
-                          >
-                            <DisplayComponent {...field.props} questionNumber={index + 1} value={formValues[field.id]}
-                              onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing}
-                              onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
-                            />
-                          </motion.div>
-                        );
-                      })}
+                          const isLast = index === visibleFields.length - 1;
+                          const isMissing = missingFieldIds.includes(field.id);
+
+                          return (
+                            <motion.div key={field.id} id={field.id} layout="position"
+                              transition={{ layout: { type: "spring", stiffness: 300, damping: 30 } }} initial={{ opacity: 0, height: 0, scale: 0.97 }}
+                              animate={{
+                                opacity: 1, height: "auto", scale: 1,
+                                transition: { duration: 0.35, ease: "easeOut", height: { duration: 0.3 }, opacity: { duration: 0.25, delay: 0.1 } }
+                              }}
+                              exit={{
+                                opacity: 0, height: 0, scale: 0.97,
+                                transition: { duration: 0.25, ease: "easeIn", height: { duration: 0.3, delay: 0.05 }, opacity: { duration: 0.15 } }
+                              }}
+                              onAnimationStart={() => {
+                                const el = document.getElementById(field.id);
+                                if (el) el.style.overflow = "hidden";
+                              }}
+                              onAnimationComplete={() => {
+                                const el = document.getElementById(field.id);
+                                if (el) el.style.overflow = "visible";
+                              }}
+                              style={{ zIndex: visibleFields.length - index }}
+                              className={`relative ${isLast || isSeparator ? "" : "border-b border-white/5 pb-6"}`}
+                            >
+                              <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionCounter} value={formValues[field.id]}
+                                onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing}
+                                onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
+                              />
+                            </motion.div>
+                          );
+                        });
+                      })()}
                     </AnimatePresence>
                     </div>
 

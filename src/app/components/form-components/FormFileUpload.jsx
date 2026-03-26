@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Upload, X, File as FileIcon, Loader2 } from "lucide-react";
 import { FieldShell } from "./FieldShell";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { uploadWithProgress } from "@/lib/apiClient";
 
@@ -53,7 +54,7 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
         <label htmlFor="file-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
-        <input id="file-question" type="text" {...bind("question")}
+        <AutoResizeTextarea id="file-question" {...bind("question")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Sorunuzu buraya yazın."
         />
@@ -63,7 +64,7 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
         <label htmlFor="file-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
-        <input id="file-description" type="text" {...bind("description")}
+        <AutoResizeTextarea id="file-description" {...bind("description")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Açıklamanızı buraya yazın."
         />

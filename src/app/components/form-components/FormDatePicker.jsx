@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { FieldShell } from "./FieldShell";
+import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { AnimatePresence } from "framer-motion";
 import DatePicker from "../utils/DatePicker";
@@ -40,7 +41,7 @@ export function CreateFormDatePicker({ questionNumber, props, onPropsChange, rea
         <label htmlFor="dp-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
-        <input id="dp-question" type="text" {...bind("question")}
+        <AutoResizeTextarea id="dp-question" {...bind("question")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Sorunuzu buraya yazın."
         />
@@ -50,7 +51,7 @@ export function CreateFormDatePicker({ questionNumber, props, onPropsChange, rea
         <label htmlFor="dp-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
-        <input id="dp-description" type="text" {...bind("description")}
+        <AutoResizeTextarea id="dp-description" {...bind("description")}
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Açıklamanızı buraya yazın."
         />
