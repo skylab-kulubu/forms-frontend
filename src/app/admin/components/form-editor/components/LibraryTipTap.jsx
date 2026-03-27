@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
-import Strike from "@tiptap/extension-strike";
-import Heading from "@tiptap/extension-heading";
 import { Bold, Heading1, Heading2, Italic, List, ListOrdered, Quote, Redo2, Underline as UnderlineIcon, Undo2, Strikethrough } from "lucide-react";
 import { useFormEditor } from "../FormEditorContext";
 
@@ -14,19 +12,17 @@ export function LibraryTipTap() {
     const { description } = state;
 
     const [isEditorEmpty, setIsEditorEmpty] = useState(!description || description === "<p></p>");
+    const lastDispatchedHTML = useRef(description || "");
 
     const editor = useEditor({
         immediatelyRender: false,
         extensions: [
             StarterKit.configure({
+                heading: { levels: [1, 2, 3] },
                 bulletList: { keepMarks: true },
                 orderedList: { keepMarks: true },
             }),
-            Heading.configure({
-                levels: [1, 2, 3],
-            }),
             Underline,
-            Strike,
         ],
         editorProps: {
             attributes: {
@@ -36,18 +32,19 @@ export function LibraryTipTap() {
         content: description || "",
         onUpdate({ editor }) {
             const html = editor.getHTML();
-            const isEmpty = editor.isEmpty;
-            setIsEditorEmpty(isEmpty);
+            setIsEditorEmpty(editor.isEmpty);
             const value = html === "<p></p>" ? "" : html;
+            lastDispatchedHTML.current = value;
             dispatch({ type: "SET_DESCRIPTION", payload: value });
         },
     });
 
     useEffect(() => {
-        if (editor && description !== editor.getHTML()) {
-            if (description === "" && editor.getHTML() === "<p></p>") return;
-            editor.commands.setContent(description);
-        }
+        if (!editor || editor.isDestroyed) return;
+        const normalizedDesc = description || "";
+        if (normalizedDesc === lastDispatchedHTML.current) return;
+        lastDispatchedHTML.current = normalizedDesc;
+        editor.commands.setContent(normalizedDesc);
     }, [description, editor]);
 
     const placeholder = "Bu alana form açıklamasını girin. Açıklama, formun ne hakkında olduğunu ve kullanıcıların ne bekleyebileceğini belirtmek için kullanılır.";
@@ -141,7 +138,8 @@ export function LibraryTipTap() {
                     const disabled = item.disabled;
 
                     return (
-                        <button key={index} type="button" onClick={item.handler}
+                        <button key={index} type="button"
+                            onMouseDown={(e) => e.preventDefault()} onClick={item.handler}
                             title={item.label} aria-label={item.label} disabled={disabled}
                             className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition 
                                 ${active ? "bg-white/15 text-neutral-100" : "hover:bg-white/5 hover:text-neutral-200"} 
