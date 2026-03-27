@@ -201,13 +201,13 @@ export function ResponseActions({ response }) {
               <h2 className="text-xs font-semibold text-neutral-200 tracking-wide">Cevap İşlemleri</h2>
               <div className="flex items-center gap-1 text-neutral-500">
                 <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" onClick={handleShare} disabled={!canShare}
-                  className={`rounded-lg p-1.5 transition-colors ${canShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-emerald-600" : shareStatus === "error" ? "text-red-600" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+                  className={`rounded-lg p-1.5 transition-colors ${canShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-skylab-400" : shareStatus === "error" ? "text-red-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
                 >
                   <Share2 size={15} />
                 </button>
                 <Popover open={isError} error={error} variant="error" align="bottom-right">
                   <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
-                    className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-indigo-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+                    className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
                   >
                     <Archive size={15} />
                   </button>

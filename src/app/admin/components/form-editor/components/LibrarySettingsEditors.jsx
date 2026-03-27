@@ -141,14 +141,14 @@ export function LibrarySettingsEditors() {
                                                         <div className="my-1 mx-1 h-px bg-white/10" />
 
                                                         <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 2); setOpenMenuId(null); }}
-                                                            className={`flex w-full items-center  gap-2 rounded-md px-1 py-2 text-[11px] transition-colors focus-visible:outline-none ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
+                                                            className={`flex w-full items-center  gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
                                                         >
                                                             {roleValue === 2 ? <Check size={12} className="shrink-0" /> : <PencilLine size={12} className="shrink-0" />}
                                                             <span className="flex-1 text-left">Düzenleme</span>
                                                         </button>
 
                                                         <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 1); setOpenMenuId(null); }}
-                                                            className={`flex w-full items-center gap-2 rounded-md px-1 py-2 text-[11px] transition-colors focus-visible:outline-none ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
+                                                            className={`flex w-full items-center gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
                                                         >
                                                             {roleValue === 1 ? <Check size={12} className="shrink-0" /> : <Eye size={12} className="shrink-0" />}
                                                             <span className="flex-1 text-left">Görüntüleme</span>
@@ -157,7 +157,7 @@ export function LibrarySettingsEditors() {
                                                         <div className="my-1 mx-1 h-px bg-white/10" />
 
                                                         <button type="button" onClick={() => { handleRemoveEditor(editor); setOpenMenuId(null); }}
-                                                            className="flex w-full items-center gap-2 rounded-md px-1 py-2 text-[11px] text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                                                            className="flex w-full items-center gap-2 rounded-md px-1 py-2 text-[9px] text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
                                                         >
                                                             <UserMinus size={12} className="shrink-0" />
                                                             <span className="flex-1 text-left">İzni kaldır</span>

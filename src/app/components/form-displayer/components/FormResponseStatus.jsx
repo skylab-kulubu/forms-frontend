@@ -43,7 +43,7 @@ export function FormResponseStatus({ step, status }) {
   const activeIndex = currentStep <= 2 ? 0 : currentStep <= 4 ? 1 : 2;
 
   return (
-    <div className={`w-full rounded-xl px-4 py-4 ${!isVisible ? "invisible" : ""}`} aria-hidden={!isVisible || undefined}>
+    <div className={`w-full rounded-xl px-4 py-4 ${!isVisible ? "hidden" : ""}`} aria-hidden={!isVisible || undefined}>
       <ol className="flex w-full items-center justify-between">
         {steps.map((s, idx) => {
           const isCompleted = idx < activeIndex;

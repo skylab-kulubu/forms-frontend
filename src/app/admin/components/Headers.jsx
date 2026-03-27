@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Download, List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { Download, LayoutList, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
 import FormsFilterShell from "./utils/FormsFilterShell";
@@ -163,7 +163,7 @@ export function OverviewHeader({ formTitle, formId, formStatus, onEdit, onViewRe
       actions={
         <div className="flex items-center gap-1.5">
           <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header" title="Yenile" aria-label="Yenile" />
-          <ActionButton icon={List} onClick={onViewResponses} size="md" tone="header" title="Cevaplar" aria-label="Cevaplar" />
+          <ActionButton icon={LayoutList} onClick={onViewResponses} size="md" tone="header" title="Cevaplar" aria-label="Cevaplar" />
           <ActionButton icon={PencilLine} variant="primary" onClick={onEdit} size="md" tone="header" title="Düzenle" aria-label="Düzenle" />
         </div>
       }

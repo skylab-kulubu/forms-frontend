@@ -11,13 +11,13 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
   exit: { opacity: 0, transition: { staggerChildren: 0.05, staggerDirection: -1, when: "afterChildren" } }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
   exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } }
 };
 
@@ -167,7 +167,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
 
       <div className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6">
 
-        <div className="w-full max-w-2xl mt-8 mb-4 shrink-0">
+        <div className={`w-full max-w-2xl shrink-0 ${activeStep > 0 ? "mt-8 mb-4" : ""}`}>
           <FormResponseStatus step={activeStep} status={submissionStatus} />
         </div>
 
@@ -175,8 +175,8 @@ export default function FormDisplayer({ form, step, draft = null }) {
         <AnimatePresence mode="wait">
           {!isFinished ? (
             <motion.div key="form-wrapper" className="w-full max-w-2xl flex flex-1 flex-col items-center"
-              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.3 } }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
             >
               <motion.div className="w-full mb-3"
                 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}

@@ -151,7 +151,6 @@ export function ResponseListItemSkeleton({ count = 4, className = "" }) {
                 <Divider />
                 <SkeletonBlock className="h-3 w-20 rounded-md" />
                 <SkeletonBlock className="h-6 w-6 rounded-md" />
-                <SkeletonBlock className="h-8 w-8 rounded-md" />
                 <SkeletonBlock className="h-4 w-4 rounded" />
               </div>
             </div>
@@ -221,7 +220,6 @@ export function ResponseListItem({ formId, response, className = "" }) {
           >
             <Archive className="h-3.5 w-3.5" />
           </div>
-          <ActionButton href={responseHref} icon={LayoutList} label="Görüntüle" />
           <Link href={responseHref} className="relative z-10 inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-white/10" aria-label="Cevabı görüntüle">
             <ChevronRight className="h-4 w-4 text-neutral-600 transition-transform duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
           </Link>
@@ -288,7 +286,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
           <Divider />
           <div className="flex items-center gap-1.5">
             <ActionButton href={responsesHref} onClick={onViewResponses} icon={LayoutList} label="Cevaplar" />
-            <ActionButton href={editHref} onClick={onEdit} icon={PencilLine} label="Düzenle" variant="primary" />
+            <ActionButton href={editHref} onClick={onEdit} icon={PencilLine} label="Düzenle" variant={form.userRole === 1 ? "" : "primary"} disabled={form.userRole === 1} className={`${form.userRole === 1 ? "opacity-30 pointer-events-none" : ""}`} />
           </div>
           <Link href={viewHref || "#"} className="relative z-10 inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-white/10" aria-label="Cevapları görüntüle">
             <ChevronRight className="h-4 w-4 text-neutral-600 transition-transform duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
