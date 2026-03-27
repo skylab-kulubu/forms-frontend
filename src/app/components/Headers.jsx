@@ -50,7 +50,7 @@ export default function MainHeader() {
 
         <div className="flex items-center gap-3">
           {status === "loading" ? (
-            <div className="w-24 h-10 rounded-xl bg-white/5 animate-pulse" />
+            <div className="w-24 h-8 rounded-xl bg-white/5 animate-pulse" />
           ) : !isAuthed ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
               <LoginButton onClick={handleLogin} disabled={status === "loading"} label="Giriş Yap" />

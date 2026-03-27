@@ -3,11 +3,10 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Plus, Layers, ChartColumn, ArrowUpRight, Clock, ClipboardCheck, UserX, Repeat2, BookOpen, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useUserFormsQuery, useServiceMetricsQuery } from "@/lib/hooks/useFormAdmin";
-import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 
 const container = {
   hidden: { opacity: 0 },
@@ -32,7 +31,7 @@ function getDisplayName(user) {
   return user.fullName.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map((w) => w.replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR"))).join(" ");
 }
 
-function StatCard({ icon: Icon, label, value, href }) {
+function StatCard({ icon: Icon, label, value, hint, href }) {
   const inner = (
     <div className="group relative flex h-full items-center gap-4 rounded-xl border border-white/6 bg-white/2 p-4 transition-colors hover:border-white/12 hover:bg-white/4">
       <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-white/8 bg-white/3">
@@ -40,7 +39,21 @@ function StatCard({ icon: Icon, label, value, href }) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[10px] uppercase tracking-[0.15em] text-neutral-500">{label}</p>
-        <p className="text-lg font-semibold text-neutral-100 tabular-nums">{value ?? "--"}</p>
+        <div className="flex items-baseline gap-2">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={String(value)}
+              initial={{ opacity: 0, y: 6, filter: "blur(2px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="text-lg font-semibold text-neutral-100 tabular-nums"
+            >
+              {value ?? "--"}
+            </motion.p>
+          </AnimatePresence>
+          {hint && <span className="text-[10px] text-neutral-600">{hint}</span>}
+        </div>
       </div>
       {href && (
         <ArrowUpRight className="h-4 w-4 text-neutral-600 transition-all group-hover:text-neutral-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -204,7 +217,7 @@ function ChartSkeleton() {
   return (
     <div className="rounded-xl border border-white/6 bg-white/2 p-4">
       <div className="mb-3 h-2.5 w-28 rounded shimmer" />
-      <div className="h-40 w-full rounded shimmer" />
+      <div className="h-42 w-full rounded shimmer" />
     </div>
   );
 }
@@ -220,10 +233,6 @@ export default function AdminDashboard() {
     sortDirection: "descending",
   });
 
-  const { data: groupsData, isLoading: groupsLoading } = useGroupsQuery({
-    pageSize: 1,
-  });
-
   const { data: metricsData, isLoading: metricsLoading } = useServiceMetricsQuery();
 
   const metrics = metricsData?.data ?? metricsData;
@@ -233,12 +242,8 @@ export default function AdminDashboard() {
     return Array.isArray(meta.items) ? meta.items : Array.isArray(formsData) ? formsData : [];
   }, [formsData]);
 
-  const totalForms = formsData?.data?.totalCount ?? forms.length;
-  const totalGroups = groupsData?.data?.totalCount ?? 0;
-
-  const totalResponses = useMemo(() => {
-    return forms.reduce((sum, f) => sum + (f.responseCount ?? 0), 0);
-  }, [forms]);
+  const totalForms = metrics?.totalForms ?? forms.length;
+  const totalResponses = metrics?.totalResponsesReceived ?? 0;
 
   const isLoading = status === "loading" || formsLoading;
 
@@ -248,21 +253,26 @@ export default function AdminDashboard() {
         <motion.div variants={item}>
           <h1 className="text-2xl font-bold text-neutral-100">
             {greeting},{" "}
-            {status === "loading" ? (
-              <SkeletonBlock className="inline-block h-6 w-32 rounded-md align-middle" />
-            ) : (
-              <span className="text-neutral-400">{displayName.split(" ")[0]}</span>
-            )}
+            <AnimatePresence mode="wait">
+              {status === "loading" ? (
+                <></>
+              ) : (
+                <motion.span key="name" className="inline-block text-neutral-400"
+                  initial={{ opacity: 0, y: 6, filter: "blur(2px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  {displayName.split(" ")[0]}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </h1>
           <p className="mt-1 text-sm text-neutral-500">
             Formlarını yönet, cevapları takip et ve yeni projeler oluştur.
           </p>
         </motion.div>
 
-        <motion.div variants={item} className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <motion.div variants={item} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <StatCard icon={FileText} label="Toplam Form" value={isLoading ? "--" : totalForms} href="/admin/forms" />
-          <StatCard icon={ChartColumn} label="Toplam Cevap" value={isLoading ? "--" : totalResponses} />
-          <StatCard icon={Layers} label="Bileşen Grubu" value={groupsLoading ? "--" : totalGroups} href="/admin/component-groups" />
+          <StatCard icon={ChartColumn} label="Toplam Cevap" value={isLoading ? "--" : totalResponses} hint={!isLoading && metrics?.pendingResponsesCount > 0 ? `${metrics.pendingResponsesCount} onay bekliyor` : null} />
         </motion.div>
 
         <motion.div variants={item} className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -273,20 +283,32 @@ export default function AdminDashboard() {
             </>
           ) : (
             <>
-              <TrendChart
-                title="Haftalık Form Oluşturma Trendi"
-                data={metrics?.formsCreatedWeeklyTrend}
-                gradientId="formsGradient"
-                color="#e0c8e5"
-                trendPercentage={metrics?.formsWeeklyTrendPercentage}
-              />
-              <TrendChart
-                title="Haftalık Cevap Trendi"
-                data={metrics?.responsesWeeklyTrend}
-                gradientId="responsesGradient"
-                color="#e0c8e5"
-                trendPercentage={metrics?.responsesWeeklyTrendPercentage}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 12, filter: "blur(2px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <TrendChart
+                  title="Haftalık Form Oluşturma Trendi"
+                  data={metrics?.formsCreatedWeeklyTrend}
+                  gradientId="formsGradient"
+                  color="#e0c8e5"
+                  trendPercentage={metrics?.formsWeeklyTrendPercentage}
+                />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 12, filter: "blur(2px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <TrendChart
+                  title="Haftalık Cevap Trendi"
+                  data={metrics?.responsesWeeklyTrend}
+                  gradientId="responsesGradient"
+                  color="#e0c8e5"
+                  trendPercentage={metrics?.responsesWeeklyTrendPercentage}
+                />
+              </motion.div>
             </>
           )}
         </motion.div>
@@ -316,8 +338,15 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-0.5">
-                    {forms.slice(0, 5).map((form) => (
-                      <RecentFormItem key={form.id} form={form} />
+                    {forms.slice(0, 5).map((form, i) => (
+                      <motion.div
+                        key={form.id}
+                        initial={{ opacity: 0, y: 10, filter: "blur(2px)" }}
+                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                        transition={{ duration: 0.35, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <RecentFormItem form={form} />
+                      </motion.div>
                     ))}
                   </div>
                 )}

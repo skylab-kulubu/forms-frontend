@@ -16,7 +16,7 @@ const iconVariants = {
 export default function LoginButton({ onClick, disabled = false, label = "E-Skylab ile giriş yap", className = "", hoverIcon = "skylab" }) {
   return (
     <motion.button type="button" onClick={onClick} disabled={disabled} initial="initial" whileHover="hover"
-      className={`relative inline-flex items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-neutral-100 transition-colors hover:border-pink-100/40 hover:bg-pink-100/30 hover:text-pink-100 ${className}`}
+      className={`min-w-24 h-8 relative inline-flex items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-neutral-100 transition-colors hover:border-pink-100/40 hover:bg-pink-100/30 hover:text-pink-100 ${className}`}
     >
       <div className="relative flex flex-col items-center justify-center overflow-hidden">
         <motion.span variants={textVariants} className="block whitespace-nowrap">
