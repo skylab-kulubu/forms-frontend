@@ -1,6 +1,15 @@
 import NextAuth from "next-auth"
 import Keycloak from "next-auth/providers/keycloak"
 
+function decodeJwtPayload(accessToken) {
+    try {
+        const payload = accessToken.split('.')[1];
+        return JSON.parse(Buffer.from(payload, 'base64url').toString());
+    } catch {
+        return {};
+    }
+}
+
 async function refreshAccessToken(token) {
     try {
         const response = await fetch(`${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`, {
@@ -18,36 +27,18 @@ async function refreshAccessToken(token) {
 
         if (!response.ok) { throw refreshedTokens; }
 
+        const jwtPayload = decodeJwtPayload(refreshedTokens.access_token);
+
         return {
             ...token,
             accessToken: refreshedTokens.access_token,
             expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
-            refreshToken: refreshedTokens.refresh_token ?? token.refreshToken
+            refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+            skyformsRoles: jwtPayload.resource_access?.skyforms?.roles ?? [],
+            realmRoles: jwtPayload.realm_access?.roles ?? [],
         }
     } catch (error) {
         return { ...token, accessToken: undefined, refreshToken: undefined, expiresAt: 0, error: "RefreshAccessTokenError" }
-    }
-}
-
-async function getUserProfile(accessToken) {
-    try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-
-        const response = await fetch(`${baseUrl}/api/users/me`, {
-            headers: {
-                "Authorization": `Bearer ${accessToken}`,
-                "Content-Type": "application/json"
-            },
-            method: "GET",
-        });
-
-        if (!response.ok) return null;
-
-        const json = await response.json();
-
-        return json.data;
-    } catch (error) {
-        return null;
     }
 }
 
@@ -62,13 +53,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     callbacks: {
         async jwt({ token, account }) {
             if (account) {
-                const userProfile = await getUserProfile(account.access_token);
+                const jwtPayload = decodeJwtPayload(account.access_token);
 
                 return {
                     accessToken: account.access_token,
                     expiresAt: account.expires_at * 1000,
                     refreshToken: account.refresh_token,
-                    userProfile: userProfile || {},
+                    skyformsRoles: jwtPayload.resource_access?.skyforms?.roles ?? [],
+                    realmRoles: jwtPayload.realm_access?.roles ?? [],
+                    user: {
+                        id: jwtPayload.sub,
+                        email: jwtPayload.email,
+                        firstName: jwtPayload.given_name,
+                        lastName: jwtPayload.family_name,
+                        username: jwtPayload.preferred_username,
+                        fullName: `${jwtPayload.given_name ?? ''} ${jwtPayload.family_name ?? ''}`.trim(),
+                    },
                     error: undefined
                 }
             }
@@ -80,14 +80,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         async session({ session, token }) {
             session.accessToken = token.accessToken;
             session.error = token.error;
+            session.skyformsRoles = token.skyformsRoles;
+            session.realmRoles = token.realmRoles;
 
-            if (token.userProfile) {
+            if (token.user) {
                 session.user = {
                     ...session.user,
-                    ...token.userProfile,
-                    fullName: `${token.userProfile.firstName} ${token.userProfile.lastName}`,
+                    ...token.user,
                 };
             }
+
             return session;
         },
     },

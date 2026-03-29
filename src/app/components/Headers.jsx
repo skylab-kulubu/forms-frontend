@@ -22,8 +22,8 @@ export default function MainHeader() {
 
   const initial = useMemo(() => getInitial(user?.name, user?.email), [user]);
 
-  const roles = Array.isArray(user?.roles) ? user.roles : [];
-  const isAdmin = roles.some(role => role.toLowerCase() === "admin");
+  const roles = Array.isArray(session?.skyformsRoles) ? session.skyformsRoles : [];
+  const isAdmin = roles.includes("skyforms:access");
 
   const handleLogin = () => {
     const callbackUrl =
@@ -63,7 +63,7 @@ export default function MainHeader() {
             </motion.div>
           ) : (
             <HoverCard user={user}>
-              <div className="flex items-center gap-2 rounded-xl bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5">
+              <div className="flex h-8 items-center gap-2 rounded-lg bg-transparent border border-transparent hover:border-white/10 hover:bg-white/5 px-2 py-1.5">
                 <motion.div initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.6 }}
                   className="text-right hidden min-[400px]:inline"
                 >

@@ -1,8 +1,6 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
-const ALLOWED_ROLES = ["ADMIN", "YK", "DK", "EKIP"];
-
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const isOnAdminPanel = req.nextUrl.pathname.startsWith("/admin");
@@ -11,9 +9,7 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/auth/signin?error=SessionExpired", req.nextUrl));
   }
 
-  const userRoles = req.auth?.user?.roles || [];
-
-  const hasPermission = userRoles.some(role => ALLOWED_ROLES.includes(role));
+  const hasAccess = req.auth?.skyformsRoles?.includes("skyforms:access") ?? false;
 
   if (isOnAdminPanel) {
     if (!isLoggedIn) {
@@ -21,7 +17,7 @@ export default auth((req) => {
       signInUrl.searchParams.set("callbackUrl", req.nextUrl.href);
       return NextResponse.redirect(signInUrl);
     }
-    if (!hasPermission) {
+    if (!hasAccess) {
       return NextResponse.redirect(new URL("/", req.nextUrl));
     }
   }

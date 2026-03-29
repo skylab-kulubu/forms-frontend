@@ -26,6 +26,24 @@ function SectionLabel({ children }) {
   );
 }
 
+function getRoleLabel(roles = []) {
+  for (const role of roles) {
+    const n = (role ?? "").toLowerCase();
+    if (n.includes("admin"))    return "AÇMACILAB";
+    if (n.includes("yk"))       return "YÖNETİM";
+    if (n.includes("dk"))       return "DENETİM";
+    if (n.includes("weblab"))   return "WEBLAB";
+    if (n.includes("skysec"))   return "SKYSEC";
+    if (n.includes("mobilab"))  return "MOBİLAB";
+    if (n.includes("airlab"))   return "AIRLAB";
+    if (n.includes("algolab"))  return "ALGOLAB";
+    if (n.includes("gamelab"))  return "GAMELAB";
+    if (n.includes("chainlab")) return "YAŞIYONUZ MU";
+    if (n.includes("skysis"))   return "YAŞIYONUZ MU";
+  }
+  return "KULLANICI";
+}
+
 function getInitials(name, email) {
   const source = (name || email || "").trim();
   if (!source) return "?";
@@ -67,10 +85,7 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
 
   return (
     <div className="space-y-1">
-      <button type="button" aria-expanded={open}
-        className={`${base} ${state} w-full text-left`}
-        onClick={() => setOpen((v) => !v)}
-      >
+      <button type="button" aria-expanded={open} className={`${base} ${state} w-full text-left`} onClick={() => setOpen((v) => !v)}>
         <Icon className="h-5 w-5 text-neutral-300 group-hover:text-neutral-200" strokeWidth={1.75} />
         <span className="font-medium truncate">{label}</span>
         <ChevronDown className={`ml-auto h-4 w-4 text-neutral-400 transition-transform ${open ? "rotate-180" : "rotate-0"}`} />
@@ -79,9 +94,7 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
       <AnimatePresence initial={false}>
         {open && (
           <motion.div key="nav-group" className="pl-4 ml-5 space-y-1 border-l-3 border-neutral-800/80 overflow-hidden"
-            initial="collapsed"
-            animate="open"
-            exit="collapsed"
+            initial="collapsed" animate="open" exit="collapsed"
             variants={{
               open: { height: "auto", opacity: 1, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.04, delayChildren: 0.03 } },
               collapsed: { height: 0, opacity: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.03, staggerDirection: -1 } },
@@ -92,38 +105,16 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
                 variants={{ open: { opacity: 1, x: 0 }, collapsed: { opacity: 0, x: -6 } }}
                 transition={{ duration: 0.15 }}
               >
-                <NavItem
-                  href={item.href}
-                  icon={item.icon}
-                  label={item.label}
-                  active={itemIsActive(item)}
-                  variant="subtle"
-                  onClick={onItemClick}
-                />
+                <NavItem href={item.href} icon={item.icon} label={item.label} active={itemIsActive(item)} variant="subtle" onClick={onItemClick}/>
                 {item.children?.length ? (
                   <div className="mt-1 ml-3 space-y-1 border-l border-neutral-800/60 pl-3">
                     {item.children.map((child) => (
                       <div key={child.href}>
-                        <NavItem
-                          href={child.href}
-                          icon={child.icon}
-                          label={child.label}
-                          active={itemIsActive(child)}
-                          variant="subtle"
-                          onClick={onItemClick}
-                        />
+                        <NavItem href={child.href} icon={child.icon} label={child.label} active={itemIsActive(child)} variant="subtle" onClick={onItemClick}/>
                         {child.children?.length ? (
                           <div className="mt-1 ml-3 space-y-1 border-l border-neutral-800/60 pl-3">
                             {child.children.map((grandChild) => (
-                              <NavItem
-                                key={grandChild.href}
-                                href={grandChild.href}
-                                icon={grandChild.icon}
-                                label={grandChild.label}
-                                active={itemIsActive(grandChild)}
-                                variant="subtle"
-                                onClick={onItemClick}
-                              />
+                              <NavItem key={grandChild.href} href={grandChild.href} icon={grandChild.icon} label={grandChild.label} active={itemIsActive(grandChild)} variant="subtle" onClick={onItemClick}/>
                             ))}
                           </div>
                         ) : null}
@@ -140,12 +131,12 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
   );
 }
 
-function SidebarContent({ user, pathname, onItemClick, status, formId, form, formLoading }) {
+function SidebarContent({ user, realmRoles = [], pathname, onItemClick, status, formId, form, formLoading }) {
   const subtitle = user?.email?.trim() || user?.username?.trim() || "--";
   const imageUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
-  const roles = Array.isArray(user?.roles) ? user.roles.filter(Boolean) : [];
+  const roles = realmRoles.filter(Boolean);
 
-  const displayName = user?.fullName.trim().toLocaleLowerCase("tr-TR").split(/\s+/)
+  const displayName = user?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/)
     .map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR")))
     .join(" ") || "Kullanıcı";
 
@@ -202,7 +193,7 @@ function SidebarContent({ user, pathname, onItemClick, status, formId, form, for
       </div>
 
       <div className="w-full rounded-md text-center border border-white/8 bg-white/3 px-2 py-1 text-[11px] text-neutral-200">
-        <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: 1.2 }}>{roles.length ? roles[0] : "--"}</motion.span>
+        <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: 1.2 }}>{getRoleLabel(roles)}</motion.span>
       </div>
 
       <div className="space-y-2">
@@ -269,7 +260,7 @@ export default function Sidebar({ user, children }) {
     <div className="min-h-screen md:pl-72">
 
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 shrink-0 border-r border-neutral-950/70 bg-neutral-950/40 backdrop-blur-lg shadow-md">
-        <SidebarContent user={resolvedUser} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} />
+        <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} />
       </aside>
 
       <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
@@ -304,7 +295,7 @@ export default function Sidebar({ user, children }) {
               transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
             >
               <div ref={panelRef} className="pointer-events-auto h-full w-72 border-r border-neutral-800 bg-[#070707] shadow-xl">
-                <SidebarContent user={resolvedUser} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} onItemClick={() => setOpen(false)} />
+                <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} onItemClick={() => setOpen(false)} />
               </div>
               <button type="button" onClick={() => setOpen(false)}
                 className="group pointer-events-auto relative flex w-5 -ml-0.5 h-full flex-col items-center justify-center rounded-r-full border-y border-r border-neutral-800 bg-[#070707] text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"

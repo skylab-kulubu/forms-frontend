@@ -58,7 +58,7 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
   const roles = Array.isArray(user?.roles) ? user.roles.filter(Boolean) : [];
   const avatarUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
 
-  const displayName = user?.fullName.trim().toLocaleLowerCase("tr-TR").split(/\s+/)
+  const displayName = user?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/)
     .map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR")))
     .join(" ") || "Kullanıcı";
 
