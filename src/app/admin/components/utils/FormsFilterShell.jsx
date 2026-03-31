@@ -66,6 +66,66 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, height: "auto", transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] } },
 };
 
+export function DatabaseFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange,
+  allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange,
+  hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange, className = ""
+}) {
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleClick = (event) => {
+      if (panelRef.current?.contains(event.target)) return;
+      if (anchorRef?.current?.contains(event.target)) return;
+      onClose?.();
+    };
+    const handleKey = (event) => { if (event.key === "Escape") onClose?.(); };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open, onClose, anchorRef]);
+
+  const sortOptions = [
+    { value: "desc", label: "Azalan", icon: ArrowDown },
+    { value: "asc", label: "Artan", icon: ArrowUp },
+  ];
+
+  return (
+    <AnimatePresence>
+      {open ? (
+        <motion.div ref={panelRef} role="dialog" aria-label="Database filters" layout
+          initial="hidden" animate="visible" exit="exit" variants={panelVariants}
+          transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
+          className={`absolute left-1/2 top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] -translate-x-1/2 rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+        >
+          <motion.div variants={contentVariants} className="flex flex-col p-4 text-center">
+            <motion.div variants={itemVariants} className="overflow-hidden">
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">Tarih Sıralaması</p>
+                <SegmentedControl options={sortOptions} value={sortValue} onChange={onSortChange} ariaLabel="Siralama" />
+              </div>
+            </motion.div>
+            <motion.div variants={itemVariants} className="overflow-hidden">
+              <div className="space-y-2 pt-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">Form Özellikleri</p>
+                <div className="flex items-center gap-2">
+                  <TriStateIconButton value={allowAnonymous} onChange={onAllowAnonymousChange} icon={UserX} label="Anonim cevap" />
+                  <TriStateIconButton value={allowMultiple} onChange={onAllowMultipleChange} icon={Repeat2} label="Çoklu cevap" />
+                  <TriStateIconButton value={hasLinkedForm} onChange={onHasLinkedFormChange} icon={CornerDownRight} label="Bağlı form" />
+                  <TriStateIconButton value={requiresManualReview} onChange={onRequiresManualReviewChange} icon={ClipboardCheck} label="Manuel onay" />
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
 export default function FormsFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange,
   allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange,
   requiresManualReview = null, onRequiresManualReviewChange, className = ""

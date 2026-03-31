@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Download, LayoutList, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
-import FormsFilterShell from "./utils/FormsFilterShell";
+import FormsFilterShell, { DatabaseFilterShell } from "./utils/FormsFilterShell";
 
 const fadeIn = {
   initial: { opacity: 0, y: -6 },
@@ -147,6 +147,40 @@ export function GroupsHeader({ searchValue = "", onSearchChange, onRefresh, onCr
       </div>
       <div className="ml-auto shrink-0">
         <Stat label="Toplam Grup" value={stats.count} />
+      </div>
+    </HeaderShell>
+  );
+}
+
+export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "desc", onSortChange, allowAnonymous = null, onAllowAnonymousChange,
+  allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange,
+  onRefresh, stats = { count: 0 }
+}) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterButtonRef = useRef(null);
+  const activeFilters = [sortValue !== "desc", allowAnonymous !== null, allowMultiple !== null, hasLinkedForm !== null, requiresManualReview !== null].filter(Boolean).length;
+  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
+
+  return (
+    <HeaderShell title="Veritabanı" description="Sistemdeki tüm formları görüntüle.">
+      <SearchInput value={searchValue} onChange={onSearchChange} placeholder="Form ara" />
+      <div className="flex items-center gap-1.5 shrink-0">
+        <div ref={filterButtonRef} className="relative">
+          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size="md" tone="header"
+            variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
+          />
+          <DatabaseFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)}
+            sortValue={sortValue} onSortChange={onSortChange}
+            allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
+            allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
+            hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={onHasLinkedFormChange}
+            requiresManualReview={requiresManualReview} onRequiresManualReviewChange={onRequiresManualReviewChange}
+          />
+        </div>
+        <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header" title="Yenile" aria-label="Yenile" />
+      </div>
+      <div className="ml-auto shrink-0">
+        <Stat label="Toplam Form" value={stats.count} />
       </div>
     </HeaderShell>
   );

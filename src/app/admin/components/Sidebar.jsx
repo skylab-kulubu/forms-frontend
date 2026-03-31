@@ -6,12 +6,13 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
   "/admin/forms": "Formlar",
+  "/admin/forms/all": "Veritabanı",
   "/admin/forms/new-form": "Yeni Form",
   "/admin/how-to-use": "Nasıl Kullanılır",
   "/admin/component-groups": "Bileşen Grupları",
@@ -131,7 +132,8 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
   );
 }
 
-function SidebarContent({ user, realmRoles = [], pathname, onItemClick, status, formId, form, formLoading }) {
+function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, onItemClick, status, formId, form, formLoading }) {
+  const isSuperAdmin = skyformsRoles.includes("skyforms:*");
   const subtitle = user?.email?.trim() || user?.username?.trim() || "--";
   const imageUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
   const roles = realmRoles.filter(Boolean);
@@ -213,6 +215,7 @@ function SidebarContent({ user, realmRoles = [], pathname, onItemClick, status, 
               icon: List,
               label: "Formları Görüntüle"
             },
+            ...(isSuperAdmin ? [{ href: "/admin/forms/all", icon: Database, label: "Veritabanı" }] : []),
             ...(activeFormItem ? [activeFormItem] : []),
           ]}
         />
@@ -260,7 +263,7 @@ export default function Sidebar({ user, children }) {
     <div className="min-h-screen md:pl-72">
 
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 shrink-0 border-r border-neutral-950/70 bg-neutral-950/40 backdrop-blur-lg shadow-md">
-        <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} />
+        <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} />
       </aside>
 
       <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
@@ -295,7 +298,7 @@ export default function Sidebar({ user, children }) {
               transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
             >
               <div ref={panelRef} className="pointer-events-auto h-full w-72 border-r border-neutral-800 bg-[#070707] shadow-xl">
-                <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} onItemClick={() => setOpen(false)} />
+                <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} onItemClick={() => setOpen(false)} />
               </div>
               <button type="button" onClick={() => setOpen(false)}
                 className="group pointer-events-auto relative flex w-5 -ml-0.5 h-full flex-col items-center justify-center rounded-r-full border-y border-r border-neutral-800 bg-[#070707] text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"

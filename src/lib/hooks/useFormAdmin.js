@@ -55,6 +55,30 @@ const deleteForm = async (formId) => {
   });
 };
 
+const fetchAllForms = async ({ page, pageSize, search, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection } = {}) => {
+  const params = new URLSearchParams();
+  if (page !== undefined && page !== null) params.set("Page", page);
+  if (pageSize !== undefined && pageSize !== null) params.set("PageSize", pageSize);
+  if (search) params.set("Search", search);
+  if (allowAnonymous !== undefined && allowAnonymous !== null) params.set("AllowAnonymous", allowAnonymous);
+  if (allowMultiple !== undefined && allowMultiple !== null) params.set("AllowMultiple", allowMultiple);
+  if (hasLinkedForm !== undefined && hasLinkedForm !== null) params.set("HasLinkedForm", hasLinkedForm);
+  if (requiresManualReview !== undefined && requiresManualReview !== null) params.set("RequiresManualReview", requiresManualReview);
+  if (sortDirection) params.set("SortDirection", sortDirection);
+  const query = params.toString();
+  return request(`/api/admin/forms/all${query ? `?${query}` : ""}`);
+};
+
+export const useAllFormsQuery = (options = {}) => {
+  const { page = 1, pageSize, search, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection, ...queryOptions } = options;
+  return useQuery({
+    queryKey: ["all-forms", page, pageSize, search, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection],
+    queryFn: () => fetchAllForms({ page, pageSize, search, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection }),
+    retry: queryOptions.retry ?? false,
+    ...queryOptions,
+  });
+};
+
 export const useUserFormsQuery = (options = {}) => {
   const { page = 1, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection, ...queryOptions } = options;
   return useQuery({
