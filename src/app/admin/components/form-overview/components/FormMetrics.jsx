@@ -3,19 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Timer, User2, ToggleLeft, ToggleRight, Link2, Hash, Shield, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Timer, User2, ToggleLeft, ToggleRight, Link2, Hash, Shield, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
-};
-
-const ROLE_LABELS = {
-  3: "Sahip",
-  2: "Editör",
-  default: "Görüntüleyici",
 };
 
 function formatDuration(seconds) {
@@ -131,6 +125,57 @@ function SourceBreakdownBar({ registered, anonymous }) {
   );
 }
 
+const ROLE_BADGE = {
+  3: { label: "Sahip", className: "bg-skylab-500/10 text-skylab-400 border border-skylab-400/40" },
+  2: { label: "Editör", className: "bg-indigo-400/10 text-indigo-200 border border-indigo-300/40" },
+  default: { label: "Görüntüleyici", className: "bg-neutral-200/10 text-neutral-300 border border-white/15" },
+};
+
+function CollaboratorAvatar({ fullName }) {
+  const initials = fullName && fullName !== "??" ? fullName.trim().split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() : "?";
+  return (
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-neutral-700 text-[10px] font-semibold text-neutral-200">
+      {initials}
+    </div>
+  );
+}
+
+function CollaboratorsSection({ formData }) {
+  const collaborators = [...(formData?.data?.collaborators ?? formData?.collaborators ?? [])].sort((a, b) => b.role - a.role);
+
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 mb-3">
+        <Users size={11} className="text-neutral-500" />
+        <SectionTitle>İşbirlikçiler</SectionTitle>
+      </div>
+      {collaborators.length === 0 ? (
+        <p className="text-center text-[10px] text-neutral-600">İşbirlikçi yok</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {collaborators.map((c) => {
+            const badge = ROLE_BADGE[c.role] ?? ROLE_BADGE.default;
+            const name = c.user?.fullName || "??";
+            const email = c.user?.email;
+            return (
+              <div key={c.user?.id} className="flex items-center gap-2.5">
+                <CollaboratorAvatar fullName={name} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-medium text-neutral-200 truncate">{name}</p>
+                  {email && <p className="text-[9px] text-neutral-500 truncate">{email}</p>}
+                </div>
+                <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-medium ${badge.className}`}>
+                  {badge.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FormInfoGrid({ formData }) {
   const formSchema = formData?.data?.schema ?? formData?.schema ?? [];
   const allowAnonymous = formData?.data?.allowAnonymousResponses ?? formData?.allowAnonymousResponses;
@@ -143,7 +188,7 @@ function FormInfoGrid({ formData }) {
     { icon: User2, label: "Anonim", value: allowAnonymous ? "Açık" : "Kapalı" },
     { icon: allowMultiple ? ToggleRight : ToggleLeft, label: "Çoklu", value: allowMultiple ? "Açık" : "Kapalı" },
     { icon: Link2, label: "Bağlı", value: linkedFormId || "Yok", href: linkedFormId ? `/admin/forms/${linkedFormId}` : null },
-    { icon: Shield, label: "Rol", value: ROLE_LABELS[userRole] ?? ROLE_LABELS.default },
+    { icon: Shield, label: "Rol", value: userRole === 0 ? "Yok" : (ROLE_BADGE[userRole]?.label ?? ROLE_BADGE.default.label) },
   ];
 
   return (
@@ -180,6 +225,10 @@ export default function FormMetrics({ formData, metrics }) {
       <div className="flex-1 overflow-y-auto p-2 scrollbar">
 
         <motion.div {...fadeIn} className="p-4 border-b border-white/5">
+          <CollaboratorsSection formData={formData} />
+        </motion.div>
+
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
           <SectionTitle>Cevap İstatistikleri</SectionTitle>
           <div className="flex items-center justify-around">
             <StatBlock label="Toplam" value={metrics?.totalResponses ?? 0} />
@@ -189,7 +238,7 @@ export default function FormMetrics({ formData, metrics }) {
           </div>
         </motion.div>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }} className="p-4 border-b border-white/5">
           <TrendChart
             hourlyData={metrics?.hourlyTrend ?? []}
             dailyData={metrics?.dailyTrend ?? []}
@@ -198,7 +247,7 @@ export default function FormMetrics({ formData, metrics }) {
           />
         </motion.div>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.15 }} className="p-4 border-b border-white/5">
           <SectionTitle>Ortalama Süre</SectionTitle>
           <div className="flex items-center justify-center gap-3">
             <Timer size={16} className="text-skylab-300" />
@@ -208,7 +257,7 @@ export default function FormMetrics({ formData, metrics }) {
           </div>
         </motion.div>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }} className="p-4 border-b border-white/5">
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.2 }} className="p-4 border-b border-white/5">
           <SectionTitle>Kaynak Dağılımı</SectionTitle>
           <SourceBreakdownBar
             registered={metrics?.sourceBreakdown?.registered ?? 0}
@@ -216,7 +265,7 @@ export default function FormMetrics({ formData, metrics }) {
           />
         </motion.div>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.15 }} className="p-4">
+        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.25 }} className="p-4">
           <SectionTitle>Form Bilgileri</SectionTitle>
           <FormInfoGrid formData={formData} />
         </motion.div>

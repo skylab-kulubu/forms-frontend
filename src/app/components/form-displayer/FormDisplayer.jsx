@@ -167,7 +167,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
 
       <div className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6">
 
-        <div className={`w-full max-w-2xl shrink-0 ${activeStep > 0 ? "mt-8 mb-4" : ""}`}>
+        <div className="w-full max-w-2xl shrink-0 mt-8 mb-4">
           <FormResponseStatus step={activeStep} status={submissionStatus} />
         </div>
 

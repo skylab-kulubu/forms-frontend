@@ -4,24 +4,17 @@ import Link from "next/link";
 import { ChevronRight, Clock, ClipboardCheck, CornerDownRight, LayoutList, PencilLine, Repeat2, UserX, ChartColumn, Archive, User2 } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 
-const ROLE_STYLES = {
-  3: "border-indigo-500/30 bg-indigo-500/10 text-indigo-200",
-  2: "border-indigo-400/30 bg-indigo-400/10 text-indigo-100",
-  default: "border-white/10 bg-white/5 text-neutral-300",
-};
-
-const ROLE_LABELS = {
-  3: "Owner",
-  2: "Editor",
-  default: "Viewer",
+const ROLE_BADGE = {
+  3: { label: "Sahip", className: "bg-skylab-500/10 text-skylab-400 border border-skylab-400/40" },
+  2: { label: "Editör", className: "bg-indigo-400/10 text-indigo-200 border border-indigo-300/40" },
+  default: { label: "Görüntüleyici", className: "bg-neutral-200/10 text-neutral-300 border border-white/15" },
 };
 
 function RoleBadge({ role }) {
-  const label = ROLE_LABELS[role] ?? ROLE_LABELS.default;
-  const style = ROLE_STYLES[role] ?? ROLE_STYLES.default;
+  const { label, className } = ROLE_BADGE[role] ?? ROLE_BADGE.default;
 
   return (
-    <span className={`rounded-md border px-1 py-0.5 text-[7px] uppercase tracking-[0.18em] ${style}`}>
+    <span className={`rounded-md px-1 py-0.5 text-[7px] uppercase tracking-[0.18em] ${className}`}>
       {label}
     </span>
   );
@@ -173,11 +166,7 @@ export function ResponseListItem({ formId, response, className = "" }) {
   const submittedAt = formatDate(response.submittedAt);
   const initial = getInitial(userName);
 
-  const reviewText = (statusValue === 2 || statusValue === 3)
-    ? `${reviewerName} tarafından incelendi.`
-    : statusValue === 0
-      ? "Onay aşaması bulunmamakta."
-      : "Henüz incelenmedi.";
+  const reviewText = (statusValue === 2 || statusValue === 3) ? `${reviewerName} tarafından incelendi.` : statusValue === 0 ? "Onay aşaması bulunmamakta." : "Henüz incelenmedi.";
 
   const responseHref = `/admin/forms/${formId}/responses/${response.id}`;
 
@@ -201,12 +190,12 @@ export function ResponseListItem({ formId, response, className = "" }) {
           </div>
         </div>
 
-        <div className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
-          <p className="text-[11px] font-medium text-neutral-300 truncate">
+        <div className="flex flex-1 items-center gap-x-3 min-w-0 overflow-hidden">
+          <p className="text-[11px] font-medium text-neutral-300 truncate min-w-12 shrink">
             <span className="text-neutral-600 mr-1">ID</span>{response.id || "--"}
           </p>
           <ResponseStatusBadge status={statusValue} />
-          <span className="text-[10px] text-neutral-500 truncate">{reviewText}</span>
+          <span className="text-[10px] text-neutral-500 truncate shrink-0">{reviewText}</span>
         </div>
 
         <div className="flex items-center gap-2 sm:ml-auto shrink-0">
@@ -220,7 +209,7 @@ export function ResponseListItem({ formId, response, className = "" }) {
           >
             <Archive className="h-3.5 w-3.5" />
           </div>
-          <Link href={responseHref} className="relative z-10 inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-white/10" aria-label="Cevabı görüntüle">
+          <Link href={responseHref} className="relative z-10 ml-auto inline-flex items-center justify-center rounded-md p-1 transition-colors hover:bg-white/10" aria-label="Cevabı görüntüle">
             <ChevronRight className="h-4 w-4 text-neutral-600 transition-transform duration-200 group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
           </Link>
         </div>
@@ -240,10 +229,10 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
   return (
     <div className={`group/row relative w-full px-4 py-2.5 transition-colors hover:bg-white/5 rounded-lg ${className}`}>
       {viewHref && <Link href={viewHref} className="absolute inset-0 z-0" aria-label={form.title ?? "Form"} tabIndex={-1} />}
-      <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className={`relative z-10 flex flex-col gap-3 ${hasLinked ? "sm:flex-row sm:items-center" : "min-[510px]:flex-row min-[510px]:items-center"}`}>
 
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="min-w-0">
+          <div className="min-w-0 w-64 shrink">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-medium text-neutral-100 truncate">{form.title || "--"}</h3>
               <RoleBadge role={form.userRole} />
@@ -267,7 +256,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
           )}
         </div>
 
-        <div className="flex items-center gap-2 sm:ml-auto shrink-0">
+        <div className={`flex w-full items-center gap-2 shrink-0 ${hasLinked ? "sm:w-auto sm:ml-auto" : "min-[510px]:w-auto min-[510px]:ml-auto"}`}>
           <div className="flex items-center gap-0.5">
             <div className="inline-flex h-7 gap-1 items-center justify-center rounded-md px-1 text-neutral-400/80">
               <ChartColumn className="h-3.5 w-3.5" />
@@ -284,7 +273,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
             </FeatureIcon>
           </div>
           <Divider />
-          <div className="flex items-center gap-1.5">
+          <div className={`flex items-center gap-1.5 ml-auto ${hasLinked ? "sm:ml-0" : "min-[510px]:ml-0"}`}>
             <ActionButton href={responsesHref} onClick={onViewResponses} icon={LayoutList} label="Cevaplar" />
             <ActionButton href={editHref} onClick={onEdit} icon={PencilLine} label="Düzenle" variant={form.userRole === 1 ? "" : "primary"} disabled={form.userRole === 1} className={`${form.userRole === 1 ? "opacity-30 pointer-events-none" : ""}`} />
           </div>
