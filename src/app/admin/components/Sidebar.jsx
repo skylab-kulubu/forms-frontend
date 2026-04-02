@@ -157,8 +157,8 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
       icon: FileText,
       label: activeFormLabel,
       children: [
-        { href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" },
-        { href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" },
+        ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
+        ...(Number(form?.userRole) >= 2 ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
       ],
     }
   : null;

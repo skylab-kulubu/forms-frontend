@@ -38,7 +38,7 @@ function GroupPicker({ onGroupSelect }) {
     };
 
     return (
-        <div className="px-3 pt-3 pb-1" ref={ref}>
+        <div className="px-2 pt-3 pb-1" ref={ref}>
             <label className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-500 mb-1.5">Grup ekle</label>
             <div className="relative">
                 <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500"><ChevronsUpDown size={13} /></span>

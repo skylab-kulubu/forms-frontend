@@ -109,7 +109,7 @@ export function LibrarySettingsEditors() {
                     return (
                         <div key={editor.user.id || index} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
                             <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950 text-xs font-semibold uppercase tracking-wide text-emerald-200">
+                                <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950/20 border border-neutral-950/60 text-xs font-semibold uppercase tracking-wide text-emerald-100/70">
                                     {editor.user?.profilePictureUrl ? (<img src={editor.user?.profilePictureUrl} alt={editor.user.fullName} className="h-full w-full object-cover" />) : (editor.user?.fullName ? (<span>{getInitials(editor.user.fullName)}</span>) : (<User2 size={20} />))}
                                 </div>
                                 <div className="min-w-0">

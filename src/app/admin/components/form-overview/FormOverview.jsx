@@ -14,7 +14,7 @@ export default function FormOverview({ formId, formData, metrics, metricsLoading
 
   return (
     <div className="flex flex-col p-4 lg:h-[calc(100dvh-3rem)] lg:overflow-hidden">
-      <OverviewHeader formTitle={formTitle} formId={formId} formStatus={formInfo?.status}
+      <OverviewHeader formTitle={formTitle} formId={formId} formStatus={formInfo?.status} userRole={formInfo?.userRole}
         onEdit={() => router.push(`/admin/forms/${formId}/edit`)} onRefresh={onRefresh}
         onViewResponses={() => router.push(`/admin/forms/${formId}/responses`)}
       />

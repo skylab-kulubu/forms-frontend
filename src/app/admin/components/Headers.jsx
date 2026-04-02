@@ -125,7 +125,6 @@ export function ResponsesHeader({ formTitle = "--", formId = "--", searchValue =
           />
         </div>
         <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={PencilLine} onClick={onEdit} size="md" tone="header" title="Düzenle" aria-label="Düzenle" />
         <ActionButton icon={Download} variant="primary" onClick={onExport} disabled={exportLoading} size="md" tone="header" title="Excel İndir" aria-label="Excel İndir" />
       </div>
       <div className="flex items-center gap-5 ml-auto shrink-0">
@@ -186,7 +185,7 @@ export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "
   );
 }
 
-export function OverviewHeader({ formTitle, formId, formStatus, onEdit, onViewResponses, onRefresh }) {
+export function OverviewHeader({ formTitle, formId, formStatus, onEdit, onViewResponses, onRefresh, userRole }) {
   const isActive = formStatus === 2;
   const statusLabel = isActive ? "Aktif" : "Pasif";
   const statusStyle = isActive ? 1 : 2;
@@ -197,8 +196,8 @@ export function OverviewHeader({ formTitle, formId, formStatus, onEdit, onViewRe
       actions={
         <div className="flex items-center gap-1.5">
           <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header" title="Yenile" aria-label="Yenile" />
-          <ActionButton icon={LayoutList} onClick={onViewResponses} size="md" tone="header" title="Cevaplar" aria-label="Cevaplar" />
-          <ActionButton icon={PencilLine} variant="primary" onClick={onEdit} size="md" tone="header" title="Düzenle" aria-label="Düzenle" />
+          <ActionButton icon={LayoutList} onClick={onViewResponses} disabled={Number(userRole) < 1} className={Number(userRole) < 1 ? "opacity-30 pointer-events-none" : ""} size="md" tone="header" title="Cevaplar" aria-label="Cevaplar" />
+          <ActionButton icon={PencilLine} variant={Number(userRole) >= 2 ? "primary" : "ghost"} disabled={Number(userRole) < 2} className={Number(userRole) < 2 ? "opacity-30 pointer-events-none" : ""} onClick={onEdit} size="md" tone="header" title="Düzenle" aria-label="Düzenle" />
         </div>
       }
     />
