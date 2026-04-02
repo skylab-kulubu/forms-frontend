@@ -35,7 +35,7 @@ export const REGISTRY = {
   combobox: {
     label: "Açılır Liste",
     svg: "/assets/components/combobox.svg",
-    defaults: { question: "", description: "", required: false, allowCustom: false, choices: ["Seçenek 1", "Seçenek 2"] },
+    defaults: { question: "", description: "", required: false, allowCustom: false, choices: ["Seçenek 1", "Seçenek 2"], preset: null },
     Create: CreateFormCombobox, Display: DisplayFormCombobox
   },
   multi_choice: {

@@ -31,6 +31,8 @@ async function refreshAccessToken(token) {
 
         return {
             ...token,
+            university: refreshedTokens.university,
+            department: refreshedTokens.department,
             accessToken: refreshedTokens.access_token,
             expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
             refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
@@ -68,6 +70,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         lastName: jwtPayload.family_name,
                         username: jwtPayload.preferred_username,
                         fullName: `${jwtPayload.given_name ?? ''} ${jwtPayload.family_name ?? ''}`.trim(),
+                        university: jwtPayload.university,
+                        department: jwtPayload.department
                     },
                     error: undefined
                 }

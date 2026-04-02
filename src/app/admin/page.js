@@ -195,7 +195,7 @@ function TrendChart({ title, data, gradientId, color = "rgb(129,140,248)", trend
                   <stop offset="100%" stopColor={color} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgb(100,100,110)" }} dy={6}/>
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgb(100,100,110)" }} dy={6} padding={{ left: 20, right: 20 }} />
               <YAxis hide domain={[0, "auto"]} />
               <Tooltip content={<CustomTooltip />} cursor={{ stroke: color, strokeWidth: 0.5, strokeDasharray: "3 3" }} />
               <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2} fill={`url(#${gradientId})`} dot={{ r: 2.5, fill: color, strokeWidth: 0 }}
@@ -283,31 +283,11 @@ export default function AdminDashboard() {
             </>
           ) : (
             <>
-              <motion.div
-                initial={{ opacity: 0, y: 12, filter: "blur(2px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <TrendChart
-                  title="Haftalık Form Oluşturma Trendi"
-                  data={metrics?.formsCreatedWeeklyTrend}
-                  gradientId="formsGradient"
-                  color="#e0c8e5"
-                  trendPercentage={metrics?.formsWeeklyTrendPercentage}
-                />
+              <motion.div initial={{ opacity: 0, y: 12, filter: "blur(2px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}>
+                <TrendChart title="Haftalık Form Oluşturma Trendi" data={metrics?.formsCreatedWeeklyTrend} gradientId="formsGradient" color="#e0c8e5" trendPercentage={metrics?.formsWeeklyTrendPercentage}/>
               </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 12, filter: "blur(2px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <TrendChart
-                  title="Haftalık Cevap Trendi"
-                  data={metrics?.responsesWeeklyTrend}
-                  gradientId="responsesGradient"
-                  color="#e0c8e5"
-                  trendPercentage={metrics?.responsesWeeklyTrendPercentage}
-                />
+              <motion.div initial={{ opacity: 0, y: 12, filter: "blur(2px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}>
+                <TrendChart title="Haftalık Cevap Trendi" data={metrics?.responsesWeeklyTrend} gradientId="responsesGradient" color="#e0c8e5" trendPercentage={metrics?.responsesWeeklyTrendPercentage}/>
               </motion.div>
             </>
           )}

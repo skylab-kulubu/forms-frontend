@@ -2,11 +2,24 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronsUpDown, Plus, X } from "lucide-react";
+import { BookOpen, ChevronsUpDown, GraduationCap, Plus, X } from "lucide-react";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import SearchPicker from "@/app/components/utils/SearchPicker";
+import { useSession } from "next-auth/react";
+import { UNIVERSITIES } from "../../../data/presets/universities";
+import { DEPARTMENTS } from "../../../data/presets/departments";
+
+const CHOICE_PRESETS = [
+  { id: "universities", label: "Üniversite", icon: GraduationCap, data: UNIVERSITIES },
+  { id: "departments", label: "Bölüm", icon: BookOpen, data: DEPARTMENTS },
+];
+
+const SESSION_PRESET_MAP = {
+  universities: "university",
+  departments: "department",
+};
 
 function normalizeOptions(choices) {
   return (choices ?? []).map((choice, idx) => {
@@ -21,7 +34,14 @@ function normalizeOptions(choices) {
 
 export function CreateFormCombobox({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
-  const [choicesOpen, setChoicesOpen] = useState(true);
+  const [choicesOpen, setChoicesOpen] = useState(false);
+
+  const activePreset = useMemo(() => {
+    const current = prop.choices ?? [];
+    return CHOICE_PRESETS.find((preset) =>
+      preset.data.length === current.length && preset.data.every((item, i) => item === current[i])
+    )?.id ?? null;
+  }, [prop.choices]);
 
   const addChoice = () => {
     const next = [...(prop.choices ?? []), `Seçenek ${((prop.choices ?? []).length + 1)}`];
@@ -69,6 +89,24 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
           className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
           placeholder="Açıklamanızı buraya yazın."
         />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Hazır Listeler</label>
+        <div className="grid grid-cols-2 gap-2">
+          {CHOICE_PRESETS.map((preset) => {
+            const Icon = preset.icon;
+            const isActive = activePreset === preset.id;
+            return (
+              <button key={preset.id} type="button" onClick={() => patch({ choices: preset.data, preset: preset.id })}
+                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all ${isActive ? "border-white/20 bg-white/10 text-indigo-200" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
+              >
+                <Icon size={14} />
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
@@ -136,7 +174,8 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
   );
 }
 
-export function DisplayFormCombobox({ question, questionNumber, description, required = false, choices = [], allowCustom = false, value, onChange, missing = false }) {
+export function DisplayFormCombobox({ question, questionNumber, description, required = false, choices = [], allowCustom = false, preset = null, value, onChange, missing = false }) {
+  const { data: session, status } = useSession();
   const [internalValue, setInternalValue] = useState(value ?? "");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -144,6 +183,22 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
 
   const normalized = useMemo(() => normalizeOptions(choices), [choices]);
   const currentValue = value !== undefined ? (value ?? "") : internalValue;
+
+  const autoValue = useMemo(() => {
+    if (status !== "authenticated" || !preset) return null;
+    const sessionKey = SESSION_PRESET_MAP[preset];
+    const sessionVal = session?.user?.[sessionKey];
+    if (!sessionVal) return null;
+    const found = normalized.find((o) => o.label === sessionVal);
+    if (!found) return allowCustom ? sessionVal : null;
+    return found.id;
+  }, [status, preset, session?.user, normalized, allowCustom]);
+
+  useEffect(() => {
+    if (autoValue != null && onChange && value !== autoValue) {
+      onChange({ target: { value: autoValue } });
+    }
+  }, [autoValue]);
 
   const selectedLabel = useMemo(() => {
     const found = normalized.find((o) => o.id === currentValue || o.label === currentValue);
@@ -199,6 +254,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
     setQuery("");
   };
 
+  const isAutoFilled = autoValue != null && currentValue === autoValue;
   const displayText = selectedLabel || "Bir seçenek seçin";
 
   return (
@@ -222,11 +278,11 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
             <ChevronsUpDown size={16} />
           </span>
-          <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((s) => !s)}
-            className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition hover:bg-white/5 focus:ring-2 focus:ring-white/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-white/30"}`}
+          <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => !isAutoFilled && setOpen((s) => !s)}
+            className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition ${isAutoFilled ? "cursor-default opacity-70" : "hover:bg-white/5 focus:ring-2 focus:ring-white/20"} ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-white/30"}`}
           >
             <span className={currentValue ? "text-neutral-100" : "text-neutral-500"}>{displayText}</span>
-            {currentValue && (
+            {currentValue && !isAutoFilled && (
               <span className="ml-2 text-neutral-400 hover:text-neutral-200" onClick={(e) => { e.stopPropagation(); clear(); }}>
                 <X size={16} />
               </span>
@@ -265,7 +321,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
         </div>
 
         <input type="hidden" name="combobox" value={currentValue} aria-required={required} />
-        {required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1">Zorunlu alan</span>}
+        {isAutoFilled ? <span className="px-0.5 text-[11px] text-neutral-500 mt-1">Oturumunuzdan otomatik dolduruldu</span> : required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1">Zorunlu alan</span>}
       </div>
     </div>
   );
