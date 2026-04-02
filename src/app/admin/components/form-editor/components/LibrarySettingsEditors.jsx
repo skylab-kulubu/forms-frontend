@@ -43,7 +43,7 @@ export function LibrarySettingsEditors() {
         return () => clearTimeout(timer);
     }, [userSearch]);
 
-    const { data: usersData, isLoading: isUsersLoading } = useUserByMailQuery({ email: debouncedSearch, roles: ["ADMIN", "YK", "DK", "EKIP"], enabled: (debouncedSearch.length > 1) });
+    const { data: usersData, isLoading: isUsersLoading } = useUserByMailQuery({ email: debouncedSearch, roles: ["skyforms:form:manage"], enabled: (debouncedSearch.length > 1) });
     const foundUsers = Array.isArray(usersData) ? usersData : (usersData?.data || []);
 
     useEffect(() => {
@@ -124,7 +124,7 @@ export function LibrarySettingsEditors() {
                                 ) : canManageRoles ? (
                                     <div className="relative w-26" style={{ zIndex: openMenuId === editor.user.id ? 50 : 10 }}>
                                         <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.user.id ? null : editor.user.id)}
-                                            className={`flex w-full items-center justify-between gap-1 border px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] transition-colors focus:outline-none 
+                                            className={`flex w-full items-center justify-between gap-1 border px-3 py-1 text-[10px] uppercase tracking-[0.2em] transition-colors focus:outline-none 
                                             ${openMenuId === editor.user.id ? 'rounded-t-lg border-white/20 border-b-transparent bg-[#1e1e1e] text-neutral-50'
                                             : 'rounded-lg border-white/10 bg-white/5 text-neutral-300 hover:border-white/20 hover:text-neutral-50 hover:bg-white/10'}`}
                                         >
@@ -137,8 +137,8 @@ export function LibrarySettingsEditors() {
                                                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15, ease: "easeInOut" }}
                                                     className="absolute left-0 top-full w-full overflow-hidden rounded-b-lg border border-white/20 border-t-0 bg-[#1e1e1e] shadow-xl backdrop-blur-xl"
                                                 >
-                                                    <div className="flex flex-col p-1.5">
-                                                        <div className="my-1 mx-1 h-px bg-white/10" />
+                                                    <div className="flex flex-col px-1.5 pb-1.5 pt-0.5">
+                                                        <div className="mb-1 mx-1 h-px bg-white/10" />
 
                                                         <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 2); setOpenMenuId(null); }}
                                                             className={`flex w-full items-center  gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}

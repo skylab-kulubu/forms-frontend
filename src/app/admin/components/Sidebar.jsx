@@ -28,9 +28,9 @@ function SectionLabel({ children }) {
 }
 
 function getRoleLabel(roles = []) {
+  if (roles.some((r) => (r ?? "").toLowerCase().includes("admin"))) return "AÇMACILAB";
   for (const role of roles) {
     const n = (role ?? "").toLowerCase();
-    if (n.includes("admin"))    return "AÇMACILAB";
     if (n.includes("yk"))       return "YÖNETİM";
     if (n.includes("dk"))       return "DENETİM";
     if (n.includes("weblab"))   return "WEBLAB";
@@ -95,16 +95,13 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
       <AnimatePresence initial={false}>
         {open && (
           <motion.div key="nav-group" className="pl-4 ml-5 space-y-1 border-l-3 border-neutral-800/80 overflow-hidden"
-            initial="collapsed" animate="open" exit="collapsed"
-            variants={{
-              open: { height: "auto", opacity: 1, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.04, delayChildren: 0.03 } },
-              collapsed: { height: 0, opacity: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.03, staggerDirection: -1 } },
-            }}
+            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            {items.map((item) => (
+            {items.map((item, i) => (
               <motion.div key={item.href}
-                variants={{ open: { opacity: 1, x: 0 }, collapsed: { opacity: 0, x: -6 } }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.15, delay: i * 0.04 }}
               >
                 <NavItem href={item.href} icon={item.icon} label={item.label} active={itemIsActive(item)} variant="subtle" onClick={onItemClick}/>
                 {item.children?.length ? (

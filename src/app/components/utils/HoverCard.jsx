@@ -53,7 +53,6 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
   const email = user?.email?.trim() || "";
   const id = user?.id?.trim() || "";
   const university = user?.university?.trim() || "";
-  const faculty = user?.faculty?.trim() || "";
   const department = user?.department?.trim() || "";
   const roles = Array.isArray(user?.roles) ? user.roles.filter(Boolean) : [];
   const avatarUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
@@ -66,7 +65,6 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
 
   const rows = [
     { label: "University", value: university || "--" },
-    { label: "Faculty", value: faculty || "--" },
     { label: "Department", value: department || "--" },
   ];
 
