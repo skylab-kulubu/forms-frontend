@@ -6,7 +6,6 @@ import { FormResponseStatus } from "./components/FormResponseStatus";
 import { useFormDisplayer } from "./hooks/useFormDisplayer";
 import { FormStatusDisplayer } from "../FormStatusHandler";
 import Background from "../Background";
-import { Spotlight } from "../landing/utils";
 import { Loader2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -159,10 +158,9 @@ export default function FormDisplayer({ form, step, draft = null }) {
       <AnimatePresence>
         {!isFinished && (
           <motion.div key="background-layer" className="fixed inset-0 z-0 pointer-events-none"
-            initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
           >
             <Background />
-            <Spotlight />
           </motion.div>
         )}
       </AnimatePresence>
@@ -187,7 +185,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
                 <FormRespondentBadge />
               </motion.div>
 
-            <div className="w-full flex-1 flex flex-col rounded-3xl border border-white/10 bg-black/20 shadow-2xl">
+            <div className="w-full flex-1 flex flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
               <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
 
                 <motion.div variants={itemVariants}>
@@ -253,7 +251,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
                     <motion.div variants={itemVariants} className="mt-auto flex flex-col items-end gap-2">
                       <motion.button onClick={onSubmit} disabled={isSubmitting || errorMessage || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none
-                        ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-pink-300/30 border-pink-200/40 hover:bg-pink-200/60"}`}
+                        ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}
                       >
                         {errorMessage ? (errorMessage) : isSubmitting ? (<Loader2 className="animate-spin" size={16} />) : ("Yanıtları Gönder")}
                       </motion.button>
@@ -299,7 +297,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
             </div>
 
             <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
-              className="text-[10px] text-neutral-600/50 hover:text-neutral-400 -mt-1 transition-colors">
+              className="text-[10px] text-neutral-300/50 hover:text-skylab-500 -mt-1 transition-colors">
               Developed by Fatih Naz
             </a>
           </div>

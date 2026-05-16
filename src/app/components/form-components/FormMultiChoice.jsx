@@ -139,7 +139,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex gap-3">
           {questionNumber != null && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300 shrink-0">
               {questionNumber}
             </div>
           )}

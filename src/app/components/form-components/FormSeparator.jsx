@@ -34,7 +34,7 @@ export function DisplayFormSeparator({ title, description }) {
             <div className="flex flex-col p-2 md:p-4">
                 <div className="flex items-center gap-3">
                     {title && (
-                        <p className="shrink-0 text-[18px] font-medium text-neutral-100">{title}</p>
+                        <p className="min-w-0 max-w-[70%] wrap-break-word text-[18px] font-medium text-neutral-100">{title}</p>
                     )}
                     <div className="h-px flex-1 bg-white/10" />
                 </div>

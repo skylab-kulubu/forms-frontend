@@ -54,8 +54,8 @@ export function FormResponseStatus({ step, status }) {
           return (
             <li key={s.key} className={`flex items-center ${isLastStep ? "w-auto" : "w-full"}`}>
               <div className="flex items-center gap-3 relative">
-                <motion.span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-white ${isOn ? "border-indigo-500 bg-indigo-400" : "border-neutral-700 bg-neutral-900 text-neutral-500"}`}
-                  animate={isOn ? { scale: [1, 1.2, 1], borderColor: "rgb(99 102 241)", backgroundColor: "rgb(129 140 248)" } : { scale: 1, borderColor: "rgb(64 64 64)", backgroundColor: "rgb(23 23 23)" }}
+                <motion.span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-white ${isOn ? "border-skylab-700 bg-skylab-600" : "border-neutral-700 bg-neutral-900 text-neutral-500"}`}
+                  animate={isOn ? { scale: [1, 1.2, 1], borderColor: "#ae7eb6", backgroundColor: "#c8a4ce" } : { scale: 1, borderColor: "rgb(64 64 64)", backgroundColor: "rgb(23 23 23)" }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 >
                   <StepIcon isCompleted={isCompleted} isActive={isActive} isLastStep={isLastStep} currentStep={currentStep} status={status} index={idx}/>
@@ -67,7 +67,7 @@ export function FormResponseStatus({ step, status }) {
               {!isLastStep && (
                 <div className="flex-1 mx-2 sm:mx-4">
                   <div className="relative h-0.5 w-full rounded-full bg-neutral-800 overflow-hidden">
-                    <motion.div className="absolute inset-y-0 left-0 rounded-full bg-indigo-400"
+                    <motion.div className="absolute inset-y-0 left-0 rounded-full bg-skylab-600"
                       initial={false} animate={{ width: isCompleted ? "100%" : "0%" }} transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
                     />
                   </div>

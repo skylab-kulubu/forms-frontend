@@ -61,7 +61,7 @@ function NavItem({ href, icon: Icon, label, active, onClick, variant = "default"
 
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className={`${base} ${state}`} onClick={onClick}>
-      <Icon className={`${variant === "subtle" ? "h-4 w-4" : "h-5 w-5"} text-neutral-300 group-hover:text-neutral-200`} strokeWidth={1.75} />
+      <Icon className={`${variant === "subtle" ? "h-4 w-4" : "h-5 w-5"} text-neutral-300 group-hover:text-neutral-200 shrink-0`} strokeWidth={1.75} />
       <span className="font-medium truncate">{label}</span>
       {variant !== "subtle" && (
         <ChevronRight className="ml-auto h-4 w-4 text-neutral-400 group-hover:text-neutral-200" />
