@@ -6,6 +6,7 @@ import { FormResponseStatus } from "./components/FormResponseStatus";
 import { useFormDisplayer } from "./hooks/useFormDisplayer";
 import { FormStatusDisplayer } from "../FormStatusHandler";
 import Background from "../Background";
+import { Spotlight } from "../landing/utils";
 import { Loader2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -161,6 +162,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
             initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
           >
             <Background />
+            <Spotlight />
           </motion.div>
         )}
       </AnimatePresence>

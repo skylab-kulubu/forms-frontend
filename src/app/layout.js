@@ -18,13 +18,15 @@ export const metadata = {
     template: "%s | SKY LAB Forms",
   },
   description:
-    "Yıldız Teknik Üniversitesi Bilgisayar Bilimleri Kulübü. 8 AR-GE ekibiyle yazılım, yapay zeka, siber güvenlik ve daha fazlasında projeler geliştir.",
-  keywords: ["skylab", "arge", "form", "anket", "form oluşturucu", "skylab forms", "skylab arge"],
+    "SKY LAB iş akışları için modern ve esnek form altyapısı. Dinamik formlar oluşturun, süreçleri tasarlayın ve tüm başvuruları tek merkezden yönetin.",
+  keywords: [
+    "skylab", "arge", "form", "anket", "form oluşturucu", "skylab forms", "süreç yönetimi", "dinamik form", "veri yönetimi"
+  ],
   authors: [{ name: "Fatih Naz" }],
   openGraph: {
     title: "SKY LAB Forms",
     description:
-      "Yıldız Teknik Üniversitesi Bilgisayar Bilimleri Kulübü. 8 AR-GE ekibiyle projeler geliştir.",
+      "SKY LAB iş akışları için modern ve esnek form altyapısı. Dinamik formlar oluşturun, süreçleri tasarlayın ve tüm başvuruları tek merkezden yönetin.",
     type: "website",
     locale: "tr_TR",
     siteName: "SKY LAB Forms",
@@ -33,7 +35,7 @@ export const metadata = {
     card: "summary",
     title: "SKY LAB Forms",
     description:
-      "Yıldız Teknik Üniversitesi Bilgisayar Bilimleri Kulübü. 8 AR-GE ekibiyle projeler geliştir.",
+      "SKY LAB iş akışları için modern ve esnek form altyapısı. Dinamik formlar oluşturun, süreçleri tasarlayın ve tüm başvuruları tek merkezden yönetin.",
   },
   robots: {
     index: false,
