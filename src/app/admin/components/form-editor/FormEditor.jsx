@@ -17,6 +17,7 @@ import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
 import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
 import ApprovalOverlay from "../ApprovalOverlay";
+import ShareOverlay from "../ShareOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 import { FormPreview } from "./components/FormPreview";
 
@@ -73,6 +74,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false);
+    const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
 
     const editorRef = useRef(null);
     const libraryDropElRef = useRef(null);
@@ -272,11 +274,13 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                     hasDraft={hasDraft}
                     onDiscardDraft={handleDiscardDraft}
                     isDiscardingDraft={isDiscardingDraft}
+                    onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
                     onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
                     isPending={isPending}
                     isSuccess={isSuccess}
                     isError={isError}
                     error={error}
+                    isShareDisabled={isNewForm}
                     isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                     onLibrarySelect={handleLibrarySelect}
                     onGroupSelect={handleGroupSelect}
@@ -302,10 +306,12 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                                 hasDraft={hasDraft}
                                 onDiscardDraft={handleDiscardDraft}
                                 isDiscardingDraft={isDiscardingDraft}
+                                onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
                                 onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
                                 isPending={isPending}
                                 isSuccess={isSuccess}
                                 isError={isError}
+                                isShareDisabled={isNewForm}
                                 isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                                 onLibrarySelect={handleLibrarySelect}
                                 onGroupSelect={handleGroupSelect}
@@ -342,6 +348,12 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 />
 
                 <FormPreview open={previewOpen} onClose={() => setPreviewOpen(false)} />
+
+                <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
+                    resource="form" resourceId={state.id}
+                    title="Formu Paylaş"
+                    description="Bu bağlantıyla form herkese açık olarak doldurulabilir."
+                />
             </div>
         </DndContext>
     );

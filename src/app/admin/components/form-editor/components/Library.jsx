@@ -3,14 +3,14 @@ import { LibraryComponents } from "./LibraryComponents";
 import { LibrarySettings } from "./LibrarySettings";
 import { useFormEditor } from "../FormEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, CircleAlert, CircleGauge, Eye, Undo2, ClipboardX, Trash, Trash2, Loader2 } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleGauge, Eye, Undo2, ClipboardX, Share2, Trash, Trash2, Loader2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import Popover from "@/app/components/utils/Popover";
 import dynamic from "next/dynamic";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
 
-export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPreview, onSave, onUndo, onDelete, isPending, isError, error, isSuccess, isDeleteDisabled, canUndo, hasDraft, onDiscardDraft, isDiscardingDraft, draftNotice, onDraftNoticeClose }) {
+export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPreview, onSave, onUndo, onShare, onDelete, isPending, isError, error, isSuccess, isDeleteDisabled, isShareDisabled, canUndo, hasDraft, onDiscardDraft, isDiscardingDraft, draftNotice, onDraftNoticeClose }) {
     const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
@@ -100,6 +100,11 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
                             className={`rounded-lg p-1.5 transition-colors ${onPreview ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
                         >
                             <Eye size={16} />
+                        </button>
+                        <button type="button" aria-label="Formu paylaş" onClick={onShare} disabled={isShareDisabled || !onShare}
+                            className={`rounded-lg p-1.5 transition-colors ${(isShareDisabled || !onShare) ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+                        >
+                            <Share2 size={16} />
                         </button>
                         {hasDraft && !canUndo ? (
                             <button type="button" aria-label="Taslagi sil" onClick={onDiscardDraft} disabled={isDiscardingDraft}

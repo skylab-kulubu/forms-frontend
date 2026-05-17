@@ -6,13 +6,15 @@ import { Check, CircleAlert, Copy, Loader2, RotateCcw, Share2, Timer, Trash2, X 
 
 const buildShareUrl = (resource, id, token) => {
   if (typeof window === "undefined") return "";
-  if (!id || !token) return "";
+  if (!id) return "";
   const origin = window.location.origin;
   switch (resource) {
     case "component-group":
-      return `${origin}/component-groups/${id}?token=${encodeURIComponent(token)}`;
+      return token ? `${origin}/component-groups/${id}?token=${encodeURIComponent(token)}` : "";
     case "response":
-      return `${origin}/responses/${id}?token=${encodeURIComponent(token)}`;
+      return token ? `${origin}/responses/${id}?token=${encodeURIComponent(token)}` : "";
+    case "form":
+      return `${origin}/${id}`;
     default:
       return "";
   }
@@ -52,7 +54,8 @@ export default function ShareOverlay({
   shareMutation,
   revokeMutation,
 }) {
-  const { mutate, data, isPending, isError, error, reset } = shareMutation;
+  const isDirect = !shareMutation;
+  const { mutate, data, isPending, isError, error, reset } = shareMutation ?? {};
   const revokeMutate = revokeMutation?.mutate;
   const isRevoking = revokeMutation?.isPending ?? false;
   const revokeReset = revokeMutation?.reset;
@@ -73,7 +76,7 @@ export default function ShareOverlay({
   useEffect(() => {
     if (!open) {
       hasTriggeredRef.current = false;
-      reset();
+      reset?.();
       revokeReset?.();
       setCopyState("idle");
       setRevoked(false);
@@ -84,11 +87,12 @@ export default function ShareOverlay({
       return;
     }
 
+    if (isDirect) return;
     if (!resourceId) return;
     if (hasTriggeredRef.current) return;
     hasTriggeredRef.current = true;
     mutate(resourceId);
-  }, [open, resourceId, mutate, reset, revokeReset]);
+  }, [open, resourceId, mutate, reset, revokeReset, isDirect]);
 
   useEffect(() => {
     if (!expiresAt) {
@@ -124,8 +128,8 @@ export default function ShareOverlay({
   };
 
   const handleRetry = () => {
-    if (!resourceId || isPending) return;
-    reset();
+    if (!resourceId || isPending || isDirect) return;
+    reset?.();
     setCopyState("idle");
     mutate(resourceId);
   };
@@ -214,25 +218,27 @@ export default function ShareOverlay({
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 text-[11px] text-neutral-500">
-                      <div className="inline-flex items-center gap-1.5">
-                        <Timer size={12} className="text-neutral-500" />
-                        <span>{remaining ?? "Geçerli"}</span>
+                    {(expiresAt || remaining) && (
+                      <div className="flex items-center justify-between gap-2 text-[11px] text-neutral-500">
+                        <div className="inline-flex items-center gap-1.5">
+                          <Timer size={12} className="text-neutral-500" />
+                          <span>{remaining ?? "Geçerli"}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {expiresLabel && (
+                            <span className="truncate text-neutral-600">{expiresLabel} tarihinde sona erer</span>
+                          )}
+                          {revokeMutate && (
+                            <button type="button" onClick={handleRevoke} disabled={isRevoking}
+                              className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-[11px] font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isRevoking ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                              <span>İptal Et</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        {expiresLabel && (
-                          <span className="truncate text-neutral-600">{expiresLabel} tarihinde sona erer</span>
-                        )}
-                        {revokeMutate && (
-                          <button type="button" onClick={handleRevoke} disabled={isRevoking}
-                            className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-[11px] font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isRevoking ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
-                            <span>İptal Et</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    )}
                   </motion.div>
                 ) : null}
               </AnimatePresence>
