@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Clock, Loader2, PencilLine, Undo2, X, User2, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { Check, Clock, Loader2, PencilLine, Share2, Undo2, X, User2, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import { useResponseStatusMutation, useResponseArchiveMutation } from "@/lib/hooks/useResponse";
+import { useCreateResponseShareMutation, useRevokeResponseTokenMutation } from "@/lib/hooks/useResponseShare";
 import Popover from "@/app/components/utils/Popover";
+import ShareOverlay from "@/app/admin/components/ShareOverlay";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -81,7 +83,7 @@ function UserCard({ name, email, userId, photoUrl, initials, hasUser, size = "no
   );
 }
 
-export function ResponseActions({ response }) {
+export function ResponseActions({ response, readOnly = false }) {
   const reviewedAt = response?.reviewedAt;
   const reviewDescription = response?.reviewDescription || response?.reviewerNote || "";
   const statusValue = Number(response?.status ?? 0);
@@ -89,17 +91,20 @@ export function ResponseActions({ response }) {
   const canReview = statusValue !== 0;
   const archivedAt = response?.archivedAt;
   const isArchived = Boolean(response?.isArchived);
-  const canEditReview = canReview && !isArchived;
+  const canEditReview = !readOnly && canReview && !isArchived;
   const timeSpent = response?.timeSpent ?? null;
 
   const [note, setNote] = useState(reviewDescription);
   const [isEditing, setIsEditing] = useState(canEditReview && !reviewedAt);
   const [actionState, setActionState] = useState("idle");
+  const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
   const actionTimerRef = useRef(null);
   const responseId = response?.id;
   const prevResponseIdRef = useRef(responseId);
   const { mutate, isPending } = useResponseStatusMutation();
   const { mutate: archiveMutate, isPending: isArchivePending, isSuccess, isError, error, reset } = useResponseArchiveMutation();
+  const shareMutation = useCreateResponseShareMutation();
+  const revokeMutation = useRevokeResponseTokenMutation();
 
   useEffect(() => {
     if (!isError && !isSuccess) return;
@@ -183,9 +188,16 @@ export function ResponseActions({ response }) {
     );
   };
 
-  const showReviewDetails = canReview && Boolean(reviewedAt) && !isEditing && actionState === "idle";
+  const showReviewDetails = canReview && Boolean(reviewedAt) && (!isEditing || readOnly) && actionState === "idle";
   const actionTone = actionState === "error" ? "border-red-500/30 bg-red-500/10 text-red-200" : actionState === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5 text-neutral-200";
   const StatusIcon = statusInfo.Icon;
+
+  const sharedBy = response.sharedBy ?? null;
+  const sharedByName = sharedBy?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "";
+  const sharedByEmail = sharedBy?.email || "";
+  const sharedById = sharedBy?.id || null;
+  const sharedByPhotoUrl = sharedBy?.profilePictureUrl || null;
+  const sharedByInitials = getInitials(sharedByName);
 
   return (
     <div className="flex h-full items-start justify-center overflow-hidden">
@@ -193,17 +205,31 @@ export function ResponseActions({ response }) {
         <div className="flex h-full flex-col rounded-xl overflow-hidden">
           <div className="flex-1 overflow-y-auto scrollbar">
             <motion.div {...fadeIn} className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <h2 className="text-xs font-semibold text-neutral-200 tracking-wide">Cevap İşlemleri</h2>
-              <div className="flex items-center gap-1 text-neutral-500">
-                <Popover open={isError} error={error} variant="error" align="bottom-right">
-                  <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
-                    className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+              <h2 className="text-xs font-semibold text-neutral-200 tracking-wide">{readOnly ? "Paylaşılan Cevap" : "Cevap İşlemleri"}</h2>
+              {!readOnly && (
+                <div className="flex items-center gap-1 text-neutral-500">
+                  <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" disabled={!responseId} onClick={() => setShareOverlayOpen(true)}
+                    className={`rounded-lg p-1.5 transition-colors ${!responseId ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
                   >
-                    <Archive size={15} />
+                    <Share2 size={15} />
                   </button>
-                </Popover>
-              </div>
+                  <Popover open={isError} error={error} variant="error" align="bottom-right">
+                    <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
+                      className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
+                    >
+                      <Archive size={15} />
+                    </button>
+                  </Popover>
+                </div>
+              )}
             </motion.div>
+
+            {readOnly && sharedBy && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.02 }} className="px-4 py-4 border-b border-white/5">
+                <SectionTitle>Paylaşan</SectionTitle>
+                <UserCard name={sharedByName || "Bilinmiyor"} email={sharedByEmail} userId={sharedById} photoUrl={sharedByPhotoUrl} initials={sharedByInitials} hasUser={Boolean(sharedBy?.fullName)} />
+              </motion.div>
+            )}
 
             <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.03 }} className="px-4 py-4 border-b border-white/5">
               <SectionTitle>Özet</SectionTitle>
@@ -326,6 +352,16 @@ export function ResponseActions({ response }) {
           </div>
         </div>
       </div>
+
+      {!readOnly && (
+        <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
+          resource="response" resourceId={responseId}
+          title="Cevabı Paylaş"
+          description="Bu bağlantıyla paylaşılan kişi cevabı görüntüleyebilir. Bağlantı 1 saat geçerlidir."
+          shareMutation={shareMutation}
+          revokeMutation={revokeMutation}
+        />
+      )}
     </div>
   );
 }

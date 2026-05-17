@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { motion } from "framer-motion";
-import { CircleAlert, FolderHeart, ShieldAlert, User2 } from "lucide-react";
+import { CircleAlert, FolderHeart, Share2, ShieldAlert, User2 } from "lucide-react";
 import Background from "@/app/components/Background";
 import LoginButton from "@/app/components/utils/LoginButton";
 
@@ -14,19 +14,33 @@ const cardVariants = {
 function CardShell({ children }) {
     return (
         <motion.div variants={cardVariants} initial="initial" animate="animate"
-            className="w-full max-w-md rounded-2xl border border-white/10 bg-neutral-950/60 backdrop-blur p-6 text-center shadow-2xl"
+            className="w-full max-w-md p-6 text-center"
         >
             {children}
         </motion.div>
     );
 }
 
-export default function SharedLanding({ groupId, token, meta, isLoggedIn, hasAccess }) {
-    const callbackUrl = token
-        ? `/component-groups/${groupId}?token=${encodeURIComponent(token)}`
-        : `/component-groups/${groupId}`;
+const ICON_MAP = {
+    "component-group": FolderHeart,
+    response: Share2,
+};
 
+export default function AuthLanding({
+    callbackUrl,
+    isLoggedIn,
+    hasAccess,
+    hasToken,
+    hasMeta,
+    title,
+    description,
+    sharedByName,
+    resource = "component-group",
+    fallbackTitle = "Skylab Forms Paylaşımı",
+    actionHint = "Görüntülemek için giriş yapman gerekiyor.",
+}) {
     const handleLogin = () => signIn("keycloak", { callbackUrl });
+    const ResourceIcon = ICON_MAP[resource] ?? FolderHeart;
 
     let content;
 
@@ -42,7 +56,7 @@ export default function SharedLanding({ groupId, token, meta, isLoggedIn, hasAcc
                 </p>
             </CardShell>
         );
-    } else if (token && !meta) {
+    } else if (hasToken && !hasMeta) {
         content = (
             <CardShell>
                 <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-amber-400/20 bg-amber-400/10 text-amber-300">
@@ -55,16 +69,14 @@ export default function SharedLanding({ groupId, token, meta, isLoggedIn, hasAcc
             </CardShell>
         );
     } else {
-        const title = meta?.title || "Bileşen Grubu Paylaşımı";
-        const description = meta?.description || null;
-        const sharedByName = meta?.sharedBy?.fullName || null;
+        const displayTitle = title || fallbackTitle;
 
         content = (
             <CardShell>
                 <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl border border-skylab-400/20 bg-skylab-400/10 text-skylab-300">
-                    <FolderHeart size={22} />
+                    <ResourceIcon size={22} />
                 </div>
-                <h1 className="mt-4 text-base font-semibold text-neutral-100 truncate">{title}</h1>
+                <h1 className="mt-4 text-base font-semibold text-neutral-100 truncate">{displayTitle}</h1>
                 {description && (
                     <p className="mt-2 text-[12px] leading-relaxed text-neutral-400 line-clamp-3">{description}</p>
                 )}
@@ -74,9 +86,7 @@ export default function SharedLanding({ groupId, token, meta, isLoggedIn, hasAcc
                         <span>{sharedByName} paylaştı</span>
                     </div>
                 )}
-                <p className="mt-5 text-[11px] text-neutral-500">
-                    Görüntülemek ve kendi gruplarına eklemek için giriş yapman gerekiyor.
-                </p>
+                <p className="mt-5 text-[11px] text-neutral-500">{actionHint}</p>
                 <div className="mt-4 flex items-center justify-center">
                     <LoginButton onClick={handleLogin} />
                 </div>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import SharedLanding from "@/app/components/SharedLanding";
+import AuthLanding from "@/app/components/AuthLanding";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
@@ -75,13 +75,23 @@ export default async function ShareGatewayPage({ params, searchParams }) {
 
     const meta = await fetchMeta(groupId, token);
 
+    const callbackUrl = token
+        ? `/component-groups/${groupId}?token=${encodeURIComponent(token)}`
+        : `/component-groups/${groupId}`;
+
     return (
-        <SharedLanding
-            groupId={groupId}
-            token={token}
-            meta={meta}
+        <AuthLanding
+            resource="component-group"
+            callbackUrl={callbackUrl}
             isLoggedIn={isLoggedIn}
             hasAccess={hasAccess}
+            hasToken={!!token}
+            hasMeta={!!meta}
+            title={meta?.title}
+            description={meta?.description}
+            sharedByName={meta?.sharedBy?.fullName}
+            fallbackTitle="Bileşen Grubu Paylaşımı"
+            actionHint="Görüntülemek ve kendi gruplarına eklemek için giriş yapman gerekiyor."
         />
     );
 }

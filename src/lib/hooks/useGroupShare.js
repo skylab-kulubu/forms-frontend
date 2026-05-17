@@ -27,7 +27,7 @@ export const useCreateGroupShareMutation = () => {
 
 export const useGroupPreviewQuery = (groupId, token, options = {}) =>
   useQuery({
-    queryKey: ["group-preview", groupId, token || null],
+    queryKey: ["group", groupId, token || null],
     queryFn: () => fetchGroupPreview(groupId, token),
     enabled: !!groupId && options.enabled !== false,
     retry: false,

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CircleAlert, Copy, Loader2, RotateCcw, Share2, Timer, X } from "lucide-react";
+import { Check, CircleAlert, Copy, Loader2, RotateCcw, Share2, Timer, Trash2, X } from "lucide-react";
 
 const buildShareUrl = (resource, id, token) => {
   if (typeof window === "undefined") return "";
@@ -11,6 +11,8 @@ const buildShareUrl = (resource, id, token) => {
   switch (resource) {
     case "component-group":
       return `${origin}/component-groups/${id}?token=${encodeURIComponent(token)}`;
+    case "response":
+      return `${origin}/responses/${id}?token=${encodeURIComponent(token)}`;
     default:
       return "";
   }
@@ -48,16 +50,21 @@ export default function ShareOverlay({
   title = "Bağlantıyı Paylaş",
   description = "Bu bağlantıyla paylaşılan kişi grubu görüntüleyip kendi gruplarına ekleyebilir.",
   shareMutation,
+  revokeMutation,
 }) {
   const { mutate, data, isPending, isError, error, reset } = shareMutation;
+  const revokeMutate = revokeMutation?.mutate;
+  const isRevoking = revokeMutation?.isPending ?? false;
+  const revokeReset = revokeMutation?.reset;
 
   const [copyState, setCopyState] = useState("idle");
+  const [revoked, setRevoked] = useState(false);
   const copyTimerRef = useRef(null);
   const hasTriggeredRef = useRef(false);
 
   const tokenData = data?.data ?? null;
-  const token = tokenData?.token ?? null;
-  const expiresAt = tokenData?.expiresAt ?? null;
+  const token = revoked ? null : tokenData?.token ?? null;
+  const expiresAt = revoked ? null : tokenData?.expiresAt ?? null;
 
   const shareUrl = useMemo(() => buildShareUrl(resource, resourceId, token), [resource, resourceId, token]);
   const expiresLabel = formatExpiresAt(expiresAt);
@@ -67,7 +74,9 @@ export default function ShareOverlay({
     if (!open) {
       hasTriggeredRef.current = false;
       reset();
+      revokeReset?.();
       setCopyState("idle");
+      setRevoked(false);
       if (copyTimerRef.current) {
         clearTimeout(copyTimerRef.current);
         copyTimerRef.current = null;
@@ -79,7 +88,7 @@ export default function ShareOverlay({
     if (hasTriggeredRef.current) return;
     hasTriggeredRef.current = true;
     mutate(resourceId);
-  }, [open, resourceId, mutate, reset]);
+  }, [open, resourceId, mutate, reset, revokeReset]);
 
   useEffect(() => {
     if (!expiresAt) {
@@ -121,6 +130,13 @@ export default function ShareOverlay({
     mutate(resourceId);
   };
 
+  const handleRevoke = () => {
+    if (!resourceId || !revokeMutate || isRevoking) return;
+    revokeMutate(resourceId, {
+      onSuccess: () => setRevoked(true),
+    });
+  };
+
   const errorMessage = error?.message || "Bağlantı oluşturulamadı.";
 
   return (
@@ -152,7 +168,14 @@ export default function ShareOverlay({
               <p className="text-[12px] leading-relaxed text-neutral-400">{description}</p>
 
               <AnimatePresence mode="wait" initial={false}>
-                {isPending ? (
+                {revoked ? (
+                  <motion.div key="revoked" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-4 text-sm text-amber-200"
+                  >
+                    <Trash2 size={14} />
+                    <span>Bağlantı iptal edildi</span>
+                  </motion.div>
+                ) : isPending ? (
                   <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                     className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-4 text-sm text-neutral-400"
                   >
@@ -194,11 +217,21 @@ export default function ShareOverlay({
                     <div className="flex items-center justify-between gap-2 text-[11px] text-neutral-500">
                       <div className="inline-flex items-center gap-1.5">
                         <Timer size={12} className="text-neutral-500" />
-                        <span>{remaining ?? "48 saat geçerli"}</span>
+                        <span>{remaining ?? "Geçerli"}</span>
                       </div>
-                      {expiresLabel && (
-                        <span className="truncate text-neutral-600">{expiresLabel} tarihinde sona erer</span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {expiresLabel && (
+                          <span className="truncate text-neutral-600">{expiresLabel} tarihinde sona erer</span>
+                        )}
+                        {revokeMutate && (
+                          <button type="button" onClick={handleRevoke} disabled={isRevoking}
+                            className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-[11px] font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isRevoking ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                            <span>İptal Et</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ) : null}

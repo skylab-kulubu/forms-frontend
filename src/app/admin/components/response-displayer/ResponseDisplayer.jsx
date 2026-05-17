@@ -4,7 +4,7 @@ import { useState, useEffect, forwardRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ClockPlusIcon, ChevronsLeft, ListX, TextSearch,  } from "lucide-react";
 
-import { useResponseQuery } from "@/lib/hooks/useResponse";
+import { useResponsePreviewQuery } from "@/lib/hooks/useResponseShare";
 import { ResponseListItem, ResponseListSkeleton } from "./components/ResponseDisplayerComponents";
 import { ResponseActions } from "./components/ResponseActions";
 import StateCard from "@/app/components/StateCard";
@@ -60,10 +60,11 @@ const formatDateTime = (value) => {
   return date.toLocaleString();
 };
 
-export default function ResponseDisplayer({ response }) {
+export default function ResponseDisplayer({ response, token = null }) {
   const schema = Array.isArray(response?.schema) ? response.schema : [];
   const relationship = Number(response?.relationship ?? 0);
   const linkedResponseId = response?.linkedResponseId ?? "";
+  const isSharedView = Boolean(response?.sharedBy);
 
   const canNavigateLinked = (relationship === 1 || relationship === 2) && Boolean(linkedResponseId);
   const isChild = relationship === 2;
@@ -83,7 +84,7 @@ export default function ResponseDisplayer({ response }) {
   }, [isLgUp]);
 
   const linkedEnabled = canNavigateLinked && activeView === "linked";
-  const { data: linkedData, isLoading: isLinkedLoading, error: linkedError } = useResponseQuery(linkedResponseId, { enabled: linkedEnabled });
+  const { data: linkedData, isLoading: isLinkedLoading, error: linkedError } = useResponsePreviewQuery(linkedResponseId, token, { enabled: linkedEnabled });
   const linkedResponse = linkedData?.data ?? linkedData ?? null;
   const linkedSchema = Array.isArray(linkedResponse?.schema) ? linkedResponse.schema : [];
 
@@ -215,7 +216,7 @@ export default function ResponseDisplayer({ response }) {
 
   const drawerContent = (
      <div className="h-full w-full p-4 overflow-y-auto scrollbar">
-        <ResponseActions response={activeResponse} isLoading={actionsLoading} />
+        <ResponseActions response={activeResponse} isLoading={actionsLoading} readOnly={isSharedView} />
      </div>
   );
 
