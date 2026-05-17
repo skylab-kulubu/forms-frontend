@@ -16,7 +16,7 @@ const fetchGroupById = async (groupId) => {
 };
 
 const createGroup = async (payload) => {
-  return request("/api/admin/forms/component-groups/", {
+  return request("/api/admin/forms/component-groups", {
     method: "POST",
     body: payload,
   });

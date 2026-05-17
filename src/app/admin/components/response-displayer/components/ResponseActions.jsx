@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Clock, Loader2, PencilLine, Share2, Undo2, X, User2, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { Check, Clock, Loader2, PencilLine, Undo2, X, User2, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import { useResponseStatusMutation, useResponseArchiveMutation } from "@/lib/hooks/useResponse";
-import { useShareLink } from "@/app/admin/hooks/useShareLink";
 import Popover from "@/app/components/utils/Popover";
 
 const fadeIn = {
@@ -98,13 +97,9 @@ export function ResponseActions({ response }) {
   const [actionState, setActionState] = useState("idle");
   const actionTimerRef = useRef(null);
   const responseId = response?.id;
-  const responseFormId = response?.formId || response?.form?.id || null;
   const prevResponseIdRef = useRef(responseId);
   const { mutate, isPending } = useResponseStatusMutation();
   const { mutate: archiveMutate, isPending: isArchivePending, isSuccess, isError, error, reset } = useResponseArchiveMutation();
-  const sharePath = responseFormId && responseId ? `admin/${responseFormId}/responses/${responseId}` : null;
-  const { shareStatus, handleShare } = useShareLink(sharePath);
-  const canShare = Boolean(sharePath);
 
   useEffect(() => {
     if (!isError && !isSuccess) return;
@@ -200,11 +195,6 @@ export function ResponseActions({ response }) {
             <motion.div {...fadeIn} className="flex items-center justify-between px-4 py-3 border-b border-white/5">
               <h2 className="text-xs font-semibold text-neutral-200 tracking-wide">Cevap İşlemleri</h2>
               <div className="flex items-center gap-1 text-neutral-500">
-                <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" onClick={handleShare} disabled={!canShare}
-                  className={`rounded-lg p-1.5 transition-colors ${canShare ? "" : "opacity-50 cursor-not-allowed"} ${shareStatus === "success" ? "text-skylab-400" : shareStatus === "error" ? "text-red-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-                >
-                  <Share2 size={15} />
-                </button>
                 <Popover open={isError} error={error} variant="error" align="bottom-right">
                   <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
                     className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}

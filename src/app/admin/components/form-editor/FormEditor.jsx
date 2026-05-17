@@ -16,7 +16,6 @@ import { LibraryTrigger } from "./components/LibraryTrigger";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
 import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
-import { useShareLink } from "@/app/admin/hooks/useShareLink";
 import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 import { FormPreview } from "./components/FormPreview";
@@ -81,7 +80,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
 
     const { mutate: saveForm, isPending, isSuccess, isError, error, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
-    const { shareStatus, handleShare } = useShareLink(state.id);
 
     useDraftAutoSave(isNewForm ? null : state.id, state);
     const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
@@ -274,13 +272,11 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                     hasDraft={hasDraft}
                     onDiscardDraft={handleDiscardDraft}
                     isDiscardingDraft={isDiscardingDraft}
-                    onShare={handleShare}
                     onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
                     isPending={isPending}
                     isSuccess={isSuccess}
                     isError={isError}
                     error={error}
-                    shareStatus={shareStatus}
                     isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                     onLibrarySelect={handleLibrarySelect}
                     onGroupSelect={handleGroupSelect}
@@ -306,12 +302,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                                 hasDraft={hasDraft}
                                 onDiscardDraft={handleDiscardDraft}
                                 isDiscardingDraft={isDiscardingDraft}
-                                onShare={handleShare}
                                 onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
                                 isPending={isPending}
                                 isSuccess={isSuccess}
                                 isError={isError}
-                                shareStatus={shareStatus}
                                 isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
                                 onLibrarySelect={handleLibrarySelect}
                                 onGroupSelect={handleGroupSelect}

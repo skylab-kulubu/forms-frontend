@@ -12,7 +12,9 @@ import { GhostComponent, Canvas, CanvasItem, DropSlot } from "../form-editor/com
 import { LibraryTrigger } from "../form-editor/components/LibraryTrigger";
 import { GroupLibrary } from "./GroupLibrary";
 import { useGroupMutation, useDeleteGroupMutation } from "@/lib/hooks/useGroupAdmin";
+import { useCreateGroupShareMutation } from "@/lib/hooks/useGroupShare";
 import ApprovalOverlay from "../ApprovalOverlay";
+import ShareOverlay from "../ShareOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 
 import { REGISTRY } from "../../../components/form-registry";
@@ -55,6 +57,7 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
 
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
+    const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
 
     const editorRef = useRef(null);
     const libraryDropElRef = useRef(null);
@@ -62,6 +65,7 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
 
     const { mutate: saveGroup, isPending, isSuccess, isError, error, reset } = useGroupMutation();
     const { mutate: deleteGroup, isPending: isDeletePending } = useDeleteGroupMutation();
+    const shareMutation = useCreateGroupShareMutation();
 
     useEffect(() => {
         if (!isError && !isSuccess) return;
@@ -185,12 +189,14 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
                 <GroupLibrary layout="grid"
                     onSave={handleSave}
                     onRefresh={handleRefresh}
+                    onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
                     onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
                     isPending={isPending}
                     isSuccess={isSuccess}
                     isError={isError}
                     error={error}
                     isDeleteDisabled={isNewGroup || isDeletePending}
+                    isShareDisabled={isNewGroup}
                     onLibrarySelect={handleLibrarySelect}
                 />
             )}
@@ -207,12 +213,14 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
                             <GroupLibrary layout="drawer"
                                 onSave={handleSave}
                                 onRefresh={handleRefresh}
+                                onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
                                 onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
                                 isPending={isPending}
                                 isSuccess={isSuccess}
                                 isError={isError}
                                 error={error}
                                 isDeleteDisabled={isNewGroup || isDeletePending}
+                                isShareDisabled={isNewGroup}
                                 onLibrarySelect={handleLibrarySelect}
                             />
                         </DrawerContent>
@@ -228,6 +236,13 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
                 <ApprovalOverlay open={deleteOverlayOpen} preset="delete-group" context={{ isPending: isDeletePending }}
                     onApprove={() => deleteGroup(state.id, { onSuccess: () => router.push("/admin/component-groups"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
+                />
+
+                <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
+                    resource="component-group" resourceId={state.id}
+                    title="Grubu Paylaş"
+                    description="Bu bağlantıyla paylaşılan kişi grubu görüntüleyip kendi gruplarına ekleyebilir. Bağlantı 48 saat geçerlidir."
+                    shareMutation={shareMutation}
                 />
             </div>
         </DndContext>
