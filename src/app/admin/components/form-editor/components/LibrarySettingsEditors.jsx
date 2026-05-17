@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, Check, ChevronDown, Eye, PencilLine, Plus, User2, UserMinus } from "lucide-react";
+import { ArrowUp, Check, ChevronDown, Eye, Loader2, PencilLine, Plus, User2, UserMinus, Users } from "lucide-react";
 import SearchPicker from "../../../../components/utils/SearchPicker";
-import { useUserByMailQuery } from "@/lib/hooks/useUser";
+import { fetchUserByMail, useUserByMailQuery } from "@/lib/hooks/useUser";
 import { useFormEditor } from "../FormEditorContext";
 
 function normalizeUserName(username) {
@@ -31,6 +31,9 @@ export function LibrarySettingsEditors() {
     const [showUserPicker, setShowUserPicker] = useState(false);
     const [userSearch, setUserSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [isBulkAdding, setIsBulkAdding] = useState(false);
+    const [boardMemberIds, setBoardMemberIds] = useState([]);
+    const [isExpanded, setIsExpanded] = useState(true);
     const userPickerRef = useRef(null);
 
     const currentUserRole = Number(userRole || 3);
@@ -70,6 +73,42 @@ export function LibrarySettingsEditors() {
         setUserSearch("");
     };
 
+    const handleBulkAddBoardMembers = async () => {
+        if (isBulkAdding) return;
+        setIsBulkAdding(true);
+        try {
+            const response = await fetchUserByMail({ roles: ["YK", "DK"] });
+            const list = Array.isArray(response) ? response : (response?.data || []);
+            const fetchedIds = list.map((u) => u?.id).filter(Boolean);
+            const existingIds = new Set(editorsList.map((e) => e.user?.id));
+            const newCollaborators = list
+                .filter((u) => u?.id && !existingIds.has(u.id))
+                .map((u) => ({
+                    user: {
+                        id: u.id,
+                        fullName: u.firstName,
+                        email: u.email,
+                        profilePictureUrl: u.profilePictureUrl || null,
+                    },
+                    role: 1,
+                }));
+            if (newCollaborators.length > 0) {
+                dispatch({ type: "SET_EDITORS", payload: [...editorsList, ...newCollaborators] });
+            }
+            setBoardMemberIds(fetchedIds);
+        } finally {
+            setIsBulkAdding(false);
+        }
+    };
+
+    const handleBulkRemoveBoardMembers = () => {
+        if (boardMemberIds.length === 0) return;
+        const removeSet = new Set(boardMemberIds);
+        const nextEditors = editorsList.filter((item) => !removeSet.has(item.user?.id) || Number(item.role) === 3);
+        dispatch({ type: "SET_EDITORS", payload: nextEditors });
+        setBoardMemberIds([]);
+    };
+
     const handleRemoveEditor = (editor) => {
         const nextEditors = editorsList.filter((item) => item.user?.id !== editor.user?.id);
         dispatch({ type: "SET_EDITORS", payload: nextEditors });
@@ -95,14 +134,21 @@ export function LibrarySettingsEditors() {
 
     return (
         <section className="pb-6 space-y-4">
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <p className="font-semibold text-neutral-100">Düzenleme ekibi</p>
+            <button type="button" onClick={() => setIsExpanded((v) => !v)} className="group flex w-full items-start justify-between gap-4 text-left">
+                <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                        <p className="font-semibold text-neutral-100">Düzenleme ekibi</p>
+                        <ChevronDown size={14} className={`text-neutral-500 transition-transform duration-200 group-hover:text-neutral-300 ${isExpanded ? "" : "-rotate-90"}`} />
+                    </div>
                     <p className="mt-1 text-[11px] text-neutral-500 leading-relaxed">Formu düzenleyebilecek kişileri buradan ekleyin ya da kaldırın.</p>
                 </div>
                 <span className="rounded-full border border-emerald-500/30 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/80">Aktif</span>
-            </div>
+            </button>
 
+            <AnimatePresence initial={false}>
+            {isExpanded && (
+            <motion.div key="editors-body" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2, ease: "easeInOut" }} className="overflow-hidden">
+            <div className="space-y-4 pt-1">
             <div className="space-y-3">
                 {sortedEditors.map((editor, index) => {
                     const roleValue = Number(editor.role);
@@ -120,38 +166,36 @@ export function LibrarySettingsEditors() {
 
                             <div className="relative flex items-center">
                                 {roleValue === 3 ? (
-                                    <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-neutral-300">Sahip</span>
+                                    <span className="rounded-lg w-22 mx-auto text-center border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-neutral-300">Sahip</span>
                                 ) : canManageRoles ? (
-                                    <div className="relative w-26" style={{ zIndex: openMenuId === editor.user.id ? 50 : 10 }}>
+                                    <div className="relative w-22" style={{ zIndex: openMenuId === editor.user.id ? 50 : 10 }}>
                                         <button type="button" onClick={() => setOpenMenuId(openMenuId === editor.user.id ? null : editor.user.id)}
-                                            className={`flex w-full items-center justify-between gap-1 border px-3 py-1 text-[10px] uppercase tracking-[0.2em] transition-colors focus:outline-none 
+                                            className={`flex w-full items-center justify-between gap-1 border px-3 py-1 text-[11px] transition-colors focus:outline-none 
                                             ${openMenuId === editor.user.id ? 'rounded-t-lg border-white/20 border-b-transparent bg-[#1e1e1e] text-neutral-50'
                                             : 'rounded-lg border-white/10 bg-white/5 text-neutral-300 hover:border-white/20 hover:text-neutral-50 hover:bg-white/10'}`}
                                         >
-                                            <span>{roleValue === 2 ? "Editör" : "Okuyucu"}</span>
+                                            <span className="mx-auto">{roleValue === 2 ? "Editör" : "Okuyucu"}</span>
                                             <ChevronDown size={12} className={`opacity-70 transition-transform duration-200 ${openMenuId === editor.user.id ? "rotate-180" : ""}`} />
                                         </button>
 
                                         <AnimatePresence>
                                             {openMenuId === editor.user.id && (
                                                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15, ease: "easeInOut" }}
-                                                    className="absolute left-0 top-full w-full overflow-hidden rounded-b-lg border border-white/20 border-t-0 bg-[#1e1e1e] shadow-xl backdrop-blur-xl"
+                                                    className="absolute left-0 top-full w-full overflow-hidden rounded-b-lg border border-white/20 border-t-0 bg-[#1e1e1e] shadow-xl backdrop-blur-xl -mt-0.5"
                                                 >
-                                                    <div className="flex flex-col px-1.5 pb-1.5 pt-0.5">
+                                                    <div className="flex flex-col px-1.5 pb-1.5 -pt-0.5">
                                                         <div className="mb-1 mx-1 h-px bg-white/10" />
 
                                                         <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 2); setOpenMenuId(null); }}
                                                             className={`flex w-full items-center  gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
                                                         >
-                                                            {roleValue === 2 ? <Check size={12} className="shrink-0" /> : <PencilLine size={12} className="shrink-0" />}
-                                                            <span className="flex-1 text-left">Düzenleme</span>
+                                                            <span className="flex-1">Düzenleme</span>
                                                         </button>
 
                                                         <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 1); setOpenMenuId(null); }}
                                                             className={`flex w-full items-center gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
                                                         >
-                                                            {roleValue === 1 ? <Check size={12} className="shrink-0" /> : <Eye size={12} className="shrink-0" />}
-                                                            <span className="flex-1 text-left">Görüntüleme</span>
+                                                            <span className="flex-1">Görüntüleme</span>
                                                         </button>
 
                                                         <div className="my-1 mx-1 h-px bg-white/10" />
@@ -159,8 +203,7 @@ export function LibrarySettingsEditors() {
                                                         <button type="button" onClick={() => { handleRemoveEditor(editor); setOpenMenuId(null); }}
                                                             className="flex w-full items-center gap-2 rounded-md px-1 py-2 text-[9px] text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
                                                         >
-                                                            <UserMinus size={12} className="shrink-0" />
-                                                            <span className="flex-1 text-left">İzni kaldır</span>
+                                                            <span className="flex-1">İzni kaldır</span>
                                                         </button>
                                                     </div>
                                                 </motion.div>
@@ -182,6 +225,26 @@ export function LibrarySettingsEditors() {
                     );
                 })}
             </div>
+
+            {canManageRoles && (() => {
+                const isRemoveMode = boardMemberIds.length > 0;
+                const onClick = isRemoveMode ? handleBulkRemoveBoardMembers : handleBulkAddBoardMembers;
+                const label = isBulkAdding ? "Ekleniyor..." : isRemoveMode ? "Yönetim Kurulunu Kaldır" : "Yönetim Kurulunu Ekle";
+                const icon = isBulkAdding ? <Loader2 size={14} className="animate-spin" />
+                    : isRemoveMode ? <UserMinus size={14} className="text-neutral-400 group-hover:text-red-300" />
+                    : <Users size={14} className="text-neutral-400 group-hover:text-emerald-300" />;
+                const colorClasses = isRemoveMode
+                    ? "hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
+                    : "hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-200";
+                return (
+                    <button type="button" onClick={onClick} disabled={isBulkAdding}
+                        className={`group flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-medium text-neutral-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${colorClasses}`}
+                    >
+                        {icon}
+                        <span>{label}</span>
+                    </button>
+                );
+            })()}
 
             <div className="pt-1 flex gap-2" ref={userPickerRef}>
                 <div className="relative flex-1">
@@ -209,6 +272,10 @@ export function LibrarySettingsEditors() {
                     </AnimatePresence>
                 </div>
             </div>
+            </div>
+            </motion.div>
+            )}
+            </AnimatePresence>
         </section>
     );
 }

@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../apiClient";
 
-const fetchUserByMail = async ({ email, roles }) => {
+export const fetchUserByMail = async ({ email, roles }) => {
     const params = new URLSearchParams();
     if (email) params.set("email", email);
-    if (roles && roles.length > 0) {roles.forEach(role => {params.append("roles", role);})}
+    if (roles && roles.length > 0) params.set("roles", roles.join(","));
     const query = params.toString();
     return request(`/api/users${query ? `?${query}` : ""}`);
 }
