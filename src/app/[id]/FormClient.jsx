@@ -17,7 +17,7 @@ export default function FormClient() {
   const { data: draftData, isLoading: draftLoading } = useResponseDraftQuery(id, isAuthed);
 
   return (
-    <FormStatusHandler
+    <FormStatusHandler withBackground
       isLoading={sessionLoading || isLoading || (isAuthed && draftLoading)} error={error} data={data}
       renderForm={(responseData) => (
         <FormDisplayer form={responseData.data.form} step={responseData.data.step} draft={isAuthed ? (draftData?.data ?? null) : null}/>

@@ -129,7 +129,7 @@ export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) 
                                 onSelect={(form) => handleRequestLink(form.id, form.title)} footerText="Bu form tamamlandığında seçilen forma geçilir." showClear={hasLinkedForm} onClear={() => handleRequestLink("")}
                                 renderItem={(form, { active, onSelect }) => (
                                     <button type="button" onClick={onSelect} className={`flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}>
-                                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
+                                        <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-300/70" />
                                         <div className="flex-1"><p className="font-medium leading-tight">{form.title}</p><p className="text-[11px] text-neutral-500">{form.id}</p></div>
                                     </button>
                                 )}
@@ -141,9 +141,9 @@ export function LibrarySettingsLinkedForm({ alertVariants: alertVariantsProp }) 
                 <AnimatePresence>
                     {hasLinkedForm && (
                         <motion.div key={"linked-form-alert"} variants={variants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.3, ease: "easeInOut" }}>
-                            <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-100">
+                            <div className="flex items-center justify-between gap-3 rounded-xl border border-indigo-400/40 bg-indigo-400/10 px-4 py-3 text-xs text-indigo-100">
                                 <span className="truncate">{linkedFormId} ile eşleştirildi.</span>
-                                <button type="button" className="text-emerald-100/80 transition-colors hover:text-emerald-50" onClick={() => handleRequestLink("")}>Kaldır</button>
+                                <button type="button" className="text-indigo-100/80 transition-colors hover:text-indigo-50" onClick={() => handleRequestLink("")}>Kaldır</button>
                             </div>
                         </motion.div>
                     )}

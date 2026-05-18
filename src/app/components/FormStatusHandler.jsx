@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { FilePenLine, FileCheckIcon, FileClock, FileLock2, Loader2, Shredder, FileSearchCorner, FileXCorner } from "lucide-react";
 import LoginButton from "./utils/LoginButton";
 import StateCard from "./StateCard";
+import Background from "./Background";
 
 export const FORM_ACCESS_STATUS = {
     AVAILABLE: 200,
@@ -126,7 +127,7 @@ export function FormStatusDisplayer({ state, message, step, reviewNote, reviewed
     };
 
     return (
-        <motion.div key={state} className="flex min-h-[85vh] w-full flex-col items-center p-4"
+        <motion.div key={state} className="relative z-10 flex min-h-[85vh] w-full flex-col items-center p-4"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
         >
             <StateCard title={config.title} description={description} Icon={Icon} isLoading={state === "loading"}>
@@ -160,7 +161,7 @@ export function FormStatusDisplayer({ state, message, step, reviewNote, reviewed
     );
 }
 
-export function FormStatusHandler({ isLoading, error, data, renderForm, variant = "form" }) {
+export function FormStatusHandler({ isLoading, error, data, renderForm, variant = "form", withBackground = false }) {
     const step = data?.data?.step ?? 0;
     const reviewNote = data?.data?.reviewNote ?? null;
     const reviewedAt = data?.data?.reviewedAt ?? null;
@@ -223,13 +224,14 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
 
     const uiState = getUiState();
 
-    if (uiState === "success") {
-        return renderForm(data);
-    };
-
     return (
-        <AnimatePresence mode="wait">
-            <FormStatusDisplayer key={uiState} state={uiState} step={step} reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant} />
-        </AnimatePresence>
+        <>
+            {withBackground && <Background instant />}
+            {uiState === "success" ? renderForm(data) : (
+                <AnimatePresence mode="wait">
+                    <FormStatusDisplayer key={uiState} state={uiState} step={step} reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant} />
+                </AnimatePresence>
+            )}
+        </>
     );
 }

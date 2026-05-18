@@ -57,9 +57,9 @@ function GroupPicker({ onGroupSelect }) {
                                 const isJustAdded = justAdded === group.id;
                                 return (
                                     <button type="button" onClick={onSelect}
-                                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${isJustAdded ? "bg-emerald-500/10" : ""}`}
+                                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${isJustAdded ? "bg-indigo-400/10" : ""}`}
                                     >
-                                        <Layers size={13} className={isJustAdded ? "text-emerald-400" : "text-neutral-500"} />
+                                        <Layers size={13} className={isJustAdded ? "text-indigo-300" : "text-neutral-500"} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[12px] font-medium text-neutral-200 truncate">{group.title}</p>
                                         </div>
@@ -116,7 +116,7 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
     if (layout === "drawer") {
         return (
             <motion.button type="button" onClick={handleClick} whileTap={{ scale: 0.98, backgroundColor: "rgba(255,255,255,0.08)" }}
-                animate={justAdded ? { backgroundColor: "rgba(16, 185, 129, 0.2)", borderColor: "rgba(16, 185, 129, 0.4)" } : { backgroundColor: "rgba(23, 23, 23, 0.6)", borderColor: "rgba(255, 255, 255, 0.05)" }}
+                animate={justAdded ? { backgroundColor: "rgba(129, 140, 248, 0.18)", borderColor: "rgba(129, 140, 248, 0.4)" } : { backgroundColor: "rgba(23, 23, 23, 0.6)", borderColor: "rgba(255, 255, 255, 0.05)" }}
                 className="group relative flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors"
             >
                 <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-neutral-900 border border-white/10 text-neutral-400 group-hover:text-neutral-200">
@@ -128,7 +128,7 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
                     <p className="text-[11px] text-neutral-500 truncate">Forma eklemek için dokunun</p>
                 </div>
 
-                <div className={`grid h-8 w-8 place-items-center rounded-lg transition-colors ${justAdded ? "bg-emerald-500 text-emerald-950" : "bg-white/5 text-neutral-400 group-hover:bg-white/10 group-hover:text-neutral-200"}`}>
+                <div className={`grid h-8 w-8 place-items-center rounded-lg transition-colors ${justAdded ? "bg-indigo-400 text-indigo-950" : "bg-white/5 text-neutral-400 group-hover:bg-white/10 group-hover:text-neutral-200"}`}>
                     {justAdded ? <CheckCircle2 size={16} /> : <Plus size={16} />}
                 </div>
             </motion.button>
@@ -141,7 +141,7 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
             className="cursor-grab active:cursor-grabbing relative overflow-hidden"
         >
             {justAdded && (
-                <motion.div layoutId="added-flash" className="absolute inset-0 z-10 rounded bg-emerald-500/20 border-2 border-emerald-500/50 pointer-events-none"
+                <motion.div layoutId="added-flash" className="absolute inset-0 z-10 rounded bg-indigo-400/20 border-2 border-indigo-400/50 pointer-events-none"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 />
             )}

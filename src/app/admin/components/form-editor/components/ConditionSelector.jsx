@@ -222,7 +222,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                             ) : isDate ? (
                                 <div className="relative" ref={dateRef}>
                                     <button type="button" onClick={() => setDateOpen((s) => !s)}
-                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/20"
                                     >
                                         <Calendar size={13} className="text-neutral-400 shrink-0" />
                                         <span className={selectedDate ? "text-neutral-200" : "text-neutral-500"}>{dateDisplay}</span>
@@ -239,7 +239,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                             ) : isTime ? (
                                 <div className="relative" ref={timeRef}>
                                     <button type="button" onClick={() => setTimeOpen((s) => !s)}
-                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/20"
                                     >
                                         <Clock size={13} className="text-neutral-400 shrink-0" />
                                         <span className={parsedTime ? "text-neutral-200" : "text-neutral-500"}>{timeDisplay}</span>
@@ -257,7 +257,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                                 </div>
                             ) : (
                                 <input type="text" placeholder="Cevap..." value={current.value} onChange={(e) => handleChange("value", e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-neutral-200 placeholder-neutral-600 outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                                    className="w-full rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-neutral-200 placeholder-neutral-600 outline-none focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/20 transition-all"
                                 />
                             )}
                         </>

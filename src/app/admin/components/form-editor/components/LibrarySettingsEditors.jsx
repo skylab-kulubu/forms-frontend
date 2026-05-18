@@ -34,6 +34,7 @@ export function LibrarySettingsEditors() {
     const [isBulkAdding, setIsBulkAdding] = useState(false);
     const [boardMemberIds, setBoardMemberIds] = useState([]);
     const [isExpanded, setIsExpanded] = useState(true);
+    const [isAnimating, setIsAnimating] = useState(false);
     const userPickerRef = useRef(null);
 
     const currentUserRole = Number(userRole || 3);
@@ -142,12 +143,12 @@ export function LibrarySettingsEditors() {
                     </div>
                     <p className="mt-1 text-[11px] text-neutral-500 leading-relaxed">Formu düzenleyebilecek kişileri buradan ekleyin ya da kaldırın.</p>
                 </div>
-                <span className="rounded-full border border-emerald-500/30 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/80">Aktif</span>
+                <span className="rounded-full border border-indigo-400/30 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-300/80">Aktif</span>
             </button>
 
             <AnimatePresence initial={false}>
             {isExpanded && (
-            <motion.div key="editors-body" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2, ease: "easeInOut" }} className="overflow-hidden">
+            <motion.div key="editors-body" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2, ease: "easeInOut" }} onAnimationStart={() => setIsAnimating(true)} onAnimationComplete={() => setIsAnimating(false)} className={isAnimating ? "overflow-hidden" : ""}>
             <div className="space-y-4 pt-1">
             <div className="space-y-3">
                 {sortedEditors.map((editor, index) => {
@@ -155,7 +156,7 @@ export function LibrarySettingsEditors() {
                     return (
                         <div key={editor.user.id || index} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
                             <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950/20 border border-neutral-950/60 text-xs font-semibold uppercase tracking-wide text-emerald-100/70">
+                                <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950/20 border border-neutral-950/60 text-xs font-semibold uppercase tracking-wide text-indigo-100/70">
                                     {editor.user?.profilePictureUrl ? (<img src={editor.user?.profilePictureUrl} alt={editor.user.fullName} className="h-full w-full object-cover" />) : (editor.user?.fullName ? (<span>{getInitials(editor.user.fullName)}</span>) : (<User2 size={20} />))}
                                 </div>
                                 <div className="min-w-0">
@@ -187,13 +188,13 @@ export function LibrarySettingsEditors() {
                                                         <div className="mb-1 mx-1 h-px bg-white/10" />
 
                                                         <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 2); setOpenMenuId(null); }}
-                                                            className={`flex w-full items-center  gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 2 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
+                                                            className={`flex w-full items-center  gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 2 ? "bg-indigo-400/10 text-indigo-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
                                                         >
                                                             <span className="flex-1">Düzenleme</span>
                                                         </button>
 
                                                         <button type="button" onClick={() => { handleChangeEditorRole(editor.user.id, 1); setOpenMenuId(null); }}
-                                                            className={`flex w-full items-center gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 1 ? "bg-emerald-500/10 text-emerald-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
+                                                            className={`flex w-full items-center gap-2 rounded-md px-1 py-2 text-[9px] transition-colors focus-visible:outline-none ${roleValue === 1 ? "bg-indigo-400/10 text-indigo-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
                                                         >
                                                             <span className="flex-1">Görüntüleme</span>
                                                         </button>
@@ -232,10 +233,10 @@ export function LibrarySettingsEditors() {
                 const label = isBulkAdding ? "Ekleniyor..." : isRemoveMode ? "Yönetim Kurulunu Kaldır" : "Yönetim Kurulunu Ekle";
                 const icon = isBulkAdding ? <Loader2 size={14} className="animate-spin" />
                     : isRemoveMode ? <UserMinus size={14} className="text-neutral-400 group-hover:text-red-300" />
-                    : <Users size={14} className="text-neutral-400 group-hover:text-emerald-300" />;
+                    : <Users size={14} className="text-neutral-400 group-hover:text-indigo-300" />;
                 const colorClasses = isRemoveMode
                     ? "hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
-                    : "hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-200";
+                    : "hover:border-indigo-400/30 hover:bg-indigo-400/10 hover:text-indigo-200";
                 return (
                     <button type="button" onClick={onClick} disabled={isBulkAdding}
                         className={`group flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] font-medium text-neutral-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${colorClasses}`}
@@ -250,7 +251,7 @@ export function LibrarySettingsEditors() {
                 <div className="relative flex-1">
                     <div className="relative">
                         <input type="text" value={userSearch} onChange={(event) => { setUserSearch(event.target.value); if (!showUserPicker) setShowUserPicker(true); }} onFocus={() => setShowUserPicker(true)} placeholder="E-posta ile kullanıcı ara..." className="w-full rounded-lg border border-white/10 bg-neutral-900/60 pr-11 pl-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-white/25 focus:ring-2 focus:ring-white/15" />
-                        <button type="button" aria-label="Ekle" className="group absolute right-1 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-lg border border-emerald-900/80 bg-emerald-500/10 text-emerald-200 transition-colors hover:bg-emerald-500/20 hover:text-emerald-100">
+                        <button type="button" aria-label="Ekle" className="group absolute right-1 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-lg border border-indigo-900/80 bg-indigo-400/10 text-indigo-200 transition-colors hover:bg-indigo-400/20 hover:text-indigo-100">
                             <Plus size={16} className="transition-opacity duration-150 group-hover:hidden" /> <ArrowUp size={16} className="hidden transition-opacity duration-150 group-hover:block" />
                         </button>
                     </div>
@@ -263,7 +264,7 @@ export function LibrarySettingsEditors() {
                                         <button type="button" onClick={isAdded ? undefined : onSelect} disabled={isAdded} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition ${active ? "bg-white/10 text-neutral-100" : "text-neutral-200"} ${isAdded ? "opacity-50 cursor-default" : "hover:bg-white/5"}`}>
                                             <div className="grid h-8 w-8 place-items-center rounded-lg bg-neutral-800 border border-white/10 text-xs font-semibold text-neutral-400 shrink-0">{user.profilePictureUrl ? (<img src={user.profilePictureUrl} alt="" className="h-full w-full rounded-full object-cover" />) : getInitials(user.fullName || user.email)}</div>
                                             <div className="flex-1 min-w-0"><p className="font-medium leading-tight truncate">{formatFullName(user.firstName, user.lastName)}</p><p className="text-[11px] text-neutral-500 truncate">{user.email}</p></div>
-                                            {isAdded && <span className="text-[10px] text-emerald-500">Ekli</span>}
+                                            {isAdded && <span className="text-[10px] text-indigo-300">Ekli</span>}
                                         </button>
                                     );
                                 }}
