@@ -1,11 +1,11 @@
 import { LibraryComponents } from "../form-editor/components/LibraryComponents";
 import { useGroupEditor } from "./GroupEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, CircleAlert, CircleGauge, RotateCcw, Share2, Trash, Trash2 } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleGauge, Share2, Trash, Trash2, Undo2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import Popover from "@/app/components/utils/Popover";
 
-export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onRefresh, onShare, onDelete, isPending, isError, error, isSuccess, isDeleteDisabled, isShareDisabled }) {
+export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onUndo, canUndo, onShare, onDelete, isPending, isError, error, isSuccess, isDeleteDisabled, isShareDisabled }) {
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
     const from = active?.data?.current?.from;
@@ -29,10 +29,10 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onRefre
                         <span className="font-semibold text-neutral-200">Bileşenler</span>
                     </div>
                     <div className="ml-auto flex items-center gap-1 text-neutral-500">
-                        <button type="button" aria-label="Yenile" onClick={onRefresh} disabled={!onRefresh}
-                            className={`rounded-lg p-1.5 transition-colors ${onRefresh ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
+                        <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo}
+                            className={`rounded-lg p-1.5 transition-colors ${canUndo ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
                         >
-                            <RotateCcw size={16} />
+                            <Undo2 size={16} />
                         </button>
                         <button type="button" aria-label="Grubu paylaş" onClick={onShare} disabled={isShareDisabled || !onShare}
                             className={`rounded-lg p-1.5 transition-colors ${(isShareDisabled || !onShare) ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}

@@ -13,7 +13,7 @@ export default function EditGroupPage() {
     const searchParams = useSearchParams();
     const token = searchParams?.get("token") || null;
 
-    const { data: groupData, isLoading, refetch } = useGroupPreviewQuery(groupId, token);
+    const { data: groupData, isLoading } = useGroupPreviewQuery(groupId, token);
 
     if (isLoading) {
         return (
@@ -30,5 +30,5 @@ export default function EditGroupPage() {
         return <SharedGroupPreview group={group} token={token} />;
     }
 
-    return <GroupEditor initialGroup={group} onRefresh={refetch} />;
+    return <GroupEditor initialGroup={group} />;
 }

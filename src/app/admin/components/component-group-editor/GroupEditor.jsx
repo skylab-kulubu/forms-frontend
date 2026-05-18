@@ -51,7 +51,7 @@ class SmartKeyboardSensor extends KeyboardSensor {
     ];
 }
 
-function GroupEditorContent({ onRefresh, isNewGroup }) {
+function GroupEditorContent({ isNewGroup }) {
     const router = useRouter();
     const { state, dispatch } = useGroupEditor();
 
@@ -105,25 +105,13 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
         });
     };
 
-    const handleRefresh = async () => {
-        if (isNewGroup) {
-            dispatch({ type: "RESET_GROUP" });
-            return;
-        }
-        if (!onRefresh) return;
-        try {
-            const result = await onRefresh();
-            const refreshedGroup = result?.data?.data ?? result?.data;
-            if (refreshedGroup) {
-                dispatch({ type: "LOAD_GROUP", payload: refreshedGroup });
-            }
-        } catch (e) { console.error(e); }
-    };
-
     const updateField = (id, updates) => {
         const nextSchema = state.schema.map((field) => (field.id === id ? { ...field, ...updates } : field));
         dispatch({ type: "SET_SCHEMA", payload: nextSchema });
     };
+
+    const handleUndo = () => dispatch({ type: "UNDO" });
+    const canUndo = state._history.length > 0;
 
     const handleLibrarySelect = (item) => {
         const type = item?.type;
@@ -188,7 +176,8 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
             {isLgUp && (
                 <GroupLibrary layout="grid"
                     onSave={handleSave}
-                    onRefresh={handleRefresh}
+                    onUndo={handleUndo}
+                    canUndo={canUndo}
                     onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
                     onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
                     isPending={isPending}
@@ -212,7 +201,8 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
                         <DrawerContent className="h-full">
                             <GroupLibrary layout="drawer"
                                 onSave={handleSave}
-                                onRefresh={handleRefresh}
+                                onUndo={handleUndo}
+                                canUndo={canUndo}
                                 onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
                                 onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
                                 isPending={isPending}
@@ -249,7 +239,7 @@ function GroupEditorContent({ onRefresh, isNewGroup }) {
     );
 }
 
-export default function GroupEditor({ initialGroup = null, onRefresh }) {
+export default function GroupEditor({ initialGroup = null }) {
     const normalizedInitialData = initialGroup ? {
         id: initialGroup.id,
         schema: initialGroup.schema || [],
@@ -259,7 +249,7 @@ export default function GroupEditor({ initialGroup = null, onRefresh }) {
 
     return (
         <GroupEditorProvider initialData={normalizedInitialData}>
-            <GroupEditorContent onRefresh={onRefresh} isNewGroup={!initialGroup?.id} />
+            <GroupEditorContent isNewGroup={!initialGroup?.id} />
         </GroupEditorProvider>
     );
 }
