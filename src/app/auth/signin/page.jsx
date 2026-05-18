@@ -14,7 +14,7 @@ function SignInLogic() {
   }, [callbackUrl]);
 
   return (
-    <div className="grid h-screen place-items-center">
+    <div className="grid h-dvh place-items-center">
       <SkylabLoader size={64} color="#525252" />
     </div>
   );
@@ -23,7 +23,7 @@ function SignInLogic() {
 export default function SignInRedirect() {
   return (
     <Suspense fallback={
-      <div className="grid h-screen place-items-center">
+      <div className="grid h-dvh place-items-center">
         <SkylabLoader size={64} color="#525252" />
       </div>
     }>

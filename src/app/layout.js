@@ -12,6 +12,8 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
+export const viewport = { viewportFit: "cover" };
+
 export const metadata = {
   title: {
     default: "SKY LAB Forms",

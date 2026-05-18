@@ -153,7 +153,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
   };
 
   return (
-    <div className="relative h-screen w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
+    <div className="relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
 
       <AnimatePresence>
         {!isFinished && (
@@ -282,7 +282,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
         </div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }}
-          className={`shrink-0 mt-12 mb-8 flex flex-col items-center gap-4 text-xs font-medium text-neutral-500 ${isFinished ? "invisible" : ""}`}
+          className={`shrink-0 mt-12 mb-8 pb-[env(safe-area-inset-bottom)] flex flex-col items-center gap-4 text-xs font-medium text-neutral-500 ${isFinished ? "invisible" : ""}`}
           aria-hidden={isFinished || undefined}
         >
           <div className="flex flex-col items-center gap-1.5">

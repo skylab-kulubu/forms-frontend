@@ -15,7 +15,7 @@ export default function Landing() {
 
   return (
     <ScrollContainerContext.Provider value={scrollRef}>
-      <main ref={scrollRef} className="sl-root relative h-screen overflow-y-auto overflow-x-hidden scroll-smooth scrollbar [scrollbar-gutter:stable_both-edges] bg-neutral-950 text-white selection:bg-skylab-500 selection:text-neutral-900 font-sans">
+      <main ref={scrollRef} className="sl-root relative h-dvh overflow-y-auto overflow-x-hidden scroll-smooth scrollbar [scrollbar-gutter:stable_both-edges] bg-neutral-950 text-white selection:bg-skylab-500 selection:text-neutral-900 font-sans">
         <Background />
         <Spotlight />
 

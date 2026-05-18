@@ -257,7 +257,7 @@ export default function Sidebar({ user, children }) {
   }, [formId, form?.title, formLoading]);
 
   return (
-    <div className="min-h-screen md:pl-72">
+    <div className="min-h-dvh md:pl-72">
 
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 shrink-0 border-r border-neutral-950/70 bg-neutral-950/40 backdrop-blur-lg shadow-md">
         <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} />

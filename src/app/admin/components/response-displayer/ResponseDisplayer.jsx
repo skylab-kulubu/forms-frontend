@@ -164,7 +164,7 @@ export default function ResponseDisplayer({ response, token = null }) {
         <AnimatePresence mode="wait">
           {canNavigateLinked && (
             <motion.button key={arrowSide} type="button" onClick={handleToggleLinked} aria-label={"Diğer cevaplar"}
-              className={`absolute inset-y-0 translate-y-1/5 ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 flex w-5 h-[70vh] items-center justify-center rounded-md border border-white/5 bg-neutral-900/90 text-neutral-200 transition hover:bg-neutral-800 opacity-80`}
+              className={`absolute inset-y-0 translate-y-1/5 ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 hidden lg:flex w-5 h-[70vh] items-center justify-center rounded-md border border-white/5 bg-neutral-900/90 text-neutral-200 transition hover:bg-neutral-800 opacity-80`}
               initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
@@ -189,6 +189,16 @@ export default function ResponseDisplayer({ response, token = null }) {
               </div>
             </div>
           </div>
+
+          {canNavigateLinked && (
+            <button type="button" onClick={handleToggleLinked} aria-label="Diğer cevaplar"
+              className="lg:hidden flex items-center justify-between w-full px-3 py-2 rounded-md border border-white/5 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition-colors text-xs -mt-2"
+            >
+              {arrowSide === "left" && <ArrowIcon size={13} />}
+              <span>{activeView === "responses" ? "Bağlı yanıta geç" : "Ana yanıta dön"}</span>
+              {arrowSide === "right" && <ArrowIcon size={13} />}
+            </button>
+          )}
 
           <div className="relative flex-1 overflow-hidden">
             <AnimatePresence mode="wait" custom={direction}>

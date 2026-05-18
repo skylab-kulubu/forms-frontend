@@ -164,7 +164,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative px-5 md:px-10 pt-28 md:pt-32 pb-24 min-h-screen flex items-center overflow-x-clip">
+    <section className="relative px-5 md:px-10 pt-28 md:pt-32 pb-24 min-h-dvh flex items-center overflow-x-clip">
       <div
         className="hero-logo hero-logo--bloom"
         ref={logoRef}
