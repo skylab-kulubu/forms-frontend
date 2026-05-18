@@ -46,7 +46,7 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onRefre
                         </button>
                         <Popover open={isError} error={error} variant="error" align="bottom-right">
                             <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
-                                {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-400" />) : isSuccess ? (<CheckCircle2 size={16} className="text-indigo-400" />) : (<CheckCircle2 size={16} />)}
+                                {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-400" />) : isSuccess ? (<CheckCircle2 size={16} className="text-skylab-400" />) : (<CheckCircle2 size={16} />)}
                             </button>
                         </Popover>
                     </div>

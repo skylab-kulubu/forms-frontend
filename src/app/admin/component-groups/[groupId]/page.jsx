@@ -2,8 +2,8 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Loader2 } from "lucide-react";
 import { useGroupPreviewQuery } from "@/lib/hooks/useGroupShare";
+import SkylabLoader from "@/app/components/SkylabLoader";
 
 const GroupEditor = dynamic(() => import("../../components/component-group-editor/GroupEditor"), { ssr: false });
 const SharedGroupPreview = dynamic(() => import("../../components/component-group-editor/SharedGroupPreview"), { ssr: false });
@@ -18,7 +18,7 @@ export default function EditGroupPage() {
     if (isLoading) {
         return (
             <div className="flex h-[calc(100dvh-3.5rem)] items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-neutral-500" />
+                <SkylabLoader size={64} color="#525252" />
             </div>
         );
     }

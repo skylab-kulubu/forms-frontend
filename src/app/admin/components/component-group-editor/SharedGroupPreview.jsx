@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { CircleAlert, CircleGauge, CopyPlus, Loader2, User2 } from "lucide-react";
+import { CircleAlert, CircleGauge, CopyPlus, User2 } from "lucide-react";
 
 import { REGISTRY } from "@/app/components/form-registry";
 import { useCloneGroupMutation } from "@/lib/hooks/useGroupShare";
