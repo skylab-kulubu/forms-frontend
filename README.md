@@ -41,6 +41,14 @@
 - Save commonly used field sets as **reusable templates**
 - Import component groups into any form
 - Manage and update groups from a dedicated panel
+- **Group editor history** - Debounced undo/redo stack mirroring the form editor
+
+### Sharing & Collaboration
+- **Component group sharing** - Generate an expiring token link for any group; recipients land on a public preview page and can clone the group into their own library with one click
+- **Response sharing** - Send a tokenized, read-only response preview to people outside the admin panel; revoke the active token at any time
+- **Form link copying** - Share the public form URL straight from the editor with a single action
+- **Bulk collaborator adding** - Add multiple collaborators to a form or group at once instead of one by one
+- All share links are gated by an auth landing page so unauthenticated visitors are prompted to sign in before viewing
 
 ### Response Drafts
 - **Auto-save for respondents** - Logged-in users' in-progress responses are automatically saved as drafts
@@ -68,10 +76,11 @@
 - SEO metadata (title & description) for shared form links
 
 ### Landing Page
-- Animated hero section with live statistics (8 teams, 50+ members, 30+ projects)
-- **Team showcase** bento grid
-- "How We Work" section, FAQ, and scrolling component marquee
-- Fully responsive design with Framer Motion animations
+- Rebuilt from scratch with a unified design language and an animated background layer
+- **Hero** - Side-by-side YAML schema preview and the rendered form it produces, with a magnetic background logo that tracks the cursor
+- **Features** - Six interactive feature rows, each paired with a live in-page demo (form builder, conditional logic, response management, component groups, dashboard, drafts)
+- **Flow** - Scroll-driven five-step pipeline showing the admin / respondent journey
+- Subtle spotlight, scroll-reveal, and reduced-motion-aware Framer Motion animations throughout
 
 ### Documentation
 - Built-in **"How to Use"** guide with 12 interactive tutorial sections
@@ -101,10 +110,12 @@
 
 ### Public
 
-| Route      | Description                          |
-| ---------- | ------------------------------------ |
-| `/`        | Landing page                         |
-| `/[id]`    | Fill out a published form            |
+| Route                              | Description                                       |
+| ---------------------------------- | ------------------------------------------------- |
+| `/`                                | Landing page                                      |
+| `/[id]`                            | Fill out a published form                         |
+| `/component-groups/[groupId]`      | Tokenized component group preview (clone-to-library) |
+| `/responses/[responseId]`          | Tokenized read-only response preview              |
 
 ### Admin (Protected)
 

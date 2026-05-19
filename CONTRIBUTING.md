@@ -23,10 +23,14 @@ src/
 │   ├── layout.js                      # Root layout (fonts, providers)
 │   ├── providers.js                   # React Query + SessionProvider
 │   ├── globals.css                    # Global styles & Tailwind
+│   ├── not-found.jsx                  # Custom 404 page
 │   │
 │   ├── [id]/                          # Public form display
 │   │   ├── page.jsx                   # Dynamic metadata + SSR
 │   │   └── FormClient.jsx             # Client-side form renderer
+│   │
+│   ├── component-groups/[groupId]/    # Public shared group preview (tokenized)
+│   ├── responses/[responseId]/        # Public shared response preview (tokenized)
 │   │
 │   ├── admin/                         # Protected admin panel
 │   │   ├── page.js                    # Dashboard
@@ -43,20 +47,28 @@ src/
 │   │   │   ├── new-group/             # Create group
 │   │   │   └── [groupId]/             # Group detail
 │   │   │
-│   │   ├── how-to-use/               # Built-in documentation
+│   │   ├── how-to-use/                # Built-in documentation
 │   │   │
 │   │   └── components/                # Admin UI components
+│   │       ├── ShareOverlay.jsx       # Reusable share-link modal (group/response/form)
 │   │       ├── form-editor/           # Form builder
 │   │       │   └── hooks/             # Editor-specific hooks
 │   │       ├── form-overview/         # Form analytics
 │   │       ├── response-displayer/    # Response viewer
-│   │       └── component-group-editor/# Group builder
+│   │       └── component-group-editor/# Group builder (incl. SharedGroupPreview, GroupEditorContext)
 │   │
 │   ├── components/                    # Shared components
+│   │   ├── AuthLanding.jsx            # Sign-in gate for shared resources
 │   │   ├── form-components/           # Field type components
 │   │   ├── form-displayer/            # Public form renderer
 │   │   │   └── hooks/                 # Displayer hooks
 │   │   ├── landing/                   # Landing page sections
+│   │   │   ├── Hero.jsx               # Schema + rendered form preview
+│   │   │   ├── Features.jsx           # Feature rows
+│   │   │   ├── Flow.jsx               # Scroll-driven pipeline
+│   │   │   ├── SkylabLogo.jsx
+│   │   │   ├── utils.jsx              # Spotlight, Magnetic, scroll reveal
+│   │   │   └── components/            # Per-feature interactive demos
 │   │   └── form-registry.js           # Field type registry
 │   │
 │   └── api/
@@ -67,11 +79,14 @@ src/
 │   └── hooks/                         # React Query hooks
 │       ├── useFormAdmin.js            # Form CRUD mutations
 │       ├── useResponse.js             # Response management
+│       ├── useResponseShare.js        # Response share token create/revoke/preview
 │       ├── useGroupAdmin.js           # Component group operations
+│       ├── useGroupShare.js           # Group share token create + preview + clone
 │       ├── useForm.js                 # Public form display & submission
+│       ├── useFormContext.js          # Form editor context helper
 │       ├── useDraft.js                # Draft queries & mutations
 │       ├── useUser.js                 # User session
-│       └── useMedia.js               # Responsive breakpoints
+│       └── useMedia.js                # Responsive breakpoints
 │
 ├── auth.js                            # NextAuth Keycloak config
 └── middleware.js                      # Route protection & role checks
@@ -96,16 +111,19 @@ User ──▶ Next.js (App Router) ──▶ React Query ──▶ apiClient.js
 - **Client Components** for interactive features (form editor, responses)
 - **React Query** for all server state — caching, background refetching, optimistic updates
 - **Context Providers** for form editor and group editor local state
-- **Custom Hooks** (`useFormAdmin`, `useResponse`, `useGroupAdmin`) encapsulate all API logic
+- **Custom Hooks** (`useFormAdmin`, `useResponse`, `useGroupAdmin`, `useGroupShare`, `useResponseShare`) encapsulate all API logic
 - **Component Registry** pattern for extensible field types
+- **Tokenized share links** for component groups and responses — the public preview pages (`/component-groups/[groupId]`, `/responses/[responseId]`) read the `?token=` query param, fetch metadata server-side for SEO, and fall back to `AuthLanding` when the token is missing or expired
 
 ### Design System
 
-- **Dark theme** with glass-morphism effects
-- **Space Grotesk** (sans-serif) + **JetBrains Mono** (monospace)
-- Custom Tailwind color palette (`skylab-500`, `skylab-400`, `skylab-300`)
+- **Dark theme** built on a `neutral-950` canvas with a shared animated `Background` layer
+- **Skylab accent palette** (`skylab-300` → `skylab-700`) used consistently across the landing page, form editor, form displayer, response viewer and component-group editor
+- **Space Grotesk** (sans-serif) + **JetBrains Mono** (monospace); mono is used for eyebrows, labels and status chips to reinforce the "schema" feel
+- Subtle glass-morphism, thin `white/8` borders and `bg-linear-to-*` gradients over solid fills
+- Framer Motion for entrance and scroll-reveal animations; `Magnetic` + `Spotlight` helpers in `landing/utils.jsx`; all motion respects `prefers-reduced-motion`
 - Shimmer loading skeletons for async content
-- Responsive breakpoints via `useMedia` hook
+- Responsive breakpoints via `useMedia` hook; layouts and typography tuned for mobile in the recent UI/UX pass
 
 ---
 
