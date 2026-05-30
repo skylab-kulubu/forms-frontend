@@ -36,7 +36,7 @@ async function refreshAccessToken(token) {
             accessToken: refreshedTokens.access_token,
             expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
             refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-            skyformsRoles: jwtPayload.resource_access?.skyforms?.roles ?? [],
+            skyformsRoles: jwtPayload.resource_access?.dotnet?.roles ?? [],
             realmRoles: jwtPayload.realm_access?.roles ?? [],
         }
     } catch (error) {
@@ -61,7 +61,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     accessToken: account.access_token,
                     expiresAt: account.expires_at * 1000,
                     refreshToken: account.refresh_token,
-                    skyformsRoles: jwtPayload.resource_access?.skyforms?.roles ?? [],
+                    skyformsRoles: jwtPayload.resource_access?.dotnet?.roles ?? [],
                     realmRoles: jwtPayload.realm_access?.roles ?? [],
                     user: {
                         id: jwtPayload.sub,
