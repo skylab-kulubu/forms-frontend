@@ -1,12 +1,15 @@
 import { useEffect, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { request } from "@/lib/apiClient";
+import { useReliableSave } from "@/lib/hooks/useReliableSave";
 
 const DEBOUNCE_MS = 2000;
 
-const saveFormDraft = (formId, data) =>
+const saveFormDraft = (formId, data, { token, keepalive } = {}) =>
   request(`/api/admin/forms/${formId}/draft`, {
     method: "POST",
+    token,
+    keepalive,
     body: {
       formId,
       data: {
@@ -23,29 +26,31 @@ const saveFormDraft = (formId, data) =>
   });
 
 export function useDraftAutoSave(formId, state) {
-  const saveFnRef = useRef(null);
+  const { data: session } = useSession();
+  const tokenRef = useRef(session?.accessToken);
+  tokenRef.current = session?.accessToken;
 
-  const { mutate } = useMutation({
-    mutationFn: (data) => saveFormDraft(formId, data),
+  const { schedule, cancel } = useReliableSave({
+    debounceMs: DEBOUNCE_MS,
+    save: (data, opts) => saveFormDraft(formId, data, { ...opts, token: tokenRef.current }),
   });
 
-  saveFnRef.current = mutate;
-
   useEffect(() => {
-    if (!formId || state.isSaved) return;
+    if (!formId || state.isSaved) {
+      if (state.isSaved) cancel();
+      return;
+    }
 
-    const timer = setTimeout(() => {
-      saveFnRef.current?.({
-        title: state.title,
-        description: state.description,
-        schema: state.schema,
-        allowAnonymousResponses: state.allowAnonymousResponses,
-        allowMultipleResponses: state.allowMultipleResponses,
-        requiresManualReview: state.requiresManualReview,
-        status: state.status,
-      });
-    }, DEBOUNCE_MS);
+    schedule({
+      title: state.title,
+      description: state.description,
+      schema: state.schema,
+      allowAnonymousResponses: state.allowAnonymousResponses,
+      allowMultipleResponses: state.allowMultipleResponses,
+      requiresManualReview: state.requiresManualReview,
+      status: state.status,
+    });
+  }, [formId, state, schedule, cancel]);
 
-    return () => clearTimeout(timer);
-  }, [formId, state]);
+  return { cancel };
 }

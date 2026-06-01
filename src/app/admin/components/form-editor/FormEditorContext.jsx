@@ -65,6 +65,9 @@ function coreReducer(state, action) {
                 isSaved: false,
             };
 
+        case "MARK_SAVED":
+            return state.isSaved ? state : { ...state, isSaved: true };
+
         case "UPDATE_SETTINGS":
             return { ...state, [action.payload.key]: action.payload.value, isSaved: false };
 

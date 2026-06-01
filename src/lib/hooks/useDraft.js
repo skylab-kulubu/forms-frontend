@@ -31,8 +31,8 @@ export function useDeleteDraftMutation() {
 const fetchResponseDraft = (formId) =>
   request(`/api/forms/responses/draft/${formId}`);
 
-const saveResponseDraft = (payload) =>
-  request("/api/forms/responses/draft", { method: "POST", body: payload });
+export const saveResponseDraft = (payload, { token, keepalive } = {}) =>
+  request("/api/forms/responses/draft", { method: "POST", body: payload, token, keepalive });
 
 const deleteResponseDraft = (formId) =>
   request(`/api/forms/responses/draft/${formId}`, { method: "DELETE" });
@@ -45,9 +45,6 @@ export const useResponseDraftQuery = (formId, enabled = true) =>
     retry: false,
     staleTime: Infinity,
   });
-
-export const useSaveResponseDraftMutation = () =>
-  useMutation({ mutationFn: saveResponseDraft });
 
 export const useDeleteResponseDraftMutation = () => {
   const queryClient = useQueryClient();

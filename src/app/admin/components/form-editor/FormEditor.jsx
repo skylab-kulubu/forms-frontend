@@ -83,7 +83,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     const { mutate: saveForm, isPending, isSuccess, isError, error, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
 
-    useDraftAutoSave(isNewForm ? null : state.id, state);
+    const { cancel: cancelDraftAutoSave } = useDraftAutoSave(isNewForm ? null : state.id, state);
     const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
     const [hasDraft, setHasDraft] = useState(!!draft);
     const [draftNotice, setDraftNotice] = useState(false);
@@ -163,9 +163,20 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
             isUpdate: !isNewForm
         }, {
             onSuccess: (data) => {
-                if (!isNewForm) return;
-                const nextId = data?.data?.id ?? data?.id;
-                if (nextId) router.push(`/admin/forms/${nextId}/edit`);
+                cancelDraftAutoSave();
+                dispatch({ type: "MARK_SAVED" });
+
+                if (isNewForm) {
+                    const nextId = data?.data?.id ?? data?.id;
+                    if (nextId) router.push(`/admin/forms/${nextId}/edit`);
+                    return;
+                }
+
+                if (state.id) {
+                    deleteDraft(state.id, {
+                        onSuccess: () => { setHasDraft(false); setDraftNotice(false); },
+                    });
+                }
             },
         });
     };
