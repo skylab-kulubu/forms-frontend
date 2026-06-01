@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { loginWithKeycloak, logout } from "@/lib/authActions";
 import { motion } from "framer-motion";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
@@ -69,11 +70,11 @@ export default function MainHeader() {
   const handleLogin = () => {
     const callbackUrl =
       typeof window !== "undefined" ? window.location.href : "/admin";
-    signIn("keycloak", { callbackUrl });
+    loginWithKeycloak(callbackUrl);
   };
 
   const handleLogout = async () => {
-    signOut({ callbackUrl: window.location.origin });
+    logout({ callbackUrl: window.location.origin });
   };
 
   return (

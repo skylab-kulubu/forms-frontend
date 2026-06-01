@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
-import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import SkylabLoader from "@/app/components/SkylabLoader";
+import { loginWithKeycloak } from "@/lib/authActions";
 
 function SignInLogic() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get("callbackUrl") || "/admin";
 
   useEffect(() => {
-    signIn("keycloak", { callbackUrl });
+    loginWithKeycloak(callbackUrl);
   }, [callbackUrl]);
 
   return (

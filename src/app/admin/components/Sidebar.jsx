@@ -3,7 +3,8 @@
 import { useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { logout } from "@/lib/authActions";
 import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database } from "lucide-react";
@@ -142,7 +143,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
   const initials = getInitials(displayName, subtitle);
 
   const handleLogout = async () => {
-    signOut({ callbackUrl: window.location.origin });
+    logout({ callbackUrl: window.location.origin });
   };
 
   const activeFormLabel = formLoading ? "..." : (form?.title?.trim() || "...");

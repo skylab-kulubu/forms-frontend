@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { signIn } from "next-auth/react";
 import { FilePenLine, FileCheckIcon, FileClock, FileLock2, Loader2, Shredder, FileSearchCorner, FileXCorner } from "lucide-react";
+import { loginWithKeycloak } from "@/lib/authActions";
 import LoginButton from "./utils/LoginButton";
 import StateCard from "./StateCard";
 import Background from "./Background";
@@ -123,7 +123,7 @@ export function FormStatusDisplayer({ state, message, step, reviewNote, reviewed
 
     const handleSignIn = () => {
         const callbackUrl = typeof window !== "undefined" ? window.location.href : "/";
-        signIn("keycloak", { callbackUrl });
+        loginWithKeycloak(callbackUrl);
     };
 
     return (

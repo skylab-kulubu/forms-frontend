@@ -1,9 +1,10 @@
 "use client";
 
 import { Suspense, useEffect, useRef } from "react";
-import { signIn, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SkylabLoader from "@/app/components/SkylabLoader";
+import { loginWithKeycloak, getPostLoginRedirect } from "@/lib/authActions";
 
 // Errors where retrying the login would just loop — send the user home after cleanup.
 const NON_RECOVERABLE = new Set(["AccessDenied", "Configuration"]);
@@ -24,7 +25,6 @@ function AuthErrorLogic() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const error = searchParams?.get("error") ?? "Default";
-  const callbackUrl = searchParams?.get("callbackUrl") || "/admin";
   const startedRef = useRef(false);
 
   useEffect(() => {
@@ -33,7 +33,8 @@ function AuthErrorLogic() {
 
     (async () => {
       // Full cleanup first: drop the (possibly broken) session cookie and end the
-      // Keycloak session, so recovery always starts from a clean slate.
+      // Keycloak session, so recovery always starts from a clean slate. signOut leaves
+      // sessionStorage untouched, so the stashed destination below still survives.
       try { await signOut({ redirect: false }); } catch { }
 
       let lastRetry = 0;
@@ -41,10 +42,13 @@ function AuthErrorLogic() {
       const looping = Date.now() - lastRetry < RETRY_GUARD_MS;
 
       if (!NON_RECOVERABLE.has(error) && !looping) {
-        // Recoverable error → restart the Keycloak sign-in flow. A fresh flow gets new
-        // state/PKCE cookies, so the user never sees the bare NextAuth error page.
+        // Recoverable error → restart the Keycloak sign-in flow, returning the user to
+        // wherever they were headed before the failed callback (falls back to /admin).
+        // A fresh flow gets new state/PKCE cookies, so the bare NextAuth error page is
+        // never shown.
+        const target = searchParams?.get("callbackUrl") || getPostLoginRedirect() || "/admin";
         try { sessionStorage.setItem(RETRY_GUARD_KEY, String(Date.now())); } catch { }
-        signIn("keycloak", { callbackUrl });
+        loginWithKeycloak(target);
         return;
       }
 
@@ -53,7 +57,7 @@ function AuthErrorLogic() {
       try { sessionStorage.removeItem(RETRY_GUARD_KEY); } catch { }
       router.replace("/");
     })();
-  }, [error, callbackUrl, router]);
+  }, [error, searchParams, router]);
 
   return <Loader />;
 }

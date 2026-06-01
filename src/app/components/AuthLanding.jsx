@@ -1,7 +1,7 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { CircleAlert, FolderHeart, Share2, ShieldAlert, User2 } from "lucide-react";
+import { loginWithKeycloak } from "@/lib/authActions";
 import Background from "@/app/components/Background";
 import LoginButton from "@/app/components/utils/LoginButton";
 import StateCard from "@/app/components/StateCard";
@@ -24,7 +24,7 @@ export default function AuthLanding({
     fallbackTitle = "Skylab Forms Paylaşımı",
     actionHint = "Görüntülemek için giriş yapman gerekiyor.",
 }) {
-    const handleLogin = () => signIn("keycloak", { callbackUrl });
+    const handleLogin = () => loginWithKeycloak(callbackUrl);
     const ResourceIcon = ICON_MAP[resource] ?? FolderHeart;
 
     let content;
