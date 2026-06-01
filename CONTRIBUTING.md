@@ -85,12 +85,15 @@ src/
 │       ├── useForm.js                 # Public form display & submission
 │       ├── useFormContext.js          # Form editor context helper
 │       ├── useDraft.js                # Draft queries & mutations
+│       ├── useReliableSave.js         # Debounced auto-save primitive (in-flight ordering, retry, unload flush)
 │       ├── useUser.js                 # User session
 │       └── useMedia.js                # Responsive breakpoints
 │
-├── auth.js                            # NextAuth Keycloak config
+├── auth.js                            # NextAuth Keycloak config (buffered token refresh, federated logout)
 └── middleware.js                      # Route protection & role checks
 ```
+
+> Outside `src/`, the repository root also holds [`mail-templates/`](mail-templates/) — standalone transactional email templates that are **not imported by the app**; they are rendered by a separate notification service and kept here for version control and design consistency (see the README's *Email Templates* section).
 
 ---
 
@@ -114,6 +117,7 @@ User ──▶ Next.js (App Router) ──▶ React Query ──▶ apiClient.js
 - **Custom Hooks** (`useFormAdmin`, `useResponse`, `useGroupAdmin`, `useGroupShare`, `useResponseShare`) encapsulate all API logic
 - **Component Registry** pattern for extensible field types
 - **Tokenized share links** for component groups and responses — the public preview pages (`/component-groups/[groupId]`, `/responses/[responseId]`) read the `?token=` query param, fetch metadata server-side for SEO, and fall back to `AuthLanding` when the token is missing or expired
+- **Reliable auto-save** — both the form editor and respondent drafts share `useReliableSave`, a debounced primitive that serializes in-flight requests (no out-of-order writes), retries transient failures, and flushes the latest pending change on unmount / tab close via a `keepalive` request
 
 ### Design System
 
@@ -134,9 +138,10 @@ User ──▶ Next.js (App Router) ──▶ React Query ──▶ apiClient.js
 The platform uses **Keycloak** as an identity provider through **NextAuth.js v5**:
 
 1. User clicks "Sign In" and is redirected to the Keycloak login page
-2. After successful authentication, Keycloak returns an access token
-3. NextAuth manages the session with automatic **token refresh rotation**
+2. After successful authentication, Keycloak returns an access token, refresh token and ID token (all stored in the encrypted JWT session)
+3. NextAuth refreshes the access token **ahead of expiry** (60s buffer) so requests never go out with a just-expired token; a failed refresh flags the session with `RefreshAccessTokenError` and stops retrying, and `middleware.js` redirects the user to re-authenticate
 4. The API client attaches the Bearer token to all backend requests
+5. **Logout is federated** — the `events.signOut` handler in `auth.js` calls Keycloak's end-session endpoint server-side with the stored `id_token_hint`, terminating the SSO session (the `id_token` never leaves the server)
 
 ### Role-Based Access Control
 

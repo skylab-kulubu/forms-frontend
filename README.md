@@ -33,7 +33,7 @@
 - **Conditional logic** - Show or hide fields based on user responses
 - **Form linking** - Link fields to other forms for nested submissions
 - **Live preview** - See your form as you build it
-- **Auto-save drafts** - Editor changes are automatically saved as drafts with debounced caching; restore or discard on next session
+- **Auto-save drafts** - Editor changes are automatically saved as drafts (debounced, retried on failure, and flushed on tab close so nothing is lost); restore or discard on next session
 - **Undo system** - Debounced history tracking with one-click undo
 - **Session auto-fill** - Name and email fields are automatically populated from the user's session
 
@@ -51,7 +51,7 @@
 - All share links are gated by an auth landing page so unauthenticated visitors are prompted to sign in before viewing
 
 ### Response Drafts
-- **Auto-save for respondents** - Logged-in users' in-progress responses are automatically saved as drafts
+- **Auto-save for respondents** - Logged-in users' in-progress responses are automatically saved as drafts, with the latest change flushed on tab close and writes serialized + retried for reliability
 - **Draft restore prompt** - On revisit, saved answers are auto-loaded with an option to discard and start fresh
 - **Last saved indicator** - Timestamp shown near the submit button
 
@@ -157,6 +157,20 @@ Each field type supports:
 - Custom placeholder text
 - Conditional display logic
 - Linking to other forms
+
+---
+
+## Email Templates
+
+Transactional email templates live in [`mail-templates/`](mail-templates/) and are authored with [React Email](https://react.email/) (`@react-email/components`) + Tailwind, matching the platform's dark visual language:
+
+| Template                | Purpose                                          |
+| ----------------------- | ------------------------------------------------ |
+| `FormSubmission.jsx`    | Sent when a form receives a new submission       |
+| `PendingResponses.jsx`  | Reminder for responses awaiting review           |
+| `StatusChanged.jsx`     | Notifies a respondent when their status changes  |
+
+> ℹ️ These templates are **not imported by the Next.js app**. They are rendered and dispatched by a separate notification service — the markup embeds Go templating directives (e.g. `{{if eq .status \`approved\`}}`) that the service fills in at send time. They are version-controlled here so the email design stays in sync with the rest of the product and doesn't get lost.
 
 ---
 
