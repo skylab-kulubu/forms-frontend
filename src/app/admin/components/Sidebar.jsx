@@ -162,7 +162,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
   return (
     <div className="flex h-full w-full flex-col gap-4 px-4 py-6">
       <div className="flex items-center gap-3 px-2">
-        <div className="h-10 w-10 rounded-lg bg-neutral-800 border border-white/10 text-white grid place-items-center text-sm font-medium overflow-hidden">
+        <div className="h-10 w-10 rounded-lg bg-neutral-800 border border-white/10 text-white grid place-items-center text-sm font-medium overflow-hidden selection:">
           {status === "loading" ? null
             : imageUrl ? (
               <motion.img
@@ -180,9 +180,10 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
               <p className="text-sm font-semibold text-neutral-100 truncate">{displayName}</p>
               <p className="text-xs text-neutral-500 truncate">{subtitle}</p>
             </motion.div>
-            <motion.button type="button" onClick={handleLogout}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.6 }}
-              className="rounded-lg bg-transparent text-xs py-1  ml-auto font-semibold text-neutral-500 transition hover:text-skylab-500"
+            <motion.button type="button" onClick={handleLogout} aria-label="Çıkış yap"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ opacity: { duration: 0.3, delay: 0.2 } }}
+              whileHover={{ x: 2 }}
+              className="rounded-lg bg-transparent text-xs py-1  ml-auto font-semibold text-neutral-500 transition-colors hover:text-skylab-500"
             >
               <LogOut size={16} />
             </motion.button>
