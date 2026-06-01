@@ -15,23 +15,41 @@ export async function request(path, options = {}) {
     } catch { }
   }
 
-  const finalOptions = {
+  const buildOptions = (authToken) => ({
     ...otherOptions,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
       ...(options.headers || {}),
-      ...(resolvedToken ? { "Authorization": `Bearer ${resolvedToken}` } : {}),
+      ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {}),
     },
     body:
       options.body && typeof options.body !== "string"
         ? JSON.stringify(options.body)
         : options.body,
+  });
+
+  const send = async (authToken) => {
+    const response = await fetch(`${BASE_URL}${path}`, buildOptions(authToken));
+    let data = null;
+    try { data = await response.json(); } catch { }
+    return { response, data };
   };
 
-  const response = await fetch(`${BASE_URL}${path}`, finalOptions);
+  let { response, data } = await send(resolvedToken);
 
-  let data = null;
-  try { data = await response.json(); } catch { }
+  // A 401 usually means the access token went stale (e.g. a long idle session where the
+  // client-cached token wasn't refreshed). Force a fresh session — which triggers the
+  // server-side jwt refresh in auth.js — and retry once with the new token. Skipped when
+  // the caller supplied its own Authorization header.
+  if (response.status === 401 && !hasAuthHeader) {
+    try {
+      const session = await getSession();
+      const freshToken = session?.accessToken;
+      if (freshToken && freshToken !== resolvedToken) {
+        ({ response, data } = await send(freshToken));
+      }
+    } catch { }
+  }
 
   if (!response.ok) {
     const error = new Error( data?.detail || data?.message || `İstek başarısız: ${response.status}` );

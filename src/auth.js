@@ -61,6 +61,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             issuer: process.env.KEYCLOAK_ISSUER,
         }),
     ],
+    pages: {
+        signIn: "/auth/signin",
+        error: "/auth/error",
+    },
     callbacks: {
         async jwt({ token, account }) {
             if (account) {
