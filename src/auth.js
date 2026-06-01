@@ -10,6 +10,8 @@ function decodeJwtPayload(accessToken) {
     }
 }
 
+const EXPIRY_BUFFER_MS = 60 * 1000;
+
 async function refreshAccessToken(token) {
     try {
         const response = await fetch(`${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`, {
@@ -31,17 +33,24 @@ async function refreshAccessToken(token) {
 
         return {
             ...token,
-            university: refreshedTokens.university,
-            department: refreshedTokens.department,
             accessToken: refreshedTokens.access_token,
+            idToken: refreshedTokens.id_token ?? token.idToken,
             expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
             refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-            skyformsRoles: jwtPayload.resource_access?.dotnet?.roles ?? [],
-            realmRoles: jwtPayload.realm_access?.roles ?? [],
+            skyformsRoles: jwtPayload.resource_access?.dotnet?.roles ?? token.skyformsRoles ?? [],
+            realmRoles: jwtPayload.realm_access?.roles ?? token.realmRoles ?? [],
+            error: undefined,
         }
     } catch (error) {
-        return { ...token, accessToken: undefined, refreshToken: undefined, expiresAt: 0, error: "RefreshAccessTokenError" }
+        return { ...token, error: "RefreshAccessTokenError" }
     }
+}
+
+async function endKeycloakSession(idToken) {
+    if (!idToken) return;
+    try {
+        await fetch(`${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout?${new URLSearchParams({ id_token_hint: idToken })}`)
+    } catch (error) { }
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -59,7 +68,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                 return {
                     accessToken: account.access_token,
-                    expiresAt: account.expires_at * 1000,
+                    idToken: account.id_token,
+                    expiresAt: account.expires_at ? account.expires_at * 1000 : Date.now() + (account.expires_in ?? 300) * 1000,
                     refreshToken: account.refresh_token,
                     skyformsRoles: jwtPayload.resource_access?.dotnet?.roles ?? [],
                     realmRoles: jwtPayload.realm_access?.roles ?? [],
@@ -77,7 +87,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }
             }
 
-            if (Date.now() < token.expiresAt) return token;
+            if (token.error) return token;
+
+            if (Date.now() < token.expiresAt - EXPIRY_BUFFER_MS) return token;
 
             return await refreshAccessToken(token)
         },
@@ -95,6 +107,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
 
             return session;
+        },
+    },
+    events: {
+        async signOut(message) {
+            const token = "token" in message ? message.token : null;
+            await endKeycloakSession(token?.idToken);
         },
     },
 })

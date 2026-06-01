@@ -73,8 +73,7 @@ export default function MainHeader() {
   };
 
   const handleLogout = async () => {
-    const logoutRedirectUrl = `${process.env.NEXT_PUBLIC_KEYCLOAK_ISSUER}/protocol/openid-connect/logout?post_logout_redirect_uri=${encodeURIComponent(window.location.origin)}`;
-    signOut({ callbackUrl: logoutRedirectUrl });
+    signOut({ callbackUrl: window.location.origin });
   };
 
   return (
