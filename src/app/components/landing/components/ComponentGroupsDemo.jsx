@@ -106,10 +106,10 @@ export default function ComponentGroupsDemo() {
             </div>
             <div className="font-mono text-[9.5px] text-neutral-500 mt-1 ml-5 uppercase tracking-[0.16em]">{g.fields.length} bileşen · yeniden kullanılabilir</div>
           </div>
-          <motion.button animate={imported ? { backgroundColor: "rgba(110,231,183,.12)", borderColor: "rgba(110,231,183,.35)", color: "rgb(110,231,183)" } : {}}
-            className="shrink-0 flex items-center gap-1.5 rounded-md border border-skylab-600/30 bg-skylab-700/10 px-2.5 py-1.5 text-[10.5px] text-skylab-500 transition-colors">
+          <button
+            className={`shrink-0 flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-[10.5px] transition-colors duration-300 ${imported ? "border-emerald-400/35 bg-emerald-400/12 text-emerald-400" : "border-skylab-600/30 bg-skylab-700/10 text-skylab-500"}`}>
             {imported ? <><Check size={10} /> Eklendi</> : <><Plus size={10} /> İçe aktar</>}
-          </motion.button>
+          </button>
         </div>
         <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-1.5 min-h-[170px] content-start">
           <AnimatePresence mode="popLayout">

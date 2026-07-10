@@ -40,7 +40,7 @@ export function LibrarySettingsEditors() {
         return () => clearTimeout(timer);
     }, [userSearch]);
 
-    const { data: usersData, isLoading: isUsersLoading } = useUserByMailQuery({ email: debouncedSearch, roles: ["skyforms:form:manage"], enabled: (debouncedSearch.length > 1) });
+    const { data: usersData, isLoading: isUsersLoading } = useUserByMailQuery({ email: debouncedSearch, enabled: (debouncedSearch.length > 1) });
     const foundUsers = Array.isArray(usersData) ? usersData : (usersData?.data || []);
 
     useEffect(() => {
