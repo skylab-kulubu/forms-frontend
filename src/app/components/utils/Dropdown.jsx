@@ -27,7 +27,7 @@ export function Dropdown({ value, onChange, options = [], placeholder = "Seçini
         <div className={`relative ${className}`} ref={containerRef}>
             <button type="button" onClick={() => setIsOpen(!isOpen)}
                 className={`flex w-full items-center justify-between rounded-lg border bg-neutral-800/50 px-3 py-2.5 text-xs font-medium text-neutral-200 transition-all 
-                ${isOpen ? "border-indigo-500/50 ring-1 ring-indigo-500/20" : "border-white/10 hover:border-white/20 hover:bg-neutral-800"}`}
+                ${isOpen ? "border-skylab-400/50 ring-1 ring-skylab-400/20" : "border-white/10 hover:border-white/20 hover:bg-neutral-800"}`}
             >
                 <span className="truncate">{displayLabel}</span>
                 <ChevronDown size={14} className={`ml-2 text-neutral-500 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
@@ -50,10 +50,10 @@ export function Dropdown({ value, onChange, options = [], placeholder = "Seçini
                                 return (
                                     <button key={idx} type="button" onClick={() => handleSelect(option)}
                                         className={`flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-xs transition-colors
-                                        ${isSelected ? "bg-indigo-500/20 text-indigo-200" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
+                                        ${isSelected ? "bg-skylab-500/20 text-skylab-300" : "text-neutral-300 hover:bg-white/5 hover:text-white"}`}
                                     >
                                         <span className="truncate pr-2">{renderOption ? renderOption(option) : label}</span>
-                                        {isSelected && <Check size={12} className="text-indigo-400 shrink-0" />}
+                                        {isSelected && <Check size={12} className="text-skylab-400 shrink-0" />}
                                     </button>
                                 );
                             }) : (

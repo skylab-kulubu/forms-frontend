@@ -86,12 +86,12 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
                     <div onClick={handleToggle}
                         className={`flex items-center justify-between gap-4 w-full rounded-lg border ${optionBorderClass} bg-neutral-900/60 px-4 py-1.5 cursor-pointer transition-colors hover:bg-white/4`}
                     >
-                        <span className={`text-sm font-medium select-none transition-colors ${currentValue ? "text-indigo-200" : "text-neutral-400"}`}>
+                        <span className={`text-sm font-medium select-none transition-colors ${currentValue ? "text-skylab-300" : "text-neutral-400"}`}>
                             {currentValue ? trueLabel : falseLabel}
                         </span>
 
                         <button type="button" role="switch" aria-checked={currentValue}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-lg border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 ${currentValue ? 'bg-pink-300/70' : 'bg-neutral-700'}`}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-lg border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${currentValue ? 'bg-skylab-400' : 'bg-neutral-700'}`}
                         >
                             <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-md bg-white shadow ring-0 transition duration-200 ease-in-out ${currentValue ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
                         </button>

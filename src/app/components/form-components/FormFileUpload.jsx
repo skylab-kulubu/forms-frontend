@@ -224,7 +224,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
         <div role="button" tabIndex={0} onClick={() => !isUploading && inputRef.current?.click()}
           onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !isUploading) inputRef.current?.click(); }}
           onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
-          className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border h-16 px-4 py-3 transition-all duration-300 ${dragging ? "border-indigo-500/50 bg-indigo-500/10"
+          className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border h-16 px-4 py-3 transition-all duration-300 ${dragging ? "border-skylab-400/50 bg-skylab-500/10"
               : missing && !currentFile && !error ? "border-dashed border-red-400/60 bg-red-900/20"
                 : currentFile || isUploading ? "border-solid border-white/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
                   : "border-dashed border-white/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
@@ -232,7 +232,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
         >
           {!currentFile && !isUploading && (
             <div className="flex items-center gap-4 w-full animate-in fade-in duration-300">
-              <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-indigo-500/20 text-indigo-400" : error ? "bg-red-500/20 text-red-400" : "bg-white/5 text-neutral-400"} transition-colors`}>
+              <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-skylab-500/20 text-skylab-400" : error ? "bg-red-500/20 text-red-400" : "bg-white/5 text-neutral-400"} transition-colors`}>
                 <Upload size={18} />
               </div>
               <div className="flex flex-col text-left">
@@ -251,7 +251,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
             <div className="flex items-center justify-between w-full animate-in fade-in duration-300">
 
               <div className="flex items-center gap-4 overflow-hidden">
-                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${isUploading ? 'bg-indigo-500/10 text-indigo-400' : 'bg-white/10 text-neutral-300'}`}>
+                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${isUploading ? 'bg-skylab-500/10 text-skylab-400' : 'bg-white/10 text-neutral-300'}`}>
                   {isUploading ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
                 </div>
 
@@ -264,7 +264,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
                     {isUploading ? (
                       <>
                         <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
-                        <span className="text-indigo-400/80">Yükleniyor... {uploadProgress}%</span>
+                        <span className="text-skylab-400/80">Yükleniyor... {uploadProgress}%</span>
                       </>
                     ) : (
                       <>
@@ -287,7 +287,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
               {isUploading && (
                 <div className="absolute bottom-0 left-0 h-0.5 w-full bg-neutral-800/50">
                   <div
-                    className="h-full bg-indigo-400 transition-all duration-300 ease-out"
+                    className="h-full bg-skylab-500 transition-all duration-300 ease-out"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>

@@ -158,7 +158,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
             const checked = currentValue.includes(choice.id);
             return (
               <label key={id} htmlFor={id}
-                className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-indigo-300/10 has-checked:bg-indigo-200/20`}
+                className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`}
               >
                 <input id={id} name="multi_choice" type="checkbox" aria-required={required}
                   checked={checked} onChange={() => toggle(choice.id)}

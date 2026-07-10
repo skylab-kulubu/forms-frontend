@@ -159,7 +159,7 @@ export default function DatePicker({ value = null, onChange, onClose, className 
                             className={`relative flex size-full items-center justify-center rounded-md text-[13px] transition select-none border
                               ${!inMonth ? "border-transparent text-neutral-600" : "text-neutral-300"}
                               ${inMonth && !isSelected ? "hover:bg-white/10 hover:text-neutral-100" : ""}
-                              ${isSelected ? "border-indigo-400/40 bg-indigo-500/10 text-indigo-100 shadow-sm font-medium" : "border-transparent"}
+                              ${isSelected ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300 shadow-sm font-medium" : "border-transparent"}
                               ${isToday && !isSelected ? "ring-1 ring-white/10 bg-white/5 text-neutral-200" : ""}
                             `}
                           >
@@ -179,7 +179,7 @@ export default function DatePicker({ value = null, onChange, onClose, className 
                   {months.map((month, idx) => (
                     <button key={month} type="button" onClick={() => { setDirection(idx > viewMonth ? 1 : -1); setViewMonth(idx); setIsSelecting(false); }}
                       className={`rounded-md border py-2 text-xs font-medium transition
-                        ${idx === viewMonth ? "border-indigo-400/40 bg-indigo-500/10 text-indigo-100 hover:border-indigo-300/60 hover:bg-indigo-400/20" : "border-white/5 bg-white/5 text-neutral-200 hover:border-white/10 hover:bg-white/10"}`}
+                        ${idx === viewMonth ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300 hover:border-skylab-300/60 hover:bg-skylab-400/20" : "border-white/5 bg-white/5 text-neutral-200 hover:border-white/10 hover:bg-white/10"}`}
                     >
                       {month}
                     </button>
