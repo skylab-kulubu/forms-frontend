@@ -169,7 +169,9 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
     const getUiState = () => {
         if (isLoading) return "loading";
         if (error) {
-            const accessStatus = error.body?.status;
+            // Auth-layer 401/403s arrive without the app's status envelope; fall back to the
+            // HTTP status so an expired session shows the sign-in card, not a generic error.
+            const accessStatus = error.body?.status ?? error.status;
 
             if (variant === "response") {
                 switch (accessStatus) {

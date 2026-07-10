@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
+import SessionExpiredHandler from "@/app/components/SessionExpiredHandler";
 
 export default function Providers({ children }) {
   const [queryClient] = useState(
@@ -20,6 +21,7 @@ export default function Providers({ children }) {
     // before it expires. Keep this below the Keycloak access-token lifespan (default 5m).
     <SessionProvider refetchInterval={4 * 60} refetchOnWindowFocus={true}>
       <QueryClientProvider client={queryClient}>
+        <SessionExpiredHandler />
         {children}
       </QueryClientProvider>
     </SessionProvider>

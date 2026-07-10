@@ -161,8 +161,11 @@ export function useFormDisplayer(form, step, draft) {
           step: response?.data?.step,
         });
       },
-      onError: () => {
-        dispatch({ type: "SET_ERROR", message: "Bir hata oluştu." });
+      onError: (error) => {
+        // On 401 the SessionExpiredHandler banner supplies the re-login button; the button
+        // label only needs to say why the submit failed.
+        const message = error?.status === 401 ? "Oturum süresi doldu" : "Bir hata oluştu.";
+        dispatch({ type: "SET_ERROR", message });
         setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 2000);
       },
     });
