@@ -91,10 +91,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }
             }
 
-            if (token.error) return token;
-
             if (Date.now() < token.expiresAt - EXPIRY_BUFFER_MS) return token;
 
+            // A failed refresh is retried on every session read on purpose: a transient
+            // failure (network blip, concurrent-refresh race on a rotated refresh token)
+            // must not brick the session permanently. If the refresh token is truly dead,
+            // Keycloak keeps answering invalid_grant and the error persists until re-login.
             return await refreshAccessToken(token)
         },
         async session({ session, token }) {

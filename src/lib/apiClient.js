@@ -2,6 +2,27 @@ import { getSession } from "next-auth/react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
+export const SESSION_EXPIRED_EVENT = "skyforms:session-expired";
+
+// Concurrent callers share one in-flight session fetch. Every request() reads the session,
+// and each separate fetch can trigger its own server-side token refresh; with refresh-token
+// rotation two parallel refreshes race and the loser gets invalid_grant.
+let inflightSession = null;
+function getSharedSession() {
+  if (!inflightSession) {
+    inflightSession = getSession().finally(() => { inflightSession = null; });
+  }
+  return inflightSession;
+}
+
+// We had a token but it no longer authenticates and a refresh couldn't produce a new one:
+// tell the UI (SessionExpiredHandler) so it can offer a re-login instead of failing silently.
+function announceSessionExpired() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+  }
+}
+
 export async function request(path, options = {}) {
 
   const { token, ...otherOptions } = options;
@@ -10,7 +31,7 @@ export async function request(path, options = {}) {
   let resolvedToken = token;
   if (!resolvedToken && !hasAuthHeader) {
     try {
-      const session = await getSession();
+      const session = await getSharedSession();
       resolvedToken = session?.accessToken;
     } catch { }
   }
@@ -38,17 +59,22 @@ export async function request(path, options = {}) {
   let { response, data } = await send(resolvedToken);
 
   // A 401 usually means the access token went stale (e.g. a long idle session where the
-  // client-cached token wasn't refreshed). Force a fresh session — which triggers the
-  // server-side jwt refresh in auth.js — and retry once with the new token. Skipped when
+  // client-cached token wasn't refreshed). Force a fresh session (which triggers the
+  // server-side jwt refresh in auth.js) and retry once with the new token. Skipped when
   // the caller supplied its own Authorization header.
   if (response.status === 401 && !hasAuthHeader) {
+    let refreshed = false;
     try {
-      const session = await getSession();
+      const session = await getSharedSession();
       const freshToken = session?.accessToken;
       if (freshToken && freshToken !== resolvedToken) {
+        refreshed = true;
         ({ response, data } = await send(freshToken));
       }
     } catch { }
+    // No new token means the refresh token is dead too; only announce when a token existed,
+    // so a never-logged-in visitor hitting a 401 doesn't get a "session expired" prompt.
+    if (!refreshed && resolvedToken) announceSessionExpired();
   }
 
   if (!response.ok) {
@@ -62,45 +88,67 @@ export async function request(path, options = {}) {
 }
 
 export async function uploadWithProgress(path, file, onProgress) {
+  const attempt = (authToken) =>
+    new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${BASE_URL}${path}`);
+
+      if (authToken) {
+        xhr.setRequestHeader("Authorization", `Bearer ${authToken}`);
+      }
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          onProgress(percentComplete);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response);
+          } catch {
+            resolve(xhr.responseText);
+          }
+        } else {
+          const error = new Error(`Yükleme başarısız: ${xhr.status}`);
+          error.status = xhr.status;
+          reject(error);
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Network hatası"));
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      xhr.send(formData);
+    });
+
   let resolvedToken = null;
   try {
-    const session = await getSession();
+    const session = await getSharedSession();
     resolvedToken = session?.accessToken;
   } catch {}
 
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${BASE_URL}${path}`);
-    
-    if (resolvedToken) {
-      xhr.setRequestHeader("Authorization", `Bearer ${resolvedToken}`);
+  try {
+    return await attempt(resolvedToken);
+  } catch (error) {
+    // Same stale-token recovery as request(): a fresh session read triggers the server-side
+    // refresh, then retry once (progress restarts from zero on the retry).
+    if (error.status === 401) {
+      let freshToken = null;
+      try {
+        const session = await getSharedSession();
+        freshToken = session?.accessToken;
+      } catch {}
+      if (freshToken && freshToken !== resolvedToken) {
+        return attempt(freshToken);
+      }
+      if (resolvedToken) announceSessionExpired();
     }
-    
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        const percentComplete = Math.round((e.loaded / e.total) * 100);
-        onProgress(percentComplete);
-      }
-    };
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          resolve(response);
-        } catch {
-          resolve(xhr.responseText);
-        }
-      } else {
-        reject(new Error(`Yükleme başarısız: ${xhr.status}`));
-      }
-    };
-
-    xhr.onerror = () => reject(new Error("Network hatası"));
-
-    const formData = new FormData();
-    formData.append("file", file); 
-    
-    xhr.send(formData);
-  });
+    throw error;
+  }
 }
