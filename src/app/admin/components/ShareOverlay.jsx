@@ -162,14 +162,14 @@ export default function ShareOverlay({
               </div>
 
               <button type="button" onClick={() => onClose?.()} aria-label="Kapat"
-                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
               >
                 <X size={16} />
               </button>
             </div>
 
             <div className="px-5 py-5 space-y-4">
-              <p className="text-[12px] leading-relaxed text-neutral-400">{description}</p>
+              <p className="text-xs leading-relaxed text-neutral-400">{description}</p>
 
               <AnimatePresence mode="wait" initial={false}>
                 {revoked ? (
@@ -195,7 +195,7 @@ export default function ShareOverlay({
                       <span className="truncate">{errorMessage}</span>
                     </div>
                     <button type="button" onClick={handleRetry}
-                      className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] font-medium text-neutral-200 hover:bg-white/10"
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:bg-white/10"
                     >
                       <RotateCcw size={12} /> Tekrar Dene
                     </button>
@@ -207,7 +207,7 @@ export default function ShareOverlay({
                         className="flex-1 min-w-0 bg-transparent text-sm text-neutral-100 outline-none truncate"
                       />
                       <button type="button" onClick={handleCopy} aria-label="Bağlantıyı kopyala"
-                        className={`shrink-0 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
+                        className={`shrink-0 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
                           copyState === "success" ? "border border-skylab-400/30 bg-skylab-400/10 text-skylab-300"
                           : copyState === "error" ? "border border-red-500/30 bg-red-500/10 text-red-300"
                           : "border border-white/10 bg-white/5 text-neutral-200 hover:bg-white/10"
@@ -219,7 +219,7 @@ export default function ShareOverlay({
                     </div>
 
                     {(expiresAt || remaining) && (
-                      <div className="flex items-center justify-between gap-2 text-[11px] text-neutral-500">
+                      <div className="flex items-center justify-between gap-2 text-2xs text-neutral-500">
                         <div className="inline-flex items-center gap-1.5">
                           <Timer size={12} className="text-neutral-500" />
                           <span>{remaining ?? "Geçerli"}</span>
@@ -230,7 +230,7 @@ export default function ShareOverlay({
                           )}
                           {revokeMutate && (
                             <button type="button" onClick={handleRevoke} disabled={isRevoking}
-                              className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-[11px] font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-2xs font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {isRevoking ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
                               <span>İptal Et</span>

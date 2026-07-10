@@ -10,7 +10,7 @@ import FormsFilterShell, { DatabaseFilterShell } from "./utils/FormsFilterShell"
 const fadeIn = {
   initial: { opacity: 0, y: -6 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
 };
 
 const LABEL_STYLES = {
@@ -21,7 +21,7 @@ const LABEL_STYLES = {
 function Stat({ label, value }) {
   return (
     <div className="text-right">
-      <p className="text-[9px] font-medium uppercase tracking-[0.15em] text-neutral-500">{label}</p>
+      <p className="text-3xs font-medium uppercase tracking-[0.18em] text-neutral-500">{label}</p>
       <p className="text-sm font-semibold text-neutral-100 tabular-nums">{value ?? "--"}</p>
     </div>
   );
@@ -32,7 +32,7 @@ function SearchInput({ value, onChange, placeholder = "Ara" }) {
     <div className="relative flex-1 min-w-[180px] max-w-sm">
       <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-600" />
       <input type="search" value={value} onChange={(e) => onChange?.(e.target.value)} placeholder={placeholder}
-        className="h-8 w-full rounded-lg border border-white/8 bg-white/3 pl-8 pr-3 text-[12px] text-neutral-100 placeholder:text-neutral-600 focus:border-white/15 focus:bg-white/5 focus:outline-none transition-colors"
+        className="h-9 w-full rounded-lg border border-white/10 bg-white/3 pl-8 pr-3 text-xs text-neutral-100 placeholder:text-neutral-600 focus:border-skylab-400/50 focus:bg-white/5 focus:outline-none transition-colors"
       />
     </div>
   );
@@ -46,17 +46,17 @@ function HeaderShell({ title, description, label, labelType = 1, actions, childr
           <div className="flex items-center gap-2.5">
             <h1 className="text-lg font-semibold text-neutral-100 truncate">{title}</h1>
             {label && (
-              <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] ${LABEL_STYLES[labelType]}`}>
+              <span className={`shrink-0 rounded-md border px-2 py-0.5 text-3xs uppercase tracking-[0.18em] ${LABEL_STYLES[labelType]}`}>
                 {label}
               </span>
             )}
           </div>
-          {description && <p className="mt-0.5 text-[11px] text-neutral-500">{description}</p>}
+          {description && <p className="mt-0.5 text-2xs text-neutral-500">{description}</p>}
         </div>
         {actions && <div className="shrink-0">{actions}</div>}
       </div>
 
-      <div className="h-px bg-white/6" />
+      <div className="h-px bg-white/10" />
 
       {children && (
         <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">

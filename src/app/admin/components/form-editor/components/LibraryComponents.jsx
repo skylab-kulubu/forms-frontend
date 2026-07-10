@@ -39,11 +39,11 @@ function GroupPicker({ onGroupSelect }) {
 
     return (
         <div className="px-2 pt-3 pb-1" ref={ref}>
-            <label className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-500 mb-1.5">Grup ekle</label>
+            <label className="block text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-1.5">Grup ekle</label>
             <div className="relative">
                 <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500"><ChevronsUpDown size={13} /></span>
                 <button type="button" onClick={() => setOpen((p) => !p)}
-                    className="flex w-full items-center rounded-lg border border-white/10 bg-neutral-900/60 pl-8 pr-3 py-2 text-left text-[12px] text-neutral-400 transition hover:bg-white/5 focus:border-white/20 focus:outline-none"
+                    className="flex w-full items-center rounded-lg border border-white/10 bg-neutral-900/60 pl-8 pr-3 py-2 text-left text-xs text-neutral-400 transition hover:bg-white/5 focus:border-skylab-400/50 focus:outline-none"
                 >
                     Grup seçin...
                 </button>
@@ -57,13 +57,13 @@ function GroupPicker({ onGroupSelect }) {
                                 const isJustAdded = justAdded === group.id;
                                 return (
                                     <button type="button" onClick={onSelect}
-                                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${isJustAdded ? "bg-indigo-400/10" : ""}`}
+                                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${isJustAdded ? "bg-skylab-500/10" : ""}`}
                                     >
-                                        <Layers size={13} className={isJustAdded ? "text-indigo-300" : "text-neutral-500"} />
+                                        <Layers size={13} className={isJustAdded ? "text-skylab-300" : "text-neutral-500"} />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[12px] font-medium text-neutral-200 truncate">{group.title}</p>
+                                            <p className="text-xs font-medium text-neutral-200 truncate">{group.title}</p>
                                         </div>
-                                        <span className="text-[10px] text-neutral-600 shrink-0">{count} bileşen</span>
+                                        <span className="text-3xs text-neutral-600 shrink-0">{count} bileşen</span>
                                     </button>
                                 );
                             }}
@@ -125,10 +125,10 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
 
                 <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-neutral-200 group-hover:text-neutral-50">{item.label}</p>
-                    <p className="text-[11px] text-neutral-500 truncate">Forma eklemek için dokunun</p>
+                    <p className="text-2xs text-neutral-500 truncate">Forma eklemek için dokunun</p>
                 </div>
 
-                <div className={`grid h-8 w-8 place-items-center rounded-lg transition-colors ${justAdded ? "bg-indigo-400 text-indigo-950" : "bg-white/5 text-neutral-400 group-hover:bg-white/10 group-hover:text-neutral-200"}`}>
+                <div className={`grid h-8 w-8 place-items-center rounded-lg transition-colors ${justAdded ? "bg-skylab-500 text-skylab-900" : "bg-white/5 text-neutral-400 group-hover:bg-white/10 group-hover:text-neutral-200"}`}>
                     {justAdded ? <CheckCircle2 size={16} /> : <Plus size={16} />}
                 </div>
             </motion.button>
@@ -141,7 +141,7 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
             className="cursor-grab active:cursor-grabbing relative overflow-hidden"
         >
             {justAdded && (
-                <motion.div layoutId="added-flash" className="absolute inset-0 z-10 rounded bg-indigo-400/20 border-2 border-indigo-400/50 pointer-events-none"
+                <motion.div layoutId="added-flash" className="absolute inset-0 z-10 rounded bg-skylab-400/20 border-2 border-skylab-400/50 pointer-events-none"
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 />
             )}

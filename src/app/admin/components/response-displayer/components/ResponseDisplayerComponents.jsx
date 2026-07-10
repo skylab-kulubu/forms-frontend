@@ -47,7 +47,7 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
       </div>
 
       <div className="mt-3 px-3 py-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-500 mb-1">Cevap</p>
+        <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-1">Cevap</p>
 
         {type === "file" && answerText ? (
           <FilePreview mediaId={answerText} />
@@ -60,7 +60,7 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
                     <td className="px-3 py-2 font-medium text-neutral-300 border-r border-white/5 w-1/2">
                       {rowLabel}
                     </td>
-                    <td className="px-3 py-2 text-indigo-300 font-medium">
+                    <td className="px-3 py-2 text-skylab-300 font-medium">
                       {colLabel}
                     </td>
                   </tr>

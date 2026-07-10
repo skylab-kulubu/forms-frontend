@@ -5,11 +5,12 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Timer, User2, ToggleLeft, ToggleRight, Link2, Hash, Shield, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { ROLE_BADGE } from "../../ListItem";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
 };
 
 function formatDuration(seconds) {
@@ -20,7 +21,7 @@ function formatDuration(seconds) {
 }
 
 function SectionTitle({ children }) {
-  return <h3 className="text-[10px] uppercase tracking-wide text-neutral-500 mb-2">{children}</h3>;
+  return <h3 className="text-3xs uppercase tracking-[0.18em] text-neutral-500 mb-2">{children}</h3>;
 }
 
 function TrendBadge({ value }) {
@@ -32,7 +33,7 @@ function TrendBadge({ value }) {
   const color = isUp ? "text-emerald-400" : isDown ? "text-red-400" : "text-neutral-400";
 
   return (
-    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 -mt-2.5 -ml-2 text-[10px] font-medium ${color}`}>
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 -mt-2.5 -ml-2 text-3xs font-medium ${color}`}>
       <Icon size={10} />
       {isUp ? "+" : ""}{rounded}%
     </span>
@@ -48,7 +49,7 @@ function TrendChart({ hourlyData, dailyData, dailyTrendPercentage, hourlyTrendPe
     if (!active || !payload?.length) return null;
     return (
       <div className="bg-neutral-900/90 border border-white/10 rounded-md px-2.5 py-1.5 shadow-xl">
-        <span className="text-[11px] text-skylab-300 font-medium">{payload[0].value}</span>
+        <span className="text-2xs text-skylab-300 font-medium">{payload[0].value}</span>
       </div>
     );
   };
@@ -62,12 +63,12 @@ function TrendChart({ hourlyData, dailyData, dailyTrendPercentage, hourlyTrendPe
         </div>
         <div className="flex items-center gap-0.5 rounded-md border border-white/10 bg-white/5 p-0.5">
           <button type="button" onClick={() => setMode("hourly")}
-            className={`px-2 py-0.5 text-[10px] rounded transition ${mode === "hourly" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+            className={`px-2 py-0.5 text-3xs rounded transition ${mode === "hourly" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
           >
             Saatlik
           </button>
           <button type="button" onClick={() => setMode("daily")}
-            className={`px-2 py-0.5 text-[10px] rounded transition ${mode === "daily" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+            className={`px-2 py-0.5 text-3xs rounded transition ${mode === "daily" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
           >
             Günlük
           </button>
@@ -106,35 +107,29 @@ function SourceBreakdownBar({ registered, anonymous }) {
       <div className="flex h-2 w-full overflow-hidden rounded-full bg-neutral-800">
         {total > 0 ? (
           <>
-            {regPct > 0 && <div style={{ width: `${regPct}%` }} className="bg-skylab-600 transition-all duration-500" />}
-            {anonPct > 0 && <div style={{ width: `${anonPct}%` }} className="bg-skylab-300 transition-all duration-500" />}
+            {regPct > 0 && <div style={{ width: `${regPct}%` }} className="bg-skylab-600 transition-all duration-300" />}
+            {anonPct > 0 && <div style={{ width: `${anonPct}%` }} className="bg-skylab-300 transition-all duration-300" />}
           </>
         ) : null}
       </div>
       <div className="flex gap-3 mt-1.5 justify-center">
         <div className="flex items-center gap-1">
           <div className="h-1.5 w-1.5 rounded-full bg-skylab-600" />
-          <span className="text-[9px] text-neutral-500">Kayıtlı ({registered})</span>
+          <span className="text-3xs text-neutral-500">Kayıtlı ({registered})</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="h-1.5 w-1.5 rounded-full bg-skylab-300" />
-          <span className="text-[9px] text-neutral-500">Anonim ({anonymous})</span>
+          <span className="text-3xs text-neutral-500">Anonim ({anonymous})</span>
         </div>
       </div>
     </div>
   );
 }
 
-const ROLE_BADGE = {
-  3: { label: "Sahip", className: "bg-skylab-500/10 text-skylab-400 border border-skylab-400/40" },
-  2: { label: "Editör", className: "bg-indigo-400/10 text-indigo-200 border border-indigo-300/40" },
-  default: { label: "Görüntüleyici", className: "bg-neutral-200/10 text-neutral-300 border border-white/15" },
-};
-
 function CollaboratorAvatar({ fullName }) {
   const initials = fullName && fullName !== "??" ? fullName.trim().split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() : "?";
   return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-neutral-700 text-[10px] font-semibold text-neutral-200">
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-neutral-700 text-3xs font-semibold text-neutral-200">
       {initials}
     </div>
   );
@@ -150,7 +145,7 @@ function CollaboratorsSection({ formData }) {
         <SectionTitle>İşbirlikçiler</SectionTitle>
       </div>
       {collaborators.length === 0 ? (
-        <p className="text-center text-[10px] text-neutral-600">İşbirlikçi yok</p>
+        <p className="text-center text-3xs text-neutral-600">İşbirlikçi yok</p>
       ) : (
         <div className="flex flex-col gap-2">
           {collaborators.map((c) => {
@@ -161,10 +156,10 @@ function CollaboratorsSection({ formData }) {
               <div key={c.user?.id} className="flex items-center gap-2.5">
                 <CollaboratorAvatar fullName={name} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-medium text-neutral-200 truncate">{name}</p>
-                  {email && <p className="text-[9px] text-neutral-500 truncate">{email}</p>}
+                  <p className="text-2xs font-medium text-neutral-200 truncate">{name}</p>
+                  {email && <p className="text-3xs text-neutral-500 truncate">{email}</p>}
                 </div>
-                <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-medium ${badge.className}`}>
+                <span className={`shrink-0 rounded-md px-1 py-0.5 text-4xs uppercase tracking-[0.18em] ${badge.className}`}>
                   {badge.label}
                 </span>
               </div>
@@ -196,13 +191,13 @@ function FormInfoGrid({ formData }) {
       {items.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5">
           <item.icon size={12} className="text-neutral-600 shrink-0" />
-          <span className="text-[10px] text-neutral-500">{item.label}:</span>
+          <span className="text-3xs text-neutral-500">{item.label}:</span>
           {item.href ? (
-            <Link href={item.href} className="text-[10px] font-medium text-indigo-300 hover:text-indigo-200 truncate max-w-[100px]">
+            <Link href={item.href} className="text-3xs font-medium text-skylab-300 hover:text-skylab-300 truncate max-w-[100px]">
               {item.value}
             </Link>
           ) : (
-            <span className="text-[10px] font-medium text-neutral-300">{item.value}</span>
+            <span className="text-3xs font-medium text-neutral-300">{item.value}</span>
           )}
         </div>
       ))}
@@ -213,7 +208,7 @@ function FormInfoGrid({ formData }) {
 function StatBlock({ label, value }) {
   return (
     <div className="text-center">
-      <p className="text-[9px] uppercase tracking-wide text-neutral-500">{label}</p>
+      <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">{label}</p>
       <p className="text-sm font-semibold text-neutral-100">{value ?? 0}</p>
     </div>
   );
@@ -251,7 +246,7 @@ export default function FormMetrics({ formData, metrics }) {
           <SectionTitle>Ortalama Süre</SectionTitle>
           <div className="flex items-center justify-center gap-3">
             <Timer size={16} className="text-skylab-300" />
-            <p className="text-lg font-bold text-neutral-100">
+            <p className="text-lg font-semibold text-neutral-100">
               {formatDuration(metrics?.averageCompletionTime)}
             </p>
           </div>

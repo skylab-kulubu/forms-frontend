@@ -25,14 +25,14 @@ function GroupCard({ group, index: cardIndex, onDelete }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay: cardIndex * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      className="rounded-xl border border-white/8 bg-neutral-900/80 overflow-hidden"
+      transition={{ duration: 0.3, delay: cardIndex * 0.06, ease: [0.22, 1, 0.36, 1] }}
+      className="rounded-xl border border-white/10 bg-neutral-900/80 overflow-hidden"
     >
       <div className="flex items-center justify-between gap-2 px-4 py-3">
         <div className="min-w-0 flex-1">
-          <h3 className="text-[13px] font-semibold text-neutral-100 truncate">{group.title || "--"}</h3>
+          <h3 className="text-sm font-semibold text-neutral-100 truncate">{group.title || "--"}</h3>
           {group.description && (
-            <p className="text-[10px] text-neutral-500 truncate mt-0.5">{group.description}</p>
+            <p className="text-3xs text-neutral-500 truncate mt-0.5">{group.description}</p>
           )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -52,14 +52,14 @@ function GroupCard({ group, index: cardIndex, onDelete }) {
       </div>
 
       <div className="flex items-center gap-2 px-4 pb-2">
-        <span className="text-[9px] font-medium text-neutral-600 uppercase tracking-wider">{schema.length} bileşen</span>
+        <span className="text-3xs font-medium text-neutral-600 uppercase tracking-[0.18em]">{schema.length} bileşen</span>
         <div className="flex-1 h-px bg-white/5" />
       </div>
 
       {schema.length === 0 ? (
         <div className="px-4 pb-4">
-          <div className="flex items-center justify-center py-5 rounded-lg border border-dashed border-white/6">
-            <p className="text-[10px] text-neutral-600">Boş grup</p>
+          <div className="flex items-center justify-center py-5 rounded-lg border border-dashed border-white/5">
+            <p className="text-3xs text-neutral-600">Boş grup</p>
           </div>
         </div>
       ) : (
@@ -68,14 +68,14 @@ function GroupCard({ group, index: cardIndex, onDelete }) {
             const { Icon, label } = getComponentInfo(field.type);
             return (
               <motion.div key={field.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.25, delay: cardIndex * 0.06 + i * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.2, delay: cardIndex * 0.06 + i * 0.04, ease: [0.22, 1, 0.36, 1] }}
                 className="group/row flex items-center gap-2 rounded-md pl-1.5 pr-2.5 py-1 hover:bg-white/3 transition-colors"
               >
                 <GripVertical size={10} className="shrink-0 text-neutral-800 group-hover/row:text-neutral-600 transition-colors" />
-                <div className="grid h-5 w-5 shrink-0 place-items-center rounded bg-white/4 border border-white/6">
+                <div className="grid h-5 w-5 shrink-0 place-items-center rounded bg-white/5 border border-white/5">
                   <Icon size={10} className="text-neutral-500 group-hover/row:text-neutral-300 transition-colors" />
                 </div>
-                <span className="flex-1 text-[11px] text-neutral-400 group-hover/row:text-neutral-200 truncate transition-colors">
+                <span className="flex-1 text-2xs text-neutral-400 group-hover/row:text-neutral-200 truncate transition-colors">
                   {field.props?.question || label}
                 </span>
               </motion.div>
@@ -84,7 +84,7 @@ function GroupCard({ group, index: cardIndex, onDelete }) {
 
           {remaining > 0 && (
             <div className="pl-7 pt-0.5">
-              <span className="text-[9px] text-neutral-600">+{remaining} daha</span>
+              <span className="text-3xs text-neutral-600">+{remaining} daha</span>
             </div>
           )}
         </div>
@@ -95,7 +95,7 @@ function GroupCard({ group, index: cardIndex, onDelete }) {
 
 function GroupCardSkeleton({ count = 3 }) {
   return Array.from({ length: count }, (_, i) => (
-    <div key={i} className="rounded-xl border border-white/8 bg-neutral-900/80 overflow-hidden">
+    <div key={i} className="rounded-xl border border-white/10 bg-neutral-900/80 overflow-hidden">
       <div className="px-4 py-3 flex items-center justify-between gap-2">
         <div className="space-y-1.5 flex-1">
           <div className="shimmer h-3.5 w-24 rounded" />
@@ -104,7 +104,7 @@ function GroupCardSkeleton({ count = 3 }) {
       </div>
       <div className="flex items-center gap-2 px-4 pb-2">
         <div className="shimmer h-2.5 w-12 rounded" />
-        <div className="flex-1 h-px bg-white/4" />
+        <div className="flex-1 h-px bg-white/5" />
       </div>
       <div className="px-3 pb-3 space-y-0.5">
         {Array.from({ length: 3 }, (_, j) => (

@@ -37,23 +37,23 @@ function AllFormItem({ form }) {
       <div className="flex-1 min-w-0 relative z-10">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-sm font-medium text-neutral-100 truncate max-w-xs">{form.title || "--"}</p>
-          <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[7px] uppercase tracking-[0.18em] ${statusActive ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-red-500/30 bg-red-500/10 text-red-200"}`}>
+          <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-4xs uppercase tracking-[0.18em] ${statusActive ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-red-500/30 bg-red-500/10 text-red-200"}`}>
             {statusActive ? "Aktif" : "Pasif"}
           </span>
         </div>
 
         <div className="mt-0.5 flex items-center gap-3 flex-wrap">
-          <span className="text-[10px] text-neutral-600 font-mono">{form.id}</span>
+          <span className="text-3xs text-neutral-600 font-mono">{form.id}</span>
           <div className="flex items-center gap-1">
             <User2 size={9} className="text-neutral-600 shrink-0" />
-            <span className="text-[10px] text-neutral-500">{ownerName ?? "--"}</span>
+            <span className="text-3xs text-neutral-500">{ownerName ?? "--"}</span>
           </div>
-          <span className="inline-flex items-center gap-1 text-[10px] text-neutral-600" title="Oluşturulma">
+          <span className="inline-flex items-center gap-1 text-3xs text-neutral-600" title="Oluşturulma">
             <Clock size={9} />
             {formatDate(form.createdAt)}
           </span>
           {form.updatedAt && form.updatedAt !== form.createdAt && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-neutral-600" title="Güncellenme">
+            <span className="inline-flex items-center gap-1 text-3xs text-neutral-600" title="Güncellenme">
               <Pencil size={9} />
               {formatDate(form.updatedAt)}
             </span>
@@ -62,7 +62,7 @@ function AllFormItem({ form }) {
       </div>
 
       <div className="flex items-center gap-0.5 relative z-10 shrink-0">
-        <div className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] text-neutral-500">
+        <div className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-2xs text-neutral-500">
           <ChartColumn size={11} />
           {form.responseCount ?? 0}
         </div>
@@ -75,7 +75,7 @@ function AllFormItem({ form }) {
         <div title="Manuel inceleme" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.requiresManualReview ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
           <ClipboardCheck size={13} />
         </div>
-        <Link href={`/admin/forms/${form.id}`} className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/8 bg-transparent text-neutral-500 hover:bg-white/5 hover:text-neutral-200 transition-colors">
+        <Link href={`/admin/forms/${form.id}`} className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-neutral-500 hover:bg-white/5 hover:text-neutral-200 transition-colors">
           <ArrowUpRight size={13} />
         </Link>
       </div>
@@ -134,7 +134,7 @@ export default function AllFormsPage() {
                 <div>
                   {forms.map((form, i) => (
                     <div key={form.id}>
-                      {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+                      {i > 0 && <div className="mx-4 h-px bg-white/10" />}
                       <AllFormItem form={form} />
                     </div>
                   ))}

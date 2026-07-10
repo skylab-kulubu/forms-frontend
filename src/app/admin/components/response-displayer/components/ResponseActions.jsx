@@ -11,7 +11,7 @@ import ShareOverlay from "@/app/admin/components/ShareOverlay";
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
 };
 
 const STATUS_META = {
@@ -45,7 +45,7 @@ function formatDuration(seconds) {
 }
 
 function SectionTitle({ children }) {
-  return <h3 className="text-[10px] uppercase tracking-wide text-neutral-500 mb-2">{children}</h3>;
+  return <h3 className="text-3xs uppercase tracking-[0.18em] text-neutral-500 mb-2">{children}</h3>;
 }
 
 function StatBlock({ label, value, icon: Icon, color = "text-neutral-100" }) {
@@ -53,15 +53,15 @@ function StatBlock({ label, value, icon: Icon, color = "text-neutral-100" }) {
     <div className="text-center flex flex-col items-center gap-1.5">
       {Icon && <Icon size={14} className={`${color} opacity-60`} />}
       <p className={`text-sm font-semibold ${color}`}>{value}</p>
-      <p className="text-[9px] uppercase tracking-wide text-neutral-500">{label}</p>
+      <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">{label}</p>
     </div>
   );
 }
 
 function UserCard({ name, email, userId, photoUrl, initials, hasUser, size = "normal" }) {
   const avatarSize = size === "small" ? "h-9 w-9 rounded-lg text-xs" : "h-11 w-11 rounded-xl text-sm";
-  const nameSize = size === "small" ? "text-[12px]" : "text-[13px]";
-  const subSize = size === "small" ? "text-[9px]" : "text-[10px]";
+  const nameSize = size === "small" ? "text-xs" : "text-sm";
+  const subSize = "text-3xs";
 
   return (
     <div className="flex items-center gap-3">
@@ -237,7 +237,7 @@ export function ResponseActions({ response, readOnly = false }) {
                 {canReview && (
                   <StatBlock label="Durum" value={statusInfo.label} icon={StatusIcon} color={statusInfo.color} />
                 )}
-                <StatBlock label="Süre" value={formatDuration(timeSpent)} icon={Timer} color="text-indigo-300" />
+                <StatBlock label="Süre" value={formatDuration(timeSpent)} icon={Timer} color="text-skylab-300" />
                 <StatBlock label="Gönderim" value={response?.submittedAt ? new Date(response.submittedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "--"} icon={CalendarCheck} color="text-neutral-300" />
               </div>
             </motion.div>
@@ -253,7 +253,7 @@ export function ResponseActions({ response, readOnly = false }) {
                   <motion.div key="review" {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }} className="px-4 py-4 border-b border-white/5">
                     <div className="flex items-center justify-between mb-3">
                       <SectionTitle>İnceleyen</SectionTitle>
-                      <div className="flex items-center gap-1 text-[10px] text-neutral-400">
+                      <div className="flex items-center gap-1 text-3xs text-neutral-400">
                         <Clock size={11} className="shrink-0" />
                         <span className="truncate">{formatDateTime(reviewedAt)}</span>
                       </div>
@@ -262,30 +262,30 @@ export function ResponseActions({ response, readOnly = false }) {
                     <UserCard name={reviewerName} email={reviewerEmail} userId={reviewerId} photoUrl={reviewerPhotoUrl} initials={reviewerInitials} hasUser={Boolean(response.reviewer?.fullName)} size="small"/>
 
                     {reviewDescription && (
-                      <div className="mt-3 rounded-lg border border-white/8 bg-neutral-900/40 p-3">
-                        <p className="text-[9px] font-semibold uppercase tracking-wide text-neutral-500 mb-1">Not</p>
-                        <p className="text-[11px] text-neutral-200 whitespace-pre-wrap leading-relaxed">{reviewDescription}</p>
+                      <div className="mt-3 rounded-lg border border-white/10 bg-neutral-900/40 p-3">
+                        <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-1">Not</p>
+                        <p className="text-2xs text-neutral-200 whitespace-pre-wrap leading-relaxed">{reviewDescription}</p>
                       </div>
                     )}
 
                     {isArchived && (
-                      <div className="mt-3 rounded-lg border border-white/8 bg-neutral-900/40 p-3">
+                      <div className="mt-3 rounded-lg border border-white/10 bg-neutral-900/40 p-3">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-[9px] font-semibold uppercase tracking-wide text-neutral-500">Arşivleyen</p>
-                          <div className="flex items-center gap-1 text-[9px] text-neutral-400">
+                          <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Arşivleyen</p>
+                          <div className="flex items-center gap-1 text-3xs text-neutral-400">
                             <Clock size={10} className="shrink-0" />
                             <span className="truncate">{archivedAt ? formatDateTime(archivedAt) : "Arşivlendi"}</span>
                           </div>
                         </div>
                         {archiverLabel && (
-                          <p className="text-[10px] text-neutral-400 truncate">{archiverLabel}</p>
+                          <p className="text-3xs text-neutral-400 truncate">{archiverLabel}</p>
                         )}
                       </div>
                     )}
 
                     {canEditReview && (
                       <button type="button" onClick={() => setIsEditing(true)} aria-label="Durumu değiştir" title="Durumu değiştir"
-                        className="mt-3 w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
+                        className="mt-3 w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-2xs font-semibold uppercase tracking-[0.18em] text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
                       >
                         <PencilLine size={15} className="mx-auto" />
                       </button>
@@ -321,7 +321,7 @@ export function ResponseActions({ response, readOnly = false }) {
                           ) : actionState === "success" ? (
                             <Check size={16} className="mx-auto" />
                           ) : (
-                            <span className="text-[11px] font-semibold uppercase tracking-wide">
+                            <span className="text-2xs font-semibold uppercase tracking-[0.18em]">
                               X
                             </span>
                           )}
@@ -330,15 +330,15 @@ export function ResponseActions({ response, readOnly = false }) {
                     </AnimatePresence>
 
                     <motion.div layout className="mt-4">
-                      <label className="text-[9px] font-semibold uppercase tracking-wide text-neutral-500 mb-1.5 block">
+                      <label className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-1.5 block">
                         Açıklama
                       </label>
                       <textarea rows={3} placeholder="Açıklama ekle..." value={note} onChange={(event) => setNote(event.target.value)}
-                        className="w-full rounded-lg border border-white/8 bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-white/20 focus:ring-1 focus:ring-white/10"
+                        className="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                       />
                       {reviewedAt && (
                         <button type="button" onClick={() => { setIsEditing(false); setNote(reviewDescription); }} aria-label="Değişiklikten vazgeç" title="Değişiklikten vazgeç"
-                          className="mt-2 inline-flex items-center justify-center rounded-lg border border-white/10 bg-neutral-900/60 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
+                          className="mt-2 inline-flex items-center justify-center rounded-lg border border-white/10 bg-neutral-900/60 px-2 py-1 text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
                         >
                           <Undo2 size={14} />
                         </button>

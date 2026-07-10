@@ -13,7 +13,7 @@ const containerVariants = {
 
 const itemVariants = {
     hidden: { opacity: 0, y: 16 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+    show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
 };
 
 export function FormPreview({ open, onClose }) {
@@ -33,7 +33,7 @@ export function FormPreview({ open, onClose }) {
         <AnimatePresence>
             {open && (
                 <motion.div key="form-preview-overlay" className="absolute inset-0 md:-left-8 z-50 flex flex-col bg-neutral-900"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: "easeInOut" }}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 >
                     <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-50" style={{ transform: "translateZ(0)" }}>
                         <Background />
@@ -41,7 +41,7 @@ export function FormPreview({ open, onClose }) {
 
                     <div className="relative z-20 flex h-8 shrink-0 items-center border-b rounded-b-xl border-white/10 bg-neutral-900 backdrop-blur-sm px-5">
                         <div className="flex-1" />
-                        <span className="text-xs uppercase text-neutral-500 tracking-wide">Form Önizlemesi</span>
+                        <span className="text-xs uppercase text-neutral-500 tracking-[0.18em]">Form Önizlemesi</span>
                         <div className="flex-1 flex justify-end">
                             <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-neutral-400 transition-colors hover:bg-white/10 hover:text-neutral-200">
                                 <X size={18} />

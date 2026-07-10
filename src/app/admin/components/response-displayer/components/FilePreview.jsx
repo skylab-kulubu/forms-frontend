@@ -51,7 +51,7 @@ export function FilePreview({ mediaId }) {
         <AlertCircle size={18} className="shrink-0 text-neutral-500" />
         <div className="flex-1 min-w-0">
           <span className="text-sm text-neutral-400">Dosya bilgilerine ulaşılamadı</span>
-          <p className="text-[11px] text-neutral-600 break-all mt-0.5">{mediaId}</p>
+          <p className="text-2xs text-neutral-600 break-all mt-0.5">{mediaId}</p>
         </div>
       </div>
     );
@@ -75,7 +75,7 @@ export function FilePreview({ mediaId }) {
               {fileName || "Dosya"}
             </p>
             {(fileType || fileSize != null) && (
-              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-neutral-500">
+              <div className="flex items-center gap-2 mt-0.5 text-2xs text-neutral-500">
                 {fileType && <span>{fileType}</span>}
                 {fileSize != null && (
                   <>
@@ -92,13 +92,13 @@ export function FilePreview({ mediaId }) {
               <button type="button" onClick={() => setExpanded((v) => !v)} title={expanded ? "Önizlemeyi kapat" : "Önizle"}
                 className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-white/5 hover:text-neutral-200 transition-colors"
               >
-                <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }} className="inline-flex">
+                <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="inline-flex">
                   <ChevronDown size={16} />
                 </motion.span>
               </button>
             )}
             <a href={fileUrl} download={fileName || true} title="İndir"
-              className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-indigo-500/10 hover:text-indigo-400 transition-colors"
+              className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-skylab-500/10 hover:text-skylab-400 transition-colors"
             >
               <Download size={16} />
             </a>

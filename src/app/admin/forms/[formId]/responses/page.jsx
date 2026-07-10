@@ -106,7 +106,7 @@ export default function ResponsesPage() {
                 <div>
                   {responses.map((response, i) => (
                     <div key={response.id}>
-                      {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+                      {i > 0 && <div className="mx-4 h-px bg-white/10" />}
                       <ResponseListItem formId={formId} response={response} />
                     </div>
                   ))}

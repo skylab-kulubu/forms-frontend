@@ -4,17 +4,17 @@ import Link from "next/link";
 import { ChevronRight, Clock, ClipboardCheck, CornerDownRight, LayoutList, PencilLine, Repeat2, UserX, ChartColumn, Archive, User2 } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 
-const ROLE_BADGE = {
-  3: { label: "Sahip", className: "bg-skylab-500/10 text-skylab-400 border border-skylab-400/40" },
-  2: { label: "Editör", className: "bg-indigo-400/10 text-indigo-200 border border-indigo-300/40" },
-  default: { label: "Görüntüleyici", className: "bg-neutral-200/10 text-neutral-300 border border-white/15" },
+export const ROLE_BADGE = {
+  3: { label: "Sahip", className: "bg-skylab-500/10 text-skylab-300 border border-skylab-400/40" },
+  2: { label: "Editör", className: "bg-white/10 text-neutral-200 border border-white/20" },
+  default: { label: "Görüntüleyici", className: "bg-white/5 text-neutral-400 border border-white/10" },
 };
 
 function RoleBadge({ role }) {
   const { label, className } = ROLE_BADGE[role] ?? ROLE_BADGE.default;
 
   return (
-    <span className={`rounded-md px-1 py-0.5 text-[7px] uppercase tracking-[0.18em] ${className}`}>
+    <span className={`rounded-md px-1 py-0.5 text-4xs uppercase tracking-[0.18em] ${className}`}>
       {label}
     </span>
   );
@@ -41,7 +41,7 @@ export function ListItemSkeleton({ count = 4, className = "" }) {
     <div className={className}>
       {Array.from({ length: count }, (_, i) => (
         <div key={i}>
-          {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+          {i > 0 && <div className="mx-4 h-px bg-white/10" />}
           <div className="w-full px-4 py-2.5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -101,7 +101,7 @@ function ResponseStatusBadge({ status }) {
   const style = RESPONSE_STATUS_STYLES[status] ?? RESPONSE_STATUS_STYLES.default;
 
   return (
-    <span className={`rounded-md border px-2 py-0.5 text-[9px] uppercase tracking-[0.18em] ${style}`}>
+    <span className={`rounded-md border px-2 py-0.5 text-3xs uppercase tracking-[0.18em] ${style}`}>
       {label}
     </span>
   );
@@ -124,7 +124,7 @@ export function ResponseListItemSkeleton({ count = 4, className = "" }) {
     <div className={className}>
       {Array.from({ length: count }, (_, i) => (
         <div key={i}>
-          {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+          {i > 0 && <div className="mx-4 h-px bg-white/10" />}
           <div className="w-full px-4 py-2">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3 sm:w-48 shrink-0">
@@ -186,21 +186,21 @@ export function ResponseListItem({ formId, response, className = "" }) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-neutral-100 truncate">{userName}</p>
-            <p className="text-[10px] text-neutral-500 truncate">{userId}</p>
+            <p className="text-3xs text-neutral-500 truncate">{userId}</p>
           </div>
         </div>
 
         <div className="flex flex-1 items-center gap-x-3 min-w-0 overflow-hidden">
-          <p className="text-[11px] font-medium text-neutral-300 truncate min-w-12 shrink">
+          <p className="text-2xs font-medium text-neutral-300 truncate min-w-12 shrink">
             <span className="text-neutral-600 mr-1">ID</span>{response.id || "--"}
           </p>
           <ResponseStatusBadge status={statusValue} />
-          <span className="text-[10px] text-neutral-500 truncate shrink-0">{reviewText}</span>
+          <span className="text-3xs text-neutral-500 truncate shrink-0">{reviewText}</span>
         </div>
 
         <div className="flex items-center gap-2 sm:ml-auto shrink-0">
           <Divider />
-          <span className="inline-flex items-center gap-1 text-[10px] text-neutral-500">
+          <span className="inline-flex items-center gap-1 text-3xs text-neutral-500">
             <Clock size={12} />
             {submittedAt}
           </span>
@@ -237,7 +237,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
               <h3 className="text-sm font-medium text-neutral-100 truncate">{form.title || "--"}</h3>
               <RoleBadge role={form.userRole} />
             </div>
-            <p className="mt-0.5 text-[10px] text-neutral-500 truncate">{form.id}</p>
+            <p className="mt-0.5 text-3xs text-neutral-500 truncate">{form.id}</p>
           </div>
 
           {hasLinked && (
@@ -246,10 +246,10 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
               <Link href={`/admin/forms/${linkedId}`} title={linkedTitle}
                 className="relative z-10 group/link flex items-center gap-1.5 min-w-0 shrink"
               >
-                <CornerDownRight className="h-3.5 w-3.5 shrink-0 text-neutral-500 group-hover/link:text-indigo-300 transition-colors" />
+                <CornerDownRight className="h-3.5 w-3.5 shrink-0 text-neutral-500 group-hover/link:text-skylab-400 transition-colors" />
                 <div className="min-w-0">
-                  <p className="truncate text-[11px] font-medium text-neutral-300 group-hover/link:text-indigo-200 transition-colors">{linkedTitle}</p>
-                  <p className="truncate text-[10px] text-neutral-600">{linkedId}</p>
+                  <p className="truncate text-2xs font-medium text-neutral-300 group-hover/link:text-skylab-300 transition-colors">{linkedTitle}</p>
+                  <p className="truncate text-3xs text-neutral-600">{linkedId}</p>
                 </div>
               </Link>
             </>
@@ -260,7 +260,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, onViewR
           <div className="flex items-center gap-0.5">
             <div className="inline-flex h-7 gap-1 items-center justify-center rounded-md px-1 text-neutral-400/80">
               <ChartColumn className="h-3.5 w-3.5" />
-              <span className="text-[11px]">{form.responseCount || 0}</span>
+              <span className="text-2xs">{form.responseCount || 0}</span>
             </div>
             <FeatureIcon active={form.allowMultipleResponses} title={form.allowMultipleResponses ? "Birden fazla cevap açık" : "Birden fazla cevap kapalı"}>
               <Repeat2 className="h-3.5 w-3.5" />

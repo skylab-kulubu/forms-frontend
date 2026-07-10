@@ -189,11 +189,11 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
     };
 
     return (
-        <div className="rounded-b-xl border-t border-white/5 bg-neutral-900/40 p-3 animate-in fade-in slide-in-from-top-1">
+        <div className="rounded-b-xl border-t border-white/5 bg-neutral-900/40 p-3">
             <div className="grid grid-cols-12 gap-3 items-end">
 
                 <div className="col-span-12 sm:col-span-4 flex flex-col gap-1.5">
-                    <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Buna Bağlı:</label>
+                    <label className="ml-1 text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Buna Bağlı:</label>
                     <Dropdown value={current.fieldId} onChange={(val) => handleChange("fieldId", val)}
                         options={availableFields.map(q => ({
                             value: q.id,
@@ -204,7 +204,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                 </div>
 
                 <div className="col-span-12 sm:col-span-3 flex flex-col gap-1.5">
-                    <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Koşul:</label>
+                    <label className="ml-1 text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Koşul:</label>
                     <Dropdown value={current.operator} onChange={(val) => handleChange("operator", val)}
                         options={operators} placeholder="Seçiniz..." className={!current.fieldId ? "opacity-50 pointer-events-none" : ""}
                     />
@@ -213,7 +213,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                 <div className="col-span-12 sm:col-span-5 flex flex-col gap-1.5">
                     {showValueInput && (
                         <>
-                            <label className="ml-1 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Değer:</label>
+                            <label className="ml-1 text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Değer:</label>
 
                             {hasChoices && selectedTarget?.choices?.length > 0 ? (
                                 <Dropdown value={current.value} onChange={(val) => handleChange("value", val)} placeholder="Seçenek seçin"
@@ -222,7 +222,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                             ) : isDate ? (
                                 <div className="relative" ref={dateRef}>
                                     <button type="button" onClick={() => setDateOpen((s) => !s)}
-                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/20"
+                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                                     >
                                         <Calendar size={13} className="text-neutral-400 shrink-0" />
                                         <span className={selectedDate ? "text-neutral-200" : "text-neutral-500"}>{dateDisplay}</span>
@@ -239,7 +239,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                             ) : isTime ? (
                                 <div className="relative" ref={timeRef}>
                                     <button type="button" onClick={() => setTimeOpen((s) => !s)}
-                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/20"
+                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                                     >
                                         <Clock size={13} className="text-neutral-400 shrink-0" />
                                         <span className={parsedTime ? "text-neutral-200" : "text-neutral-500"}>{timeDisplay}</span>
@@ -257,7 +257,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                                 </div>
                             ) : (
                                 <input type="text" placeholder="Cevap..." value={current.value} onChange={(e) => handleChange("value", e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-neutral-200 placeholder-neutral-600 outline-none focus:border-indigo-400/50 focus:ring-1 focus:ring-indigo-400/20 transition-all"
+                                    className="w-full rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-neutral-200 placeholder-neutral-600 outline-none focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 transition-all"
                                 />
                             )}
                         </>
@@ -266,7 +266,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
             </div>
 
             {current.fieldId && current.operator && (
-                <div className="mt-2 flex justify-between items-center gap-1.5 px-1 text-[10px] text-indigo-300/60">
+                <div className="mt-2 flex justify-between items-center gap-1.5 px-1 text-3xs text-skylab-300/60">
                     <span>
                         Eğer <b>{selectedTarget?.title?.substring(0, 15) || "Soru"}</b> cevabı
                         <b> {operators.find(o => o.value === current.operator)?.label.toLowerCase()} </b>

@@ -141,7 +141,7 @@ export function LibraryTipTap() {
                         <button key={index} type="button"
                             onMouseDown={(e) => e.preventDefault()} onClick={item.handler}
                             title={item.label} aria-label={item.label} disabled={disabled}
-                            className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-400 transition 
+                            className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-400 transition 
                                 ${active ? "bg-white/15 text-neutral-100" : "hover:bg-white/5 hover:text-neutral-200"} 
                                 ${disabled ? "cursor-not-allowed opacity-30 hover:bg-transparent" : ""}
                             `}

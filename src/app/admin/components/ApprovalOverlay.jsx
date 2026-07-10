@@ -71,7 +71,7 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
               </div>
 
               <button type="button" onClick={() => onReject?.()} aria-label="Kapat"
-                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
               >
                 <X size={16} />
               </button>
@@ -96,13 +96,13 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
                     <label className="text-sm font-medium text-neutral-200">
                       Yazılı Onay
                     </label>
-                    <div className="inline-flex items-center gap-1.5 text-[12px] text-neutral-400">
+                    <div className="inline-flex items-center gap-1.5 text-xs text-neutral-400">
                       <Keyboard size={14} />
                       <span>Gereken metin: <span className="font-semibold text-neutral-300 select-all">{requiredPhrase}</span></span>
                     </div>
                   </div>
                   <input type="text" value={typedValue} onChange={(event) => setTypedValue(event.target.value)} placeholder={requiredPhrase}
-                    className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition-all focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/50"
+                    className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition-all focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                   />
                 </div>
               )}
@@ -110,13 +110,13 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
 
             <div className="flex items-center justify-end gap-3 border-t border-white/5 bg-neutral-950/30 px-5 py-2">
               <button type="button" onClick={() => onReject?.()}
-                className="h-9 rounded-lg px-4 text-sm font-medium text-neutral-300 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                className="h-9 rounded-lg px-4 text-sm font-medium text-neutral-300 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
               >
                 {rejectLabel}
               </button>
               
               <button type="button" disabled={!canApprove} onClick={() => { if (!canApprove) return; onApprove?.();}}
-                className={`h-9 rounded-lg px-4 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/50 ${
+                className={`h-9 rounded-lg px-4 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${
                   canApprove ? "border border-skylab-400/30 bg-skylab-400/10 text-skylab-300 hover:bg-skylab-400/20" 
                   : "cursor-not-allowed border border-white/5 bg-neutral-800/50 text-neutral-500"
                 }`}

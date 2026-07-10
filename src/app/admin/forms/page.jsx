@@ -89,7 +89,7 @@ export default function FormsPage() {
                   const linkedForm = form?.linkedForm || null;
                   return (
                     <div key={form.id}>
-                      {i > 0 && <div className="mx-4 h-px bg-white/6" />}
+                      {i > 0 && <div className="mx-4 h-px bg-white/10" />}
                       <ListItem form={form} linkedForm={linkedForm}
                         viewHref={`/admin/forms/${form.id}`} editHref={`/admin/forms/${form.id}/edit`}
                       />

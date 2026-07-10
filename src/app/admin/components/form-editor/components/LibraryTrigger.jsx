@@ -26,7 +26,7 @@ export const LibraryTrigger = forwardRef(({ dragSource, isDropOver, isLgUp }, re
                                 initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} transition={{ duration: 0.2 }}
                             >
                                 <Trash2 size={20} className={isDropOver ? "text-red-400" : "text-neutral-400"} />
-                                <span className={`text-[10px] font-semibold tracking-wide ${isDropOver ? "text-red-300" : "text-neutral-400"}`}>
+                                <span className={`text-3xs font-semibold tracking-wide ${isDropOver ? "text-red-300" : "text-neutral-400"}`}>
                                     SİL
                                 </span>
                             </motion.div>

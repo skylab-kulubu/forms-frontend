@@ -98,7 +98,7 @@ function SectionBlock({ id, icon, title, children, demo }) {
         </div>
         {demo && (
           <div className="w-full lg:w-72 shrink-0 flex items-start">
-            <div className="sticky top-6 w-full rounded-xl border border-white/6 bg-white/2 p-4 overflow-hidden">
+            <div className="sticky top-6 w-full rounded-xl border border-white/5 bg-white/3 p-4 overflow-hidden">
               {demo}
             </div>
           </div>
@@ -159,14 +159,14 @@ export default function HowToUsePage() {
           <div className="flex gap-10">
             <motion.nav initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.05 }} className="hidden lg:block w-40 shrink-0">
               <div className="sticky top-6 space-y-0.5">
-                <p className="mb-2 text-[9px] font-semibold text-neutral-600 tracking-[0.15em] uppercase">İçindekiler</p>
+                <p className="mb-2 text-3xs font-semibold text-neutral-600 tracking-[0.18em] uppercase">İçindekiler</p>
                 {sections.map((s, i) => (
                   <button key={s.id} onClick={() => scrollToSection(s.id)}
-                    className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] transition-colors ${
+                    className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-2xs transition-colors ${
                       activeSection === s.id ? "text-skylab-300 font-medium" : "text-neutral-600 hover:text-neutral-400"
                     }`}
                   >
-                    <span className="text-[9px] text-neutral-700 w-3 text-right tabular-nums">{i + 1}</span>
+                    <span className="text-3xs text-neutral-700 w-3 text-right tabular-nums">{i + 1}</span>
                     <span>{s.label}</span>
                   </button>
                 ))}
@@ -175,7 +175,7 @@ export default function HowToUsePage() {
 
             <div className="flex-1 min-w-0">
           <div className="mb-8">
-            <h1 className="text-xl font-bold text-neutral-100">Nasıl Kullanılır</h1>
+            <h1 className="text-xl font-semibold text-neutral-100">Nasıl Kullanılır</h1>
             <p className="mt-1 text-sm text-neutral-500">Platform özellikleri ve kullanım rehberi</p>
           </div>
 
@@ -215,11 +215,11 @@ export default function HowToUsePage() {
               <p className="text-sm text-neutral-400 mb-4">Form düzenleyicisinde kullanabileceğiniz <strong className="text-neutral-200">12 farklı bileşen türü</strong>:</p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {componentTypes.map((comp) => (
-                  <div key={comp.name} className="flex items-center gap-3 rounded-lg border border-white/6 bg-white/2 px-3 py-2.5">
+                  <div key={comp.name} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/3 px-3 py-2.5">
                     <comp.icon className="h-4 w-4 text-skylab-400 shrink-0" strokeWidth={1.75} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-neutral-200">{comp.name}</p>
-                      <p className="text-[10px] text-neutral-500">{comp.desc}</p>
+                      <p className="text-3xs text-neutral-500">{comp.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -363,13 +363,13 @@ export default function HowToUsePage() {
               <p><strong className="text-neutral-100">Manuel İnceleme</strong> açık formlarda yanıtlar editör tarafından incelenir.</p>
 
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1 text-[11px] text-amber-300">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1 text-2xs text-amber-300">
                   <CircleDot size={10} /> Bekliyor
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-[11px] text-emerald-300">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-2xs text-emerald-300">
                   <CheckCircle size={10} /> Onaylandı
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-[11px] text-red-300">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-2xs text-red-300">
                   <XCircle size={10} /> Reddedildi
                 </span>
               </div>

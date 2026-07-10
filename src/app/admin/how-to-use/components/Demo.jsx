@@ -25,7 +25,7 @@ export function DemoFormCreate() {
   return (
     <div className="space-y-3">
       <p className="text-[9px] uppercase tracking-wider text-neutral-600">Demo</p>
-      <div className="rounded-lg border border-white/8 bg-white/3 px-3 py-2">
+      <div className="rounded-lg border border-white/10 bg-white/3 px-3 py-2">
         <p className="text-[10px] text-neutral-600 mb-1">Form Başlığı</p>
         <div className="h-5 flex items-center">
           <motion.span className="text-xs text-neutral-200 font-medium" initial={{ opacity: 0 }} animate={{ opacity: step >= 1 ? 1 : 0 }}>
@@ -70,7 +70,7 @@ export function DemoDragDrop() {
           <motion.div key={item} layout
             className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-[11px] transition-colors ${
               dragging === i ? "border-skylab-400/30 bg-skylab-500/10 text-skylab-300"
-                : "border-white/8 bg-white/3 text-neutral-300"
+                : "border-white/10 bg-white/3 text-neutral-300"
             }`}
             animate={dragging === i ? { y: [0, -4, 0], x: [0, 2, 0] } : {}}
             transition={{ duration: 0.5 }}
@@ -96,7 +96,7 @@ export function DemoConditional() {
     <div className="space-y-3">
       <p className="text-[9px] uppercase tracking-wider text-neutral-600">Koşullu Gösterim</p>
       <div className="space-y-2">
-        <div className="flex items-center justify-between rounded-md border border-white/8 bg-white/3 px-2.5 py-1.5">
+        <div className="flex items-center justify-between rounded-md border border-white/10 bg-white/3 px-2.5 py-1.5">
           <span className="text-[11px] text-neutral-300">Deneyiminiz var mı?</span>
           <motion.div
             className={`h-4 w-7 rounded-full p-0.5 cursor-pointer transition-colors ${toggled ? "bg-skylab-500" : "bg-neutral-700"}`}
@@ -143,7 +143,7 @@ export function DemoSettings() {
   return (
     <div className="space-y-3">
       <p className="text-[9px] uppercase tracking-wider text-neutral-600">Ayarlar</p>
-      <div className="space-y-2.5 rounded-md border border-white/8 bg-white/3 px-3 py-2.5">
+      <div className="space-y-2.5 rounded-md border border-white/10 bg-white/3 px-3 py-2.5">
         <Toggle label="Anonim Yanıt" value={settings.anonymous} />
         <Toggle label="Çoklu Yanıt" value={settings.multiple} />
         <Toggle label="Manuel İnceleme" value={settings.review} />
@@ -165,7 +165,7 @@ export function DemoFormLink() {
     <div className="space-y-3">
       <p className="text-[9px] uppercase tracking-wider text-neutral-600">Form Bağlama</p>
       <div className="flex items-center justify-center gap-3">
-        <div className="rounded-md border border-white/8 bg-white/3 px-3 py-2 text-[10px] text-neutral-300">
+        <div className="rounded-md border border-white/10 bg-white/3 px-3 py-2 text-[10px] text-neutral-300">
           Kayıt Formu
         </div>
         <div className="relative flex items-center">
@@ -217,7 +217,7 @@ export function DemoCollaboration() {
 
   const users = [
     { initials: "AY", role: "Sahip", color: "bg-skylab-600" },
-    { initials: "MK", role: "Editör", color: "bg-indigo-600" },
+    { initials: "MK", role: "Editör", color: "bg-skylab-800" },
   ];
 
   return (
@@ -225,7 +225,7 @@ export function DemoCollaboration() {
       <p className="text-[9px] uppercase tracking-wider text-neutral-600">Ekip</p>
       <div className="space-y-1.5">
         {users.map((u) => (
-          <div key={u.initials} className="flex items-center gap-2 rounded-md border border-white/8 bg-white/3 px-2.5 py-1.5">
+          <div key={u.initials} className="flex items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2.5 py-1.5">
             <div className={`h-5 w-5 rounded-full ${u.color} grid place-items-center text-[8px] font-bold text-white`}>{u.initials}</div>
             <span className="text-[11px] text-neutral-300 flex-1">{u.initials}</span>
             <span className="text-[9px] text-neutral-500">{u.role}</span>
@@ -267,7 +267,7 @@ export function DemoResponses() {
           <motion.div
             key={r.name}
             className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[11px] transition-colors cursor-pointer ${
-              selected === i ? "bg-white/6 border border-white/10" : "border border-transparent"
+              selected === i ? "bg-white/5 border border-white/10" : "border border-transparent"
             }`}
             animate={{ scale: selected === i ? 1.02 : 1 }}
             transition={{ duration: 0.2 }}
@@ -339,17 +339,17 @@ export function DemoArchive() {
     <div className="space-y-3">
       <p className="text-[9px] uppercase tracking-wider text-neutral-600">Arşivleme</p>
       <div className="space-y-1.5">
-        <div className="flex items-center gap-2 rounded-md border border-white/8 bg-white/3 px-2.5 py-1.5 text-[11px] text-neutral-300">
+        <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2.5 py-1.5 text-[11px] text-neutral-300">
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
           <span className="flex-1">Ayşe Y.</span>
         </div>
-        <div className="grid transition-all duration-350 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ gridTemplateRows: !archived ? "1fr" : "0fr" }}>
+        <div className="grid transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ gridTemplateRows: !archived ? "1fr" : "0fr" }}>
           <div className="overflow-hidden">
             <motion.div
               animate={{ opacity: !archived ? 1 : 0, x: !archived ? 0 : 40 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="flex items-center gap-2 rounded-md border border-white/8 bg-white/3 px-2.5 py-1.5 text-[11px] text-neutral-300">
+              <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2.5 py-1.5 text-[11px] text-neutral-300">
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                 <span className="flex-1">Mehmet K.</span>
                 <Archive size={10} className="text-neutral-600" />
@@ -357,7 +357,7 @@ export function DemoArchive() {
             </motion.div>
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-md border border-white/8 bg-white/3 px-2.5 py-1.5 text-[11px] text-neutral-300">
+        <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2.5 py-1.5 text-[11px] text-neutral-300">
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
           <span className="flex-1">Elif S.</span>
         </div>
@@ -387,7 +387,7 @@ export function DemoFilter() {
   const Chip = ({ label, isActive }) => (
     <motion.div
       className={`rounded-md border px-2 py-1 text-[10px] transition-colors ${
-        isActive ? "border-skylab-400/30 bg-skylab-500/10 text-skylab-300" : "border-white/8 bg-white/3 text-neutral-500"
+        isActive ? "border-skylab-400/30 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/3 text-neutral-500"
       }`}
       animate={{ scale: isActive ? 1.05 : 1 }}
       transition={{ duration: 0.2 }}
@@ -399,7 +399,7 @@ export function DemoFilter() {
   return (
     <div className="space-y-3">
       <p className="text-[9px] uppercase tracking-wider text-neutral-600">Filtreler</p>
-      <div className="flex items-center gap-1.5 rounded-md border border-white/8 bg-white/3 px-2.5 py-1.5">
+      <div className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/3 px-2.5 py-1.5">
         <Search size={10} className="text-neutral-600" />
         <motion.span
           className="text-[11px]"

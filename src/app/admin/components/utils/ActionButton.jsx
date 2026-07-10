@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function ActionButton({ href, onClick, icon: Icon, label, variant = "ghost", size = "sm", tone = "default", className = "", title, "aria-label": ariaLabel, disabled, ...props}) {
   const sizeClass = size === "md" ? "h-9 w-9 rounded-lg" : "h-8 w-8 rounded-md";
-  const ringClass = tone === "header" ? "focus-visible:ring-neutral-700" : "focus-visible:ring-white/30";
+  const ringClass = "focus-visible:ring-skylab-400/40";
   let variantClass = "";
   if (variant === "primary") {
     variantClass = "border-skylab-400/40 bg-skylab-500/10 text-skylab-300 hover:border-skylab-300/60 hover:bg-skylab-400/20";
@@ -11,7 +11,7 @@ export default function ActionButton({ href, onClick, icon: Icon, label, variant
   } else {
     variantClass = "border-white/10 bg-transparent text-neutral-200 hover:border-white/20 hover:bg-white/5";
   }
-  const base = "inline-flex items-center justify-center border text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
+  const base = "inline-flex items-center justify-center border text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
   const buttonClass = `${base} ${sizeClass} ${ringClass} ${variantClass} ${className}`;
 
   if (href) {

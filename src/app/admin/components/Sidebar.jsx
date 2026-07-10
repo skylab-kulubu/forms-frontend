@@ -55,7 +55,7 @@ function getInitials(name, email) {
 }
 
 function NavItem({ href, icon: Icon, label, active, onClick, variant = "default" }) {
-  const base = "group flex items-center gap-3 rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/5";
+  const base = "group flex items-center gap-3 rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
   const defaultState = active ? "bg-neutral-800 text-neutral-200 px-3 py-2" : "text-neutral-400 hover:bg-neutral-800/60 hover:text-neutral-100 px-3 py-2";
   const subtleState = active ? "text-neutral-100 text-xs px-2 py-1" : "text-neutral-400 hover:text-neutral-100 text-xs px-2 py-1";
   const state = variant === "subtle" ? subtleState : defaultState;
@@ -82,7 +82,7 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
   const hasActive = items.some((item) => itemIsActive(item));
   const [open, setOpen] = useState(hasActive);
 
-  const base = "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/5";
+  const base = "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
   const state = "text-neutral-400 hover:bg-neutral-800/60 hover:text-neutral-100";
 
   return (
@@ -175,7 +175,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         </div>
         {status === "loading" ? null : (
           <>
-            <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}
+            <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }}
               className="min-w-0"
             >
               <p className="text-sm font-semibold text-neutral-100 truncate">{displayName}</p>
@@ -192,7 +192,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         )}
       </div>
 
-      <div className="w-full rounded-md text-center border border-white/8 bg-white/3 px-2 py-1 text-[11px] text-neutral-200">
+      <div className="w-full rounded-md text-center border border-white/10 bg-white/3 px-2 py-1 text-2xs text-neutral-200">
         <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: 1.2 }}>{getRoleLabel(roles)}</motion.span>
       </div>
 
@@ -273,7 +273,7 @@ export default function Sidebar({ user, children }) {
       <div className="md:hidden sticky top-0 z-40 border-b border-neutral-950/70 bg-neutral-950/40 backdrop-blur">
         <div className="flex h-14 items-center px-3">
           <button onClick={() => setOpen(true)}
-            className="inline-flex items-center justify-center rounded-md p-2 text-neutral-200 hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950/5"
+            className="inline-flex items-center justify-center rounded-md p-2 text-neutral-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
           >
             <Menu className="h-5 w-5" />
           </button>

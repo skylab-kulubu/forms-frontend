@@ -21,7 +21,7 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onUndo,
         >
             <motion.div className="flex h-full min-w-0 flex-1 flex-col rounded-xl"
                 animate={{ opacity: showTrash ? 0 : 1, y: showTrash ? 6 : 0, scale: showTrash ? 0.98 : 1 }}
-                transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
                 <div className="h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 text-sm tracking-wide border-b border-neutral-800 overflow-visible">
@@ -54,12 +54,12 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onUndo,
 
                 <div className="space-y-3 p-4 border-b border-neutral-800">
                     <div>
-                        <label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
+                        <label className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
                             Grup Açıklaması
                         </label>
                         <textarea value={state.description} onChange={(e) => dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })}
                             placeholder="Bu grup hakkında kısa bir açıklama..." rows={2}
-                            className="mt-1 w-full resize-none rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-700 focus:outline-none"
+                            className="mt-1 w-full resize-none rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-skylab-400/50 focus:outline-none"
                         />
                     </div>
                 </div>
@@ -73,7 +73,7 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onUndo,
                 {showTrash && (
                     <motion.div key="trash-overlay" className={`m-4 rounded-xl pointer-events-none bg-neutral-100/2 absolute inset-0 grid place-items-center border-3 ${isOver ? "border-red-500/60" : "border-neutral-200/30 border-dashed"}`}
                         initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
-                        transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
+                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div className="flex flex-col items-center gap-2 text-center">
                             {isOver ? (

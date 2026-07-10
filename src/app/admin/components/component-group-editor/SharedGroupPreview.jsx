@@ -100,7 +100,7 @@ function SharedByPanel({ group, token, expiresAt }) {
 
                 <div className="flex-1 overflow-y-auto scrollbar">
                     <div className="px-4 py-4 border-b border-white/5">
-                        <p className="text-[10px] uppercase tracking-wide text-neutral-500 mb-2">Paylaşan</p>
+                        <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500 mb-2">Paylaşan</p>
                         <div className="flex items-center gap-3">
                             <div className="h-11 w-11 rounded-xl border border-white/10 bg-neutral-900/70 text-neutral-200 grid place-items-center font-semibold text-sm overflow-hidden shrink-0">
                                 {sharedBy?.profilePictureUrl ? (
@@ -112,18 +112,18 @@ function SharedByPanel({ group, token, expiresAt }) {
                                 )}
                             </div>
                             <div className="min-w-0 space-y-0.5">
-                                <p className="text-[13px] font-semibold text-neutral-100 truncate leading-tight">{fullName}</p>
-                                {email && <p className="text-[10px] text-neutral-500 truncate">{email}</p>}
+                                <p className="text-sm font-semibold text-neutral-100 truncate leading-tight">{fullName}</p>
+                                {email && <p className="text-3xs text-neutral-500 truncate">{email}</p>}
                             </div>
                         </div>
                     </div>
 
                     <div className="px-4 py-4 border-b border-white/5 space-y-2">
-                        <p className="text-[10px] uppercase tracking-wide text-neutral-500">Bağlantı</p>
-                        <p className="text-[11px] leading-relaxed text-neutral-400">
+                        <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">Bağlantı</p>
+                        <p className="text-2xs leading-relaxed text-neutral-400">
                             Bu grubu sadece görüntüleyebilirsiniz. Düzenlemek için önce kendi gruplarınıza ekleyin.
                         </p>
-                        <div className="flex items-center justify-between gap-2 text-[11px] text-neutral-500 pt-1">
+                        <div className="flex items-center justify-between gap-2 text-2xs text-neutral-500 pt-1">
                             <span>{remaining ?? "48 saat geçerli"}</span>
                             {expiresLabel && <span className="truncate text-neutral-600">{expiresLabel}</span>}
                         </div>

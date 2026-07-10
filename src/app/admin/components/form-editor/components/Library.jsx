@@ -14,7 +14,7 @@ function Tip({ label, children }) {
     return (
         <div className="group/tip relative flex">
             {children}
-            <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-md border border-neutral-700 bg-neutral-800 px-1 py-0.5 text-[9px] font-medium text-neutral-200 opacity-0 shadow-lg transition-all duration-150 group-hover/tip:translate-y-0 group-hover/tip:opacity-100">
+            <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-md border border-neutral-700 bg-neutral-800 px-1 py-0.5 text-3xs font-medium text-neutral-200 opacity-0 shadow-lg transition-all duration-150 group-hover/tip:translate-y-0 group-hover/tip:opacity-100">
                 {label}
             </span>
         </div>
@@ -46,8 +46,8 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
                         {isChildForm && (
                             <div className="pointer-events-auto absolute inset-0 flex items-center justify-center">
                                 <div className="mx-4 max-w-xs rounded-lg border border-neutral-700 bg-neutral-900/90 px-4 py-3 text-center shadow-lg">
-                                    <p className="mb-1 text-sm font-semibold text-neutral-500 uppercase tracking-wide">Ayarlar kilitli</p>
-                                    <p className="text-[11px] leading-relaxed text-neutral-300">Bu formun ayarları ana form tarafından yönetilmektedir.</p>
+                                    <p className="mb-1 text-sm font-semibold text-neutral-500 uppercase tracking-[0.18em]">Ayarlar kilitli</p>
+                                    <p className="text-2xs leading-relaxed text-neutral-300">Bu formun ayarları ana form tarafından yönetilmektedir.</p>
                                 </div>
                             </div>
                         )}
@@ -60,7 +60,7 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
                         <section className="flex flex-1 min-h-0 flex-col gap-4">
                             <div>
                                 <p className="font-semibold text-neutral-100">Form açıklaması</p>
-                                <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
+                                <p className="mt-1 text-2xs leading-relaxed text-neutral-500">
                                     Formu görüntüleyen kişiler için kısa bir açıklama ekleyin.
                                 </p>
                             </div>
@@ -83,7 +83,7 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
         >
             <motion.div className="flex h-full min-w-0 flex-1 flex-col rounded-xl"
                 animate={{ opacity: showTrash ? 0 : 1, y: showTrash ? 6 : 0, scale: showTrash ? 0.98 : 1 }}
-                transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
                 <div className="h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 text-sm tracking-wide border-b border-neutral-800 overflow-visible">
@@ -160,7 +160,7 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
                 <div className={`flex-1 min-h-0 p-1 ${activeTab === "description" ? "overflow-hidden flex flex-col" : "overflow-y-auto overflow-x-hidden scrollbar"}`}>
                     <AnimatePresence mode="wait" initial={false}>
                         <motion.div key={activeTab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                            transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }} className="h-full"
+                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="h-full"
                         >
                             {renderContent()}
                         </motion.div>
@@ -172,7 +172,7 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
                 {showTrash && (
                     <motion.div key="trash-overlay" className={`m-4 rounded-xl pointer-events-none bg-neutral-100/2 absolute inset-0 grid place-items-center border-3 ${isOver ? "border-red-500/60" : "border-neutral-200/30 border-dashed"}`}
                         initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
-                        transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
+                        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div className="flex flex-col items-center gap-2 text-center">
                             {isOver ? (

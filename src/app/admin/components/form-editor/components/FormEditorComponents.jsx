@@ -57,9 +57,9 @@ export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span
                 {toolbar ? <div className="flex items-center gap-2">{toolbar}</div> : null}
             </div>
             <motion.div ref={setNodeRef} className={`overflow-y-auto rounded-xl transition border-2 scrollbar-hidden h-full
-                ${isOver && dragSource !== "canvas" ? "border-indigo-400/50 bg-indigo-400/5" : "border-transparent"}`}
+                ${isOver && dragSource !== "canvas" ? "border-skylab-400/50 bg-skylab-500/5" : "border-transparent"}`}
                 animate={{ scale: showDrop ? 0.99 : 1 }}
-                transition={{ duration: 0.18, ease: [0.2, 0.65, 0.3, 0.9] }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
                 {children}
             </motion.div>
@@ -120,10 +120,10 @@ export function DropSlot({ index, enabled }) {
     if (!enabled) return (<div className="h-2" />);
     return (
         <div ref={setNodeRef} className={`relative my-1 transition-all duration-200 ${isOver ? "h-10" : "h-2"}`}>
-            <div className={`relative rounded-md max-w-2xl mx-auto ${isOver ? "h-10 bg-indigo-400/15 border-2 border-indigo-400/60 border-dashed" : "h-2"}`}>
+            <div className={`relative rounded-md max-w-2xl mx-auto ${isOver ? "h-10 bg-skylab-400/15 border-2 border-skylab-400/60 border-dashed" : "h-2"}`}>
                 {isOver && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-fade-in">
-                        <CopyPlus className="w-4 h-4 text-indigo-300" />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <CopyPlus className="w-4 h-4 text-skylab-300" />
                     </div>
                 )}
             </div>

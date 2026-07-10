@@ -177,7 +177,7 @@ export default function ResponseDisplayer({ response, token = null }) {
           <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
             {activeId && (
               <div className="text-left">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">Response ID</p>
+                <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">Response ID</p>
                 <p className="mt-1 text-xs text-neutral-200 break-all">{activeId}</p>
               </div>
             )}
@@ -204,14 +204,14 @@ export default function ResponseDisplayer({ response, token = null }) {
             <AnimatePresence mode="wait" custom={direction}>
               {activeView === "responses" ? (
                 <motion.div key="responses" custom={direction} variants={slideVariants}
-                  initial="enter" animate="center" exit="exit" transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  initial="enter" animate="center" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
                 >
                   {responsesContent}
                 </motion.div>
               ) : (
                 <motion.div key="linked" custom={direction} variants={slideVariants}
-                  initial="enter" animate="center" exit="exit" transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  initial="enter" animate="center" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
                 >
                   {linkedContent}
