@@ -84,7 +84,6 @@ export function ResponseActions({ response, readOnly = false }) {
   const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
   const actionTimerRef = useRef(null);
   const responseId = response?.id;
-  const prevResponseIdRef = useRef(responseId);
   const { mutate, isPending } = useResponseStatusMutation();
   const { mutate: archiveMutate, isPending: isArchivePending, isSuccess, isError, error, reset } = useResponseArchiveMutation();
   const shareMutation = useCreateResponseShareMutation();
@@ -103,18 +102,22 @@ export function ResponseActions({ response, readOnly = false }) {
     }
   };
 
-  useEffect(() => {
+  // Sync local state during render when the response (or its review data) changes:
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const syncKey = `${responseId}|${reviewDescription}|${reviewedAt}|${canEditReview}`;
+  const [prevSyncKey, setPrevSyncKey] = useState(syncKey);
+  if (prevSyncKey !== syncKey) {
+    setPrevSyncKey(syncKey);
     setNote(reviewDescription);
     setIsEditing(canEditReview && !reviewedAt);
-  }, [response?.id, reviewDescription, reviewedAt, canEditReview]);
+  }
 
-  useEffect(() => {
-    if (prevResponseIdRef.current !== responseId) {
-      prevResponseIdRef.current = responseId;
-      clearActionTimer();
-      setActionState("idle");
-    }
-  }, [responseId]);
+  // No timer cleanup here: a stale timer only ever re-sets "idle", which is a no-op.
+  const [prevResponseId, setPrevResponseId] = useState(responseId);
+  if (prevResponseId !== responseId) {
+    setPrevResponseId(responseId);
+    setActionState("idle");
+  }
 
   useEffect(() => () => {
     clearActionTimer();

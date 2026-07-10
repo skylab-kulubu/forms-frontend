@@ -41,19 +41,19 @@ function TrendBadge({ value }) {
   );
 }
 
+function TrendTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-neutral-900/90 border border-white/10 rounded-md px-2.5 py-1.5 shadow-xl">
+      <span className="text-2xs text-skylab-300 font-medium">{payload[0].value}</span>
+    </div>
+  );
+}
+
 function TrendChart({ hourlyData, dailyData, dailyTrendPercentage, hourlyTrendPercentage }) {
   const [mode, setMode] = useState("daily");
   const data = mode === "hourly" ? hourlyData : dailyData;
   const trendValue = mode === "hourly" ? hourlyTrendPercentage : dailyTrendPercentage;
-
-  const CustomTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="bg-neutral-900/90 border border-white/10 rounded-md px-2.5 py-1.5 shadow-xl">
-        <span className="text-2xs text-skylab-300 font-medium">{payload[0].value}</span>
-      </div>
-    );
-  };
 
   return (
     <div>
@@ -87,7 +87,7 @@ function TrendChart({ hourlyData, dailyData, dailyTrendPercentage, hourlyTrendPe
             </defs>
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} interval={0} dy={4} />
             <YAxis hide domain={[0, "auto"]} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#e0c8e5", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
+            <Tooltip content={<TrendTooltip />} cursor={{ stroke: "#e0c8e5", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
             <Area type="monotone" dataKey="count" stroke="#e0c8e5" strokeWidth={2} fill="url(#colorCount)"
               dot={{ r: 2.5, fill: "#e0c8e5", strokeWidth: 0 }} activeDot={{ r: 4, fill: "#f3e8f5", strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out"
             />

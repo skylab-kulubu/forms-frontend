@@ -47,17 +47,15 @@ function SharedByPanel({ group, token, expiresAt }) {
     const fullName = formatName(sharedBy?.fullName) || "Bilinmiyor";
     const email = sharedBy?.email || "";
     const expiresLabel = formatExpiresAt(expiresAt);
-    const [remaining, setRemaining] = useState(() => getRemainingLabel(expiresAt));
 
+    // remaining is derived at render; the interval only forces a re-render each minute
+    const [, setMinuteTick] = useState(0);
     useEffect(() => {
-        if (!expiresAt) {
-            setRemaining(null);
-            return;
-        }
-        setRemaining(getRemainingLabel(expiresAt));
-        const interval = setInterval(() => setRemaining(getRemainingLabel(expiresAt)), 60_000);
+        if (!expiresAt) return;
+        const interval = setInterval(() => setMinuteTick((t) => t + 1), 60_000);
         return () => clearInterval(interval);
     }, [expiresAt]);
+    const remaining = getRemainingLabel(expiresAt);
 
     useEffect(() => {
         if (!isError) return;
