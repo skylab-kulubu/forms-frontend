@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Timer, User2, ToggleLeft, ToggleRight, Link2, Hash, Shield, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { ROLE_BADGE } from "../../ListItem";
+import Avatar from "@/app/components/utils/Avatar";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -126,15 +127,6 @@ function SourceBreakdownBar({ registered, anonymous }) {
   );
 }
 
-function CollaboratorAvatar({ fullName }) {
-  const initials = fullName && fullName !== "??" ? fullName.trim().split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() : "?";
-  return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-neutral-700 text-3xs font-semibold text-neutral-200">
-      {initials}
-    </div>
-  );
-}
-
 function CollaboratorsSection({ formData }) {
   const collaborators = [...(formData?.data?.collaborators ?? formData?.collaborators ?? [])].sort((a, b) => b.role - a.role);
 
@@ -154,7 +146,7 @@ function CollaboratorsSection({ formData }) {
             const email = c.user?.email;
             return (
               <div key={c.user?.id} className="flex items-center gap-2.5">
-                <CollaboratorAvatar fullName={name} />
+                <Avatar name={c.user?.fullName || ""} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="text-2xs font-medium text-neutral-200 truncate">{name}</p>
                   {email && <p className="text-3xs text-neutral-500 truncate">{email}</p>}

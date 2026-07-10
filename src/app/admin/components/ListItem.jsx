@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Clock, ClipboardCheck, CornerDownRight, LayoutList, PencilLine, Repeat2, UserX, ChartColumn, Archive, User2 } from "lucide-react";
+import { ChevronRight, Clock, ClipboardCheck, CornerDownRight, LayoutList, PencilLine, Repeat2, UserX, ChartColumn, Archive } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
+import Avatar from "@/app/components/utils/Avatar";
 
 export const ROLE_BADGE = {
   3: { label: "Sahip", className: "bg-skylab-500/10 text-skylab-300 border border-skylab-400/40" },
@@ -107,11 +108,6 @@ function ResponseStatusBadge({ status }) {
   );
 }
 
-function getInitial(name, email) {
-  const source = (name || email || "").trim();
-  return source ? source[0].toUpperCase() : "?";
-}
-
 const formatDate = (value) => {
   if (!value) return "--";
   const date = new Date(value);
@@ -164,7 +160,6 @@ export function ResponseListItem({ formId, response, className = "" }) {
   const reviewedBy = response.reviewedBy || null;
   const reviewerName = reviewedBy?.fullName.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "--";
   const submittedAt = formatDate(response.submittedAt);
-  const initial = getInitial(userName);
 
   const reviewText = (statusValue === 2 || statusValue === 3) ? `${reviewerName} tarafından incelendi.` : statusValue === 0 ? "Onay aşaması bulunmamakta." : "Henüz incelenmedi.";
 
@@ -175,15 +170,7 @@ export function ResponseListItem({ formId, response, className = "" }) {
       <Link href={responseHref} className="absolute inset-0 z-0" aria-label={userName} tabIndex={-1} />
       <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3 min-w-0 sm:w-48 shrink-0">
-          <div className="h-9 w-9 rounded-lg border shrink-0 border-white/10 bg-neutral-900/60 grid place-items-center overflow-hidden">
-            {photoUrl ? (
-              <img src={photoUrl} alt={userName} className="h-full w-full object-cover" />
-            ) : response.user?.fullName ? (
-              <span className="text-lg text-neutral-600">{initial}</span>
-            ) : (
-              <User2 size={18} className="text-neutral-600" />
-            )}
-          </div>
+          <Avatar name={response.user?.fullName ? userName : ""} photoUrl={photoUrl} size="md" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-neutral-100 truncate">{userName}</p>
             <p className="text-3xs text-neutral-500 truncate">{userId}</p>

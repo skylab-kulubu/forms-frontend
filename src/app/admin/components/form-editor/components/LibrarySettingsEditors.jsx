@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, Check, ChevronDown, Eye, Loader2, PencilLine, Plus, User2, UserMinus, Users } from "lucide-react";
+import { ArrowUp, Check, ChevronDown, Eye, Loader2, PencilLine, Plus, UserMinus, Users } from "lucide-react";
 import SearchPicker from "../../../../components/utils/SearchPicker";
+import Avatar from "@/app/components/utils/Avatar";
 import { fetchUserByMail, useUserByMailQuery } from "@/lib/hooks/useUser";
 import { useFormEditor } from "../FormEditorContext";
 
@@ -14,14 +15,6 @@ function formatFullName(firstName, lastName) {
     if (!fullName) return "--";
     return fullName.replace(/(^|\s)(\S)/g, (_, space, char) => space + char.toLocaleUpperCase("tr-TR"));
 };
-
-function getInitials(name, email) {
-    const source = (name || email || "").trim();
-    if (!source) return "?";
-    const parts = source.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-}
 
 export function LibrarySettingsEditors() {
     const { state, dispatch } = useFormEditor();
@@ -156,9 +149,7 @@ export function LibrarySettingsEditors() {
                     return (
                         <div key={editor.user.id || index} className="group flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
                             <div className="flex items-center gap-3 min-w-0 flex-1">
-                                <div className="grid shrink-0 h-9 w-9 place-items-center rounded-lg bg-neutral-950/20 border border-neutral-950/60 text-xs font-semibold uppercase tracking-[0.18em] text-skylab-300/70">
-                                    {editor.user?.profilePictureUrl ? (<img src={editor.user?.profilePictureUrl} alt={editor.user.fullName} className="h-full w-full object-cover" />) : (editor.user?.fullName ? (<span>{getInitials(editor.user.fullName)}</span>) : (<User2 size={20} />))}
-                                </div>
+                                <Avatar name={editor.user?.fullName} email={editor.user?.email} photoUrl={editor.user?.profilePictureUrl} size="md" />
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-neutral-50 truncate">{normalizeUserName(editor.user.fullName) || "--"}</p>
                                     <p className="text-3xs text-neutral-500 truncate">{editor.user.email}</p>
@@ -262,7 +253,7 @@ export function LibrarySettingsEditors() {
                                     const isAdded = editorsList.some(e => e.user.id === user.id);
                                     return (
                                         <button type="button" onClick={isAdded ? undefined : onSelect} disabled={isAdded} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition ${active ? "bg-white/10 text-neutral-100" : "text-neutral-200"} ${isAdded ? "opacity-50 cursor-default" : "hover:bg-white/5"}`}>
-                                            <div className="grid h-8 w-8 place-items-center rounded-lg bg-neutral-800 border border-white/10 text-xs font-semibold text-neutral-400 shrink-0">{user.profilePictureUrl ? (<img src={user.profilePictureUrl} alt="" className="h-full w-full rounded-full object-cover" />) : getInitials(user.fullName || user.email)}</div>
+                                            <Avatar name={user.fullName} email={user.email} photoUrl={user.profilePictureUrl} size="md" />
                                             <div className="flex-1 min-w-0"><p className="font-medium leading-tight truncate">{formatFullName(user.firstName, user.lastName)}</p><p className="text-2xs text-neutral-500 truncate">{user.email}</p></div>
                                             {isAdded && <span className="text-3xs text-skylab-300">Ekli</span>}
                                         </button>

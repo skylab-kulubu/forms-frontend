@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { loginWithKeycloak, logout } from "@/lib/authActions";
 import { motion } from "framer-motion";
@@ -8,12 +8,8 @@ import { LogOut } from "lucide-react";
 import Link from "next/link";
 import LoginButton from "./utils/LoginButton";
 import HoverCard from "./utils/HoverCard";
+import Avatar from "./utils/Avatar";
 import { useScrollContainer } from "./landing/utils";
-
-function getInitial(name, email) {
-  const source = (name || email || "").trim();
-  return source ? source[0].toUpperCase() : "?";
-}
 
 const TOP_THRESHOLD = 40;
 
@@ -62,8 +58,6 @@ export default function MainHeader() {
   const name = user?.firstName?.trim().toLocaleLowerCase("tr-TR").replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR")) || "Kullanıcı";
   const avatarUrl = user?.profilePictureUrl?.trim() || "";
 
-  const initial = useMemo(() => getInitial(user?.name, user?.email), [user]);
-
   const roles = Array.isArray(session?.skyformsRoles) ? session.skyformsRoles : [];
   const isAdmin = roles.includes("skyforms:access");
 
@@ -111,14 +105,8 @@ export default function MainHeader() {
                     Merhaba, {name}
                   </p>
                 </motion.div>
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
-                  className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-neutral-800 text-xs font-semibold text-neutral-200"
-                >
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
-                  ) : (
-                    <span>{initial}</span>
-                  )}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+                  <Avatar name={user?.name} email={user?.email} photoUrl={avatarUrl} size="sm" />
                 </motion.div>
                 <motion.button type="button" onClick={handleLogout}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}

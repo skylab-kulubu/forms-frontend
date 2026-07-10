@@ -2,11 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-function getInitial(name, email) {
-  const source = (name || email || "").trim();
-  return source ? source[0].toUpperCase() : "?";
-}
+import Avatar from "./Avatar";
 
 const panelVariants = {
   hidden: { opacity: 0, y: -6, scale: 0.98 },
@@ -61,8 +57,6 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
     .map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR")))
     .join(" ") || "Kullanıcı";
 
-  const initial = getInitial(displayName);
-
   const rows = [
     { label: "University", value: university || "--" },
     { label: "Department", value: department || "--" },
@@ -78,13 +72,7 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
           >
             <motion.div variants={contentVariants}>
               <motion.div variants={itemVariants} className="flex items-center gap-3 rounded-lg border border-white/8 bg-white/3 p-2">
-                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-neutral-800 text-xs font-semibold text-neutral-200">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-                  ) : (
-                    <span>{initial}</span>
-                  )}
-                </div>
+                <Avatar name={displayName} email={email} photoUrl={avatarUrl} size="lg" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-neutral-100">{displayName}</div>
                   <div className="truncate text-xs text-neutral-400">{email || "--"}</div>

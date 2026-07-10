@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { logout } from "@/lib/authActions";
 import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
+import Avatar from "@/app/components/utils/Avatar";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,14 +45,6 @@ function getRoleLabel(roles = []) {
     if (n.includes("skysis"))   return "YAŞIYONUZ MU";
   }
   return "KULLANICI";
-}
-
-function getInitials(name, email) {
-  const source = (name || email || "").trim();
-  if (!source) return "?";
-  const parts = source.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 function NavItem({ href, icon: Icon, label, active, onClick, variant = "default" }) {
@@ -140,8 +133,6 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
     .map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR")))
     .join(" ") || "Kullanıcı";
 
-  const initials = getInitials(displayName, subtitle);
-
   const handleLogout = async () => {
     logout({ callbackUrl: window.location.origin });
   };
@@ -163,16 +154,11 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
   return (
     <div className="flex h-full w-full flex-col gap-4 px-4 py-6">
       <div className="flex items-center gap-3 px-2">
-        <div className="h-10 w-10 rounded-lg bg-neutral-800 border border-white/10 text-white grid place-items-center text-sm font-medium overflow-hidden selection:">
-          {status === "loading" ? null
-            : imageUrl ? (
-              <motion.img
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}
-                src={imageUrl} alt={displayName} className="h-full w-full object-cover" />
-            ) : (
-              <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>{initials}</motion.span>
-            )}
-        </div>
+        {status === "loading" ? (
+          <Avatar size="lg" />
+        ) : (
+          <Avatar name={displayName} email={subtitle === "--" ? "" : subtitle} photoUrl={imageUrl} size="lg" />
+        )}
         {status === "loading" ? null : (
           <>
             <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }}

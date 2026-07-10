@@ -3,24 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { CircleAlert, CircleGauge, CopyPlus, User2 } from "lucide-react";
+import { CircleAlert, CircleGauge, CopyPlus } from "lucide-react";
 
 import { REGISTRY } from "@/app/components/form-registry";
 import { useCloneGroupMutation } from "@/lib/hooks/useGroupShare";
 import Popover from "@/app/components/utils/Popover";
+import Avatar from "@/app/components/utils/Avatar";
 
 const formatName = (raw) => {
     if (!raw) return "";
     return raw.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ");
-};
-
-const getInitials = (label) => {
-    if (!label) return "?";
-    const cleaned = String(label).trim();
-    if (!cleaned) return "?";
-    const parts = cleaned.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
-    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 };
 
 const formatExpiresAt = (value) => {
@@ -54,7 +46,6 @@ function SharedByPanel({ group, token, expiresAt }) {
     const sharedBy = group?.sharedBy ?? null;
     const fullName = formatName(sharedBy?.fullName) || "Bilinmiyor";
     const email = sharedBy?.email || "";
-    const initials = getInitials(fullName);
     const expiresLabel = formatExpiresAt(expiresAt);
     const [remaining, setRemaining] = useState(() => getRemainingLabel(expiresAt));
 
@@ -102,15 +93,7 @@ function SharedByPanel({ group, token, expiresAt }) {
                     <div className="px-4 py-4 border-b border-white/5">
                         <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500 mb-2">Paylaşan</p>
                         <div className="flex items-center gap-3">
-                            <div className="h-11 w-11 rounded-xl border border-white/10 bg-neutral-900/70 text-neutral-200 grid place-items-center font-semibold text-sm overflow-hidden shrink-0">
-                                {sharedBy?.profilePictureUrl ? (
-                                    <img src={sharedBy.profilePictureUrl} alt={fullName} className="h-full w-full object-cover" />
-                                ) : sharedBy?.fullName ? (
-                                    <span>{initials}</span>
-                                ) : (
-                                    <User2 size={20} className="text-neutral-400" />
-                                )}
-                            </div>
+                            <Avatar name={sharedBy?.fullName ? fullName : ""} photoUrl={sharedBy?.profilePictureUrl} size="lg" />
                             <div className="min-w-0 space-y-0.5">
                                 <p className="text-sm font-semibold text-neutral-100 truncate leading-tight">{fullName}</p>
                                 {email && <p className="text-3xs text-neutral-500 truncate">{email}</p>}
