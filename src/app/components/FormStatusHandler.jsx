@@ -135,13 +135,13 @@ export function FormStatusDisplayer({ state, message, step, reviewNote, reviewed
                     <div className={`rounded-xl border mx-auto px-4 py-3 max-w-xs text-left bg-neutral-800/50 border-neutral-700`}>
                         <div className="">
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-neutral-400/90">
+                                <p className="text-3xs font-semibold uppercase tracking-[0.24em] text-neutral-400/90">
                                     İnceleme Detayları
                                 </p>
-                                <p className="text-[11px] text-neutral-400">{formatReviewDate(reviewedAt)}</p>
+                                <p className="text-2xs text-neutral-400">{formatReviewDate(reviewedAt)}</p>
                             </div>
                             {normalizedReviewNote && (
-                                <p className="mt-1 text-[12px] text-neutral-200 whitespace-pre-wrap leading-relaxed">
+                                <p className="mt-1 text-xs text-neutral-200 whitespace-pre-wrap leading-relaxed">
                                     {normalizedReviewNote}
                                 </p>
                             )}

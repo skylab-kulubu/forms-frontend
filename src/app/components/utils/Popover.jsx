@@ -64,7 +64,7 @@ export default function Popover({ open, error, message, variant = "error", child
             <div className={`absolute h-2.5 w-2.5 rotate-45 rounded-[2.5px] ${style.arrow} ${arrowClasses}`} style={{ zIndex: -1 }}/>
 
             <IconComponent size={13} strokeWidth={2.5} className={`shrink-0 ${style.iconClass}`} />
-            <span className="text-[10px] font-medium leading-snug text-neutral-200 wrap-break-word">
+            <span className="text-3xs font-medium leading-snug text-neutral-200 wrap-break-word">
               {displayMessage}
             </span>
           </motion.div>

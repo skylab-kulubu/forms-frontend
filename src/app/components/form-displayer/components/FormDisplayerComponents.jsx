@@ -13,7 +13,7 @@ export function FormRespondentBadge() {
 
   if (!isAuthed) {
     return (
-      <div className="flex ml-4 items-center gap-1.5 text-[11px] text-neutral-500 px-1">
+      <div className="flex ml-4 items-center gap-1.5 text-2xs text-neutral-500 px-1">
         <UserRoundX size={12} className="shrink-0" />
         <span>Anonim olarak yanıtlıyorsunuz</span>
       </div>
@@ -23,7 +23,7 @@ export function FormRespondentBadge() {
   const fullName = user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Kullanıcı";
 
   return (
-    <div className="flex ml-4 items-center gap-1.5 text-[11px] text-neutral-500 px-1">
+    <div className="flex ml-4 items-center gap-1.5 text-2xs text-neutral-500 px-1">
       <UserRound size={12} className="shrink-0" />
       <span><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
     </div>
@@ -48,13 +48,13 @@ export function FormDisplayerHeader({ title, description }) {
 
       {hasDescription && (
         <div
-          className="mt-3 text-[11px] leading-relaxed text-neutral-200 space-y-2 opacity-90
+          className="mt-3 text-2xs leading-relaxed text-neutral-200 space-y-2 opacity-90
             [&_p]:m-0 [&_p+p]:mt-2 [&_strong]:text-neutral-100 [&_em]:text-neutral-300
             [&_blockquote]:border-l-2 [&_blockquote]:border-white/10 [&_blockquote]:pl-3 [&_blockquote]:text-neutral-100 [&_blockquote]:italic
             [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
-            [&_h1]:text-[14px] [&_h1]:font-semibold
-            [&_h2]:text-[13px] [&_h2]:font-semibold
-            [&_h3]:text-[12px] [&_h3]:font-semibold"
+            [&_h1]:text-sm [&_h1]:font-semibold
+            [&_h2]:text-xs [&_h2]:font-semibold
+            [&_h3]:text-2xs [&_h3]:font-semibold"
           dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
         />
       )}

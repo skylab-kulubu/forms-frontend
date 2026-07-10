@@ -11,21 +11,21 @@ export function CreateFormLongText({ questionNumber, props, onPropsChange, readO
   return (
     <FieldShell number={questionNumber} title="Uzun Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="short-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+        <label htmlFor="short-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
         <AutoResizeTextarea id="short-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Sorunuzu buraya yazın."
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="short-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+        <label htmlFor="short-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
         <AutoResizeTextarea id="short-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Açıklamanızı buraya yazın."
         />
       </div>
@@ -68,11 +68,11 @@ export function DisplayFormLongText({ question, questionNumber, description, req
           value={currentValue} ref={textareaRef}
           onChange={handleChange} onInput={handleInput}
           placeholder="Cevabınızı buraya yazın."
-          className={`block overflow-hidden w-full resize-y rounded-lg border bg-neutral-900/60 px-3 py-2 mt-3 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-white/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-white/30"}`}
+          className={`block overflow-hidden w-full resize-y rounded-lg border bg-neutral-900/60 px-3 py-2 mt-3 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
         />
 
         {required && (
-          <span className="px-0.5 text-[11px] text-neutral-500 mt-1">Zorunlu alan</span>
+          <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>
         )}
       </div>
     </div>

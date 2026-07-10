@@ -11,32 +11,32 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
     return (
         <FieldShell number={questionNumber} title="Anahtar" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
             <div className="flex flex-col gap-1.5">
-                <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
+                <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
                 <AutoResizeTextarea {...bind("question")}
-                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                     placeholder="Sorunuzu buraya yazın."
                 />
             </div>
 
             <div className="flex flex-col gap-1.5">
-                <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
+                <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
                 <AutoResizeTextarea {...bind("description")}
-                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                     placeholder="Açıklamanızı buraya yazın."
                 />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                    <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Açık Metni</label>
+                    <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açık Metni</label>
                     <input type="text" {...bind("trueLabel")} placeholder="Evet"
-                        className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                        className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                     />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                    <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Kapalı Metni</label>
+                    <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Kapalı Metni</label>
                     <input type="text" {...bind("falseLabel")} placeholder="Hayır"
-                        className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                        className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                     />
                 </div>
             </div>
@@ -98,7 +98,7 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
                     </div>
                 </div>
 
-                {required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1.5">Devam etmek için onaylamalısınız</span>}
+                {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1.5">Devam etmek için onaylamalısınız</span>}
             </div>
         </div>
     );

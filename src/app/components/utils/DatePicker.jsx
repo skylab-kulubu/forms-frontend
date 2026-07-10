@@ -142,7 +142,7 @@ export default function DatePicker({ value = null, onChange, onClose, className 
               >
                 <div className="mb-1 grid grid-cols-7 text-center">
                   {weekdays.map((d) => (
-                    <div key={d} className="text-[11px] font-medium uppercase tracking-wide text-neutral-500 select-none py-1">{d}</div>
+                    <div key={d} className="text-2xs font-medium uppercase tracking-wide text-neutral-500 select-none py-1">{d}</div>
                   ))}
                 </div>
                 
@@ -156,7 +156,7 @@ export default function DatePicker({ value = null, onChange, onClose, className 
                         const isSelected = isSameDay(date, value);
                         return (
                           <button key={idx} type="button" onClick={() => { onChange?.(date); onClose?.(); }}
-                            className={`relative flex size-full items-center justify-center rounded-md text-[13px] transition select-none border
+                            className={`relative flex size-full items-center justify-center rounded-md text-xs transition select-none border
                               ${!inMonth ? "border-transparent text-neutral-600" : "text-neutral-300"}
                               ${inMonth && !isSelected ? "hover:bg-white/10 hover:text-neutral-100" : ""}
                               ${isSelected ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300 shadow-sm font-medium" : "border-transparent"}
@@ -191,10 +191,10 @@ export default function DatePicker({ value = null, onChange, onClose, className 
         </motion.div>
 
         <motion.div variants={staggerItemVariants} className="flex items-center justify-between border-t border-white/5 pt-2">
-          <button type="button" onClick={handleToday} className="rounded-md px-2 py-1 text-[11px] font-medium text-neutral-400 transition hover:bg-white/5 hover:text-neutral-200">
+          <button type="button" onClick={handleToday} className="rounded-md px-2 py-1 text-2xs font-medium text-neutral-400 transition hover:bg-white/5 hover:text-neutral-200">
             Bugün
           </button>
-          <button type="button" onClick={handleClear} className="rounded-md px-2 py-1 text-[11px] font-medium text-neutral-400 transition hover:bg-white/5 hover:text-neutral-200">
+          <button type="button" onClick={handleClear} className="rounded-md px-2 py-1 text-2xs font-medium text-neutral-400 transition hover:bg-white/5 hover:text-neutral-200">
             Temizle
           </button>
         </motion.div>

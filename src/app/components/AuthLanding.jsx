@@ -55,14 +55,14 @@ export default function AuthLanding({
                 title={title || fallbackTitle}
                 description={description}
                 meta={sharedByName ? (
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-neutral-300">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-2xs text-neutral-300">
                         <User2 size={12} />
                         <span>{sharedByName} paylaştı</span>
                     </div>
                 ) : null}
             >
                 <div className="flex flex-col items-center gap-3">
-                    <p className="text-[11px] text-neutral-500">{actionHint}</p>
+                    <p className="text-2xs text-neutral-500">{actionHint}</p>
                     <LoginButton onClick={handleLogin} />
                 </div>
             </StateCard>

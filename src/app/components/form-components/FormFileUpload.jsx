@@ -51,45 +51,45 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
   return (
     <FieldShell number={questionNumber} title="Dosya Yükleme" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="file-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+        <label htmlFor="file-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
         <AutoResizeTextarea id="file-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Sorunuzu buraya yazın."
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="file-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+        <label htmlFor="file-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
         <AutoResizeTextarea id="file-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Açıklamanızı buraya yazın."
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="file-accept" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          <label htmlFor="file-accept" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
             İzin verilen dosya türleri
           </label>
           <input id="file-accept" type="text" {...bind("acceptedFiles")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
             placeholder="Örn: .pdf,.jpg,.png veya image/*"
           />
-          <span className="px-0.5 text-[11px] text-neutral-500">Virgülle ayırın. Boş bırakılırsa tüm türlere izin verilir.</span>
+          <span className="px-0.5 text-2xs text-neutral-500">Virgülle ayırın. Boş bırakılırsa tüm türlere izin verilir.</span>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="file-maxsize" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          <label htmlFor="file-maxsize" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
             Maksimum dosya boyutu (MB)
           </label>
           <input id="file-maxsize" type="number" min={0} {...bind("maxSize")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
             placeholder="0 = sınırsız"
           />
-          <span className="px-0.5 text-[11px] text-neutral-500">0 ise sınır yok</span>
+          <span className="px-0.5 text-2xs text-neutral-500">0 ise sınır yok</span>
         </div>
       </div>
     </FieldShell>
@@ -239,7 +239,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
                 <span className={`text-sm font-medium transition-colors duration-300 ${error ? "text-red-400" : "text-neutral-200"}`}>
                   {error ? error : "Dosya yükle veya sürükle"}
                 </span>
-                <span className="mt-0.5 text-[11px] font-medium tracking-wide text-neutral-500 uppercase">
+                <span className="mt-0.5 text-2xs font-medium tracking-wide text-neutral-500 uppercase">
                   {acceptedFiles ? acceptedFiles.replace(/,/g, ', ') : "TÜM TÜRLER"}
                   {maxBytes !== Infinity ? ` • MAKS ${Math.round(maxBytes / 1024 / 1024)}MB` : ""}
                 </span>
@@ -259,7 +259,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
                   <span className="truncate text-sm font-medium text-neutral-200" title={currentFile?.name}>
                     {currentFile?.name}
                   </span>
-                  <div className="mt-0.5 flex items-center gap-2 text-[11px] font-medium text-neutral-500">
+                  <div className="mt-0.5 flex items-center gap-2 text-2xs font-medium text-neutral-500">
                     <span>{formatBytes(currentFile?.size)}</span>
                     {isUploading ? (
                       <>
@@ -296,7 +296,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
           )}
         </div>
 
-        {missing && !error && <span className="mt-2 px-1 text-[12px] font-medium text-red-400 animate-in fade-in">Bu alan zorunludur.</span>}
+        {missing && !error && <span className="mt-2 px-1 text-xs font-medium text-red-400 animate-in fade-in">Bu alan zorunludur.</span>}
       </div>
     </div>
   );

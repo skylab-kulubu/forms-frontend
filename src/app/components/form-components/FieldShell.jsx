@@ -39,7 +39,7 @@ export function FieldShell({ number, title, required, onRequiredChange, children
       ${hasActiveCondition ? "bg-neutral-900 border-skylab-400/30 shadow-skylab-500/5" : "bg-neutral-900 border-white/5 hover:border-white/10"}`}
     >
       <div className="flex items-center gap-3 border-b border-white/5 px-3 py-2.5">
-        <div className={`grid size-6 place-items-center rounded-md border text-[13px] font-semibold transition-colors
+        <div className={`grid size-6 place-items-center rounded-md border text-xs font-semibold transition-colors
           ${hasActiveCondition ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400 group-hover:text-neutral-200"}`}>
           {number}
         </div>
@@ -51,7 +51,7 @@ export function FieldShell({ number, title, required, onRequiredChange, children
         <div className="ml-auto flex items-center">
           <button type="button" disabled={isFirst}
             onClick={() => { if (showLogic) setIsOverflowVisible(false); setShowLogic(!showLogic); }}
-            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all border
+            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-2xs font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
               ${isFirst ? "opacity-30 cursor-not-allowed bg-white/3 text-neutral-500 border-neutral-600" : ""}
               ${!isFirst && (hasActiveCondition || showLogic) ? "bg-skylab-500/10 text-skylab-300 border-skylab-400/20"
                 : !isFirst && "border-white/15 bg-white/5 text-neutral-400 hover:text-neutral-200"
@@ -67,11 +67,11 @@ export function FieldShell({ number, title, required, onRequiredChange, children
 
               <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
                 <button type="button" aria-pressed={!required} onClick={() => onRequiredChange(false)}
-                  className={`px-2 py-1 text-[11px] rounded-lg ${!required ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}>
+                  className={`px-2 py-1 text-2xs rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${!required ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}>
                   Opsiyonel
                 </button>
                 <button type="button" aria-pressed={required} onClick={() => onRequiredChange(true)}
-                  className={`px-2 py-1 text-[11px] rounded-lg ${required ? "bg-skylab-400/20 text-skylab-300" : "text-neutral-300 hover:text-neutral-200"}`}>
+                  className={`px-2 py-1 text-2xs rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${required ? "bg-skylab-400/20 text-skylab-300" : "text-neutral-300 hover:text-neutral-200"}`}>
                   Zorunlu
                 </button>
               </div>

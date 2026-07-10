@@ -80,7 +80,7 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
               </motion.div>
 
               <motion.div variants={itemVariants} className="mt-1 flex items-center justify-start">
-                <span className="p-0.5 text-[10px] uppercase tracking-wide text-neutral-500">
+                <span className="p-0.5 text-3xs uppercase tracking-wide text-neutral-500">
                   ID: {id || "--"}
                 </span>
               </motion.div>
@@ -88,7 +88,7 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
               <motion.div variants={itemVariants} className="mt-1 grid gap-2">
                 {rows.map((row) => (
                   <div key={row.label} className="flex items-start justify-between gap-3">
-                    <span className="text-[11px] uppercase tracking-wide text-neutral-500">{row.label}</span>
+                    <span className="text-2xs uppercase tracking-wide text-neutral-500">{row.label}</span>
                     <span className="text-right text-xs text-neutral-200 break-all">{row.value}</span>
                   </div>
                 ))}
@@ -96,7 +96,7 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
 
               <motion.div variants={itemVariants} className="mt-2">
                 {roles.length ? (
-                  <div className="mt-1 w-full rounded-md text-center border border-white/8 bg-white/3 px-2 py-1 text-[11px] text-neutral-200">
+                  <div className="mt-1 w-full rounded-md text-center border border-white/8 bg-white/3 px-2 py-1 text-2xs text-neutral-200">
                     {roles[0]}
                   </div>
                 ) : (

@@ -14,42 +14,42 @@ export function CreateFormSlider({ questionNumber, props, onPropsChange, readOnl
   return (
     <FieldShell number={questionNumber} title="Aralık" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="slider-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+        <label htmlFor="slider-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
         <AutoResizeTextarea id="slider-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Sorunuzu buraya yazın."
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="slider-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+        <label htmlFor="slider-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
         <AutoResizeTextarea id="slider-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Açıklamanızı buraya yazın."
         />
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Min. Değer</label>
+          <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Min. Değer</label>
           <input type="number" {...bind("min")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-white/30"
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-skylab-400/50"
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Max. Değer</label>
+          <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Max. Değer</label>
           <input type="number" {...bind("max")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-white/30"
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-skylab-400/50"
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Artış (Step)</label>
+          <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Artış (Step)</label>
           <input type="number" {...bind("step")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-white/30"
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-skylab-400/50"
           />
         </div>
       </div>
@@ -106,7 +106,7 @@ export function DisplayFormSlider({ question, questionNumber, description, requi
           </div>
         </div>
 
-        {required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1.5">Zorunlu alan</span>}
+        {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1.5">Zorunlu alan</span>}
       </div>
     </div>
   );

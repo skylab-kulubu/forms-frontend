@@ -82,7 +82,7 @@ export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm
         </motion.div>
 
         <motion.div variants={itemVariants} className="mt-2 flex items-center justify-between">
-          <button type="button" onClick={onClear} className="text-[11px] text-neutral-400 hover:text-neutral-200 transition-colors">
+          <button type="button" onClick={onClear} className="text-2xs text-neutral-400 hover:text-neutral-200 transition-colors">
             Temizle
           </button>
           

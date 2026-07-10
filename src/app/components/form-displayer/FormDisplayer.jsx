@@ -41,7 +41,7 @@ function DraftPrompt({ savedAt, onDiscard, isDiscarding }) {
           )}
         </div>
         <button type="button" onClick={onDiscard} disabled={isDiscarding}
-          className="shrink-0 rounded-lg border border-white/10 px-3 py-1 text-[11px] font-medium text-neutral-500 transition-colors hover:text-neutral-200 hover:border-white/20 disabled:opacity-50"
+          className="shrink-0 rounded-lg border border-white/10 px-3 py-1 text-2xs font-medium text-neutral-500 transition-colors hover:text-neutral-200 hover:border-white/20 disabled:opacity-50"
         >
           {isDiscarding ? <Loader2 size={12} className="animate-spin" /> : "Sıfırla"}
         </button>
@@ -256,7 +256,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
                         {errorMessage ? (errorMessage) : isSubmitting ? (<Loader2 className="animate-spin" size={16} />) : ("Yanıtları Gönder")}
                       </motion.button>
                       {isAuthed && (
-                        <p className={`flex items-center gap-1 text-[10px] mr-1 transition-opacity duration-300 ${lastSavedAt ? "text-neutral-500 opacity-100" : "opacity-0 pointer-events-none"}`}>
+                        <p className={`flex items-center gap-1 text-3xs mr-1 transition-opacity duration-300 ${lastSavedAt ? "text-neutral-500 opacity-100" : "opacity-0 pointer-events-none"}`}>
                           <Clock size={10} className="shrink-0" />
                           {lastSavedAt ? <>Taslak kaydedildi &middot; {formatSavedAt(lastSavedAt)}</> : "\u00A0"}
                         </p>
@@ -291,18 +291,18 @@ export default function FormDisplayer({ form, step, draft = null }) {
                 className="flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100"
               >
                 <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
-                <span className="text-[14px] font-semibold uppercase tracking-wide text-[#efe3fe]">SKY LAB Forms</span>
+                <span className="text-sm font-semibold uppercase tracking-wide text-skylab-400">SKY LAB Forms</span>
               </a>
               <span className="text-neutral-600">by WEBLAB</span>
             </div>
 
             <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
-              className="text-[10px] text-neutral-300/50 hover:text-skylab-500 -mt-1 transition-colors">
+              className="text-3xs text-neutral-300/50 hover:text-skylab-500 -mt-1 transition-colors">
               Developed by Fatih Naz
             </a>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-4 text-[11px]">
+          <div className="flex items-center gap-3 md:gap-4 text-2xs">
             <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
               Kullanım Koşulları
             </a>
@@ -311,7 +311,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
               Gizlilik Politikası
             </a>
             <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
-            <a href="mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi" className="transition-colors hover:text-[#efe3fe]">
+            <a href="mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi" className="transition-colors hover:text-skylab-400">
               Sorun Bildir
             </a>
           </div>

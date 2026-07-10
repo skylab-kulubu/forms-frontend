@@ -59,7 +59,7 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
           </span>
           <input autoFocus={autoFocus} type="text" value={searchValue} onChange={(event) => onSearchChange?.(event.target.value)}
             placeholder={"Ara..."} readOnly={!onSearchChange}
-            className="w-full rounded-md border border-white/10 bg-white/5 pl-7 pr-2 py-1.5 text-sm text-neutral-100 outline-none placeholder-neutral-500 focus:border-white/20"
+            className="w-full rounded-md border border-white/10 bg-white/5 pl-7 pr-2 py-1.5 text-sm text-neutral-100 outline-none placeholder-neutral-500 focus:border-skylab-400/50"
           />
         </motion.div>
 
@@ -68,7 +68,7 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
         >
           <AnimatePresence mode="wait" initial={false}>
             {items.length === 0 ? (
-              <motion.div key="empty-state" variants={itemVariants} initial="hidden" animate="visible" exit="exit" className="px-3 py-2 text-[12px] text-neutral-400"
+              <motion.div key="empty-state" variants={itemVariants} initial="hidden" animate="visible" exit="exit" className="px-3 py-2 text-xs text-neutral-400"
               >
                 Eşleşme bulunamadı
               </motion.div>
@@ -91,14 +91,14 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
 
         {totalPages > 1 ? (
           <motion.div  variants={itemVariants} initial="hidden" animate="visible" layout="position"
-            className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-[11px] text-neutral-400" 
+            className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-2xs text-neutral-400" 
           >
             <button type="button" aria-label="Previous page" title="Previous" onClick={() => setPage((prev) => Math.max(1, prev - 1))} disabled={page <= 1}
               className={`flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-neutral-900/40 text-neutral-200 transition-colors ${(page <= 1) ? "cursor-not-allowed opacity-50" : "hover:border-white/20 hover:bg-white/10 hover:text-neutral-100"}`}
             >
               <ChevronLeft size={14} />
             </button>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+            <span className="text-3xs uppercase tracking-[0.2em] text-neutral-500">
               {page} / {totalPages}
             </span>
             <button type="button" aria-label="Next page" title="Next" onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} disabled={page >= totalPages}
@@ -111,9 +111,9 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
 
         {(Boolean(footerText) || showClear) ? (
           <motion.div  variants={itemVariants} initial="hidden" animate="visible" layout="position" className="mt-2 flex items-center justify-between">
-            {footerText ? (<span className="text-[11px] text-neutral-500">{footerText}</span>) : (null)}
+            {footerText ? (<span className="text-2xs text-neutral-500">{footerText}</span>) : (null)}
             {showClear && onClear ? (
-              <button type="button" onClick={onClear} className="text-[11px] text-neutral-400 transition-colors hover:text-neutral-200">
+              <button type="button" onClick={onClear} className="text-2xs text-neutral-400 transition-colors hover:text-neutral-200">
                 Temizle
               </button>
             ) : null}

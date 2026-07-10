@@ -10,17 +10,17 @@ export function CreateFormSeparator({ questionNumber, props, onPropsChange, read
     return (
         <FieldShell number={questionNumber} title="Ayıraç" hideRequired {...rest}>
             <div className="flex flex-col gap-1.5">
-                <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Başlık</label>
+                <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Başlık</label>
                 <AutoResizeTextarea {...bind("title")}
-                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                     placeholder="Bölüm başlığını yazın."
                 />
             </div>
 
             <div className="flex flex-col gap-1.5">
-                <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
+                <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
                 <AutoResizeTextarea {...bind("description")}
-                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                     placeholder="Açıklamanızı buraya yazın."
                 />
             </div>
@@ -34,7 +34,7 @@ export function DisplayFormSeparator({ title, description }) {
             <div className="flex flex-col p-2 md:p-4">
                 <div className="flex items-center gap-3">
                     {title && (
-                        <p className="min-w-0 max-w-[70%] wrap-break-word text-[18px] font-medium text-neutral-100">{title}</p>
+                        <p className="min-w-0 max-w-[70%] wrap-break-word text-lg font-medium text-neutral-100">{title}</p>
                     )}
                     <div className="h-px flex-1 bg-white/10" />
                 </div>

@@ -27,24 +27,24 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
   return (
     <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
       <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
-        <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30" placeholder="Sorunuzu buraya yazın." />
+        <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
+        <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Sorunuzu buraya yazın." />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
-        <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30" placeholder="Açıklamanızı buraya yazın." />
+        <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
+        <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Açıklamanızı buraya yazın." />
       </div>
 
       <div className="flex flex-col gap-1.5 pt-2">
-        <label className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">Geçerli Veri Tipi</label>
+        <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Geçerli Veri Tipi</label>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {INPUT_TYPES.map((type) => {
             const Icon = type.icon;
             const isActive = currentType === type.id;
             return (
               <button key={type.id} type="button" onClick={() => patch({ inputType: type.id })}
-                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
+                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
               >
                 <Icon size={14} />
                 {type.label}
@@ -78,7 +78,7 @@ export function DisplayFormShortText({ question, questionNumber, description, re
     }
   }, [autoFilled, autoDefault]);
 
-  const inputBorderClass = missing ? "border-red-400/60 focus:border-red-400 focus:ring-red-400/20" : "border-white/10 focus:border-white/30 focus:ring-white/20";
+  const inputBorderClass = missing ? "border-red-400/60 focus:border-red-400 focus:ring-red-400/20" : "border-white/10 focus:border-skylab-400/50 focus:ring-skylab-400/20";
 
   const currentTypeObj = INPUT_TYPES.find(t => t.id === inputType) || INPUT_TYPES[0];
   const Icon = currentTypeObj.icon;
@@ -121,10 +121,10 @@ export function DisplayFormShortText({ question, questionNumber, description, re
               className={`block w-full rounded-lg border ${inputBorderClass} bg-neutral-900/60 pl-10 pr-4 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition focus:ring-2 ${isReadOnly ? "cursor-default opacity-70" : ""}`}
             />
           </div>
-          {(isReadOnly || wasAutoFilled) && <span className="px-0.5 text-[11px] text-neutral-500">Oturumunuzdan otomatik dolduruldu</span>}
+          {(isReadOnly || wasAutoFilled) && <span className="px-0.5 text-2xs text-neutral-500">Oturumunuzdan otomatik dolduruldu</span>}
         </div>
 
-        {required && !isReadOnly && <span className="px-0.5 text-[11px] text-neutral-500 mt-1.5">Zorunlu alan</span>}
+        {required && !isReadOnly && <span className="px-0.5 text-2xs text-neutral-500 mt-1.5">Zorunlu alan</span>}
       </div>
     </div>
   );

@@ -39,21 +39,21 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
   return (
     <FieldShell number={questionNumber} title="Çoklu Seçim" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="mc-question" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+        <label htmlFor="mc-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
         </label>
         <AutoResizeTextarea id="mc-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Sorunuzu buraya yazın."
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="mc-description" className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+        <label htmlFor="mc-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Açıklama
         </label>
         <AutoResizeTextarea id="mc-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30 focus:ring-2 focus:ring-white/20"
+          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Açıklamanızı buraya yazın."
         />
       </div>
@@ -62,9 +62,9 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
         <button type="button" onClick={() => setChoicesOpen((s) => !s)}
           className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 transition hover:bg-white/10"
         >
-          <span className="px-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+          <span className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
             Seçenekler
-            <span className="ml-1.5 rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-300">
+            <span className="ml-1.5 rounded-md bg-white/10 px-1.5 py-0.5 text-3xs font-semibold text-neutral-300">
               {(prop.choices ?? []).length}
             </span>
           </span>
@@ -80,12 +80,12 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
                 {prop.choices.map((choice, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <input type="text"
-                      className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-white/30"
+                      className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                       placeholder={`Seçenek ${idx + 1}`}
                       value={choice} onChange={(e) => updateChoice(idx, e.target.value)} onPaste={(e) => handlePaste(e, idx)}
                     />
                     <button type="button"
-                      className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[11px] text-neutral-300 hover:text-neutral-100 disabled:opacity-50"
+                      className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-2xs text-neutral-300 hover:text-neutral-100 disabled:opacity-50"
                       disabled={prop.choices.length <= 1} onClick={() => removeChoice(idx)}
                     >
                       <X size={18} />
@@ -94,7 +94,7 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
                 ))}
                 <div>
                   <button type="button" onClick={addChoice}
-                    className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[12px] text-neutral-100 hover:bg-white/10"
+                    className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-neutral-100 hover:bg-white/10"
                   >
                     <Plus size={14} /> Seçenek Ekle
                   </button>
@@ -170,7 +170,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
           })}
         </div>
 
-        {required && <span className="px-0.5 text-[11px] text-neutral-500 mt-1">Zorunlu alan</span>}
+        {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>}
       </div>
     </div>
   );
