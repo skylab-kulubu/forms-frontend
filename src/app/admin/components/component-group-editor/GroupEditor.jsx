@@ -143,7 +143,7 @@ function GroupEditorContent({ isNewGroup }) {
                 span={isLgUp ? 8 : 11}
             >
                 {state.schema.length === 0 ? (
-                    <div className="grid h-[80vh] place-items-center">
+                    <div className="grid h-full place-items-center">
                         <div className="flex flex-col items-center gap-5 text-center px-6">
                             <div className="relative grid h-20 w-20 place-items-center rounded-3xl border-2 border-dashed border-neutral-800 bg-neutral-900/50 text-neutral-500">
                                 {isLgUp ? <MousePointerClick size={32} strokeWidth={1.5} className="opacity-80" /> : <PackagePlus size={32} strokeWidth={1.5} className="opacity-80" />}

@@ -35,8 +35,8 @@ export function FieldShell({ number, title, required, onRequiredChange, children
   };
 
   return (
-    <div className={`mx-auto w-full max-w-2xl rounded-xl border transition-all duration-300 group relative ${showLogic ? "z-20" : "z-0"} 
-      ${hasActiveCondition ? "bg-neutral-900 border-skylab-400/30 shadow-skylab-500/5" : "bg-neutral-900 border-white/5 hover:border-white/10"}`}
+    <div className={`mx-auto w-full max-w-2xl rounded-xl border shadow-lg shadow-black/20 transition-all duration-300 group relative ${showLogic ? "z-20" : "z-0"}
+      ${hasActiveCondition ? "bg-neutral-900 border-skylab-400/30 shadow-skylab-500/5" : "bg-neutral-900 border-white/10 hover:border-white/15 focus-within:border-skylab-400/40"}`}
     >
       <div className="flex items-center gap-3 border-b border-white/5 px-3 py-2.5">
         <div className={`grid size-6 place-items-center rounded-md border text-xs font-semibold transition-colors

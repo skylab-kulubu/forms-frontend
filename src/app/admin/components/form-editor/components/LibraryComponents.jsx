@@ -1,7 +1,8 @@
 import { useDraggable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, ChevronsUpDown, Layers, Plus } from "lucide-react";
+import Image from "next/image";
+import { CheckCircle2, ChevronsUpDown, GripVertical, Layers, Plus, Search } from "lucide-react";
 import { COMPONENTS } from "@/app/components/form-registry";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import SearchPicker from "@/app/components/utils/SearchPicker";
@@ -38,14 +39,13 @@ function GroupPicker({ onGroupSelect }) {
     };
 
     return (
-        <div className="px-2 pt-3 pb-1" ref={ref}>
-            <label className="block text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-1.5">Grup ekle</label>
+        <div ref={ref}>
             <div className="relative">
                 <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500"><ChevronsUpDown size={13} /></span>
                 <button type="button" onClick={() => setOpen((p) => !p)}
                     className="flex w-full items-center rounded-lg border border-white/10 bg-neutral-900/60 pl-8 pr-3 py-2 text-left text-xs text-neutral-400 transition hover:bg-white/5 focus:border-skylab-400/50 focus:outline-none"
                 >
-                    Grup seçin...
+                    Hazır grup ekle...
                 </button>
 
                 <AnimatePresence>
@@ -75,14 +75,67 @@ function GroupPicker({ onGroupSelect }) {
     );
 }
 
+const CATEGORIES = [
+    { label: "Metin", types: ["short_text", "long_text", "link"] },
+    { label: "Seçim", types: ["toggle", "combobox", "multi_choice", "slider", "matrix"] },
+    { label: "Tarih & Saat", types: ["date", "time"] },
+    { label: "Diğer", types: ["file", "separator"] },
+];
+
 export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect }) {
+    const [search, setSearch] = useState("");
+
+    if (layout === "drawer") {
+        return (
+            <div>
+                {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
+                <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
+                    {COMPONENTS.map((component) => (
+                        <LibraryItem key={component.type} item={component} layout={layout} onSelect={onSelect} />
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    const query = search.trim().toLowerCase();
+    const byType = Object.fromEntries(COMPONENTS.map((c) => [c.type, c]));
+    const sections = CATEGORIES.map((category) => ({
+        ...category,
+        items: category.types
+            .map((type) => byType[type])
+            .filter((c) => c && (!query || c.label.toLowerCase().includes(query))),
+    })).filter((section) => section.items.length > 0);
+
     return (
         <div>
-            {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
-            <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
-                {COMPONENTS.map((component) => (
-                    <LibraryItem key={component.type} item={component} layout={layout} onSelect={onSelect} />
-                ))}
+            <div className="flex flex-col gap-1.5 px-2 pt-2">
+                <div className="relative">
+                    <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
+                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Bileşen ara..."
+                        className="w-full rounded-lg border border-white/10 bg-neutral-900/60 py-2 pl-8 pr-3 text-xs text-neutral-200 placeholder-neutral-600 transition-colors focus:border-skylab-400/50 focus:outline-none"
+                    />
+                </div>
+                {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
+            </div>
+            <div className="flex flex-col gap-4 p-2">
+                {sections.length === 0 ? (
+                    <p className="px-1 py-4 text-center text-2xs text-neutral-600">Eşleşen bileşen yok.</p>
+                ) : (
+                    sections.map((section) => (
+                        <div key={section.label}>
+                            <div className="mb-2 flex items-center gap-2 px-1">
+                                <span className="text-2xs font-medium text-neutral-500">{section.label}</span>
+                                <span className="h-px flex-1 bg-white/5" />
+                            </div>
+                            <div className="grid grid-cols-1 gap-1.5">
+                                {section.items.map((component) => (
+                                    <LibraryItem key={component.type} item={component} layout={layout} onSelect={onSelect} />
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );
@@ -100,7 +153,7 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
     const [justAdded, setJustAdded] = useState(false);
 
     const handleClick = () => {
-        if (!onSelect || isDragging) return;        
+        if (!onSelect || isDragging) return;
         onSelect(item);
         setJustAdded(true);
         setTimeout(() => setJustAdded(false), 600);
@@ -136,17 +189,23 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
     }
 
     return (
-        <motion.div ref={setNodeRef} {...listeners} {...attributes} style={style} onClick={handleClick}
-            animate={justAdded ? { scale: [1, 0.95, 1], filter: "brightness(1.3)" } : { scale: 1, filter: "brightness(1)" }} whileHover={{ scale: 1.02 }}
-            className="cursor-grab active:cursor-grabbing relative overflow-hidden"
+        <div ref={setNodeRef} {...listeners} {...attributes} style={style} onClick={handleClick} aria-label={item.label}
+            className="group/tile relative flex cursor-grab select-none items-center gap-1 active:cursor-grabbing"
         >
-            {justAdded && (
-                <motion.div layoutId="added-flash" className="absolute inset-0 z-10 rounded bg-skylab-400/20 border-2 border-skylab-400/50 pointer-events-none"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                />
-            )}
-            
-            <img src={item.svg} alt={item.label} className="w-full h-auto block select-none pointer-events-none" />
-        </motion.div>
+            <div className="flex w-4 shrink-0 items-center justify-center self-stretch rounded-md text-neutral-700 transition-colors group-hover/tile:bg-white/5 group-hover/tile:text-neutral-400">
+                <GripVertical size={12} />
+            </div>
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg">
+                <Image src={item.svg} alt={item.label} width={400} height={200} className="pointer-events-none block h-auto w-full select-none" />
+                <AnimatePresence>
+                    {justAdded && (
+                        <motion.div key="added-flash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="pointer-events-none absolute inset-0 rounded-lg border-2 border-skylab-400/50 bg-skylab-400/15"
+                        />
+                    )}
+                </AnimatePresence>
+            </div>
+        </div>
     )
 }

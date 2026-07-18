@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
 import { REGISTRY } from "@/app/components/form-registry";
+import { genFieldId } from "../fieldId";
 
 export function useFormDnD(schema, setSchema, libraryDropElRef) {
     const [dragSource, setDragSource] = useState(null);
@@ -37,7 +38,7 @@ export function useFormDnD(schema, setSchema, libraryDropElRef) {
 
         if (from === "library") {
             const type = active.data.current.type;
-            const id = Math.random().toString(36).slice(2, 10);
+            const id = genFieldId();
             const props = structuredClone(REGISTRY[type]?.defaults ?? {});
             if (over?.id !== "canvas" && slotIndex === null) {
                 resetDragState();

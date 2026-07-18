@@ -253,6 +253,8 @@ export default function Sidebar({ user, children }) {
       <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
         <div className="flex h-14 items-center px-6">
           <Breadcrumbs labels={dynamicBreadcrumbLabels} />
+          {/* Sayfaya özgü aksiyonlar (ör. form editörü) buraya portallanır. */}
+          <div id="admin-header-slot" className="ml-auto flex items-center" />
         </div>
       </div>
 
@@ -266,6 +268,7 @@ export default function Sidebar({ user, children }) {
           <div className="ml-2 min-w-0 flex-1">
             <Breadcrumbs labels={dynamicBreadcrumbLabels} />
           </div>
+          <div id="admin-header-slot-mobile" className="ml-2 flex shrink-0 items-center" />
         </div>
       </div>
 

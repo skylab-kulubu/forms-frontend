@@ -10,9 +10,11 @@ import { useSession } from "next-auth/react";
 import { useFormContext } from "../../providers";
 import { FormEditorProvider, useFormEditor } from "./FormEditorContext";
 import { useFormDnD } from "./hooks/useFormDnD";
-import { GhostComponent, Canvas, CanvasItem, DropSlot } from "./components/FormEditorComponents";
+import { GhostComponent, Canvas, CanvasItem, DropSlot, InsertSlot } from "./components/FormEditorComponents";
+import { genFieldId } from "./fieldId";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
+import { EditorHeaderActions, HeaderStatusPill } from "./components/EditorHeaderActions";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
 import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
@@ -80,10 +82,12 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     const libraryDropElRef = useRef(null);
     const isLgUp = useMediaQuery("(min-width: 1024px)");
 
+    const [lastSavedAt, setLastSavedAt] = useState(null);
     const { mutate: saveForm, isPending, isSuccess, isError, error, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
 
-    const { cancel: cancelDraftAutoSave } = useDraftAutoSave(isNewForm ? null : state.id, state);
+    const { cancel: cancelDraftAutoSave, syncStatus: draftSyncStatus, draftSavedAt } = useDraftAutoSave(isNewForm ? null : state.id, state);
+    const [publishedFlash, setPublishedFlash] = useState(false);
     const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
     const [hasDraft, setHasDraft] = useState(!!draft);
     const [draftNotice, setDraftNotice] = useState(false);
@@ -130,6 +134,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         }
     }, [state.schema]);
 
+    useEffect(() => {
+        if (state.isSaved) return;
+        const warn = (e) => { e.preventDefault(); e.returnValue = ""; };
+        window.addEventListener("beforeunload", warn);
+        return () => window.removeEventListener("beforeunload", warn);
+    }, [state.isSaved]);
+
+    useEffect(() => {
+        if (!publishedFlash) return;
+        const timer = setTimeout(() => setPublishedFlash(false), 2200);
+        return () => clearTimeout(timer);
+    }, [publishedFlash]);
+
     const setSchemaBridge = useCallback((newSchemaOrUpdater) => {
         if (typeof newSchemaOrUpdater === 'function') {
             dispatch({ type: "SET_SCHEMA", payload: newSchemaOrUpdater(state.schema) });
@@ -165,6 +182,8 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
             onSuccess: (data) => {
                 cancelDraftAutoSave();
                 dispatch({ type: "MARK_SAVED" });
+                setLastSavedAt(new Date());
+                setPublishedFlash(true);
 
                 if (isNewForm) {
                     const nextId = data?.data?.id ?? data?.id;
@@ -205,12 +224,44 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         dispatch({ type: "SET_SCHEMA", payload: nextSchema });
     };
 
+    const duplicateField = (id) => {
+        const index = state.schema.findIndex((field) => field.id === id);
+        if (index === -1) return;
+        const source = state.schema[index];
+        const copy = { ...source, id: genFieldId(), props: structuredClone(source.props ?? {}) };
+        const next = [...state.schema];
+        next.splice(index + 1, 0, copy);
+        dispatch({ type: "SET_SCHEMA", payload: next });
+    };
+
+    const deleteField = (id) => {
+        // Silinen alana bağlı koşullar da temizlenir (sürükle-sil ile aynı davranış).
+        const next = state.schema.filter((field) => field.id !== id).map((field) => {
+            if (field.condition?.fieldId !== id) return field;
+            const { condition, ...rest } = field;
+            return rest;
+        });
+        dispatch({ type: "SET_SCHEMA", payload: next });
+    };
+
+    const moveField = (id, direction) => {
+        const index = state.schema.findIndex((field) => field.id === id);
+        const target = index + direction;
+        if (index === -1 || target < 0 || target >= state.schema.length) return;
+        dispatch({ type: "SET_SCHEMA", payload: arrayMove(state.schema, index, target) });
+    };
+
+    const insertFieldAt = (index, type) => {
+        const props = structuredClone(REGISTRY[type]?.defaults ?? {});
+        const next = [...state.schema];
+        next.splice(index, 0, { id: genFieldId(), type, props });
+        dispatch({ type: "SET_SCHEMA", payload: next });
+    };
+
     const handleLibrarySelect = (item) => {
         const type = item?.type;
         if (!type) return;
-        const id = Math.random().toString(36).slice(2, 10);
-        const props = structuredClone(REGISTRY[type]?.defaults ?? {});
-        dispatch({ type: "SET_SCHEMA", payload: [...state.schema, { id, type, props }] });
+        insertFieldAt(state.schema.length, type);
     };
 
     const handleGroupSelect = (group) => {
@@ -218,7 +269,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         if (groupSchema.length === 0) return;
         const newFields = groupSchema.map((field) => ({
             ...field,
-            id: Math.random().toString(36).slice(2, 10),
+            id: genFieldId(),
             props: structuredClone(field.props ?? REGISTRY[field.type]?.defaults ?? {}),
         }));
         dispatch({ type: "SET_SCHEMA", payload: [...state.schema, ...newFields] });
@@ -239,6 +290,18 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         setLibraryDropNodeRef(node);
     }, [setLibraryDropNodeRef]);
 
+    const saveStatusChip = (
+        <HeaderStatusPill
+            dirty={!state.isSaved}
+            draftSyncStatus={draftSyncStatus}
+            draftSavedAt={draftSavedAt}
+            isSaving={isPending}
+            isFailed={isError}
+            lastSavedAt={lastSavedAt}
+            publishedFlash={publishedFlash}
+        />
+    );
+
     const gridContent = (
         <div className="grid grid-cols-12 gap-4">
             <Canvas dragSource={dragSource} schemaTitle={state.title}
@@ -246,7 +309,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 span={isLgUp ? 8 : 11}
             >
                 {state.schema.length === 0 ? (
-                    <div className="grid h-[80vh] place-items-center">
+                    <div className="grid h-full place-items-center">
                         <div className="flex flex-col items-center gap-5 text-center px-6">
                             <div className="relative grid h-20 w-20 place-items-center rounded-3xl border-2 border-dashed border-neutral-800 bg-neutral-900/50 text-neutral-500">
                                 {isLgUp ? <MousePointerClick size={32} strokeWidth={1.5} className="opacity-80" /> : <PackagePlus size={32} strokeWidth={1.5} className="opacity-80" />}
@@ -262,11 +325,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 ) : (
                     <SortableContext items={state.schema.map((field) => field.id)} strategy={verticalListSortingStrategy}>
                         <ul className="flex flex-col gap-2 max-w-2xl mx-auto mb-4">
-                            <DropSlot index={0} enabled={dragSource === "library"} />
+                            {dragSource === "library"
+                                ? <DropSlot index={0} enabled />
+                                : <InsertSlot index={0} onInsert={insertFieldAt} hidden={!!dragSource} />}
                             {state.schema.map((field, index) => (
                                 <li key={field.id} className="flex flex-col">
-                                    <CanvasItem field={field} index={index + 1} onUpdate={updateField} schema={state.schema} />
-                                    <DropSlot index={index + 1} enabled={dragSource === "library"} />
+                                    <CanvasItem field={field} index={index + 1} onUpdate={updateField} schema={state.schema}
+                                        dragActive={!!dragSource}
+                                        onDuplicate={duplicateField} onDelete={deleteField} onMove={moveField}
+                                        canMoveUp={index > 0} canMoveDown={index < state.schema.length - 1}
+                                    />
+                                    {dragSource === "library"
+                                        ? <DropSlot index={index + 1} enabled />
+                                        : <InsertSlot index={index + 1} onInsert={insertFieldAt} hidden={!!dragSource} />}
                                 </li>
                             ))}
                         </ul>
@@ -277,58 +348,38 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
             {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} />}
 
             {isLgUp && (
-                <Library layout="grid"
-                    onPreview={() => setPreviewOpen(true)}
-                    onSave={handleSave}
-                    onUndo={handleUndo}
-                    canUndo={canUndo}
-                    hasDraft={hasDraft}
-                    onDiscardDraft={handleDiscardDraft}
-                    isDiscardingDraft={isDiscardingDraft}
-                    onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
-                    onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
-                    isPending={isPending}
-                    isSuccess={isSuccess}
-                    isError={isError}
-                    error={error}
-                    isShareDisabled={isNewForm}
-                    isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
-                    onLibrarySelect={handleLibrarySelect}
-                    onGroupSelect={handleGroupSelect}
-                    draftNotice={draftNotice}
-                    onDraftNoticeClose={() => setDraftNotice(false)}
-                />
+                <Library layout="grid" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} />
             )}
         </div>
     );
 
     return (
         <DndContext collisionDetection={pointerWithin} sensors={sensors} {...handlers}>
+            <EditorHeaderActions
+                saveStatus={saveStatusChip}
+                onPreview={() => setPreviewOpen(true)}
+                onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
+                isShareDisabled={isNewForm}
+                hasDraft={hasDraft}
+                onDiscardDraft={handleDiscardDraft}
+                isDiscardingDraft={isDiscardingDraft}
+                onUndo={handleUndo}
+                canUndo={canUndo}
+                onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
+                isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
+                onSave={handleSave}
+                isPending={isPending}
+                isError={isError}
+                error={error}
+                draftNotice={draftNotice}
+                onDraftNoticeClose={() => setDraftNotice(false)}
+            />
             <div ref={editorRef} className="relative">
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
-                            <Library layout="drawer"
-                                onPreview={() => setPreviewOpen(true)}
-                                onSave={handleSave}
-                                onUndo={handleUndo}
-                                canUndo={canUndo}
-                                hasDraft={hasDraft}
-                                onDiscardDraft={handleDiscardDraft}
-                                isDiscardingDraft={isDiscardingDraft}
-                                onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
-                                onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
-                                isPending={isPending}
-                                isSuccess={isSuccess}
-                                isError={isError}
-                                isShareDisabled={isNewForm}
-                                isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
-                                onLibrarySelect={handleLibrarySelect}
-                                onGroupSelect={handleGroupSelect}
-                                draftNotice={draftNotice}
-                                onDraftNoticeClose={() => setDraftNotice(false)}
-                            />
+                            <Library layout="drawer" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} />
                         </DrawerContent>
                     </Drawer>
                 ) : (

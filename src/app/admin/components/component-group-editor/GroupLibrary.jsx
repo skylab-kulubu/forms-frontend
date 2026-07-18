@@ -10,7 +10,7 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onUndo,
     const { active } = useDndContext();
     const from = active?.data?.current?.from;
     const showTrash = from === "canvas";
-    const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[93vh]";
+    const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
 
     const { state, dispatch } = useGroupEditor();
 

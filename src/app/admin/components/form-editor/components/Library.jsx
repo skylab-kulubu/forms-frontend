@@ -3,31 +3,19 @@ import { LibraryComponents } from "./LibraryComponents";
 import { LibrarySettings } from "./LibrarySettings";
 import { useFormEditor } from "../FormEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, CircleAlert, CircleGauge, Eye, Undo2, ClipboardX, Share2, Trash, Trash2, Loader2 } from "lucide-react";
+import { Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
-import Popover from "@/app/components/utils/Popover";
 import dynamic from "next/dynamic";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
 
-function Tip({ label, children }) {
-    return (
-        <div className="group/tip relative flex">
-            {children}
-            <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded-md border border-neutral-700 bg-neutral-800 px-1 py-0.5 text-3xs font-medium text-neutral-200 opacity-0 shadow-lg transition-all duration-150 group-hover/tip:translate-y-0 group-hover/tip:opacity-100">
-                {label}
-            </span>
-        </div>
-    );
-}
-
-export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPreview, onSave, onUndo, onShare, onDelete, isPending, isError, error, isSuccess, isDeleteDisabled, isShareDisabled, canUndo, hasDraft, onDiscardDraft, isDiscardingDraft, draftNotice, onDraftNoticeClose }) {
+export function Library({ layout = "grid", onLibrarySelect, onGroupSelect }) {
     const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
     const from = active?.data?.current?.from;
     const showTrash = from === "canvas";
-    const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-3.5rem)]";
+    const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
 
     const { state } = useFormEditor();
     const { isChildForm } = state;
@@ -87,7 +75,7 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
                 <div className="h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 text-sm tracking-wide border-b border-neutral-800 overflow-visible">
-                    <div className="flex items-center grow justify-center sm:justify-start mr-4">
+                    <div className="flex items-center grow justify-center sm:justify-start">
                         <button type="button" onClick={() => setActiveTab("components")}
                             className={`font-semibold w-full transition-colors ${activeTab === "components" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
                         >
@@ -105,56 +93,6 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, onPre
                         >
                             Açıklama
                         </button>
-                    </div>
-                    <div className="ml-auto flex items-center gap-1 text-neutral-500">
-                        <Tip label="Önizleme">
-                            <button type="button" aria-label="Önizleme" onClick={onPreview} disabled={!onPreview}
-                                className={`rounded-lg p-1.5 transition-colors ${onPreview ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
-                            >
-                                <Eye size={16} />
-                            </button>
-                        </Tip>
-                        <Tip label="Formu paylaş">
-                            <button type="button" aria-label="Formu paylaş" onClick={onShare} disabled={isShareDisabled || !onShare}
-                                className={`rounded-lg p-1.5 transition-colors ${(isShareDisabled || !onShare) ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-                            >
-                                <Share2 size={16} />
-                            </button>
-                        </Tip>
-                        {hasDraft && !canUndo ? (
-                            <Tip label="Taslağı sil">
-                                <button type="button" aria-label="Taslagi sil" onClick={onDiscardDraft} disabled={isDiscardingDraft}
-                                    className={`rounded-lg p-1.5 transition-colors ${isDiscardingDraft ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-                                >
-                                    {isDiscardingDraft ? <Loader2 size={16} className="animate-spin" /> : <ClipboardX size={16} />}
-                                </button>
-                            </Tip>
-                        ) : (
-                            <Tip label="Geri al">
-                                <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo}
-                                    className={`rounded-lg p-1.5 transition-colors ${canUndo ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
-                                >
-                                    <Undo2 size={16} />
-                                </button>
-                            </Tip>
-                        )}
-                        <Tip label="Formu sil">
-                            <button type="button" aria-label="Formu sil" onClick={onDelete} disabled={isDeleteDisabled}
-                                className={`rounded-lg p-1.5 transition-colors ${isDeleteDisabled ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </Tip>
-                        <Tip label="Formu kaydet">
-                            <Popover open={isError || (draftNotice && !isError)} error={isError ? error : null}
-                                message={!isError && draftNotice ? "Veriler taslaklardan geldi" : null} variant={isError ? "error" : "info"} align="bottom-right"
-                                onClose={!isError && draftNotice ? onDraftNoticeClose : undefined}
-                            >
-                                <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
-                                    {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-400" />) : isSuccess ? (<CheckCircle2 size={16} className="text-skylab-400" />) : (<CheckCircle2 size={16} />)}
-                                </button>
-                            </Popover>
-                        </Tip>
                     </div>
                 </div>
                 <div className={`flex-1 min-h-0 p-1 ${activeTab === "description" ? "overflow-hidden flex flex-col" : "overflow-y-auto overflow-x-hidden scrollbar"}`}>

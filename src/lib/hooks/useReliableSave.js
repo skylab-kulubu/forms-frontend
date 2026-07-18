@@ -3,13 +3,15 @@ import { useCallback, useEffect, useRef } from "react";
 const RETRY_DELAY_MS = 1500;
 const DEFAULT_MAX_RETRIES = 2;
 
-export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RETRIES }) {
+export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RETRIES, onStatusChange }) {
   const saveRef = useRef(save);
   saveRef.current = save;
   const debounceMsRef = useRef(debounceMs);
   debounceMsRef.current = debounceMs;
   const maxRetriesRef = useRef(maxRetries);
   maxRetriesRef.current = maxRetries;
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
 
   const pendingRef = useRef(null);
   const runningRef = useRef(false);
@@ -22,6 +24,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     const job = pendingRef.current;
     if (!job) return;
     runningRef.current = true;
+    onStatusChangeRef.current?.("saving");
 
     const release = (rerun) => {
       runningRef.current = false;
@@ -32,6 +35,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
       .then(() => {
         retriesRef.current = 0;
         job.onSaved?.();
+        onStatusChangeRef.current?.("saved");
         const superseded = pendingRef.current !== job;
         if (!superseded) pendingRef.current = null;
         release(superseded);
@@ -45,6 +49,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
           return;
         }
         retriesRef.current = 0;
+        onStatusChangeRef.current?.("failed");
         const superseded = pendingRef.current !== job;
         if (!superseded) pendingRef.current = null;
         release(superseded);

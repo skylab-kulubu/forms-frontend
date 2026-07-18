@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { request } from "@/lib/apiClient";
 import { useReliableSave } from "@/lib/hooks/useReliableSave";
@@ -30,9 +30,16 @@ export function useDraftAutoSave(formId, state) {
   const tokenRef = useRef(session?.accessToken);
   tokenRef.current = session?.accessToken;
 
+  const [syncStatus, setSyncStatus] = useState("idle");
+  const [draftSavedAt, setDraftSavedAt] = useState(null);
+
   const { schedule, cancel } = useReliableSave({
     debounceMs: DEBOUNCE_MS,
     save: (data, opts) => saveFormDraft(formId, data, { ...opts, token: tokenRef.current }),
+    onStatusChange: (next) => {
+      setSyncStatus(next);
+      if (next === "saved") setDraftSavedAt(new Date());
+    },
   });
 
   useEffect(() => {
@@ -52,5 +59,5 @@ export function useDraftAutoSave(formId, state) {
     });
   }, [formId, state, schedule, cancel]);
 
-  return { cancel };
+  return { cancel, syncStatus, draftSavedAt };
 }
