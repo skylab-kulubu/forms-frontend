@@ -21,8 +21,46 @@ function formatDuration(seconds) {
   return `${m}dk ${s}sn`;
 }
 
-function SectionTitle({ children }) {
-  return <h3 className="text-3xs uppercase tracking-[0.18em] text-neutral-500 mb-2">{children}</h3>;
+function Card({ children, delay = 0, className = "" }) {
+  return (
+    <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay }}
+      className={`rounded-lg border border-white/10 bg-white/3 p-4 ${className}`}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function SectionTitle({ children, icon: Icon }) {
+  return (
+    <div className="mb-3 flex items-center gap-1.5">
+      {Icon && <Icon size={11} className="shrink-0 text-neutral-500" />}
+      <h3 className="text-3xs font-medium uppercase tracking-[0.18em] text-neutral-500">{children}</h3>
+    </div>
+  );
+}
+
+const RESPONSE_STATS = [
+  { key: "totalResponses", label: "Toplam", tone: "text-neutral-100", dot: "bg-neutral-500" },
+  { key: "pendingCount", label: "Bekleyen", tone: "text-amber-300", dot: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40" },
+  { key: "approvedCount", label: "Onaylanan", tone: "text-emerald-300", dot: "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40" },
+  { key: "rejectedCount", label: "Reddedilen", tone: "text-red-300", dot: "bg-red-400 shadow-[0_0_6px] shadow-red-400/40" },
+];
+
+function ResponseStats({ metrics }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {RESPONSE_STATS.map((s) => (
+        <div key={s.key} className="flex items-center gap-2.5 rounded-md border border-white/5 bg-white/3 px-3 py-2.5">
+          <span className={`size-1.5 shrink-0 rounded-full ${s.dot}`} />
+          <div className="min-w-0">
+            <p className="truncate text-3xs uppercase tracking-[0.18em] text-neutral-500">{s.label}</p>
+            <p className={`text-lg font-semibold leading-tight tabular-nums ${s.tone}`}>{metrics?.[s.key] ?? 0}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function TrendBadge({ value }) {
@@ -34,7 +72,7 @@ function TrendBadge({ value }) {
   const color = isUp ? "text-emerald-400" : isDown ? "text-red-400" : "text-neutral-400";
 
   return (
-    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 -mt-2.5 -ml-2 text-3xs font-medium ${color}`}>
+    <span className={`inline-flex items-center gap-1 text-3xs font-medium ${color}`}>
       <Icon size={10} />
       {isUp ? "+" : ""}{rounded}%
     </span>
@@ -44,8 +82,8 @@ function TrendBadge({ value }) {
 function TrendTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-neutral-900/90 border border-white/10 rounded-md px-2.5 py-1.5 shadow-xl">
-      <span className="text-2xs text-skylab-300 font-medium">{payload[0].value}</span>
+    <div className="rounded-md border border-white/10 bg-neutral-900/90 px-2.5 py-1.5 shadow-xl">
+      <span className="text-2xs font-medium text-skylab-300">{payload[0].value}</span>
     </div>
   );
 }
@@ -57,26 +95,26 @@ function TrendChart({ hourlyData, dailyData, dailyTrendPercentage, hourlyTrendPe
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <SectionTitle>Cevap Trendi</SectionTitle>
-          <TrendBadge value={trendValue} />
+          <span className="-mt-3"><TrendBadge value={trendValue} /></span>
         </div>
         <div className="flex items-center gap-0.5 rounded-md border border-white/10 bg-white/5 p-0.5">
           <button type="button" onClick={() => setMode("hourly")}
-            className={`px-2 py-0.5 text-3xs rounded transition ${mode === "hourly" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+            className={`rounded px-2 py-0.5 text-3xs transition ${mode === "hourly" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
           >
             Saatlik
           </button>
           <button type="button" onClick={() => setMode("daily")}
-            className={`px-2 py-0.5 text-3xs rounded transition ${mode === "daily" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+            className={`rounded px-2 py-0.5 text-3xs transition ${mode === "daily" ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
           >
             Günlük
           </button>
         </div>
       </div>
 
-      <div className="w-full h-24">
+      <div className="h-24 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 5, right: 10, bottom: -2, left: 10 }}>
             <defs>
@@ -113,13 +151,13 @@ function SourceBreakdownBar({ registered, anonymous }) {
           </>
         ) : null}
       </div>
-      <div className="flex gap-3 mt-1.5 justify-center">
+      <div className="mt-2 flex justify-center gap-3">
         <div className="flex items-center gap-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-skylab-600" />
+          <div className="size-1.5 rounded-full bg-skylab-600" />
           <span className="text-3xs text-neutral-500">Kayıtlı ({registered})</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-skylab-300" />
+          <div className="size-1.5 rounded-full bg-skylab-300" />
           <span className="text-3xs text-neutral-500">Anonim ({anonymous})</span>
         </div>
       </div>
@@ -132,10 +170,7 @@ function CollaboratorsSection({ formData }) {
 
   return (
     <div>
-      <div className="flex items-center gap-1.5 mb-3">
-        <Users size={11} className="text-neutral-500" />
-        <SectionTitle>İşbirlikçiler</SectionTitle>
-      </div>
+      <SectionTitle icon={Users}>İşbirlikçiler</SectionTitle>
       {collaborators.length === 0 ? (
         <p className="text-center text-3xs text-neutral-600">İşbirlikçi yok</p>
       ) : (
@@ -148,8 +183,8 @@ function CollaboratorsSection({ formData }) {
               <div key={c.user?.id} className="flex items-center gap-2.5">
                 <Avatar name={c.user?.fullName || ""} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-2xs font-medium text-neutral-200 truncate">{name}</p>
-                  {email && <p className="text-3xs text-neutral-500 truncate">{email}</p>}
+                  <p className="truncate text-2xs font-medium text-neutral-200">{name}</p>
+                  {email && <p className="truncate text-3xs text-neutral-500">{email}</p>}
                 </div>
                 <span className={`shrink-0 rounded-md px-1 py-0.5 text-4xs uppercase tracking-[0.18em] ${badge.className}`}>
                   {badge.label}
@@ -163,7 +198,7 @@ function CollaboratorsSection({ formData }) {
   );
 }
 
-function FormInfoGrid({ formData }) {
+function FormInfoList({ formData }) {
   const formSchema = formData?.data?.schema ?? formData?.schema ?? [];
   const allowAnonymous = formData?.data?.allowAnonymousResponses ?? formData?.allowAnonymousResponses;
   const allowMultiple = formData?.data?.allowMultipleResponses ?? formData?.allowMultipleResponses;
@@ -173,89 +208,75 @@ function FormInfoGrid({ formData }) {
   const items = [
     { icon: Hash, label: "Soru", value: formSchema.length },
     { icon: User2, label: "Anonim", value: allowAnonymous ? "Açık" : "Kapalı" },
-    { icon: allowMultiple ? ToggleRight : ToggleLeft, label: "Çoklu", value: allowMultiple ? "Açık" : "Kapalı" },
-    { icon: Link2, label: "Bağlı", value: linkedFormId || "Yok", href: linkedFormId ? `/admin/forms/${linkedFormId}` : null },
+    { icon: allowMultiple ? ToggleRight : ToggleLeft, label: "Çoklu cevap", value: allowMultiple ? "Açık" : "Kapalı" },
+    { icon: Link2, label: "Bağlı form", value: linkedFormId || "Yok", href: linkedFormId ? `/admin/forms/${linkedFormId}` : null },
     { icon: Shield, label: "Rol", value: userRole === 0 ? "Yok" : (ROLE_BADGE[userRole]?.label ?? ROLE_BADGE.default.label) },
   ];
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-      {items.map((item) => (
-        <div key={item.label} className="flex items-center gap-1.5">
-          <item.icon size={12} className="text-neutral-600 shrink-0" />
-          <span className="text-3xs text-neutral-500">{item.label}:</span>
-          {item.href ? (
-            <Link href={item.href} className="text-3xs font-medium text-skylab-300 hover:text-skylab-300 truncate max-w-[100px]">
-              {item.value}
-            </Link>
-          ) : (
-            <span className="text-3xs font-medium text-neutral-300">{item.value}</span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function StatBlock({ label, value }) {
-  return (
-    <div className="text-center">
-      <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">{label}</p>
-      <p className="text-sm font-semibold text-neutral-100">{value ?? 0}</p>
+    <div>
+      <SectionTitle>Form Bilgileri</SectionTitle>
+      <div className="flex flex-col gap-2">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center justify-between gap-3">
+            <span className="flex min-w-0 items-center gap-1.5 text-2xs text-neutral-500">
+              <item.icon size={12} className="shrink-0 text-neutral-600" />
+              {item.label}
+            </span>
+            {item.href ? (
+              <Link href={item.href} className="max-w-[55%] truncate text-2xs font-medium text-skylab-300 transition-colors hover:text-skylab-200">
+                {item.value}
+              </Link>
+            ) : (
+              <span className="max-w-[55%] truncate text-2xs font-medium text-neutral-200">{item.value}</span>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 export default function FormMetrics({ formData, metrics }) {
-  return(
-    <div className="flex h-full flex-col rounded-xl p-2 overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-2 scrollbar">
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex-1 space-y-3 overflow-y-auto pr-1 scrollbar">
 
-        <motion.div {...fadeIn} className="p-4 border-b border-white/5">
-          <CollaboratorsSection formData={formData} />
-        </motion.div>
-
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.05 }} className="p-4 border-b border-white/5">
+        <Card delay={0}>
           <SectionTitle>Cevap İstatistikleri</SectionTitle>
-          <div className="flex items-center justify-around">
-            <StatBlock label="Toplam" value={metrics?.totalResponses ?? 0} />
-            <StatBlock label="Bekleyen" value={metrics?.pendingCount ?? 0} />
-            <StatBlock label="Onaylanan" value={metrics?.approvedCount ?? 0} />
-            <StatBlock label="Reddedilen" value={metrics?.rejectedCount ?? 0} />
-          </div>
-        </motion.div>
+          <ResponseStats metrics={metrics} />
+        </Card>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.1 }} className="p-4 border-b border-white/5">
+        <Card delay={0.05}>
           <TrendChart
             hourlyData={metrics?.hourlyTrend ?? []}
             dailyData={metrics?.dailyTrend ?? []}
             dailyTrendPercentage={metrics?.dailyTrendPercentage}
             hourlyTrendPercentage={metrics?.hourlyTrendPercentage}
           />
-        </motion.div>
+        </Card>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.15 }} className="p-4 border-b border-white/5">
-          <SectionTitle>Ortalama Süre</SectionTitle>
-          <div className="flex items-center justify-center gap-3">
-            <Timer size={16} className="text-skylab-300" />
-            <p className="text-lg font-semibold text-neutral-100">
-              {formatDuration(metrics?.averageCompletionTime)}
-            </p>
+        <Card delay={0.1}>
+          <SectionTitle icon={Timer}>Katılım</SectionTitle>
+          <div className="flex items-center justify-between">
+            <span className="text-2xs text-neutral-500">Ortalama süre</span>
+            <span className="text-sm font-semibold tabular-nums text-neutral-100">{formatDuration(metrics?.averageCompletionTime)}</span>
           </div>
-        </motion.div>
+          <div className="mt-4">
+            <SourceBreakdownBar
+              registered={metrics?.sourceBreakdown?.registered ?? 0}
+              anonymous={metrics?.sourceBreakdown?.anonymous ?? 0}
+            />
+          </div>
+        </Card>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.2 }} className="p-4 border-b border-white/5">
-          <SectionTitle>Kaynak Dağılımı</SectionTitle>
-          <SourceBreakdownBar
-            registered={metrics?.sourceBreakdown?.registered ?? 0}
-            anonymous={metrics?.sourceBreakdown?.anonymous ?? 0}
-          />
-        </motion.div>
+        <Card delay={0.15}>
+          <CollaboratorsSection formData={formData} />
+        </Card>
 
-        <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.25 }} className="p-4">
-          <SectionTitle>Form Bilgileri</SectionTitle>
-          <FormInfoGrid formData={formData} />
-        </motion.div>
+        <Card delay={0.2}>
+          <FormInfoList formData={formData} />
+        </Card>
 
       </div>
     </div>

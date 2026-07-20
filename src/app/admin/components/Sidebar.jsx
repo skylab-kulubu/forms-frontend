@@ -8,7 +8,7 @@ import { logout } from "@/lib/authActions";
 import { useFormContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database, ChartColumn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const breadcrumbLabels = {
@@ -55,10 +55,10 @@ function NavItem({ href, icon: Icon, label, active, onClick, variant = "default"
 
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className={`${base} ${state}`} onClick={onClick}>
-      <Icon className={`${variant === "subtle" ? "h-4 w-4" : "h-5 w-5"} text-neutral-300 group-hover:text-neutral-200 shrink-0`} strokeWidth={1.75} />
+      <Icon className={`${variant === "subtle" ? "h-4 w-4" : "h-5 w-5"} shrink-0`} strokeWidth={1.75} />
       <span className="font-medium truncate">{label}</span>
       {variant !== "subtle" && (
-        <ChevronRight className="ml-auto h-4 w-4 text-neutral-400 group-hover:text-neutral-200" />
+        <ChevronRight className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-0.5" />
       )}
     </Link>
   );
@@ -75,15 +75,21 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
   const hasActive = items.some((item) => itemIsActive(item));
   const [open, setOpen] = useState(hasActive);
 
+  const [prevHasActive, setPrevHasActive] = useState(hasActive);
+  if (hasActive !== prevHasActive) {
+    setPrevHasActive(hasActive);
+    if (hasActive) setOpen(true);
+  }
+
   const base = "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
   const state = "text-neutral-400 hover:bg-neutral-800/60 hover:text-neutral-100";
 
   return (
     <div className="space-y-1">
       <button type="button" aria-expanded={open} className={`${base} ${state} w-full text-left`} onClick={() => setOpen((v) => !v)}>
-        <Icon className="h-5 w-5 text-neutral-300 group-hover:text-neutral-200" strokeWidth={1.75} />
+        <Icon className="h-5 w-5 shrink-0" strokeWidth={1.75} />
         <span className="font-medium truncate">{label}</span>
-        <ChevronDown className={`ml-auto h-4 w-4 text-neutral-400 transition-transform ${open ? "rotate-180" : "rotate-0"}`} />
+        <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${open ? "rotate-180" : "rotate-0"}`} />
       </button>
 
       <AnimatePresence initial={false}>
@@ -146,6 +152,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
       label: activeFormLabel,
       children: [
         ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
+        ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
         ...(Number(form?.userRole) >= 2 ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
       ],
     }
@@ -240,23 +247,16 @@ export default function Sidebar({ user, children }) {
       [`/admin/forms/${formId}`]: formLoading ? "..." : title,
       [`/admin/forms/${formId}/edit`]: "Düzenleme",
       [`/admin/forms/${formId}/responses`]: "Cevaplar",
+      [`/admin/forms/${formId}/analytics`]: "Analitik",
     };
   }, [formId, form?.title, formLoading]);
 
   return (
-    <div className="min-h-dvh md:pl-72">
+    <div className="min-h-dvh md:h-dvh md:bg-neutral-950 md:pl-66 md:pr-2 md:py-2">
 
-      <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 shrink-0 border-r border-neutral-950/70 bg-neutral-950/40 backdrop-blur-lg shadow-md">
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 bg-neutral-950">
         <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} />
       </aside>
-
-      <div className="hidden md:block sticky top-0 z-30 backdrop-blur">
-        <div className="flex h-14 items-center px-6">
-          <Breadcrumbs labels={dynamicBreadcrumbLabels} />
-          {/* Sayfaya özgü aksiyonlar (ör. form editörü) buraya portallanır. */}
-          <div id="admin-header-slot" className="ml-auto flex items-center" />
-        </div>
-      </div>
 
       <div className="md:hidden sticky top-0 z-40 border-b border-neutral-950/70 bg-neutral-950/40 backdrop-blur">
         <div className="flex h-14 items-center px-3">
@@ -298,7 +298,13 @@ export default function Sidebar({ user, children }) {
         )}
       </AnimatePresence>
 
-      <div>{children}</div>
+      <div className="md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden md:rounded-xl md:border md:border-white/5 md:bg-neutral-900">
+        <div className="hidden md:flex h-10 shrink-0 items-center border-b border-white/5 px-6">
+          <Breadcrumbs labels={dynamicBreadcrumbLabels} />
+          <div id="admin-header-slot" className="ml-auto flex items-center" />
+        </div>
+        <div className="md:min-h-0 md:flex-1">{children}</div>
+      </div>
     </div>
   );
 }

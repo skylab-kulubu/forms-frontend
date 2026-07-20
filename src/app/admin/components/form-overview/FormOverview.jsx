@@ -10,13 +10,12 @@ export default function FormOverview({ formId, formData, metrics, metricsLoading
   const router = useRouter();
   const { form: formInfo } = useFormContext();
 
-  const formTitle = formInfo?.title?.trim() || "--";
-
   return (
     <div className="flex flex-col p-4 lg:h-[calc(100dvh-3rem)] lg:overflow-hidden">
-      <OverviewHeader formTitle={formTitle} formId={formId} formStatus={formInfo?.status} userRole={formInfo?.userRole}
+      <OverviewHeader formStatus={formInfo?.status} userRole={formInfo?.userRole}
         onEdit={() => router.push(`/admin/forms/${formId}/edit`)} onRefresh={onRefresh}
         onViewResponses={() => router.push(`/admin/forms/${formId}/responses`)}
+        onAnalytics={() => router.push(`/admin/forms/${formId}/analytics`)}
       />
 
       <div className="grid grid-cols-1 gap-4 pt-4 lg:min-h-0 lg:flex-1 lg:grid-cols-12">

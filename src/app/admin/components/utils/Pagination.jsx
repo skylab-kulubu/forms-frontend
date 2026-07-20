@@ -41,19 +41,19 @@ export default function Pagination({ current = 1, totalPages = 1, onPageChange, 
       >
         <button type="button" onClick={() => goTo(safeCurrent - 1)} aria-label="Onceki sayfa"
           disabled={safeCurrent <= 1}
-          className={`flex h-8 w-8 items-center justify-center rounded-md border text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
+          className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
           ${safeCurrent <= 1
             ? "cursor-not-allowed border-white/10 bg-white/5 text-neutral-500 opacity-60"
             : "border-white/10 bg-white/3 text-neutral-200 hover:border-skylab-400/40 hover:bg-skylab-500/10"}`}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={14} />
         </button>
 
-        <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/3 px-1 py-1 shadow-sm">
+        <div className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/3 px-1 py-0.5 shadow-sm">
           {pageNumbers.map((pageNum) => {
             if (typeof pageNum === "string") {
               return (
-                <span key={pageNum} className="px-1 text-sm text-neutral-500">
+                <span key={pageNum} className="px-1 text-xs text-neutral-500">
                   ...
                 </span>
               );
@@ -62,7 +62,7 @@ export default function Pagination({ current = 1, totalPages = 1, onPageChange, 
             const isCurrentPage = pageNum === safeCurrent;
             return (
               <button type="button" key={pageNum} onClick={() => goTo(pageNum)} aria-label={`Sayfa ${pageNum}`}
-                className={`h-8 w-8 rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
+                className={`h-7 w-7 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
                 ${isCurrentPage ? "border border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "text-neutral-300 hover:bg-white/10 hover:text-neutral-100"}`}
               >
                 {pageNum}
@@ -73,12 +73,12 @@ export default function Pagination({ current = 1, totalPages = 1, onPageChange, 
 
         <button type="button" onClick={() => goTo(safeCurrent + 1)} aria-label="Sonraki sayfa"
           disabled={safeCurrent >= safeTotalPages}
-          className={`flex h-8 w-8 items-center justify-center rounded-md border text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
+          className={`flex h-7 w-7 items-center justify-center rounded-md border text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
           ${safeCurrent >= safeTotalPages
             ? "cursor-not-allowed border-white/10 bg-white/5 text-neutral-500 opacity-60"
             : "border-white/10 bg-white/3 text-neutral-200 hover:border-skylab-400/40 hover:bg-skylab-500/10"}`}
         >
-          <ArrowRight size={16} />
+          <ArrowRight size={14} />
         </button>
       </motion.div>
     </div>

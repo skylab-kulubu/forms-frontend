@@ -93,7 +93,7 @@ function RecentFormItem({ form }) {
   return (
     <div className="group/row relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/5">
       <Link href={`/admin/forms/${form.id}`} className="absolute inset-0 z-0" tabIndex={-1} />
-      <div className="min-w-0 flex-1 relative z-10">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-neutral-200 truncate">{form.title || "--"}</p>
           <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-4xs uppercase tracking-[0.18em] ${form.status === 2 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-red-500/30 bg-red-500/10 text-red-200"}`}>

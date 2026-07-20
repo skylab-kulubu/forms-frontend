@@ -66,7 +66,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, height: "auto", transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
 };
 
-export default function ResponsesFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, showArchived = false, onShowArchivedChange, className = "" }) {
+export default function ResponsesFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, showArchived = false, onShowArchivedChange, className = "", align = "center" }) {
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function ResponsesFilterShell({ open, anchorRef, onClose, sortVal
         <motion.div ref={panelRef} role="dialog" aria-label="Responses filters" layout
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
           transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute left-1/2 top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
           <motion.div variants={contentVariants} className="flex flex-col text-center p-4">
             <motion.div variants={itemVariants} className="overflow-hidden">

@@ -68,7 +68,7 @@ const itemVariants = {
 
 export function DatabaseFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange,
   allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange,
-  hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange, className = ""
+  hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange, className = "", align = "center"
 }) {
   const panelRef = useRef(null);
 
@@ -99,7 +99,7 @@ export function DatabaseFilterShell({ open, anchorRef, onClose, sortValue = "des
         <motion.div ref={panelRef} role="dialog" aria-label="Database filters" layout
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
           transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute left-1/2 top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] -translate-x-1/2 rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
           <motion.div variants={contentVariants} className="flex flex-col p-4 text-center">
             <motion.div variants={itemVariants} className="overflow-hidden">
@@ -128,7 +128,7 @@ export function DatabaseFilterShell({ open, anchorRef, onClose, sortValue = "des
 
 export default function FormsFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange,
   allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange,
-  requiresManualReview = null, onRequiresManualReviewChange, className = ""
+  requiresManualReview = null, onRequiresManualReviewChange, className = "", align = "center"
 }) {
   const panelRef = useRef(null);
 
@@ -169,7 +169,7 @@ export default function FormsFilterShell({ open, anchorRef, onClose, sortValue =
         <motion.div ref={panelRef} role="dialog" aria-label="Forms filters" layout
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
           transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute left-1/2 top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] -translate-x-1/2 rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
           <motion.div variants={contentVariants} className="flex flex-col p-4 text-center">
             <motion.div variants={itemVariants} className="overflow-hidden">
