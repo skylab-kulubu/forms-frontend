@@ -21,7 +21,7 @@ const updateForm = async ({ id, payload }) => {
   });
 };
 
-const fetchUserForms = async ({ page = 1, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection } = {}) => {
+const fetchUserForms = async ({ page = 1, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortBy, sortDirection } = {}) => {
   const params = new URLSearchParams();
   if (page !== undefined && page !== null) params.set("Page", page);
   if (pageSize !== undefined && pageSize !== null) params.set("PageSize", pageSize);
@@ -31,6 +31,7 @@ const fetchUserForms = async ({ page = 1, pageSize, search, role, allowAnonymous
   if (allowMultiple !== undefined && allowMultiple !== null) params.set("AllowMultiple", allowMultiple);
   if (hasLinkedForm !== undefined && hasLinkedForm !== null) params.set("HasLinkedForm", hasLinkedForm);
   if (requiresManualReview !== undefined && requiresManualReview !== null) params.set("RequiresManualReview", requiresManualReview);
+  if (sortBy) params.set("SortBy", sortBy);
   if (sortDirection) params.set("SortDirection", sortDirection);
   const query = params.toString();
   return request(`/api/admin/forms${query ? `?${query}` : ""}`);
@@ -43,6 +44,10 @@ const fetchLinkableUserForms = async (formId) => {
 
 const fetchFormMetrics = async (formId) => {
   return request(`/api/admin/forms/${formId}/metrics`);
+};
+
+const fetchFormAnalytics = async (formId) => {
+  return request(`/api/admin/forms/${formId}/analytics`);
 };
 
 const fetchServiceMetrics = async () => {
@@ -80,10 +85,10 @@ export const useAllFormsQuery = (options = {}) => {
 };
 
 export const useUserFormsQuery = (options = {}) => {
-  const { page = 1, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection, ...queryOptions } = options;
+  const { page = 1, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortBy, sortDirection, ...queryOptions } = options;
   return useQuery({
-    queryKey: ["user-forms", page, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection],
-    queryFn: () => fetchUserForms({ page, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortDirection }),
+    queryKey: ["user-forms", page, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortBy, sortDirection],
+    queryFn: () => fetchUserForms({ page, pageSize, search, role, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortBy, sortDirection }),
     retry: queryOptions.retry ?? false,
     ...queryOptions,
   });
@@ -118,6 +123,16 @@ export const useFormMetricsQuery = (formId, options = {}) => {
   return useQuery({
     queryKey: ["form-metrics", formId],
     queryFn: () => fetchFormMetrics(formId),
+    enabled: options.enabled ?? !!formId,
+    retry: options.retry ?? false,
+    ...options,
+  });
+};
+
+export const useFormAnalyticsQuery = (formId, options = {}) => {
+  return useQuery({
+    queryKey: ["form-analytics", formId],
+    queryFn: () => fetchFormAnalytics(formId),
     enabled: options.enabled ?? !!formId,
     retry: options.retry ?? false,
     ...options,
