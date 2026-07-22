@@ -22,14 +22,18 @@ export default function FormPreview({ form }) {
   const sanitizedDescription = description ? DOMPurify.sanitize(description) : "";
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl">
-      <div className="flex-1 overflow-y-auto p-4 scrollbar">
+    <div className="flex flex-col lg:h-full lg:overflow-hidden">
+      <div className="flex items-center gap-2 px-1 lg:h-7">
+        <span className="text-2xs font-medium text-neutral-500 lg:text-base">Önizleme</span>
+        <span className="h-px flex-1 bg-white/5" />
+      </div>
+      <div className="pt-4 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
         {schema.length === 0 ? (
           <StateCard title="Bu formda soru bulunmuyor" description="Form düzenleyicisinden soru ekleyebilirsiniz." Icon={FileQuestion} />
         ) : (
           <div className="pointer-events-none select-none">
             {(title || description) && (
-              <div className="mb-5 px-8 pt-3">
+              <div className="mx-auto mb-5 w-full max-w-2xl px-2 pt-3 md:px-4">
                 {title && (
                   <h1 className="text-2xl font-semibold tracking-tight text-neutral-50">{title}</h1>
                 )}

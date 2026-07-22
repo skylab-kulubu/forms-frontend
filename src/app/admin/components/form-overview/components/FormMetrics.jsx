@@ -21,10 +21,10 @@ function formatDuration(seconds) {
   return `${m}dk ${s}sn`;
 }
 
-function Card({ children, delay = 0, className = "" }) {
+function Section({ children, delay = 0, className = "" }) {
   return (
     <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay }}
-      className={`rounded-lg border border-white/10 bg-white/3 p-4 ${className}`}
+      className={`py-4 first:pt-0 last:pb-0 ${className}`}
     >
       {children}
     </motion.div>
@@ -34,8 +34,8 @@ function Card({ children, delay = 0, className = "" }) {
 function SectionTitle({ children, icon: Icon }) {
   return (
     <div className="mb-3 flex items-center gap-1.5">
-      {Icon && <Icon size={11} className="shrink-0 text-neutral-500" />}
-      <h3 className="text-3xs font-medium uppercase tracking-[0.18em] text-neutral-500">{children}</h3>
+      {Icon && <Icon size={12} className="shrink-0 text-neutral-500" />}
+      <h3 className="text-2xs font-medium text-neutral-500">{children}</h3>
     </div>
   );
 }
@@ -54,7 +54,7 @@ function ResponseStats({ metrics }) {
         <div key={s.key} className="flex items-center gap-2.5 rounded-md border border-white/5 bg-white/3 px-3 py-2.5">
           <span className={`size-1.5 shrink-0 rounded-full ${s.dot}`} />
           <div className="min-w-0">
-            <p className="truncate text-3xs uppercase tracking-[0.18em] text-neutral-500">{s.label}</p>
+            <p className="truncate text-3xs text-neutral-500">{s.label}</p>
             <p className={`text-lg font-semibold leading-tight tabular-nums ${s.tone}`}>{metrics?.[s.key] ?? 0}</p>
           </div>
         </div>
@@ -239,45 +239,52 @@ function FormInfoList({ formData }) {
 
 export default function FormMetrics({ formData, metrics }) {
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      <div className="flex-1 space-y-3 overflow-y-auto pr-1 scrollbar">
+    <div className="flex flex-col lg:h-full lg:overflow-hidden">
+      <div className="flex items-center gap-2 px-1 lg:h-7">
+        <span className="text-2xs font-medium text-neutral-500">Metrikler</span>
+        <span className="h-px flex-1 bg-white/5" />
+      </div>
 
-        <Card delay={0}>
-          <SectionTitle>Cevap İstatistikleri</SectionTitle>
-          <ResponseStats metrics={metrics} />
-        </Card>
+      <div className="pt-4 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+        <div className="divide-y divide-white/5">
 
-        <Card delay={0.05}>
-          <TrendChart
-            hourlyData={metrics?.hourlyTrend ?? []}
-            dailyData={metrics?.dailyTrend ?? []}
-            dailyTrendPercentage={metrics?.dailyTrendPercentage}
-            hourlyTrendPercentage={metrics?.hourlyTrendPercentage}
-          />
-        </Card>
+          <Section delay={0}>
+            <SectionTitle>Cevap İstatistikleri</SectionTitle>
+            <ResponseStats metrics={metrics} />
+          </Section>
 
-        <Card delay={0.1}>
-          <SectionTitle icon={Timer}>Katılım</SectionTitle>
-          <div className="flex items-center justify-between">
-            <span className="text-2xs text-neutral-500">Ortalama süre</span>
-            <span className="text-sm font-semibold tabular-nums text-neutral-100">{formatDuration(metrics?.averageCompletionTime)}</span>
-          </div>
-          <div className="mt-4">
-            <SourceBreakdownBar
-              registered={metrics?.sourceBreakdown?.registered ?? 0}
-              anonymous={metrics?.sourceBreakdown?.anonymous ?? 0}
+          <Section delay={0.05}>
+            <TrendChart
+              hourlyData={metrics?.hourlyTrend ?? []}
+              dailyData={metrics?.dailyTrend ?? []}
+              dailyTrendPercentage={metrics?.dailyTrendPercentage}
+              hourlyTrendPercentage={metrics?.hourlyTrendPercentage}
             />
-          </div>
-        </Card>
+          </Section>
 
-        <Card delay={0.15}>
-          <CollaboratorsSection formData={formData} />
-        </Card>
+          <Section delay={0.1}>
+            <SectionTitle icon={Timer}>Katılım</SectionTitle>
+            <div className="flex items-center justify-between">
+              <span className="text-2xs text-neutral-500">Ortalama süre</span>
+              <span className="text-sm font-semibold tabular-nums text-neutral-100">{formatDuration(metrics?.averageCompletionTime)}</span>
+            </div>
+            <div className="mt-4">
+              <SourceBreakdownBar
+                registered={metrics?.sourceBreakdown?.registered ?? 0}
+                anonymous={metrics?.sourceBreakdown?.anonymous ?? 0}
+              />
+            </div>
+          </Section>
 
-        <Card delay={0.2}>
-          <FormInfoList formData={formData} />
-        </Card>
+          <Section delay={0.15}>
+            <CollaboratorsSection formData={formData} />
+          </Section>
 
+          <Section delay={0.2}>
+            <FormInfoList formData={formData} />
+          </Section>
+
+        </div>
       </div>
     </div>
   );
