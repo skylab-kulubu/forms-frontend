@@ -14,7 +14,7 @@ export default function ResponsePage() {
   const { data, isLoading, error } = useResponsePreviewQuery(responseId, token);
 
   return (
-    <div className="px-6 pb-6">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
       <FormStatusHandler isLoading={isLoading} error={error} data={data} variant="response"
         renderForm={(responseData) => (
           <ResponseDisplayer response={responseData?.data ?? responseData ?? null} token={token} />

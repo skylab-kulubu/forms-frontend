@@ -28,10 +28,10 @@ function useMediaQuery(query) {
 
 const ActionTrigger = forwardRef((props, ref) => {
     return (
-        <div ref={ref} className="flex h-full items-center justify-end z-10 -mr-6">
+        <div ref={ref} className="flex h-full items-center justify-end z-10">
             <DrawerTrigger asChild>
                 <motion.button type="button" initial={{ x: 0 }} title="Paneli aç"
-                    className="relative flex h-full w-5 items-center justify-center rounded-l-full border border-r-0 border-neutral-800 bg-[#121212] shadow-xl text-neutral-500 hover:text-neutral-200 transition-colors"
+                    className="relative flex h-full w-5 items-center justify-center rounded-l-full border border-r-0 border-white/10 bg-neutral-900/80 shadow-xl text-neutral-500 hover:text-neutral-200 transition-colors"
                 >
                     <ChevronsLeft size={16} className="opacity-60" />
                 </motion.button>
@@ -110,7 +110,7 @@ export default function ResponseDisplayer({ response, token = null }) {
     }
 
     return (
-      <ul className="space-y-3">
+      <ul className="mx-auto w-full max-w-2xl divide-y divide-white/5">
         {items.map((item, index) => (
           <ResponseListItem key={item?.id ?? `${index}`} questionNumber={index + 1} question={item?.question} answer={item?.answer} type={item?.type} />
         ))}
@@ -160,11 +160,11 @@ export default function ResponseDisplayer({ response, token = null }) {
     <motion.div className={`${className} h-full`} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
     >
-      <div className="relative h-[93vh] p-4">
+      <div className="relative h-full">
         <AnimatePresence mode="wait">
           {canNavigateLinked && (
             <motion.button key={arrowSide} type="button" onClick={handleToggleLinked} aria-label={"Diğer cevaplar"}
-              className={`absolute inset-y-0 translate-y-1/5 ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 hidden lg:flex w-5 h-[70vh] items-center justify-center rounded-md border border-white/5 bg-neutral-900/90 text-neutral-200 transition hover:bg-neutral-800 opacity-80`}
+              className={`absolute inset-y-0 my-auto ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 hidden lg:flex w-5 h-[60%] items-center justify-center rounded-md border border-white/10 bg-white/5 text-neutral-300 transition hover:bg-white/10 hover:text-neutral-100 opacity-80`}
               initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
@@ -173,26 +173,26 @@ export default function ResponseDisplayer({ response, token = null }) {
           )}
         </AnimatePresence>
 
-        <div className="flex h-full flex-col gap-4">
-          <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
+        <div className="flex h-full flex-col">
+          <div className="flex items-center gap-2 px-1 lg:h-7">
+            <span className="text-2xs font-medium text-neutral-500 lg:text-base">Cevaplar</span>
+            <span className="h-px flex-1 bg-white/5" />
+            <span className="shrink-0 text-3xs tabular-nums text-neutral-500">Cevaplanan {answeredCount}</span>
+          </div>
+
+          <div className="mx-auto mt-2 flex w-full max-w-2xl items-center justify-between gap-3">
             {activeId && (
-              <div className="text-left">
-                <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">Response ID</p>
-                <p className="mt-1 text-xs text-neutral-200 break-all">{activeId}</p>
-              </div>
+              <span className="min-w-0 truncate text-3xs text-neutral-600" title={activeId}>ID {activeId}</span>
             )}
-            <div className="text-end text-xs text-neutral-500">
-              <p>Cevaplanan {answeredCount} soru</p>
-              <div className="flex gap-1">
-                <ClockPlusIcon size={12} className="mt-0.5" />
-                <p>{formatDateTime(activeResponse?.submittedAt)}</p>
-              </div>
-            </div>
+            <span className="flex shrink-0 items-center gap-1 text-3xs text-neutral-500">
+              <ClockPlusIcon size={11} />
+              {formatDateTime(activeResponse?.submittedAt)}
+            </span>
           </div>
 
           {canNavigateLinked && (
             <button type="button" onClick={handleToggleLinked} aria-label="Diğer cevaplar"
-              className="lg:hidden flex items-center justify-between w-full px-3 py-2 rounded-md border border-white/5 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60 transition-colors text-xs -mt-2"
+              className="lg:hidden mt-3 flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-neutral-400 transition-colors hover:bg-white/10 hover:text-neutral-200"
             >
               {arrowSide === "left" && <ArrowIcon size={13} />}
               <span>{activeView === "responses" ? "Bağlı yanıta geç" : "Ana yanıta dön"}</span>
@@ -200,7 +200,7 @@ export default function ResponseDisplayer({ response, token = null }) {
             </button>
           )}
 
-          <div className="relative flex-1 overflow-hidden">
+          <div className="relative mt-4 min-h-0 flex-1 overflow-hidden">
             <AnimatePresence mode="wait" custom={direction}>
               {activeView === "responses" ? (
                 <motion.div key="responses" custom={direction} variants={slideVariants}
@@ -225,16 +225,16 @@ export default function ResponseDisplayer({ response, token = null }) {
   );
 
   const drawerContent = (
-     <div className="h-full w-full p-4 overflow-y-auto scrollbar">
+     <div className="h-full w-full overflow-y-auto p-4 scrollbar lg:overflow-visible lg:p-0">
         <ResponseActions response={activeResponse} isLoading={actionsLoading} readOnly={isSharedView} />
      </div>
   );
 
   if (isLgUp) {
       return (
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid min-h-0 flex-1 grid-cols-12 gap-6 p-4 pt-8 lg:p-6 lg:pt-10">
             {renderMainContent("col-span-12 lg:col-span-8")}
-            <motion.div className="col-span-4 h-[93vh]" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+            <motion.div className="col-span-4 h-full min-h-0" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
             >
                 {drawerContent}
@@ -244,11 +244,11 @@ export default function ResponseDisplayer({ response, token = null }) {
   }
 
   return (
-    <div className="relative w-full h-[93vh]">
+    <div className="relative min-h-0 w-full flex-1">
         {isLgUp ? (
-            <div className="grid grid-cols-12 gap-4 h-full">
+            <div className="grid min-h-0 flex-1 grid-cols-12 gap-6 p-4 pt-8 lg:p-6 lg:pt-10">
                 {renderMainContent("col-span-12 lg:col-span-8")}
-                <motion.div className="col-span-4 h-full" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                <motion.div className="col-span-4 h-full min-h-0" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                     transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
                 >
                     {drawerContent}
@@ -256,12 +256,14 @@ export default function ResponseDisplayer({ response, token = null }) {
             </div>
         ) : (
             <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                <div className="flex h-full">
-                    {renderMainContent("flex-1 min-w-0")}
+                <div className="flex h-full w-full">
+                    <div className="min-w-0 flex-1 p-4 pt-8">
+                        {renderMainContent("h-full")}
+                    </div>
                     <ActionTrigger />
                 </div>
 
-                <DrawerContent className="h-full" rootClassName="overflow-visible" wrapperClassName="-mr-6">
+                <DrawerContent className="h-full" rootClassName="overflow-visible" wrapperClassName="">
                     {drawerContent}
                 </DrawerContent>
             </Drawer>

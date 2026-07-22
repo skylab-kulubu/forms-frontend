@@ -81,7 +81,7 @@ export default function ResponsesPage() {
   const contentKey = `${sortValue}-${statusValue}-${respondentValue}-${showArchived}-${searchValue}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-6">
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-4 lg:p-6">
       <ResponsesHeader searchValue={searchValue} onSearchChange={setSearchValue}
         sortValue={sortValue} onSortChange={setSortValue} statusValue={statusValue} onStatusChange={setStatusValue} showArchived={showArchived} onShowArchivedChange={setShowArchived}
         respondentValue={respondentValue} onRespondentChange={setRespondentValue} onRefresh={() => refetch()} onExport={exportToExcel} exportLoading={exportLoading}

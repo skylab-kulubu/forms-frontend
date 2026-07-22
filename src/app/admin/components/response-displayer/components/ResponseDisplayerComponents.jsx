@@ -17,7 +17,7 @@ const formatAnswer = (answer) => {
 
 export function ResponseListItem({ questionNumber, question, answer, type, className = "" }) {
   const hasNumber = Number.isFinite(Number(questionNumber));
-  const questionText = typeof question === "string" && question.trim().length > 0 ? question.trim() : "Soru";
+  const questionText = typeof question === "string" ? question.trim() : "";
 
   let parsedMatrix = null;
   if (type === "matrix" && answer) {
@@ -32,35 +32,35 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
   const hasAnswer = parsedMatrix ? Object.keys(parsedMatrix).length > 0 : answerText.length > 0;
 
   return (
-    <li className={`border-b border-white/10 last:border-b-0 bg-neutral-900/40 px-4 py-3 shadow-sm ${className}`}>
-      <div className="flex items-start gap-3">
+    <li className={`py-5 first:pt-0 last:pb-0 ${className}`}>
+      <div className="flex gap-3">
         {hasNumber && (
-          <div className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-200">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
             {questionNumber}
           </div>
         )}
-        <div className="flex-1">
-          <p className="mt-1 text-sm font-medium text-neutral-100 wrap-break-word">
-            {questionText}
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-neutral-100 wrap-break-word">
+            {questionText || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 px-3 py-2">
-        <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-1">Cevap</p>
+      <div className="mt-3 pl-9">
+        <p className="mb-1.5 text-3xs font-medium text-neutral-500">Cevap</p>
 
         {type === "file" && answerText ? (
           <FilePreview mediaId={answerText} />
-        ) : parsedMatrix && typeof parsedMatrix === 'object' ? (
-          <div className="mt-2 rounded-lg border border-white/10 overflow-hidden bg-neutral-900/50">
+        ) : parsedMatrix && typeof parsedMatrix === "object" ? (
+          <div className="overflow-hidden rounded-lg border border-white/10 bg-white/3">
             <table className="w-full text-left text-sm">
               <tbody className="divide-y divide-white/5">
                 {Object.entries(parsedMatrix).map(([rowLabel, colLabel], idx) => (
                   <tr key={idx}>
-                    <td className="px-3 py-2 font-medium text-neutral-300 border-r border-white/5 w-1/2">
+                    <td className="w-1/2 border-r border-white/5 px-3 py-2 font-medium text-neutral-300">
                       {rowLabel}
                     </td>
-                    <td className="px-3 py-2 text-skylab-300 font-medium">
+                    <td className="px-3 py-2 font-medium text-skylab-300">
                       {colLabel}
                     </td>
                   </tr>
@@ -69,7 +69,7 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
             </table>
           </div>
         ) : (
-          <p className={`text-sm wrap-break-word whitespace-pre-wrap ${hasAnswer ? "text-neutral-100" : "text-neutral-500 italic"}`}>
+          <p className={`text-sm wrap-break-word whitespace-pre-wrap ${hasAnswer ? "text-neutral-100" : "italic text-neutral-500"}`}>
             {hasAnswer ? answerText : "Cevap yok"}
           </p>
         )}
@@ -80,33 +80,28 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
 
 export function ResponseHeaderSkeleton() {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-3">
-      <div className="space-y-2">
-        <div className="shimmer h-3 w-24 rounded-md" />
-        <div className="shimmer h-3 w-40 rounded-md" />
-      </div>
-      <div className="mt-5">
-        <div className="shimmer h-3 w-20 rounded-md" />
-      </div>
+    <div className="flex items-center gap-2 px-1 lg:h-7">
+      <div className="shimmer h-3.5 w-24 rounded-md" />
+      <span className="h-px flex-1 bg-white/5" />
+      <div className="shimmer h-3 w-16 rounded-md" />
     </div>
   );
 }
 
 export function ResponseListSkeleton({ rows = 4 }) {
   return (
-    <ul className="space-y-3">
+    <ul className="mx-auto w-full max-w-2xl divide-y divide-white/5">
       {Array.from({ length: rows }).map((_, index) => (
-        <li key={index} className="border-b border-white/10 last:border-b-0 bg-neutral-900/40 px-4 py-3 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="shimmer h-7 w-7 rounded-md" />
-            <div className="flex-1 space-y-2">
-              <div className="shimmer h-3 w-28 rounded-md" />
+        <li key={index} className="py-5 first:pt-0 last:pb-0">
+          <div className="flex gap-3">
+            <div className="shimmer h-6 w-6 shrink-0 rounded-md" />
+            <div className="flex-1">
               <div className="shimmer h-3 w-40 rounded-md" />
             </div>
           </div>
-          <div className="mt-3 rounded-lg border border-white/10 bg-neutral-950/30 px-3 py-2">
-            <div className="shimmer h-3 w-16 rounded-md" />
-            <div className="mt-2 shimmer h-3 w-3/4 rounded-md" />
+          <div className="mt-3 space-y-2 pl-9">
+            <div className="shimmer h-2.5 w-14 rounded-md" />
+            <div className="shimmer h-3 w-3/4 rounded-md" />
           </div>
         </li>
       ))}

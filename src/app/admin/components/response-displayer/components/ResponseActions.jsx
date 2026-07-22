@@ -38,7 +38,7 @@ function formatDuration(seconds) {
 }
 
 function SectionTitle({ children }) {
-  return <h3 className="text-3xs uppercase tracking-[0.18em] text-neutral-500 mb-2">{children}</h3>;
+  return <h3 className="text-2xs font-medium text-neutral-500 mb-2">{children}</h3>;
 }
 
 function StatBlock({ label, value, icon: Icon, color = "text-neutral-100" }) {
@@ -46,7 +46,7 @@ function StatBlock({ label, value, icon: Icon, color = "text-neutral-100" }) {
     <div className="text-center flex flex-col items-center gap-1.5">
       {Icon && <Icon size={14} className={`${color} opacity-60`} />}
       <p className={`text-sm font-semibold ${color}`}>{value}</p>
-      <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">{label}</p>
+      <p className="text-3xs text-neutral-500">{label}</p>
     </div>
   );
 }
@@ -184,38 +184,39 @@ export function ResponseActions({ response, readOnly = false }) {
   const sharedByPhotoUrl = sharedBy?.profilePictureUrl || null;
 
   return (
-    <div className="flex h-full items-start justify-center overflow-hidden">
-      <div className="w-full max-w-sm overflow-hidden text-neutral-200">
-        <div className="flex h-full flex-col rounded-xl overflow-hidden">
-          <div className="flex-1 overflow-y-auto scrollbar">
-            <motion.div {...fadeIn} className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <h2 className="text-xs font-semibold text-neutral-200 tracking-wide">{readOnly ? "Paylaşılan Cevap" : "Cevap İşlemleri"}</h2>
-              {!readOnly && (
-                <div className="flex items-center gap-1 text-neutral-500">
-                  <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" disabled={!responseId} onClick={() => setShareOverlayOpen(true)}
-                    className={`rounded-lg p-1.5 transition-colors ${!responseId ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-                  >
-                    <Share2 size={15} />
-                  </button>
-                  <Popover open={isError} error={error} variant="error" align="bottom-right">
-                    <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
-                      className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-                    >
-                      <Archive size={15} />
-                    </button>
-                  </Popover>
-                </div>
-              )}
-            </motion.div>
+    <div className="flex h-full flex-col text-neutral-200">
+      <div className="flex items-center gap-2 px-1 lg:h-7">
+        <span className="text-2xs font-medium text-neutral-500">{readOnly ? "Paylaşılan Cevap" : "İşlemler"}</span>
+        <span className="h-px flex-1 bg-white/5" />
+        {!readOnly && (
+          <div className="flex items-center gap-1 text-neutral-500">
+            <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" disabled={!responseId} onClick={() => setShareOverlayOpen(true)}
+              className={`rounded-lg p-1.5 transition-colors ${!responseId ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-white/5"}`}
+            >
+              <Share2 size={15} />
+            </button>
+            <Popover open={isError} error={error} variant="error" align="bottom-right">
+              <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
+                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-white/5"}`}
+              >
+                <Archive size={15} />
+              </button>
+            </Popover>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 min-h-0 flex-1 overflow-y-auto scrollbar">
+        <div className="divide-y divide-white/5">
 
             {readOnly && sharedBy && (
-              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.02 }} className="px-4 py-4 border-b border-white/5">
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.02 }} className="px-1 py-4 first:pt-0">
                 <SectionTitle>Paylaşan</SectionTitle>
                 <UserCard name={sharedByName || "Bilinmiyor"} email={sharedByEmail} userId={sharedById} photoUrl={sharedByPhotoUrl} hasUser={Boolean(sharedBy?.fullName)} />
               </motion.div>
             )}
 
-            <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.03 }} className="px-4 py-4 border-b border-white/5">
+            <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.03 }} className="px-1 py-4 first:pt-0">
               <SectionTitle>Özet</SectionTitle>
               <div className="flex items-start justify-around">
                 {canReview && (
@@ -226,7 +227,7 @@ export function ResponseActions({ response, readOnly = false }) {
               </div>
             </motion.div>
 
-            <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.06 }} className="px-4 py-4 border-b border-white/5">
+            <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.06 }} className="px-1 py-4 first:pt-0">
               <SectionTitle>Yanıt Sahibi</SectionTitle>
               <UserCard name={submitterName} email={submitterEmail} userId={submitterId} photoUrl={submitterPhotoUrl} hasUser={Boolean(response.user?.fullName)}/>
             </motion.div>
@@ -234,7 +235,7 @@ export function ResponseActions({ response, readOnly = false }) {
             {canReview && (
               <AnimatePresence mode="wait" initial={false}>
                 {showReviewDetails ? (
-                  <motion.div key="review" {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }} className="px-4 py-4 border-b border-white/5">
+                  <motion.div key="review" {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }} className="px-1 py-4 first:pt-0">
                     <div className="flex items-center justify-between mb-3">
                       <SectionTitle>İnceleyen</SectionTitle>
                       <div className="flex items-center gap-1 text-3xs text-neutral-400">
@@ -246,16 +247,16 @@ export function ResponseActions({ response, readOnly = false }) {
                     <UserCard name={reviewerName} email={reviewerEmail} userId={reviewerId} photoUrl={reviewerPhotoUrl} hasUser={Boolean(response.reviewer?.fullName)} size="small"/>
 
                     {reviewDescription && (
-                      <div className="mt-3 rounded-lg border border-white/10 bg-neutral-900/40 p-3">
-                        <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-1">Not</p>
+                      <div className="mt-3 rounded-lg border border-white/10 bg-white/3 p-3">
+                        <p className="text-3xs font-medium text-neutral-500 mb-1">Not</p>
                         <p className="text-2xs text-neutral-200 whitespace-pre-wrap leading-relaxed">{reviewDescription}</p>
                       </div>
                     )}
 
                     {isArchived && (
-                      <div className="mt-3 rounded-lg border border-white/10 bg-neutral-900/40 p-3">
+                      <div className="mt-3 rounded-lg border border-white/10 bg-white/3 p-3">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Arşivleyen</p>
+                          <p className="text-3xs font-medium text-neutral-500">Arşivleyen</p>
                           <div className="flex items-center gap-1 text-3xs text-neutral-400">
                             <Clock size={10} className="shrink-0" />
                             <span className="truncate">{archivedAt ? formatDateTime(archivedAt) : "Arşivlendi"}</span>
@@ -269,14 +270,14 @@ export function ResponseActions({ response, readOnly = false }) {
 
                     {canEditReview && (
                       <button type="button" onClick={() => setIsEditing(true)} aria-label="Durumu değiştir" title="Durumu değiştir"
-                        className="mt-3 w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-2xs font-semibold uppercase tracking-[0.18em] text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
+                        className="mt-3 w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-2xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
                       >
                         <PencilLine size={15} className="mx-auto" />
                       </button>
                     )}
                   </motion.div>
                 ) : canEditReview ? (
-                  <motion.div key="edit" {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }} className="px-4 py-4 border-b border-white/5">
+                  <motion.div key="edit" {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }} className="px-1 py-4 first:pt-0">
                     <SectionTitle>Değerlendirme</SectionTitle>
 
                     <AnimatePresence mode="wait" initial={false}>
@@ -305,7 +306,7 @@ export function ResponseActions({ response, readOnly = false }) {
                           ) : actionState === "success" ? (
                             <Check size={16} className="mx-auto" />
                           ) : (
-                            <span className="text-2xs font-semibold uppercase tracking-[0.18em]">
+                            <span className="text-2xs font-medium">
                               X
                             </span>
                           )}
@@ -314,7 +315,7 @@ export function ResponseActions({ response, readOnly = false }) {
                     </AnimatePresence>
 
                     <motion.div layout className="mt-4">
-                      <label className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500 mb-1.5 block">
+                      <label className="text-3xs font-medium text-neutral-500 mb-1.5 block">
                         Açıklama
                       </label>
                       <textarea rows={3} placeholder="Açıklama ekle..." value={note} onChange={(event) => setNote(event.target.value)}
@@ -322,7 +323,7 @@ export function ResponseActions({ response, readOnly = false }) {
                       />
                       {reviewedAt && (
                         <button type="button" onClick={() => { setIsEditing(false); setNote(reviewDescription); }} aria-label="Değişiklikten vazgeç" title="Değişiklikten vazgeç"
-                          className="mt-2 inline-flex items-center justify-center rounded-lg border border-white/10 bg-neutral-900/60 px-2 py-1 text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
+                          className="mt-2 inline-flex items-center justify-center rounded-lg border border-white/10 bg-neutral-900/60 px-2 py-1 text-3xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
                         >
                           <Undo2 size={14} />
                         </button>
@@ -333,7 +334,6 @@ export function ResponseActions({ response, readOnly = false }) {
               </AnimatePresence>
             )}
 
-          </div>
         </div>
       </div>
 
