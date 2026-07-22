@@ -58,7 +58,7 @@ export function DisplayFormLongText({ question, questionNumber, description, req
 
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question}{" "} {required && <span className="ml-1 text-xs text-red-200/70">*</span>}
+              {question || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-xs text-red-200/70">*</span>}
             </p>
             {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
