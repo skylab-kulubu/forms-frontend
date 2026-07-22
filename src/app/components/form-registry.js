@@ -10,8 +10,9 @@ import { CreateFormSlider, DisplayFormSlider } from "@/app/components/form-compo
 import { CreateFormMatrix, DisplayFormMatrix } from "@/app/components/form-components/FormMatrix";
 import { CreateFormToggle, DisplayFormToggle } from "@/app/components/form-components/FormToggle";
 import { CreateFormSeparator, DisplayFormSeparator } from "@/app/components/form-components/FormSeparator";
+import { CreateFormRepeater, DisplayFormRepeater } from "@/app/components/form-components/FormRepeater";
 
-import { Type, AlignLeft, ChevronsUpDown, ListChecks, Calendar, Clock, Paperclip, Link, SlidersHorizontal, Grid3X3, ToggleRight, SeparatorHorizontal } from "lucide-react";
+import { Type, AlignLeft, ChevronsUpDown, ListChecks, Calendar, Clock, Paperclip, SlidersHorizontal, Grid3X3, ToggleRight, SeparatorHorizontal } from "lucide-react";
 
 export const REGISTRY = {
   short_text: {
@@ -85,6 +86,16 @@ export const REGISTRY = {
     svg: "/assets/components/separator.svg",
     defaults: { title: "", description: "" },
     Create: CreateFormSeparator, Display: DisplayFormSeparator
+  },
+  repeater: {
+    label: "Tekrarlanan Grup",
+    defaults: {
+      question: "", description: "", required: false,
+      fields: [
+        { id: "f-1", type: "short_text", props: { question: "İsim", description: "", required: false, inputType: "name" } }
+      ]
+    },
+    Create: CreateFormRepeater, Display: DisplayFormRepeater
   }
 };
 
@@ -97,7 +108,6 @@ export const COMPONENTS = [
   { type: "date", label: "Tarih", svg: "/assets/components/date-picker.svg", icon: Calendar },
   { type: "time", label: "Saat", svg: "/assets/components/time-picker.svg", icon: Clock },
   { type: "file", label: "Dosya", svg: "/assets/components/file-upload.svg", icon: Paperclip },
-  { type: "link", label: "Bağlantı", svg: "/assets/components/link.svg", icon: Link },
   { type: "slider", label: "Aralık (Slider)", svg: "/assets/components/slider.svg", icon: SlidersHorizontal },
   { type: "matrix", label: "Matris Tablo", svg: "/assets/components/matrix.svg", icon: Grid3X3 },
   { type: "separator", label: "Ayıraç", svg: "/assets/components/separator.svg", icon: SeparatorHorizontal },

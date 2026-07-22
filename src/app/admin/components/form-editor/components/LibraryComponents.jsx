@@ -2,7 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, ChevronsUpDown, GripVertical, Layers, Plus, Search } from "lucide-react";
+import { CheckCircle2, ChevronsUpDown, GripVertical, Layers, Plus, Rows3, Search } from "lucide-react";
 import { COMPONENTS } from "@/app/components/form-registry";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import SearchPicker from "@/app/components/utils/SearchPicker";
@@ -75,8 +75,29 @@ function GroupPicker({ onGroupSelect }) {
     );
 }
 
+function RepeaterAddButton({ onSelect }) {
+    const [added, setAdded] = useState(false);
+
+    const handleClick = () => {
+        onSelect?.({ type: "repeater" });
+        setAdded(true);
+        setTimeout(() => setAdded(false), 800);
+    };
+
+    return (
+        <button type="button" onClick={handleClick}
+            className={`relative flex w-full items-center rounded-lg border pl-8 pr-3 py-2 text-left text-xs transition focus:outline-none ${added ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-neutral-900/60 text-neutral-400 hover:bg-white/5 focus:border-skylab-400/50"}`}
+        >
+            <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500">
+                {added ? <CheckCircle2 size={13} className="text-skylab-300" /> : <Rows3 size={13} />}
+            </span>
+            {added ? "Grup eklendi" : "Tekrarlanan grup ekle..."}
+        </button>
+    );
+}
+
 const CATEGORIES = [
-    { label: "Metin", types: ["short_text", "long_text", "link"] },
+    { label: "Metin", types: ["short_text", "long_text"] },
     { label: "Seçim", types: ["toggle", "combobox", "multi_choice", "slider", "matrix"] },
     { label: "Tarih & Saat", types: ["date", "time"] },
     { label: "Diğer", types: ["file", "separator"] },
@@ -87,9 +108,12 @@ export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect }) 
 
     if (layout === "drawer") {
         return (
-            <div>
-                {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
-                <div className="grid grid-cols-1 gap-2 p-2 space-y-1">
+            <div className="flex h-full min-h-0 flex-col">
+                <div className="flex flex-col gap-2 px-2 pt-2 shrink-0">
+                    {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
+                    <RepeaterAddButton onSelect={onSelect} />
+                </div>
+                <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 space-y-1 overflow-y-auto overflow-x-hidden scrollbar p-2">
                     {COMPONENTS.map((component) => (
                         <LibraryItem key={component.type} item={component} layout={layout} onSelect={onSelect} />
                     ))}
@@ -108,8 +132,8 @@ export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect }) 
     })).filter((section) => section.items.length > 0);
 
     return (
-        <div>
-            <div className="flex flex-col gap-1.5 px-2 pt-2">
+        <div className="flex h-full min-h-0 flex-col">
+            <div className="flex flex-col gap-1.5 px-2 pt-2 shrink-0">
                 <div className="relative">
                     <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
                     <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Bileşen ara..."
@@ -117,8 +141,9 @@ export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect }) 
                     />
                 </div>
                 {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
+                <RepeaterAddButton onSelect={onSelect} />
             </div>
-            <div className="flex flex-col gap-4 p-2">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar p-2">
                 {sections.length === 0 ? (
                     <p className="px-1 py-4 text-center text-2xs text-neutral-600">Eşleşen bileşen yok.</p>
                 ) : (
@@ -196,7 +221,16 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
                 <GripVertical size={12} />
             </div>
             <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg">
-                <Image src={item.svg} alt={item.label} width={400} height={200} className="pointer-events-none block h-auto w-full select-none" />
+                {item.svg ? (
+                    <Image src={item.svg} alt={item.label} width={400} height={200} className="pointer-events-none block h-auto w-full select-none" />
+                ) : (
+                    <div className="pointer-events-none flex items-center gap-2.5 rounded-lg border border-white/10 bg-neutral-900 p-3 select-none">
+                        <div className="grid size-6 shrink-0 place-items-center rounded-md border border-white/10 bg-white/5 text-neutral-400">
+                            <item.icon size={14} />
+                        </div>
+                        <span className="text-xs font-medium text-neutral-300">{item.label}</span>
+                    </div>
+                )}
                 <AnimatePresence>
                     {justAdded && (
                         <motion.div key="added-flash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

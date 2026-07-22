@@ -6,6 +6,7 @@ import { BookOpen, ChevronsUpDown, GraduationCap, Plus, X } from "lucide-react";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
+import { CompactField } from "./CompactField";
 import SearchPicker from "@/app/components/utils/SearchPicker";
 import { useSession } from "next-auth/react";
 import { UNIVERSITIES } from "../../../data/presets/universities";
@@ -32,7 +33,7 @@ function normalizeOptions(choices) {
   });
 }
 
-export function CreateFormCombobox({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
+export function CreateFormCombobox({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
   const [choicesOpen, setChoicesOpen] = useState(false);
 
@@ -70,7 +71,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
   };
 
   return (
-    <FieldShell number={questionNumber} title="Açılır Liste" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
+    <FieldShell number={questionNumber} title="Açılır Liste" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="cb-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
@@ -81,15 +82,17 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="cb-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Açıklama
-        </label>
-        <AutoResizeTextarea id="cb-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Açıklamanızı buraya yazın."
-        />
-      </div>
+      {!compact && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="cb-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
+            Açıklama
+          </label>
+          <AutoResizeTextarea id="cb-description" {...bind("description")}
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+            placeholder="Açıklamanızı buraya yazın."
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Hazır Listeler</label>
@@ -174,7 +177,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
   );
 }
 
-export function DisplayFormCombobox({ question, questionNumber, description, required = false, choices = [], allowCustom = false, preset = null, value, onChange, missing = false }) {
+export function DisplayFormCombobox({ question, questionNumber, description, required = false, choices = [], allowCustom = false, preset = null, disableAutoFill = false, compact = false, value, onChange, missing = false }) {
   const { data: session, status } = useSession();
   const [internalValue, setInternalValue] = useState(value ?? "");
   const [open, setOpen] = useState(false);
@@ -185,14 +188,14 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
   const currentValue = value !== undefined ? (value ?? "") : internalValue;
 
   const autoValue = useMemo(() => {
-    if (status !== "authenticated" || !preset) return null;
+    if (disableAutoFill || status !== "authenticated" || !preset) return null;
     const sessionKey = SESSION_PRESET_MAP[preset];
     const sessionVal = session?.user?.[sessionKey];
     if (!sessionVal) return null;
     const found = normalized.find((o) => o.label === sessionVal);
     if (!found) return allowCustom ? sessionVal : null;
     return found.id;
-  }, [status, preset, session?.user, normalized, allowCustom]);
+  }, [disableAutoFill, status, preset, session?.user, normalized, allowCustom]);
 
   useEffect(() => {
     if (autoValue != null && onChange && value !== autoValue) {
@@ -257,6 +260,61 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
   const isAutoFilled = autoValue != null && currentValue === autoValue;
   const displayText = selectedLabel || "Bir seçenek seçin";
 
+  const control = (
+    <>
+      <div className="relative" ref={triggerRef}>
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+          <ChevronsUpDown size={16} />
+        </span>
+        <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => !isAutoFilled && setOpen((s) => !s)}
+          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition ${isAutoFilled ? "cursor-default opacity-70" : "hover:bg-white/5 focus:ring-2 focus:ring-skylab-400/20"} ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+        >
+          <span className={currentValue ? "text-neutral-100" : "text-neutral-500"}>{displayText}</span>
+          {currentValue && !isAutoFilled && (
+            <span className="ml-2 text-neutral-400 hover:text-neutral-200" onClick={(e) => { e.stopPropagation(); clear(); }}>
+              <X size={16} />
+            </span>
+          )}
+        </button>
+
+        <AnimatePresence>
+          {open && (
+            <SearchPicker items={pickerItems} itemsPerPage={5} activeItemId={currentValue}
+              getItemId={(item) => item.id} onSelect={handleSelect} searchValue={query} onSearchChange={setQuery}
+              autoFocus={true} className="w-full" showClear={!!currentValue} onClear={() => { clear(); setOpen(false); }}
+              renderItem={(item, { active, onSelect }) => {
+                if (item.isCustomAction) {
+                  return (
+                    <button type="button" onClick={onSelect}
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-skylab-300/80"}`}
+                    >
+                      <Plus size={14} className="opacity-70" />
+                      <span>
+                        Yeni oluştur: <span className="font-semibold">"{item.label}"</span>
+                      </span>
+                    </button>
+                  );
+                }
+                return (
+                  <button type="button" onClick={onSelect}
+                    className={`block w-full text-left px-3 py-2 text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              }}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+      <input type="hidden" name="combobox" value={currentValue} aria-required={required} />
+    </>
+  );
+
+  if (compact) {
+    return <CompactField question={question} required={required}>{control}</CompactField>;
+  }
+
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
@@ -274,53 +332,8 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
           </div>
         </div>
 
-        <div className="relative mt-3" ref={triggerRef}>
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-            <ChevronsUpDown size={16} />
-          </span>
-          <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => !isAutoFilled && setOpen((s) => !s)}
-            className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition ${isAutoFilled ? "cursor-default opacity-70" : "hover:bg-white/5 focus:ring-2 focus:ring-skylab-400/20"} ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
-          >
-            <span className={currentValue ? "text-neutral-100" : "text-neutral-500"}>{displayText}</span>
-            {currentValue && !isAutoFilled && (
-              <span className="ml-2 text-neutral-400 hover:text-neutral-200" onClick={(e) => { e.stopPropagation(); clear(); }}>
-                <X size={16} />
-              </span>
-            )}
-          </button>
+        <div className="mt-3">{control}</div>
 
-          <AnimatePresence>
-            {open && (
-              <SearchPicker items={pickerItems} itemsPerPage={5} activeItemId={currentValue}
-                getItemId={(item) => item.id} onSelect={handleSelect} searchValue={query} onSearchChange={setQuery}
-                autoFocus={true} className="w-full" showClear={!!currentValue} onClear={() => { clear(); setOpen(false); }}
-                renderItem={(item, { active, onSelect }) => {
-                  if (item.isCustomAction) {
-                    return (
-                      <button type="button" onClick={onSelect}
-                        className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-skylab-300/80"}`}
-                      >
-                        <Plus size={14} className="opacity-70" />
-                        <span>
-                          Yeni oluştur: <span className="font-semibold">"{item.label}"</span>
-                        </span>
-                      </button>
-                    );
-                  }
-                  return (
-                    <button type="button" onClick={onSelect}
-                      className={`block w-full text-left px-3 py-2 text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
-                    >
-                      {item.label}
-                    </button>
-                  );
-                }}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-
-        <input type="hidden" name="combobox" value={currentValue} aria-required={required} />
         {isAutoFilled ? <span className="px-0.5 text-2xs text-neutral-500 mt-1">Oturumunuzdan otomatik dolduruldu</span> : required && <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>}
       </div>
     </div>

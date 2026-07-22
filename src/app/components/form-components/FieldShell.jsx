@@ -5,7 +5,7 @@ import { GitBranch } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConditionSelector } from "../../admin/components/form-editor/components/ConditionSelector";
 
-export function FieldShell({ number, title, required, onRequiredChange, children, condition, onConditionChange, availableFields, hideRequired = false }) {
+export function FieldShell({ number, title, required, onRequiredChange, children, condition, onConditionChange, availableFields, hideRequired = false, compact = false }) {
   const [showLogic, setShowLogic] = useState(false);
   const [isOverflowVisible, setIsOverflowVisible] = useState(false);
 
@@ -33,6 +33,10 @@ export function FieldShell({ number, title, required, onRequiredChange, children
       setIsOverflowVisible(false);
     }
   };
+
+  if (compact) {
+    return <div className="flex flex-col gap-3">{children}</div>;
+  }
 
   return (
     <div className={`mx-auto w-full max-w-2xl rounded-xl border shadow-lg shadow-black/20 transition-all duration-300 group relative ${showLogic ? "z-20" : "z-0"}

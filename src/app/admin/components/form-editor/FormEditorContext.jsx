@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useReducer, useMemo, useCallback, useRef } from "react";
+import { migrateSchema } from "@/app/components/form-migrate";
 
 const MAX_HISTORY = 20;
 const HISTORY_DEBOUNCE_MS = 800;
@@ -34,7 +35,7 @@ function coreReducer(state, action) {
             return {
                 ...state,
                 ...action.payload,
-                schema: Array.isArray(action.payload.schema) ? action.payload.schema : [],
+                schema: migrateSchema(action.payload.schema),
                 editors: Array.isArray(action.payload.collaborators) ? action.payload.collaborators : [],
                 title: action.payload.title || "Yeni Form",
                 isSaved: true
@@ -57,7 +58,7 @@ function coreReducer(state, action) {
                 ...state,
                 title: action.payload.title || state.title,
                 description: action.payload.description ?? state.description,
-                schema: Array.isArray(action.payload.schema) ? action.payload.schema : state.schema,
+                schema: Array.isArray(action.payload.schema) ? migrateSchema(action.payload.schema) : state.schema,
                 allowAnonymousResponses: action.payload.allowAnonymousResponses ?? state.allowAnonymousResponses,
                 allowMultipleResponses: action.payload.allowMultipleResponses ?? state.allowMultipleResponses,
                 requiresManualReview: action.payload.requiresManualReview ?? state.requiresManualReview,

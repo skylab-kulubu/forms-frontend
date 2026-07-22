@@ -24,6 +24,7 @@ import { Drawer, DrawerContent } from "../utils/Drawer";
 import { FormPreview } from "./components/FormPreview";
 
 import { REGISTRY } from "../../../components/form-registry";
+import { migrateSchema } from "../../../components/form-migrate";
 
 function useMediaQuery(query) {
     const [matches, setMatches] = useState(() => {
@@ -424,7 +425,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
 export default function FormEditor({ initialForm = null, draft = null, onRefresh }) {
     const normalizedInitialData = initialForm ? {
         id: initialForm.id,
-        schema: initialForm.schema || [],
+        schema: migrateSchema(initialForm.schema),
         title: initialForm.title || "Yeni Form",
         description: initialForm.description || "",
         linkedFormId: initialForm.linkedForm?.id || initialForm.linkedFormId || "",

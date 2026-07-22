@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { X, Plus, ChevronsUpDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
+import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
-export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
+export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
   const [choicesOpen, setChoicesOpen] = useState(true);
 
@@ -37,7 +38,7 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
   };
 
   return (
-    <FieldShell number={questionNumber} title="Çoklu Seçim" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
+    <FieldShell number={questionNumber} title="Çoklu Seçim" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="mc-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
@@ -48,15 +49,17 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="mc-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Açıklama
-        </label>
-        <AutoResizeTextarea id="mc-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Açıklamanızı buraya yazın."
-        />
-      </div>
+      {!compact && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="mc-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
+            Açıklama
+          </label>
+          <AutoResizeTextarea id="mc-description" {...bind("description")}
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+            placeholder="Açıklamanızı buraya yazın."
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <button type="button" onClick={() => setChoicesOpen((s) => !s)}
@@ -108,7 +111,7 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
   );
 }
 
-export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, choices = [], value, onChange, missing = false }) {
+export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, choices = [], compact = false, value, onChange, missing = false }) {
   const normalized = choices.map((choice, idx) => {
     if (typeof choice === "string") {
       return { id: String(idx), label: choice };
@@ -119,6 +122,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
   const [internalValue, setInternalValue] = useState(Array.isArray(value) ? value : []);
   const currentValue = value !== undefined ? (Array.isArray(value) ? value : []) : internalValue;
   const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
+  const instanceId = useId();
 
   const commit = (next) => {
     if (onChange) {
@@ -133,6 +137,30 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
     const next = exists ? currentValue.filter((v) => v !== id) : [...currentValue, id];
     commit(next);
   };
+
+  const choiceItems = normalized.map((choice, idx) => {
+    const id = `mc-${instanceId}-${idx}-${choice.id}`;
+    const checked = currentValue.includes(choice.id);
+    return (
+      <label key={id} htmlFor={id}
+        className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`}
+      >
+        <input id={id} name="multi_choice" type="checkbox" aria-required={required}
+          checked={checked} onChange={() => toggle(choice.id)}
+          className="checkbox shrink-0"
+        />
+        <span className="text-sm text-neutral-200">{choice.label}</span>
+      </label>
+    );
+  });
+
+  if (compact) {
+    return (
+      <CompactField question={question} required={required}>
+        <div className="flex flex-col gap-2">{choiceItems}</div>
+      </CompactField>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
@@ -153,21 +181,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
         </div>
 
         <div className="mt-3 flex flex-col gap-2">
-          {normalized.map((choice, idx) => {
-            const id = `mc_${idx}_${choice.id}`;
-            const checked = currentValue.includes(choice.id);
-            return (
-              <label key={id} htmlFor={id}
-                className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`}
-              >
-                <input id={id} name="multi_choice" type="checkbox" aria-required={required}
-                  checked={checked} onChange={() => toggle(choice.id)}
-                  className="checkbox shrink-0"
-                />
-                <span className="text-sm text-neutral-200">{choice.label}</span>
-              </label>
-            );
-          })}
+          {choiceItems}
         </div>
 
         {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>}

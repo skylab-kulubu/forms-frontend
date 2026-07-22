@@ -3,13 +3,14 @@
 import { useState, useRef } from "react";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
+import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
-export function CreateFormLongText({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
+export function CreateFormLongText({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
   const {prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
-    <FieldShell number={questionNumber} title="Uzun Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
+    <FieldShell number={questionNumber} title="Uzun Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="short-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
@@ -20,20 +21,22 @@ export function CreateFormLongText({ questionNumber, props, onPropsChange, readO
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="short-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Açıklama
-        </label>
-        <AutoResizeTextarea id="short-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Açıklamanızı buraya yazın."
-        />
-      </div>
+      {!compact && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="short-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
+            Açıklama
+          </label>
+          <AutoResizeTextarea id="short-description" {...bind("description")}
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+            placeholder="Açıklamanızı buraya yazın."
+          />
+        </div>
+      )}
     </FieldShell>
   );
 }
 
-export function DisplayFormLongText({ question, questionNumber, description, required = false, value, onChange, missing = false }) {
+export function DisplayFormLongText({ question, questionNumber, description, required = false, compact = false, value, onChange, missing = false }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
   const currentValue = value !== undefined ? value : internalValue;
   const handleChange = onChange !== undefined ? onChange : (e) => setInternalValue(e.target.value);
@@ -45,6 +48,19 @@ export function DisplayFormLongText({ question, questionNumber, description, req
     textarea.style.height = "auto";
     textarea.style.height = textarea.scrollHeight + "px";
   };
+
+  const control = (
+    <textarea name="long_text" rows={3} aria-required={required}
+      value={currentValue} ref={textareaRef}
+      onChange={handleChange} onInput={handleInput}
+      placeholder="Cevabınızı buraya yazın."
+      className={`block overflow-hidden w-full resize-y rounded-lg border bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+    />
+  );
+
+  if (compact) {
+    return <CompactField question={question} required={required}>{control}</CompactField>;
+  }
 
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
@@ -64,12 +80,7 @@ export function DisplayFormLongText({ question, questionNumber, description, req
           </div>
         </div>
 
-        <textarea name="long_text" rows={3} aria-required={required}
-          value={currentValue} ref={textareaRef}
-          onChange={handleChange} onInput={handleInput}
-          placeholder="Cevabınızı buraya yazın."
-          className={`block overflow-hidden w-full resize-y rounded-lg border bg-neutral-900/60 px-3 py-2 mt-3 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
-        />
+        <div className="mt-3">{control}</div>
 
         {required && (
           <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>

@@ -5,6 +5,7 @@ import { useDeleteResponseDraftMutation } from "@/lib/hooks/useDraft";
 import { useResponseDraftAutoSave } from "./useResponseDraftAutoSave";
 import { FORM_ACCESS_STATUS } from "../../FormStatusHandler";
 import { getVisibleFields } from "../components/conditionChecker";
+import { migrateSchema } from "@/app/components/form-migrate";
 
 function getSubmissionState(status) {
   switch (status) {
@@ -120,7 +121,7 @@ export function useFormDisplayer(form, step, draft) {
     }
   }, [draft]);
 
-  const schema = Array.isArray(state.form?.schema) ? state.form.schema : [];
+  const schema = useMemo(() => migrateSchema(state.form?.schema), [state.form?.schema]);
 
   const { lastSavedAt } = useResponseDraftAutoSave(
     state.form?.id, state.values, schema, startTimeRef,

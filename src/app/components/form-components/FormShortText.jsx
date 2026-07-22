@@ -5,14 +5,17 @@ import { useSession } from "next-auth/react";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { Type, Mail, Phone, Hash, UserRound } from "lucide-react";
+import { Type, Mail, Phone, Hash, UserRound, Link as LinkIcon } from "lucide-react";
+import { LinkAnswerInput } from "./FormLink";
+import { CompactField } from "./CompactField";
 
 const INPUT_TYPES = [
   { id: "text", label: "Düz Metin", icon: Type, placeholder: "Yanıtınızı yazın." },
   { id: "name", label: "İsim", icon: UserRound, placeholder: "Adınızı yazın." },
   { id: "email", label: "E-Posta", icon: Mail, placeholder: "ornek@mail.com" },
   { id: "phone", label: "Telefon", icon: Phone, placeholder: "+90 512 345 67 89" },
-  { id: "number", label: "Sayı", icon: Hash, placeholder: "Sayı girin." }
+  { id: "number", label: "Sayı", icon: Hash, placeholder: "Sayı girin." },
+  { id: "link", label: "Bağlantı", icon: LinkIcon, placeholder: "https://ornek.com" }
 ];
 
 function normalizeName(name) {
@@ -20,25 +23,27 @@ function normalizeName(name) {
   return name.trim().split(/\s+/).map(w => w.charAt(0).toLocaleUpperCase("tr-TR") + w.slice(1).toLocaleLowerCase("tr-TR")).join(" ");
 }
 
-export function CreateFormShortText({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
+export function CreateFormShortText({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
   const currentType = prop.inputType || "text";
 
   return (
-    <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
+    <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
         <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Sorunuzu buraya yazın." />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
-        <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Açıklamanızı buraya yazın." />
-      </div>
+      {!compact && (
+        <div className="flex flex-col gap-1.5">
+          <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
+          <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Açıklamanızı buraya yazın." />
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5 pt-2">
         <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Geçerli Veri Tipi</label>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {INPUT_TYPES.map((type) => {
             const Icon = type.icon;
             const isActive = currentType === type.id;
@@ -53,17 +58,35 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
           })}
         </div>
       </div>
+
+      {currentType === "link" && (
+        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
+          <span className="text-xs text-neutral-300">Birden fazla bağlantıya izin ver</span>
+          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+            <button type="button" aria-pressed={!prop.allowMultiple} onClick={() => toggle("allowMultiple", false)}
+              className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!prop.allowMultiple ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+            >
+              Hayır
+            </button>
+            <button type="button" aria-pressed={prop.allowMultiple} onClick={() => toggle("allowMultiple", true)}
+              className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${prop.allowMultiple ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
+            >
+              Evet
+            </button>
+          </div>
+        </div>
+      )}
     </FieldShell>
   );
 }
 
-export function DisplayFormShortText({ question, questionNumber, description, required = false, inputType = "text", value, onChange, missing = false }) {
+export function DisplayFormShortText({ question, questionNumber, description, required = false, inputType = "text", allowMultiple = false, disableAutoFill = false, compact = false, value, onChange, missing = false }) {
   const { data: session, status } = useSession();
   const isAuthed = status === "authenticated";
 
-  const autoFilled = isAuthed && inputType === "name" && session?.user?.fullName ? normalizeName(session.user.fullName) : null;
+  const autoFilled = !disableAutoFill && isAuthed && inputType === "name" && session?.user?.fullName ? normalizeName(session.user.fullName) : null;
 
-  const autoDefault = isAuthed && inputType === "email" && session?.user?.email ? session.user.email : null;
+  const autoDefault = !disableAutoFill && isAuthed && inputType === "email" && session?.user?.email ? session.user.email : null;
 
   const [internalValue, setInternalValue] = useState(value || "");
   const [wasAutoFilled, setWasAutoFilled] = useState(false);
@@ -93,6 +116,26 @@ export function DisplayFormShortText({ question, questionNumber, description, re
     else setInternalValue(next);
   };
 
+  const textControl = (
+    <div className="relative flex items-center w-full">
+      <div className="absolute left-3.5 text-neutral-500 pointer-events-none flex items-center justify-center">
+        <Icon size={16} strokeWidth={2} />
+      </div>
+
+      <input type={htmlInputType} value={autoFilled || currentValue} onChange={commit} readOnly={isReadOnly} placeholder={placeholderText}
+        className={`block w-full rounded-lg border ${inputBorderClass} bg-neutral-900/60 pl-10 pr-4 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition focus:ring-2 ${isReadOnly ? "cursor-default opacity-70" : ""}`}
+      />
+    </div>
+  );
+
+  const control = inputType === "link"
+    ? <LinkAnswerInput allowMultiple={!!allowMultiple} required={required} value={value} onChange={onChange} missing={missing} />
+    : textControl;
+
+  if (compact) {
+    return <CompactField question={question} required={required}>{control}</CompactField>;
+  }
+
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
@@ -111,18 +154,16 @@ export function DisplayFormShortText({ question, questionNumber, description, re
           </div>
         </div>
 
-        <div className="mt-3 flex flex-col gap-2 w-full">
-          <div className="relative flex items-center w-full">
-            <div className="absolute left-3.5 text-neutral-500 pointer-events-none flex items-center justify-center">
-              <Icon size={16} strokeWidth={2} />
-            </div>
-
-            <input type={htmlInputType} value={autoFilled || currentValue} onChange={commit} readOnly={isReadOnly} placeholder={placeholderText}
-              className={`block w-full rounded-lg border ${inputBorderClass} bg-neutral-900/60 pl-10 pr-4 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition focus:ring-2 ${isReadOnly ? "cursor-default opacity-70" : ""}`}
-            />
+        {inputType === "link" ? (
+          <div className="mt-3 w-full">
+            {control}
           </div>
-          {(isReadOnly || wasAutoFilled) && <span className="px-0.5 text-2xs text-neutral-500">Oturumunuzdan otomatik dolduruldu</span>}
-        </div>
+        ) : (
+          <div className="mt-3 flex flex-col gap-2 w-full">
+            {control}
+            {(isReadOnly || wasAutoFilled) && <span className="px-0.5 text-2xs text-neutral-500">Oturumunuzdan otomatik dolduruldu</span>}
+          </div>
+        )}
 
         {required && !isReadOnly && <span className="px-0.5 text-2xs text-neutral-500 mt-1.5">Zorunlu alan</span>}
       </div>

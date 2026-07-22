@@ -1,6 +1,8 @@
 "use client";
 
 import { REGISTRY } from "@/app/components/form-registry";
+import { formatFieldAnswer } from "@/app/components/form-answer-format";
+import { serializeRepeater, isRepeaterComplete } from "@/app/components/form-components/FormRepeater";
 import { FormDisplayerHeader, FormRespondentBadge } from "./components/FormDisplayerComponents";
 import { FormResponseStatus } from "./components/FormResponseStatus";
 import { useFormDisplayer } from "./hooks/useFormDisplayer";
@@ -75,6 +77,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
           let isEmpty = val === undefined || val === null;
           if (!isEmpty) {
             if (field.type === "toggle") isEmpty = val !== true;
+            else if (field.type === "repeater") isEmpty = !isRepeaterComplete(field.props?.fields, val);
             else if (typeof val === "string") isEmpty = val.trim() === "";
             else if (Array.isArray(val)) isEmpty = val.length === 0;
             else if (field.type === "matrix" && typeof val === "object") {
@@ -97,54 +100,10 @@ export default function FormDisplayer({ form, step, draft = null }) {
       }
 
       const formattedResponses = visibleFields.filter((field) => field.type !== "separator").map((field) => {
-        let rawValue = formValues[field.id];
-        if (rawValue === undefined || rawValue === null) rawValue = "";
-        let finalAnswer = "";
-
-        switch (field.type) {
-          case "multi_choice":
-            if (Array.isArray(rawValue) && field.props?.choices) {
-              const choices = field.props.choices;
-              finalAnswer = rawValue.map((idx) => {
-                const numericIdx = Number(idx);
-                if (!isNaN(numericIdx) && choices[numericIdx]) return choices[numericIdx];
-                return idx;
-              }).join(", ");
-            }
-            else finalAnswer = Array.isArray(rawValue) ? rawValue.join(", ") : String(rawValue);
-            break;
-
-          case "combobox":
-            if (field.props?.choices) {
-              const numericIdx = Number(rawValue);
-              if (rawValue !== "" && !isNaN(numericIdx) && field.props.choices[numericIdx]) finalAnswer = field.props.choices[numericIdx];
-              else finalAnswer = String(rawValue);
-            }
-            else finalAnswer = String(rawValue);
-            break;
-
-          case "file":
-            finalAnswer = rawValue ? String(rawValue) : "";
-            break;
-
-          case "toggle":
-            if (rawValue === true) {
-              finalAnswer = field.props?.trueLabel || "Evet";
-            } else {
-              finalAnswer = field.props?.falseLabel || "Hayır";
-            }
-            break;
-
-          case "matrix":
-            if (typeof rawValue === "object" && rawValue !== null) finalAnswer = JSON.stringify(rawValue);
-            else finalAnswer = String(rawValue);
-            break;
-
-          default:
-            if (Array.isArray(rawValue)) finalAnswer = rawValue.join(", ");
-            else finalAnswer = String(rawValue);
-            break;
-        }
+        const rawValue = formValues[field.id];
+        const finalAnswer = field.type === "repeater"
+          ? serializeRepeater(field.props?.fields, rawValue)
+          : formatFieldAnswer(field, rawValue);
         return { id: field.id, type: field.type, question: field.props?.question || "", answer: finalAnswer };
       });
 

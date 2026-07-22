@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, createElement } from "react";
 import { Link as LinkIcon, Github, Linkedin, Instagram, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FieldShell } from "./FieldShell";
@@ -24,6 +24,133 @@ function getProviderIcon(input) {
   if (h.includes("linkedin.com")) return Linkedin;
   if (h.includes("instagram.com")) return Instagram;
   return LinkIcon;
+}
+
+function ProviderIcon({ input, size = 16 }) {
+  return createElement(getProviderIcon(input), { size });
+}
+
+function isValidUrl(input) {
+  if (!input || typeof input !== "string") return false;
+  let u;
+  try {
+    u = new URL(input);
+  } catch (_) {
+    try {
+      u = new URL(`http://${input}`);
+    } catch (_) {
+      return false;
+    }
+  }
+  return typeof u.hostname === "string" && u.hostname.includes(".");
+}
+
+function SingleLinkInput({ required = false, value, onChange, missing = false }) {
+  const [internalValue, setInternalValue] = useState(value ?? "");
+  const currentValue = value !== undefined ? value : internalValue;
+  const handleChange = (e) => {
+    if (onChange) onChange({ target: { value: e.target.value } });
+    else setInternalValue(e.target.value);
+  };
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+        <ProviderIcon input={currentValue} size={16} />
+      </span>
+      <input name="link" type="url" aria-required={required}
+        value={currentValue} onChange={handleChange}
+        placeholder="https://ornek.com"
+        className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+      />
+    </div>
+  );
+}
+
+function MultiLinkInput({ required = false, value, onChange, missing = false }) {
+  const normalizeIncoming = (v) => {
+    if (Array.isArray(v)) return v;
+    if (typeof v === "string" && v.length > 0) return [v];
+    return [];
+  };
+
+  const [links, setLinks] = useState(normalizeIncoming(value));
+  const currentLinks = value !== undefined ? normalizeIncoming(value) : links;
+
+  const commit = (nextArray) => {
+    if (onChange) onChange({ target: { value: nextArray } });
+    else setLinks(nextArray);
+  };
+
+  const updateAt = (index, newVal) => {
+    const base = [...currentLinks];
+    base[index] = newVal;
+    let next = base.filter((v, i) => (i === base.length - 1 ? true : v !== ""));
+    const last = next[next.length - 1];
+    if (isValidUrl(last)) {
+      if (last !== "" && (next.length === 0 || next[next.length - 1] !== "")) {
+        next = [...next, ""];
+      }
+    }
+    while (next.length > 1 && next[next.length - 1] === "" && next[next.length - 2] === "") {
+      next.pop();
+    }
+    commit(next);
+  };
+
+  const removeAt = (index) => {
+    let next = currentLinks.filter((_, i) => i !== index);
+    if (next.length === 0 || isValidUrl(next[next.length - 1])) {
+      next = [...next, ""];
+    }
+    commit(next);
+  };
+
+  const fields = currentLinks.length === 0 ? [""] : currentLinks;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <AnimatePresence initial={false}>
+        {fields.map((v, index) => {
+          const placeholder = index === fields.length - 1 && v === "" ? "Yeni bağlantı ekleyin..." : "https://ornek.com/profil";
+          const isTrailingEmpty = index === fields.length - 1 && v === "";
+          const isMissingField = missing && index === 0 && v === "";
+
+          return (
+            <motion.div key={index} layout className="relative"
+              initial={{ opacity: 0, height: 0, y: -10 }}
+              animate={{ opacity: 1, height: "auto", y: 0 }}
+              exit={{ opacity: 0, height: 0, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                <ProviderIcon input={v} size={16} />
+              </span>
+
+              <input name="link[]" type="url" aria-required={required && index === 0}
+                value={v} onChange={(e) => updateAt(index, e.target.value)} placeholder={placeholder}
+                className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${isMissingField ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+              />
+
+              {!isTrailingEmpty && (
+                <button type="button" onClick={() => removeAt(index)} aria-label="Linki kaldır"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </motion.div>
+          );
+        })}
+      </AnimatePresence>
+      <span className="px-0.5 text-2xs text-neutral-500">Geçerli bir bağlantı girildiğinde yeni alan açılır</span>
+    </div>
+  );
+}
+
+export function LinkAnswerInput({ allowMultiple = false, required = false, value, onChange, missing = false }) {
+  return allowMultiple
+    ? <MultiLinkInput required={required} value={value} onChange={onChange} missing={missing} />
+    : <SingleLinkInput required={required} value={value} onChange={onChange} missing={missing} />;
 }
 
 export function CreateFormLink({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
@@ -71,111 +198,6 @@ export function CreateFormLink({ questionNumber, props, onPropsChange, readOnly,
 }
 
 export function DisplayFormLink({ question, questionNumber, description, required = false, allowMultiple = false, value, onChange, missing = false }) {
-  const isValidUrl = (input) => {
-    if (!input || typeof input !== "string") return false;
-    let u;
-    try {
-      u = new URL(input);
-    } catch (_) {
-      try {
-        u = new URL(`http://${input}`);
-      } catch (_) {
-        return false;
-      }
-    }
-    return typeof u.hostname === "string" && u.hostname.includes(".");
-  };
-
-  if (!allowMultiple) {
-    const [internalValue, setInternalValue] = useState(value ?? "");
-    const currentValue = value !== undefined ? value : internalValue;
-    const handleChange = (e) => {
-      if (onChange) {
-        onChange({ target: { value: e.target.value } });
-      } else {
-        setInternalValue(e.target.value);
-      }
-    };
-    const Icon = useMemo(() => getProviderIcon(currentValue), [currentValue]);
-
-    return (
-      <div className="mx-auto w-full max-w-2xl rounded-xl">
-        <div className="flex flex-col p-2 md:p-4">
-          <div className="flex gap-3">
-            {questionNumber != null && (
-              <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300 shrink-0">
-                {questionNumber}
-              </div>
-            )}
-
-            <div className="flex flex-col">
-              <p className="text-sm font-medium text-neutral-100">
-                {question || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
-              </p>
-              {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
-            </div>
-          </div>
-
-          <div className="relative mt-3">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-              <Icon size={16} />
-            </span>
-            <input name="link" type="url" aria-required={required}
-              value={currentValue} onChange={handleChange}
-              placeholder="https://ornek.com"
-              className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
-            />
-          </div>
-
-          {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>}
-        </div>
-      </div>
-    );
-  }
-
-  const normalizeIncoming = (v) => {
-    if (Array.isArray(v)) return v;
-    if (typeof v === "string" && v.length > 0) return [v];
-    return [];
-  };
-
-  const [links, setLinks] = useState(normalizeIncoming(value));
-  const currentLinks = value !== undefined ? normalizeIncoming(value) : links;
-
-  const commit = (nextArray) => {
-    if (onChange) {
-      onChange({ target: { value: nextArray } });
-    } else {
-      setLinks(nextArray);
-    }
-  };
-
-  const updateAt = (index, newVal) => {
-    const base = [...currentLinks];
-    base[index] = newVal;
-    let next = base.filter((v, i) => (i === base.length - 1 ? true : v !== ""));
-    const last = next[next.length - 1];
-    if (isValidUrl(last)) {
-      if (last !== "" && (next.length === 0 || next[next.length - 1] !== "")) {
-        next = [...next, ""];
-      }
-    }
-    while (next.length > 1 && next[next.length - 1] === "" && next[next.length - 2] === "") {
-      next.pop();
-    }
-    commit(next);
-  };
-
-  const removeAt = (index) => {
-    let next = currentLinks.filter((_, i) => i !== index);
-    if (next.length === 0 || isValidUrl(next[next.length - 1])) {
-      next = [...next, ""];
-    }
-    commit(next);
-  };
-
-  const fields = currentLinks.length === 0 ? [""] : currentLinks;
-
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
@@ -190,46 +212,12 @@ export function DisplayFormLink({ question, questionNumber, description, require
             <p className="text-sm font-medium text-neutral-100">
               {question || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
-            {description && <p className="my-1 text-xs text-neutral-400">{description}</p>}
+            {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
           </div>
         </div>
 
-        <div className="mt-3 flex flex-col gap-2">
-          <AnimatePresence initial={false}>
-            {fields.map((v, index) => {
-              const Icon = getProviderIcon(v);
-              const placeholder = index === fields.length - 1 && v === "" ? "Yeni bağlantı ekleyin..." : "https://ornek.com/profil";
-              const isTrailingEmpty = index === fields.length - 1 && v === "";
-              const isMissingField = missing && index === 0 && v === "";
-
-              return (
-                <motion.div key={index} layout className="relative"
-                  initial={{ opacity: 0, height: 0, y: -10 }}
-                  animate={{ opacity: 1, height: "auto", y: 0 }}
-                  exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                    <Icon size={16} />
-                  </span>
-                  
-                  <input name="link[]" type="url" aria-required={required && index === 0}
-                    value={v} onChange={(e) => updateAt(index, e.target.value)} placeholder={placeholder}
-                    className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${isMissingField ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
-                  />
-
-                  {!isTrailingEmpty && (
-                    <button type="button" onClick={() => removeAt(index)} aria-label="Linki kaldır"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-          <span className="px-0.5 text-2xs text-neutral-500">Geçerli bir bağlantı girildiğinde yeni alan açılır</span>
+        <div className="mt-3">
+          <LinkAnswerInput allowMultiple={allowMultiple} required={required} value={value} onChange={onChange} missing={missing} />
         </div>
 
         {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>}

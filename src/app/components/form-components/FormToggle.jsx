@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
+import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 
-export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
+export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
     const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
 
     return (
-        <FieldShell number={questionNumber} title="Anahtar" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
+        <FieldShell number={questionNumber} title="Anahtar" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
             <div className="flex flex-col gap-1.5">
                 <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
                 <AutoResizeTextarea {...bind("question")}
@@ -18,13 +19,15 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
                 />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-                <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
-                <AutoResizeTextarea {...bind("description")}
-                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
-                    placeholder="Açıklamanızı buraya yazın."
-                />
-            </div>
+            {!compact && (
+                <div className="flex flex-col gap-1.5">
+                    <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
+                    <AutoResizeTextarea {...bind("description")}
+                        className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
+                        placeholder="Açıklamanızı buraya yazın."
+                    />
+                </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
@@ -44,7 +47,7 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
     );
 }
 
-export function DisplayFormToggle({ question, questionNumber, description, required = false, trueLabel = "Evet", falseLabel = "Hayır", value, onChange, missing = false }) {
+export function DisplayFormToggle({ question, questionNumber, description, required = false, trueLabel = "Evet", falseLabel = "Hayır", compact = false, value, onChange, missing = false }) {
     const [internalValue, setInternalValue] = useState(value === true);
     const currentValue = value !== undefined ? (value === true) : internalValue;
     const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
@@ -63,6 +66,26 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
             setInternalValue(next);
         }
     };
+
+    const control = (
+        <div onClick={handleToggle}
+            className={`flex items-center justify-between gap-4 w-full rounded-lg border ${optionBorderClass} bg-neutral-900/60 px-4 py-1.5 cursor-pointer transition-colors hover:bg-white/4`}
+        >
+            <span className={`text-sm font-medium select-none transition-colors ${currentValue ? "text-skylab-300" : "text-neutral-400"}`}>
+                {currentValue ? trueLabel : falseLabel}
+            </span>
+
+            <button type="button" role="switch" aria-checked={currentValue}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-lg border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${currentValue ? 'bg-skylab-400' : 'bg-neutral-700'}`}
+            >
+                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-md bg-white shadow ring-0 transition duration-200 ease-in-out ${currentValue ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+            </button>
+        </div>
+    );
+
+    if (compact) {
+        return <CompactField question={question} required={required}>{control}</CompactField>;
+    }
 
     return (
         <div className="mx-auto w-full max-w-2xl rounded-xl">
@@ -83,19 +106,7 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
                 </div>
 
                 <div className="mt-3 flex flex-col gap-2">
-                    <div onClick={handleToggle}
-                        className={`flex items-center justify-between gap-4 w-full rounded-lg border ${optionBorderClass} bg-neutral-900/60 px-4 py-1.5 cursor-pointer transition-colors hover:bg-white/4`}
-                    >
-                        <span className={`text-sm font-medium select-none transition-colors ${currentValue ? "text-skylab-300" : "text-neutral-400"}`}>
-                            {currentValue ? trueLabel : falseLabel}
-                        </span>
-
-                        <button type="button" role="switch" aria-checked={currentValue}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-lg border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${currentValue ? 'bg-skylab-400' : 'bg-neutral-700'}`}
-                        >
-                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-md bg-white shadow ring-0 transition duration-200 ease-in-out ${currentValue ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
-                        </button>
-                    </div>
+                    {control}
                 </div>
 
                 {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1.5">Devam etmek için onaylamalısınız</span>}

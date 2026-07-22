@@ -5,6 +5,7 @@ import { Clock, X } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
+import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import TimePicker from "../utils/TimePicker";
 
@@ -37,11 +38,11 @@ function clampStep(minute, step) {
   return Math.max(0, Math.min(59, r));
 }
 
-export function CreateFormTimePicker({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
+export function CreateFormTimePicker({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
   const {prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
 
   return (
-    <FieldShell number={questionNumber} title="Zaman Seçici" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
+    <FieldShell number={questionNumber} title="Zaman Seçici" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="tp-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
@@ -52,20 +53,22 @@ export function CreateFormTimePicker({ questionNumber, props, onPropsChange, rea
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="tp-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Açıklama
-        </label>
-        <AutoResizeTextarea id="tp-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Açıklamanızı buraya yazın."
-        />
-      </div>
+      {!compact && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="tp-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
+            Açıklama
+          </label>
+          <AutoResizeTextarea id="tp-description" {...bind("description")}
+            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+            placeholder="Açıklamanızı buraya yazın."
+          />
+        </div>
+      )}
     </FieldShell>
   );
 }
 
-export function DisplayFormTimePicker({ question, questionNumber, description, required = false, value, onChange, missing = false }) {
+export function DisplayFormTimePicker({ question, questionNumber, description, required = false, compact = false, value, onChange, missing = false }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
   const [open, setOpen] = useState(false);
   const triggerRef = useRef(null);
@@ -118,6 +121,43 @@ export function DisplayFormTimePicker({ question, questionNumber, description, r
 
   const display = parsed ? toDisplay(parsed) : "Saat seçin";
 
+  const control = (
+    <>
+      <div className="relative" ref={triggerRef}>
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+          <Clock size={16} />
+        </span>
+        <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((s) => !s)}
+          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition hover:bg-white/5 focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+        >
+          <span className={parsed ? "text-neutral-100" : "text-neutral-500"}>{display}</span>
+          {parsed && (
+            <span className="ml-2 text-neutral-400 hover:text-neutral-200" onClick={(e) => { e.stopPropagation(); handleClear(); }}>
+              <X size={16} />
+            </span>
+          )}
+        </button>
+
+        <AnimatePresence>
+          {open && (
+            <TimePicker hour={tempHour} minute={tempMinute}
+              onChange={(h, m) => { setTempHour(h); setTempMinute(m); }}
+              onCancel={() => setOpen(false)}
+              onConfirm={handleApply}
+              onClear={handleClear}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
+      <input type="hidden" name="time" value={currentValue} />
+    </>
+  );
+
+  if (compact) {
+    return <CompactField question={question} required={required}>{control}</CompactField>;
+  }
+
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
@@ -135,34 +175,8 @@ export function DisplayFormTimePicker({ question, questionNumber, description, r
           </div>
         </div>
 
-        <div className="relative mt-3" ref={triggerRef}>
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-            <Clock size={16} />
-          </span>
-          <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((s) => !s)}
-            className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition hover:bg-white/5 focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
-          >
-            <span className={parsed ? "text-neutral-100" : "text-neutral-500"}>{display}</span>
-            {parsed && (
-              <span className="ml-2 text-neutral-400 hover:text-neutral-200" onClick={(e) => { e.stopPropagation(); handleClear(); }}>
-                <X size={16} />
-              </span>
-            )}
-          </button>
+        <div className="mt-3">{control}</div>
 
-          <AnimatePresence>
-            {open && (
-              <TimePicker hour={tempHour} minute={tempMinute}
-                onChange={(h, m) => { setTempHour(h); setTempMinute(m); }}
-                onCancel={() => setOpen(false)}
-                onConfirm={handleApply}
-                onClear={handleClear}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-        
-        <input type="hidden" name="time" value={currentValue} />
         {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>}
       </div>
     </div>

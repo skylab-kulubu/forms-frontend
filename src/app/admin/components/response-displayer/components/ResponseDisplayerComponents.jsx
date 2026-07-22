@@ -28,8 +28,23 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
     }
   }
 
+  let parsedGroup = null;
+  if (type === "repeater" && answer) {
+    try {
+      parsedGroup = typeof answer === "string" ? JSON.parse(answer) : answer;
+    } catch (e) {
+      console.error("Grup verisi çözülemedi:", e);
+    }
+  }
+  const groupRows = Array.isArray(parsedGroup) ? parsedGroup : null;
+  const groupColumns = groupRows && groupRows.length > 0 ? Object.keys(groupRows[0] ?? {}) : [];
+
   const answerText = formatAnswer(answer);
-  const hasAnswer = parsedMatrix ? Object.keys(parsedMatrix).length > 0 : answerText.length > 0;
+  const hasAnswer = parsedMatrix
+    ? Object.keys(parsedMatrix).length > 0
+    : type === "repeater"
+      ? groupColumns.length > 0
+      : answerText.length > 0;
 
   return (
     <li className={`py-5 first:pt-0 last:pb-0 ${className}`}>
@@ -47,10 +62,36 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
       </div>
 
       <div className="mt-3 pl-9">
-        <p className="mb-1.5 text-3xs font-medium text-neutral-500">Cevap</p>
+        <p className="mb-1.5 text-3xs font-medium text-neutral-500">
+          Cevap{type === "repeater" && groupRows && groupRows.length > 0 ? ` · ${groupRows.length} kayıt` : ""}
+        </p>
 
         {type === "file" && answerText ? (
           <FilePreview mediaId={answerText} />
+        ) : type === "repeater" && groupColumns.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {groupRows.map((row, ri) => (
+              <div key={ri} className="overflow-hidden rounded-lg border border-white/10 bg-white/3">
+                <div className="border-b border-white/5 px-3 py-1.5">
+                  <span className="text-3xs font-medium text-neutral-500">{ri + 1}. kayıt</span>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {groupColumns.map((col, ci) => {
+                    const cell = row?.[col];
+                    const text = cell == null ? "" : String(cell).trim();
+                    return (
+                      <div key={ci} className="flex gap-3 px-3 py-2">
+                        <span className="w-28 shrink-0 text-xs font-medium text-neutral-400 wrap-break-word">{col}</span>
+                        <span className={`min-w-0 flex-1 text-sm wrap-break-word whitespace-pre-wrap ${text ? "text-neutral-100" : "italic text-neutral-600"}`}>
+                          {text || "—"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : parsedMatrix && typeof parsedMatrix === "object" ? (
           <div className="overflow-hidden rounded-lg border border-white/10 bg-white/3">
             <table className="w-full text-left text-sm">
