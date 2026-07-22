@@ -91,7 +91,7 @@ export default function Breadcrumbs({ segments, labels = {}, includeRoot = true,
   const current = items?.[items.length - 1];
 
   return (
-    <nav aria-label="Breadcrumb" className={cn("text-sm text-neutral-500", className)}>
+    <nav aria-label="Breadcrumb" className={cn("min-w-0 text-sm text-neutral-500", className)}>
       {items?.length > 1 && (
         <div className="flex items-center gap-1.5 min-w-0 md:hidden">
           {prev && (
@@ -114,13 +114,18 @@ export default function Breadcrumbs({ segments, labels = {}, includeRoot = true,
         </div>
       )}
 
-      <ol role="list" className="hidden md:flex items-center">
+      <ol role="list" className="hidden min-w-0 md:flex items-center">
         {items?.map((item, idx) => {
           const isLast = idx === items.length - 1;
+          const isSecondToLast = idx === items.length - 2;
           return (
-            <li key={item.href} className="inline-flex items-center gap-1.5 min-w-0">
+            <li key={item.href} className={cn(
+              "inline-flex items-center gap-1.5",
+              isLast ? "shrink-0" : "min-w-0",
+              isSecondToLast && "shrink-6"
+            )}>
               {idx > 0 && (
-                <ChevronRight className="h-4 w-4 mt-0.5 text-neutral-300" />
+                <ChevronRight className="h-4 w-4 mt-0.5 shrink-0 text-neutral-300" />
               )}
 
               {isLast ? (
@@ -128,8 +133,8 @@ export default function Breadcrumbs({ segments, labels = {}, includeRoot = true,
                   {item.label}
                 </span>
               ) : (
-                <Link href={item.href} className="rounded-md px-1.5 py-1 transition-colors hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2">
-                  <span className="truncate">{item.label}</span>
+                <Link href={item.href} title={item.label} className="min-w-0 truncate rounded-md px-1.5 py-1 transition-colors hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2">
+                  {item.label}
                 </Link>
               )}
             </li>

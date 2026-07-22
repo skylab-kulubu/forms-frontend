@@ -3,8 +3,9 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChartColumn, Download, LayoutDashboard, LayoutList, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { ChartColumn, ChevronLeft, Download, List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
+import Tip from "./utils/Tip";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
 import FormsFilterShell, { DatabaseFilterShell } from "./utils/FormsFilterShell";
 
@@ -135,7 +136,7 @@ export function FormsHeader(toolbarProps) {
 }
 
 function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", showArchived = false, onShowArchivedChange,
-  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onRefresh, onExport, exportLoading = false
+  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onOverview, onRefresh, onExport, exportLoading = false
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
@@ -145,19 +146,28 @@ function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, s
 
   return (
     <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
+      <Tip label="Genel Bakış">
+        <ActionButton icon={ChevronLeft} onClick={onOverview} size={buttonSize} tone="header" aria-label="Genel Bakış" />
+      </Tip>
       <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Kullanıcı ara" />
       <div className="flex items-center gap-1.5 shrink-0">
         <div ref={filterButtonRef} className="relative">
-          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
-            variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
-          />
+          <Tip label={filtersLabel}>
+            <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
+              variant={filtersOpen ? "primary" : "ghost"} aria-label={filtersLabel} aria-expanded={filtersOpen}
+            />
+          </Tip>
           <ResponsesFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
             sortValue={sortValue} onSortChange={onSortChange} statusValue={statusValue} onStatusChange={onStatusChange}
             respondentValue={respondentValue} onRespondentChange={onRespondentChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange}
           />
         </div>
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Download} variant="primary" onClick={onExport} disabled={exportLoading} size={buttonSize} tone="header" title="Excel İndir" aria-label="Excel İndir" />
+        <Tip label="Yenile">
+          <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" aria-label="Yenile" />
+        </Tip>
+        <Tip label="Excel İndir">
+          <ActionButton icon={Download} variant="primary" onClick={onExport} disabled={exportLoading} size={buttonSize} tone="header" aria-label="Excel İndir" />
+        </Tip>
       </div>
     </div>
   );
@@ -176,18 +186,30 @@ export function ResponsesHeader(toolbarProps) {
   );
 }
 
-export function GroupsHeader({ searchValue = "", onSearchChange, onRefresh, onCreate, stats = { count: 0 } }) {
+function GroupsToolbar({ compact = false, searchValue = "", onSearchChange, onRefresh, onCreate }) {
+  const buttonSize = compact ? "sm" : "md";
+
   return (
-    <HeaderShell title="Bileşen Grupları" description="Bileşen grupları oluşturun ve forma hızlıca ekleyin.">
-      <SearchInput value={searchValue} onChange={onSearchChange} placeholder="Grup ara" />
+    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
+      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Grup ara" />
       <div className="flex items-center gap-1.5 shrink-0">
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size="md" tone="header" title="Yeni grup ekle" aria-label="Yeni grup ekle" />
+        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
+        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni grup ekle" aria-label="Yeni grup ekle" />
       </div>
-      <div className="ml-auto shrink-0">
-        <Stat label="Toplam Grup" value={stats.count} />
+    </div>
+  );
+}
+
+export function GroupsHeader(toolbarProps) {
+  return (
+    <>
+      <HeaderSlotPortal>
+        <GroupsToolbar compact {...toolbarProps} />
+      </HeaderSlotPortal>
+      <div className="md:hidden">
+        <GroupsToolbar {...toolbarProps} />
       </div>
-    </HeaderShell>
+    </>
   );
 }
 
@@ -238,10 +260,18 @@ function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit,
         </span>
       )}
       <div className="flex items-center gap-1.5 shrink-0">
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size={size} tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={ChartColumn} onClick={onAnalytics} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" title="Analitik" aria-label="Analitik" />
-        <ActionButton icon={LayoutList} onClick={onViewResponses} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" title="Cevaplar" aria-label="Cevaplar" />
-        <ActionButton icon={PencilLine} variant={canEdit ? "primary" : "ghost"} disabled={!canEdit} className={!canEdit ? "opacity-30 pointer-events-none" : ""} onClick={onEdit} size={size} tone="header" title="Düzenle" aria-label="Düzenle" />
+        <Tip label="Yenile">
+          <ActionButton icon={RefreshCw} onClick={onRefresh} size={size} tone="header" aria-label="Yenile" />
+        </Tip>
+        <Tip label="Analitik">
+          <ActionButton icon={ChartColumn} onClick={onAnalytics} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Analitik" />
+        </Tip>
+        <Tip label="Cevaplar">
+          <ActionButton icon={List} onClick={onViewResponses} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Cevaplar" />
+        </Tip>
+        <Tip label="Düzenle">
+          <ActionButton icon={PencilLine} variant={canEdit ? "primary" : "ghost"} disabled={!canEdit} className={!canEdit ? "opacity-30 pointer-events-none" : ""} onClick={onEdit} size={size} tone="header" aria-label="Düzenle" />
+        </Tip>
       </div>
     </div>
   );
@@ -263,17 +293,20 @@ export function OverviewHeader({ formStatus, onEdit, onViewResponses, onAnalytic
   );
 }
 
-function AnalyticsToolbar({ compact = false, onOverview, onViewResponses, onEdit, onRefresh, userRole }) {
+function AnalyticsToolbar({ compact = false, onOverview, onRefresh }) {
   const size = compact ? "sm" : "md";
-  const canView = Number(userRole) >= 1;
-  const canEdit = Number(userRole) >= 2;
 
   return (
     <div className={`flex items-center gap-1.5 ${compact ? "" : "w-full justify-end"}`}>
-      <ActionButton icon={LayoutDashboard} onClick={onOverview} size={size} tone="header" title="Genel Bakış" aria-label="Genel Bakış" />
-      <ActionButton icon={LayoutList} onClick={onViewResponses} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" title="Cevaplar" aria-label="Cevaplar" />
-      <ActionButton icon={PencilLine} disabled={!canEdit} className={!canEdit ? "opacity-30 pointer-events-none" : ""} onClick={onEdit} size={size} tone="header" title="Düzenle" aria-label="Düzenle" />
-      <ActionButton icon={RefreshCw} onClick={onRefresh} size={size} tone="header" title="Yenile" aria-label="Yenile" />
+      <Tip label="Genel Bakış">
+        <ActionButton icon={ChevronLeft} onClick={onOverview} size={size} tone="header" aria-label="Genel Bakış" />
+      </Tip>
+      <Tip label="Yenile">
+        <ActionButton icon={RefreshCw} onClick={onRefresh} size={size} tone="header" aria-label="Yenile" />
+      </Tip>
+      <Tip label="İndir">
+        <ActionButton icon={Download} disabled size={size} tone="header" aria-label="İndir" />
+      </Tip>
     </div>
   );
 }

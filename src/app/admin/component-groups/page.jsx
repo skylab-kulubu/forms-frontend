@@ -149,7 +149,7 @@ export default function ComponentGroupsPage() {
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-6">
       <GroupsHeader searchValue={searchValue} onSearchChange={setSearchValue}
-        onRefresh={() => refetch()} onCreate={() => router.push("/admin/component-groups/new-group")} stats={{ count: totalCount }}
+        onRefresh={() => refetch()} onCreate={() => router.push("/admin/component-groups/new-group")}
       />
 
       <AnimatePresence mode="wait">
@@ -175,13 +175,18 @@ export default function ComponentGroupsPage() {
                   ))}
                 </div>
               </div>
-              <Pagination current={groupsMeta.page ?? page}
-                totalPages={groupsMeta.totalPages ?? 1}
-                totalCount={totalCount}
-                pageSize={groupsMeta.pageSize ?? groups.length}
-                entriesLength={groups.length}
-                onPageChange={setPage}
-              />
+              <div className="flex items-center justify-between gap-3 border-t border-white/10">
+                <p className="pt-3 text-2xs text-neutral-500">
+                  <span className="font-semibold tabular-nums text-neutral-200">{totalCount}</span> grup gösteriliyor
+                </p>
+                <Pagination current={groupsMeta.page ?? page}
+                  totalPages={groupsMeta.totalPages ?? 1}
+                  totalCount={totalCount}
+                  pageSize={groupsMeta.pageSize ?? groups.length}
+                  entriesLength={groups.length}
+                  onPageChange={setPage}
+                />
+              </div>
             </div>
           )}
         </motion.div>

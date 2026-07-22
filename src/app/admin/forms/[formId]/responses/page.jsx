@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ResponsesHeader } from "../../../components/Headers";
 import { ResponseListHeader, ResponseListItem, ResponseListItemSkeleton } from "../../../components/ListItem";
@@ -26,6 +26,7 @@ const formatTimeSpent = (totalSeconds) => {
 export default function ResponsesPage() {
   const params = useParams();
   const formId = params?.formId;
+  const router = useRouter();
 
   const [searchValue, setSearchValue] = useState("");
   const [sortValue, setSortValue] = useState("desc");
@@ -84,7 +85,7 @@ export default function ResponsesPage() {
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-4 lg:p-6">
       <ResponsesHeader searchValue={searchValue} onSearchChange={setSearchValue}
         sortValue={sortValue} onSortChange={setSortValue} statusValue={statusValue} onStatusChange={setStatusValue} showArchived={showArchived} onShowArchivedChange={setShowArchived}
-        respondentValue={respondentValue} onRespondentChange={setRespondentValue} onRefresh={() => refetch()} onExport={exportToExcel} exportLoading={exportLoading}
+        respondentValue={respondentValue} onRespondentChange={setRespondentValue} onOverview={() => router.push(`/admin/forms/${formId}`)} onRefresh={() => refetch()} onExport={exportToExcel} exportLoading={exportLoading}
       />
 
       <AnimatePresence mode="wait">

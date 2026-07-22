@@ -301,7 +301,7 @@ export default function Sidebar({ user, children }) {
       <div className="md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden md:rounded-xl md:border md:border-white/5 md:bg-neutral-900">
         <div className="hidden md:flex h-10 shrink-0 items-center border-b border-white/5 px-6">
           <Breadcrumbs labels={dynamicBreadcrumbLabels} />
-          <div id="admin-header-slot" className="ml-auto flex items-center" />
+          <div id="admin-header-slot" className="ml-auto flex shrink-0 items-center" />
         </div>
         <div className="md:min-h-0 md:flex-1">{children}</div>
       </div>
