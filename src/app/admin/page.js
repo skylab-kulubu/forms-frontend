@@ -1,21 +1,23 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FileText, Plus, Layers, ChartColumn, ArrowUpRight, Clock, ClipboardCheck, UserX, Repeat2, BookOpen, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { motion } from "framer-motion";
+import { FileText, Plus, Layers, ChartColumn, ArrowRight, ArrowUpRight, BookOpen, PencilLine } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useUserFormsQuery, useServiceMetricsQuery } from "@/lib/hooks/useFormAdmin";
+import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
+import { DashboardHeader } from "./components/Headers";
+import { FeatureIcons, StatusDot, formatUpdatedAt } from "./components/ListItem";
+import { Section, SectionTitle, TrendBadge, TrendTooltip } from "./components/form-overview/components/FormMetrics";
 
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } },
-};
+const RECENT_FORMS_COUNT = 8;
 
-const item = {
-  hidden: { opacity: 0, y: 12, filter: "blur(2px)" },
-  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
+const fadeIn = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
 };
 
 function getGreeting() {
@@ -26,214 +28,334 @@ function getGreeting() {
   return "İyi akşamlar";
 }
 
-function getDisplayName(user) {
-  if (!user?.fullName) return "Kullanıcı";
-  return user.fullName.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map((w) => w.replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR"))).join(" ");
+function getFirstName(user) {
+  const full = user?.fullName?.trim();
+  if (!full) return "Kullanıcı";
+  const first = full.split(/\s+/)[0].toLocaleLowerCase("tr-TR");
+  return first.replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR"));
 }
 
-function StatCard({ icon: Icon, label, value, hint, href }) {
-  const inner = (
-    <div className="group relative flex h-full items-center gap-4 rounded-xl border border-white/5 bg-white/3 p-4 transition-colors hover:border-white/10 hover:bg-white/5">
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3">
-        <Icon className="h-5 w-5 text-neutral-400" strokeWidth={1.75} />
+const GREETING_NOTES = [
+  "Kolay gelsin.",
+  "Bugün ne oluşturuyoruz?",
+  "Formların hazır, sen hazır mısın?",
+  "Nereden devam edelim?",
+  "Bir kahve, bir form.",
+  "Cevaplar seni bekliyor.",
+  "Sıradaki form senden.",
+  "Bugün de güzel geçsin.",
+];
+
+function Greeting({ greeting, firstName, ready }) {
+  if (!ready) return <span className="shimmer inline-block h-3 w-32 rounded-md align-middle lg:h-4 lg:w-44" />;
+
+  return (
+    <motion.span {...fadeIn} className="inline-block">
+      {greeting}, <span className="text-neutral-300">{firstName}</span>
+    </motion.span>
+  );
+}
+
+function PanelHeading({ mobileTitle, desktopTitle, mobileNote, desktopNote, emphasizeDesktop = false }) {
+  return (
+    <>
+      <div className="flex items-center gap-2 px-1 lg:h-7">
+        <span className={`min-w-0 truncate text-2xs font-medium text-neutral-500 ${emphasizeDesktop ? "lg:text-base" : ""}`}>
+          <span className="lg:hidden">{mobileTitle}</span>
+          <span className="hidden lg:inline">{desktopTitle}</span>
+        </span>
+        <span className="h-px flex-1 bg-white/5" />
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">{label}</p>
-        <div className="flex items-baseline gap-2">
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={String(value)}
-              initial={{ opacity: 0, y: 6, filter: "blur(2px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="text-lg font-semibold text-neutral-100 tabular-nums"
-            >
-              {value ?? "--"}
-            </motion.p>
-          </AnimatePresence>
-          {hint && <span className="text-3xs text-neutral-600">{hint}</span>}
+      <p className="mt-0.5 h-4 truncate px-1 text-3xs leading-4 text-neutral-600">
+        <span className="lg:hidden">{mobileNote}</span>
+        <span className="hidden lg:inline">{desktopNote}</span>
+      </p>
+    </>
+  );
+}
+
+const QUICK_ACTIONS = [
+  { icon: Plus, label: "Yeni form oluştur", href: "/admin/forms/new-form", primary: true },
+  { icon: FileText, label: "Tüm formlar", href: "/admin/forms" },
+  { icon: Layers, label: "Bileşen grupları", href: "/admin/component-groups" },
+  { icon: BookOpen, label: "Nasıl kullanılır", href: "/admin/how-to-use" },
+];
+
+function QuickActions() {
+  return (
+    <div className="flex flex-col gap-0.5">
+      {QUICK_ACTIONS.map(({ icon: Icon, label, href, primary }) => (
+        <Link key={href} href={href}
+          className="group/action flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-white/5"
+        >
+          <Icon size={12} className={`shrink-0 ${primary ? "text-skylab-400" : "text-neutral-600"}`} strokeWidth={1.75} />
+          <span className={`min-w-0 flex-1 truncate text-2xs ${primary ? "font-medium text-skylab-300" : "text-neutral-300"}`}>{label}</span>
+          <ArrowUpRight size={12} className="shrink-0 text-neutral-700 transition-colors group-hover/action:text-neutral-400" />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+const SERVICE_STATS = [
+  { key: "forms", label: "Sistemdeki toplam form", dot: "bg-neutral-500", tone: "text-neutral-100", href: "/admin/forms/all", superAdminOnly: true },
+  { key: "responses", label: "Sistemdeki toplam cevap", dot: "bg-skylab-400 shadow-[0_0_6px] shadow-skylab-400/40", tone: "text-neutral-100" },
+  { key: "pending", label: "Sistemdeki bekleyen onay", dot: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40", tone: "text-amber-300" },
+  { key: "groups", label: "Sana ait bileşen grubu", dot: "bg-neutral-500", tone: "text-neutral-100", href: "/admin/component-groups" },
+];
+
+function ServiceStats({ values, isLoading, isSuperAdmin }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {SERVICE_STATS.map((stat) => {
+        const body = (
+          <>
+            <span className={`size-1.5 shrink-0 rounded-full ${stat.dot}`} />
+            <div className="min-w-0">
+              <p className="truncate text-3xs text-neutral-500" title={stat.label}>{stat.label}</p>
+              <p className={`text-lg font-semibold leading-tight tabular-nums ${stat.tone}`}>
+                {isLoading ? "--" : values[stat.key] ?? 0}
+              </p>
+            </div>
+          </>
+        );
+
+        const className = "flex items-center gap-2.5 rounded-md border border-white/5 bg-white/3 px-3 py-2.5 transition-colors";
+        const href = stat.href && (!stat.superAdminOnly || isSuperAdmin) ? stat.href : null;
+
+        if (href) {
+          return (
+            <Link key={stat.key} href={href} className={`${className} hover:border-white/10 hover:bg-white/5`}>
+              {body}
+            </Link>
+          );
+        }
+        return <div key={stat.key} className={className}>{body}</div>;
+      })}
+    </div>
+  );
+}
+
+function WeeklyTrend({ title, data, trendPercentage, gradientId }) {
+  const hasData = Array.isArray(data) && data.length > 0;
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center gap-2">
+        <SectionTitle>{title}</SectionTitle>
+        <span className="-mt-3"><TrendBadge value={trendPercentage} /></span>
+      </div>
+
+      {hasData ? (
+        <div className="h-24 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 5, right: 10, bottom: -2, left: 10 }}>
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#e0c8e5" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#e0c8e5" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} interval={0} dy={4} />
+              <YAxis hide domain={[0, "auto"]} />
+              <Tooltip content={<TrendTooltip />} cursor={{ stroke: "#e0c8e5", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
+              <Area type="monotone" dataKey="count" stroke="#e0c8e5" strokeWidth={2} fill={`url(#${gradientId})`}
+                dot={{ r: 2.5, fill: "#e0c8e5", strokeWidth: 0 }} activeDot={{ r: 4, fill: "#f3e8f5", strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
-      </div>
-      {href && (
-        <ArrowUpRight className="h-4 w-4 text-neutral-600 transition-all group-hover:text-neutral-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      ) : (
+        <p className="py-6 text-center text-3xs text-neutral-600">Veri bulunamadı</p>
       )}
     </div>
   );
-
-  if (href) return <Link href={href}>{inner}</Link>;
-  return inner;
 }
 
-function QuickAction({ icon: Icon, label, description, href, variant = "default" }) {
-  const variantClass =
-    variant === "primary"
-      ? "border-skylab-400/25 bg-skylab-500/[0.06] hover:border-skylab-400/40 hover:bg-skylab-500/[0.1]"
-      : "border-white/5 bg-white/3 hover:border-white/10 hover:bg-white/5";
-
+function TrendSkeleton() {
   return (
-    <Link href={href} className={`group flex items-center gap-3.5 rounded-xl border p-4 transition-all ${variantClass}`}>
-      <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${variant === "primary" ? "border border-skylab-400/30 bg-skylab-500/10" : "border border-white/10 bg-white/3"}`}>
-        <Icon className={`h-4 w-4 ${variant === "primary" ? "text-skylab-300" : "text-neutral-400"}`} strokeWidth={1.75} />
+    <div>
+      <div className="mb-3 flex items-center gap-2">
+        <div className="shimmer h-2.5 w-32 rounded-md" />
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-neutral-200">{label}</p>
-        <p className="text-2xs text-neutral-500 truncate">{description}</p>
-      </div>
-      <ArrowUpRight className="h-4 w-4 text-neutral-700 transition-all group-hover:text-neutral-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-    </Link>
+      <div className="shimmer h-24 w-full rounded-md" />
+    </div>
   );
 }
 
 function RecentFormItem({ form }) {
-  if (!form) return null;
-  const responsesHref = `/admin/forms/${form.id}/responses`;
-  const editHref = `/admin/forms/${form.id}/edit`;
+  const viewHref = `/admin/forms/${form.id}`;
+  const canEdit = Number(form.userRole) >= 2;
 
   return (
-    <div className="group/row relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/5">
-      <Link href={`/admin/forms/${form.id}`} className="absolute inset-0 z-0" tabIndex={-1} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-neutral-200 truncate">{form.title || "--"}</p>
-          <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-4xs uppercase tracking-[0.18em] ${form.status === 2 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-red-500/30 bg-red-500/10 text-red-200"}`}>
-            {form.status === 2 ? "Aktif" : "Pasif"}
-          </span>
+    <div className="group/row relative transition-colors hover:bg-white/3">
+      <Link href={viewHref} className="absolute inset-0 z-0" aria-label={form.title ?? "Form"} tabIndex={-1} />
+      <div className="flex items-center gap-3 px-2 py-2.5">
+        <StatusDot status={form.status} />
+
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3">
+          <FileText className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
         </div>
-        <div className="flex items-center gap-3 mt-0.5">
-          <span className="inline-flex items-center gap-1 text-3xs text-neutral-500">
-            <ChartColumn size={10} />
-            {form.responseCount ?? 0} cevap
-          </span>
-          <div className="flex items-center gap-1">
-            {form.allowMultipleResponses && <Repeat2 size={10} className="text-skylab-500/70" />}
-            {form.allowAnonymousResponses && <UserX size={10} className="text-skylab-500/70" />}
-            {form.requiresManualReview && <ClipboardCheck size={10} className="text-skylab-500/70" />}
+
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">{form.title || "--"}</h3>
+          <div className="mt-0.5 flex min-w-0 items-center gap-2">
+            <span className="text-3xs tabular-nums text-neutral-500">{form.responseCount ?? 0} yanıt</span>
+            <FeatureIcons form={form} />
           </div>
         </div>
-      </div>
-      <div className="flex items-center gap-1 relative z-10">
-        <Link href={responsesHref} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-neutral-400 hover:bg-white/5 hover:text-neutral-200 transition-colors" title="Cevaplar">
-          <ChartColumn className="h-3.5 w-3.5" />
-        </Link>
-        <Link href={editHref} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-skylab-400/30 bg-skylab-500/10 text-skylab-300 hover:bg-skylab-400/20 transition-colors" title="Düzenle">
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
+
+        <span className="hidden shrink-0 text-2xs tabular-nums text-neutral-500 sm:block">
+          {formatUpdatedAt(form.updatedAt ?? form.createdAt)}
+        </span>
+
+        <div className="flex shrink-0 items-center gap-1 lg:w-14 lg:justify-end lg:opacity-0 lg:transition-opacity lg:group-hover/row:opacity-100">
+          <Link href={`${viewHref}/responses`} title="Cevaplar" aria-label="Cevaplar"
+            className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 lg:pointer-events-none lg:group-hover/row:pointer-events-auto"
+          >
+            <ChartColumn className="h-3 w-3" />
+          </Link>
+          {canEdit ? (
+            <Link href={`${viewHref}/edit`} title="Düzenle" aria-label="Düzenle"
+              className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-skylab-400/30 bg-skylab-500/10 text-skylab-300 transition-colors hover:bg-skylab-400/20 lg:pointer-events-none lg:group-hover/row:pointer-events-auto"
+            >
+              <PencilLine className="h-3 w-3" />
+            </Link>
+          ) : (
+            <span title="Düzenleme yetkiniz yok" className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/5 text-neutral-700">
+              <PencilLine className="h-3 w-3" />
+            </span>
+          )}
+        </div>
+
+        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-neutral-700 transition-all group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
       </div>
     </div>
   );
 }
 
-function SkeletonBlock({ className = "" }) {
-  return <div aria-hidden="true" className={`shimmer ${className}`} />;
-}
-
 function RecentFormsSkeleton() {
   return (
-    <div className="space-y-1">
-      {Array.from({ length: 3 }, (_, i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-2.5">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <SkeletonBlock className="h-3.5 w-32 rounded-md" />
-              <SkeletonBlock className="h-3 w-10 rounded-md" />
-            </div>
-            <SkeletonBlock className="mt-1.5 h-2.5 w-20 rounded-md" />
+    <div className="divide-y divide-white/5">
+      {Array.from({ length: 5 }, (_, i) => (
+        <div key={i} className="flex items-center gap-3 px-2 py-2.5">
+          <div className="shimmer size-1.5 shrink-0 rounded-full" />
+          <div className="shimmer h-9 w-9 shrink-0 rounded-lg" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="shimmer h-3.5 w-40 rounded-md" />
+            <div className="shimmer h-2.5 w-20 rounded-md" />
           </div>
-          <div className="flex items-center gap-1">
-            <SkeletonBlock className="h-7 w-7 rounded-md" />
-            <SkeletonBlock className="h-7 w-7 rounded-md" />
-          </div>
+          <div className="shimmer hidden h-2.5 w-16 rounded-md sm:block" />
         </div>
       ))}
     </div>
   );
 }
 
-function TrendBadge({ value }) {
-  if (value === null || value === undefined) return null;
-  const rounded = Math.round(value * 10) / 10;
-  const isUp = rounded > 0;
-  const isDown = rounded < 0;
-  const Icon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
-  const color = isUp ? "text-emerald-400" : isDown ? "text-red-400" : "text-neutral-400";
-
+function RecentFormsPanel({ greeting, firstName, sessionReady, note, forms, isLoading }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-3xs font-medium ${color}`}>
-      <Icon size={10} />
-      {isUp ? "+" : ""}{rounded}%
-    </span>
-  );
-}
+    <div className="flex flex-col lg:h-full lg:overflow-hidden">
+      <PanelHeading
+        mobileTitle="Formların"
+        desktopTitle={<Greeting greeting={greeting} firstName={firstName} ready={sessionReady} />}
+        mobileNote=""
+        desktopNote={note}
+        emphasizeDesktop
+      />
 
-function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-md border border-white/10 bg-neutral-900/90 px-2.5 py-1.5 shadow-xl">
-      <p className="text-3xs text-neutral-500">{label}</p>
-      <p className="text-xs font-medium text-skylab-300">{payload[0].value}</p>
-    </div>
-  );
-}
-
-function TrendChart({ title, data, gradientId, color = "rgb(129,140,248)", trendPercentage }) {
-  const hasData = data && data.length > 0;
-
-  return (
-    <div className="rounded-xl border border-white/5 bg-white/3 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-3xs font-medium uppercase tracking-[0.18em] text-neutral-500">{title}</h3>
-        <TrendBadge value={trendPercentage} />
+      <div className="pt-3 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+        {isLoading ? (
+          <RecentFormsSkeleton />
+        ) : forms.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-1 py-12 text-center">
+            <FileText className="mb-1 h-7 w-7 text-neutral-700" strokeWidth={1.5} />
+            <p className="text-2xs text-neutral-400">Henüz form oluşturulmamış</p>
+            <Link href="/admin/forms/new-form" className="text-2xs font-medium text-skylab-300 transition-colors hover:text-skylab-200">
+              İlk formunu oluştur
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {forms.map((form, i) => (
+              <motion.div key={form.id} {...fadeIn} transition={{ ...fadeIn.transition, delay: Math.min(i, 6) * 0.03 }}>
+                <RecentFormItem form={form} />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
-      {hasData ? (
-        <div className="h-40 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 0, left: 10 }}>
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={color} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgb(100,100,110)" }} dy={6} padding={{ left: 20, right: 20 }} />
-              <YAxis hide domain={[0, "auto"]} />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: color, strokeWidth: 0.5, strokeDasharray: "3 3" }} />
-              <Area type="monotone" dataKey="count" stroke={color} strokeWidth={2} fill={`url(#${gradientId})`} dot={{ r: 2.5, fill: color, strokeWidth: 0 }}
-                activeDot={{ r: 4, fill: color, strokeWidth: 2, stroke: "rgb(23,23,23)" }} animationDuration={600} animationEasing="ease-out"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <div className="flex h-40 items-center justify-center">
-          <p className="text-xs text-neutral-600">Veri bulunamadı</p>
-        </div>
-      )}
+
+      <div className="mt-3 flex shrink-0 items-center justify-between gap-3 border-t border-white/5 px-1 pt-3">
+        <span className="text-2xs text-neutral-600">{isLoading ? "--" : forms.length > 0 ? `Son güncellenen ${forms.length} form` : ""}</span>
+        <Link href="/admin/forms" className="inline-flex items-center gap-1 text-2xs font-medium text-neutral-400 transition-colors hover:text-neutral-200">
+          Tümünü gör
+          <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
     </div>
   );
 }
 
-function ChartSkeleton() {
+function MetricsPanel({ greeting, firstName, sessionReady, note, stats, statsLoading, isSuperAdmin, metrics, metricsLoading }) {
   return (
-    <div className="rounded-xl border border-white/5 bg-white/3 p-4">
-      <div className="mb-3 h-2.5 w-28 rounded shimmer" />
-      <div className="h-42 w-full rounded shimmer" />
+    <div className="flex flex-col lg:h-full lg:overflow-hidden">
+      <PanelHeading
+        mobileTitle={<Greeting greeting={greeting} firstName={firstName} ready={sessionReady} />}
+        desktopTitle="Metrikler"
+        mobileNote={note}
+        desktopNote=""
+      />
+
+      <div className="pt-3 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+        <div className="divide-y divide-white/5">
+
+          <Section delay={0}>
+            <SectionTitle>Genel</SectionTitle>
+            <ServiceStats values={stats} isLoading={statsLoading} isSuperAdmin={isSuperAdmin} />
+          </Section>
+
+          <Section delay={0.05}>
+            {metricsLoading ? (
+              <TrendSkeleton />
+            ) : (
+              <WeeklyTrend title="Haftalık form trendi" data={metrics?.formsCreatedWeeklyTrend}
+                trendPercentage={metrics?.formsWeeklyTrendPercentage} gradientId="dashboardFormsTrend"
+              />
+            )}
+          </Section>
+
+          <Section delay={0.1}>
+            {metricsLoading ? (
+              <TrendSkeleton />
+            ) : (
+              <WeeklyTrend title="Haftalık cevap trendi" data={metrics?.responsesWeeklyTrend}
+                trendPercentage={metrics?.responsesWeeklyTrendPercentage} gradientId="dashboardResponsesTrend"
+              />
+            )}
+          </Section>
+
+          <Section delay={0.15}>
+            <SectionTitle>Hızlı işlemler</SectionTitle>
+            <QuickActions />
+          </Section>
+
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
-  const user = session?.user;
-  const displayName = getDisplayName(user);
-  const greeting = getGreeting();
+  const sessionReady = status !== "loading";
 
-  const { data: formsData, isLoading: formsLoading } = useUserFormsQuery({
-    pageSize: 5,
+  const { data: formsData, isLoading: formsLoading, refetch: refetchForms } = useUserFormsQuery({
+    pageSize: RECENT_FORMS_COUNT,
+    sortBy: "updatedAt",
     sortDirection: "descending",
   });
-
-  const { data: metricsData, isLoading: metricsLoading } = useServiceMetricsQuery();
+  const { data: metricsData, isLoading: metricsLoading, refetch: refetchMetrics } = useServiceMetricsQuery();
+  const { data: groupsData, isLoading: groupsLoading, refetch: refetchGroups } = useGroupsQuery({ pageSize: 1 });
 
   const metrics = metricsData?.data ?? metricsData;
 
@@ -242,134 +364,53 @@ export default function AdminDashboard() {
     return Array.isArray(meta.items) ? meta.items : Array.isArray(formsData) ? formsData : [];
   }, [formsData]);
 
-  const totalForms = metrics?.totalForms ?? forms.length;
-  const totalResponses = metrics?.totalResponsesReceived ?? 0;
+  const isSuperAdmin = Boolean(session?.skyformsRoles?.includes("skyforms:*"));
+  const [randomNote] = useState(() => GREETING_NOTES[Math.floor(Math.random() * GREETING_NOTES.length)]);
+  const greetingProps = {
+    greeting: getGreeting(),
+    firstName: getFirstName(session?.user),
+    sessionReady,
+    note: sessionReady ? randomNote : "",
+  };
 
-  const isLoading = status === "loading" || formsLoading;
+  const stats = {
+    forms: metrics?.totalForms ?? 0,
+    responses: metrics?.totalResponsesReceived ?? 0,
+    pending: metrics?.pendingResponsesCount ?? 0,
+    groups: groupsData?.data?.totalCount ?? 0,
+  };
+
+  const handleRefresh = () => {
+    refetchForms();
+    refetchMetrics();
+    refetchGroups();
+  };
 
   return (
-    <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-y-auto overflow-x-hidden p-6 scrollbar">
-      <motion.div variants={container} initial="hidden" animate="show" className="mx-auto w-full max-w-7xl space-y-8">
-        <motion.div variants={item}>
-          <h1 className="text-2xl font-semibold text-neutral-100">
-            {greeting},{" "}
-            <AnimatePresence mode="wait">
-              {status === "loading" ? (
-                <></>
-              ) : (
-                <motion.span key="name" className="inline-block text-neutral-400"
-                  initial={{ opacity: 0, y: 6, filter: "blur(2px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  {displayName.split(" ")[0]}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            Formlarını yönet, cevapları takip et ve yeni projeler oluştur.
-          </p>
-        </motion.div>
+    <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-4 overflow-hidden p-4 lg:gap-6 lg:p-6">
+      <DashboardHeader onRefresh={handleRefresh} />
 
-        <motion.div variants={item} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <StatCard icon={FileText} label="Toplam Form" value={isLoading ? "--" : totalForms} href="/admin/forms" />
-          <StatCard icon={ChartColumn} label="Toplam Cevap" value={isLoading ? "--" : totalResponses} hint={!isLoading && metrics?.pendingResponsesCount > 0 ? `${metrics.pendingResponsesCount} onay bekliyor` : null} />
-        </motion.div>
-
-        <motion.div variants={item} className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {metricsLoading ? (
-            <>
-              <ChartSkeleton />
-              <ChartSkeleton />
-            </>
-          ) : (
-            <>
-              <motion.div initial={{ opacity: 0, y: 12, filter: "blur(2px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}>
-                <TrendChart title="Haftalık Form Oluşturma Trendi" data={metrics?.formsCreatedWeeklyTrend} gradientId="formsGradient" color="#e0c8e5" trendPercentage={metrics?.formsWeeklyTrendPercentage}/>
-              </motion.div>
-              <motion.div initial={{ opacity: 0, y: 12, filter: "blur(2px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}>
-                <TrendChart title="Haftalık Cevap Trendi" data={metrics?.responsesWeeklyTrend} gradientId="responsesGradient" color="#e0c8e5" trendPercentage={metrics?.responsesWeeklyTrendPercentage}/>
-              </motion.div>
-            </>
-          )}
-        </motion.div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-stretch">
-          <motion.div variants={item} className="lg:col-span-7 flex">
-            <div className="flex-1 rounded-xl border border-white/5 bg-white/1.5 flex flex-col">
-              <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-neutral-200">Son Formlar</h2>
-                  <p className="text-3xs text-neutral-500">En son oluşturduğunuz formlar</p>
-                </div>
-                <Link href="/admin/forms" className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/3 px-2.5 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:border-white/15 hover:text-neutral-200">
-                  Tümünü Gör
-                  <ArrowUpRight className="h-3 w-3" />
-                </Link>
-              </div>
-
-              <div className="p-2">
-                {formsLoading ? (
-                  <RecentFormsSkeleton />
-                ) : forms.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <FileText className="h-8 w-8 text-neutral-700 mb-2" />
-                    <p className="text-sm text-neutral-400">Henüz form oluşturulmamış</p>
-                    <p className="text-2xs text-neutral-600 mt-0.5">İlk formunuzu oluşturmak için hızlı aksiyonları kullanın.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-0.5">
-                    {forms.slice(0, 5).map((form, i) => (
-                      <motion.div
-                        key={form.id}
-                        initial={{ opacity: 0, y: 10, filter: "blur(2px)" }}
-                        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        transition={{ duration: 0.35, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        <RecentFormItem form={form} />
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div variants={item} className="lg:col-span-5 flex flex-col gap-2">
-              <QuickAction
-                icon={Plus}
-                label="Yeni Form Oluştur"
-                description="Sıfırdan yeni bir form oluşturun"
-                href="/admin/forms/new-form"
-                variant="primary"
-              />
-              <QuickAction
-                icon={FileText}
-                label="Formları Görüntüle"
-                description="Tüm formları listeleyin ve yönetin"
-                href="/admin/forms"
-              />
-              <QuickAction
-                icon={Layers}
-                label="Bileşen Grupları"
-                description="Hazır bileşen gruplarını yönetin"
-                href="/admin/component-groups"
-              />
-              <QuickAction
-                icon={Plus}
-                label="Yeni Bileşen Grubu"
-                description="Yeniden kullanılabilir bileşen grubu oluşturun"
-                href="/admin/component-groups/new-group"
-              />
-              <QuickAction
-                icon={BookOpen}
-                label="Nasıl Kullanılır"
-                description="Platform rehberi ve dökümentasyon"
-                href="/admin/how-to-use"
-              />
-          </motion.div>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1 scrollbar lg:overflow-hidden lg:pr-0">
+        <div className="grid grid-cols-1 gap-6 lg:h-full lg:grid-cols-12">
+          <div className="order-2 lg:order-1 lg:col-span-7 lg:min-h-0">
+            <RecentFormsPanel
+              {...greetingProps}
+              forms={forms.slice(0, RECENT_FORMS_COUNT)}
+              isLoading={formsLoading}
+            />
+          </div>
+          <div className="order-1 lg:order-2 lg:col-span-5 lg:min-h-0">
+            <MetricsPanel
+              {...greetingProps}
+              stats={stats}
+              statsLoading={metricsLoading || groupsLoading}
+              isSuperAdmin={isSuperAdmin}
+              metrics={metrics}
+              metricsLoading={metricsLoading}
+            />
+          </div>
         </div>
-
-      </motion.div>
+      </div>
     </div>
   );
 }

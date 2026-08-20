@@ -21,7 +21,7 @@ function formatDuration(seconds) {
   return `${m}dk ${s}sn`;
 }
 
-function Section({ children, delay = 0, className = "" }) {
+export function Section({ children, delay = 0, className = "" }) {
   return (
     <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay }}
       className={`py-4 first:pt-0 last:pb-0 ${className}`}
@@ -31,7 +31,7 @@ function Section({ children, delay = 0, className = "" }) {
   );
 }
 
-function SectionTitle({ children, icon: Icon }) {
+export function SectionTitle({ children, icon: Icon }) {
   return (
     <div className="mb-3 flex items-center gap-1.5">
       {Icon && <Icon size={12} className="shrink-0 text-neutral-500" />}
@@ -63,7 +63,7 @@ function ResponseStats({ metrics }) {
   );
 }
 
-function TrendBadge({ value }) {
+export function TrendBadge({ value }) {
   if (value === null || value === undefined) return null;
   const rounded = Math.round(value * 10) / 10;
   const isUp = rounded > 0;
@@ -79,7 +79,7 @@ function TrendBadge({ value }) {
   );
 }
 
-function TrendTooltip({ active, payload }) {
+export function TrendTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-md border border-white/10 bg-neutral-900/90 px-2.5 py-1.5 shadow-xl">

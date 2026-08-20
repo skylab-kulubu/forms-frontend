@@ -3,7 +3,7 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChartColumn, ChevronLeft, Download, List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { ChartColumn, ChevronLeft, Download, Layers, List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import Tip from "./utils/Tip";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
@@ -183,6 +183,18 @@ export function ResponsesHeader(toolbarProps) {
         <ResponsesToolbar {...toolbarProps} />
       </div>
     </>
+  );
+}
+
+export function DashboardHeader({ onRefresh }) {
+  return (
+    <HeaderSlotPortal>
+      <div className="hidden items-center gap-1.5 lg:flex">
+        <ActionButton icon={RefreshCw} onClick={onRefresh} size="sm" tone="header" title="Yenile" aria-label="Yenile" />
+        <ActionButton icon={Layers} href="/admin/component-groups" size="sm" tone="header" title="Bileşen grupları" aria-label="Bileşen grupları" />
+        <ActionButton icon={Plus} variant="primary" href="/admin/forms/new-form" size="sm" tone="header" title="Yeni form ekle" aria-label="Yeni form ekle" />
+      </div>
+    </HeaderSlotPortal>
   );
 }
 

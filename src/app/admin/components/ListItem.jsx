@@ -30,7 +30,7 @@ const FEATURES = [
   { key: "requiresManualReview", Icon: ClipboardCheck, on: "Manuel onay gerekli" },
 ];
 
-function FeatureIcons({ form, className = "" }) {
+export function FeatureIcons({ form, className = "" }) {
   const items = FEATURES.filter((f) => form[f.key]);
   if (items.length === 0) return null;
 
@@ -45,7 +45,7 @@ function FeatureIcons({ form, className = "" }) {
   );
 }
 
-function StatusDot({ status }) {
+export function StatusDot({ status }) {
   const active = Number(status) === 2;
   const tone = active ? "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40" : "bg-red-400 shadow-[0_0_6px] shadow-red-400/40";
   return <span title={active ? "Aktif form" : "Pasif form"} className={`relative z-10 size-1.5 shrink-0 rounded-full ${tone}`} />;
@@ -150,7 +150,7 @@ const RESPONSE_STATUS = {
   default: { label: "Durumsuz", dot: "bg-neutral-600", text: "text-neutral-500" },
 };
 
-const formatUpdatedAt = (value) => {
+export const formatUpdatedAt = (value) => {
   if (!value) return "--";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "--";
