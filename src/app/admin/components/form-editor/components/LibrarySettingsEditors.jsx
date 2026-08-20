@@ -248,7 +248,7 @@ export function LibrarySettingsEditors() {
                     </div>
                     <AnimatePresence>
                         {showUserPicker && userSearch.length >= 2 && (
-                            <SearchPicker searchValue={userSearch} onSearchChange={setUserSearch} items={foundUsers} itemsPerPage={4} activeItemId={null} getItemId={(u) => u.id} onSelect={handleAddEditor} footerText={isUsersLoading ? "Aranıyor..." : "Listeden kullanıcı seçiniz."} showClear={false} className="absolute top-full left-0 mt-1 w-full [&>div>div:first-child]:hidden"
+                            <SearchPicker searchValue={userSearch} onSearchChange={setUserSearch} items={foundUsers} itemsPerPage={4} activeItemId={null} getItemId={(u) => u.id} onSelect={handleAddEditor} searchable={false} loading={isUsersLoading} footerText={isUsersLoading ? "Aranıyor..." : "Listeden kullanıcı seçiniz."} showClear={false} className="absolute top-full left-0 mt-1 w-full"
                                 renderItem={(user, { active, onSelect }) => {
                                     const isAdded = editorsList.some(e => e.user.id === user.id);
                                     return (

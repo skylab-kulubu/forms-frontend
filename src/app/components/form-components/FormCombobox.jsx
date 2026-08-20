@@ -217,12 +217,18 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
     }
   };
 
+  const closePicker = () => {
+    setOpen(false);
+    setQuery("");
+  };
+
   useEffect(() => {
     const onDoc = (e) => {
       if (!open) return;
       const t = e.target;
       if (triggerRef.current && !triggerRef.current.contains(t)) {
         setOpen(false);
+        setQuery("");
       }
     };
     document.addEventListener("mousedown", onDoc);
@@ -267,7 +273,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
           <ChevronsUpDown size={16} />
         </span>
-        <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => !isAutoFilled && setOpen((s) => !s)}
+        <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => { if (isAutoFilled) return; if (open) closePicker(); else setOpen(true); }}
           className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition ${isAutoFilled ? "cursor-default opacity-70" : "hover:bg-white/5 focus:ring-2 focus:ring-skylab-400/20"} ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
         >
           <span className={currentValue ? "text-neutral-100" : "text-neutral-500"}>{displayText}</span>
@@ -282,6 +288,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
           {open && (
             <SearchPicker items={pickerItems} itemsPerPage={5} activeItemId={currentValue}
               getItemId={(item) => item.id} onSelect={handleSelect} searchValue={query} onSearchChange={setQuery}
+              createLabel={allowCustom ? "Yeni seçenek oluştur" : ""}
               autoFocus={true} className="w-full" showClear={!!currentValue} onClear={() => { clear(); setOpen(false); }}
               renderItem={(item, { active, onSelect }) => {
                 if (item.isCustomAction) {
