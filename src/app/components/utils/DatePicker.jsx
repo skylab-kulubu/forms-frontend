@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Undo2 } from "lucide-react";
+import { Floating } from "./Floating";
 
 const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",];
 const weekdays = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
@@ -70,7 +71,7 @@ const verticalMenuVariants = {
   exit: (isSelecting) => ({ zIndex: 0, y: isSelecting ? -24 : 24, opacity: 0, filter: "blur(4px)", scale: 0.98, transition: { duration: 0.2, ease: "easeIn" } }),
 };
 
-export default function DatePicker({ value = null, onChange, onClose, className = "" }) {
+export default function DatePicker({ value = null, onChange, onClose, anchor, className = "" }) {
   const now = new Date();
   const initialYear = value?.getFullYear() ?? now.getFullYear();
   const initialMonth = value?.getMonth() ?? now.getMonth();
@@ -109,8 +110,9 @@ export default function DatePicker({ value = null, onChange, onClose, className 
   };
 
   return (
+    <Floating anchor={anchor} onDismiss={onClose}>
     <motion.div variants={panelVariants} initial="hidden" animate="visible" exit="exit" onMouseDown={(e) => e.stopPropagation()}
-      className={`absolute z-20 mt-2 w-[280px] rounded-xl border border-white/10 bg-neutral-900/30 p-3 text-neutral-100 shadow-2xl backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30 ${className}`}
+      className={`w-[280px] rounded-xl border border-white/10 bg-neutral-900/30 p-3 text-neutral-100 shadow-2xl backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30 ${className}`}
     >
       <motion.div variants={staggerContainerVariants} className="flex flex-col gap-2">
         
@@ -201,5 +203,6 @@ export default function DatePicker({ value = null, onChange, onClose, className 
 
       </motion.div>
     </motion.div>
+    </Floating>
   );
 }

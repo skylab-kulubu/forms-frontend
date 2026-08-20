@@ -72,18 +72,6 @@ export function DisplayFormDatePicker({ question, questionNumber, description, r
 
   const selected = useMemo(() => parseYMD(value ?? internalValue), [value, internalValue]);
 
-  useEffect(() => {
-    const onDoc = (e) => {
-      if (!open) return;
-      const t = e.target;
-      if (triggerRef.current && !triggerRef.current.contains(t)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
-
   const commit = (next) => {
     if (onChange) onChange({ target: { value: next } });
     else setInternalValue(next);
@@ -105,7 +93,7 @@ export function DisplayFormDatePicker({ question, questionNumber, description, r
 
         <AnimatePresence>
           {open && (
-            <DatePicker value={selected}
+            <DatePicker value={selected} anchor={triggerRef}
               onChange={(date) => { commit(toYMD(date)); }}
               onClose={() => setOpen(false)}
             />
@@ -133,9 +121,9 @@ export function DisplayFormDatePicker({ question, questionNumber, description, r
 
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
+              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
-            {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
           </div>
         </div>
 

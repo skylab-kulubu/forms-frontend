@@ -7,7 +7,6 @@ import { ConditionSelector } from "../../admin/components/form-editor/components
 
 export function FieldShell({ number, title, required, onRequiredChange, children, condition, onConditionChange, availableFields, hideRequired = false, compact = false }) {
   const [showLogic, setShowLogic] = useState(false);
-  const [isOverflowVisible, setIsOverflowVisible] = useState(false);
 
   const hasActiveCondition = condition && condition.fieldId;
   const isFirst = number === 1 || !availableFields || availableFields.length === 0;
@@ -22,24 +21,12 @@ export function FieldShell({ number, title, required, onRequiredChange, children
     }
   }, [condition, availableFields, onConditionChange]);
 
-  const handleAnimationComplete = (definition) => {
-    if (definition === "open") {
-      setIsOverflowVisible(true);
-    }
-  };
-
-  const handleAnimationStart = (definition) => {
-    if (definition === "collapsed") {
-      setIsOverflowVisible(false);
-    }
-  };
-
   if (compact) {
     return <div className="flex flex-col gap-3">{children}</div>;
   }
 
   return (
-    <div className={`mx-auto w-full max-w-2xl rounded-xl border shadow-lg shadow-black/20 transition-all duration-300 group relative ${showLogic ? "z-20" : "z-0"}
+    <div className={`mx-auto w-full max-w-2xl rounded-xl border shadow-lg shadow-black/20 transition-all duration-300 group relative
       ${hasActiveCondition ? "bg-neutral-900 border-skylab-400/30 shadow-skylab-500/5" : "bg-neutral-900 border-white/10 hover:border-white/15 focus-within:border-skylab-400/40"}`}
     >
       <div className="flex items-center gap-3 border-b border-white/5 px-3 py-2.5">
@@ -54,7 +41,7 @@ export function FieldShell({ number, title, required, onRequiredChange, children
 
         <div className="ml-auto flex items-center">
           <button type="button" disabled={isFirst}
-            onClick={() => { if (showLogic) setIsOverflowVisible(false); setShowLogic(!showLogic); }}
+            onClick={() => setShowLogic(!showLogic)}
             className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-2xs font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
               ${isFirst ? "opacity-30 cursor-not-allowed bg-white/3 text-neutral-500 border-neutral-600" : ""}
               ${!isFirst && (hasActiveCondition || showLogic) ? "bg-skylab-500/10 text-skylab-300 border-skylab-400/20"
@@ -91,15 +78,12 @@ export function FieldShell({ number, title, required, onRequiredChange, children
       <AnimatePresence initial={false}>
         {showLogic && (
           <motion.div key="logic-panel" initial="collapsed" animate="open" exit="collapsed"
-            onAnimationComplete={handleAnimationComplete}
-            onAnimationStart={handleAnimationStart}
             variants={{
               open: { height: "auto", opacity: 1 },
               collapsed: { height: 0, opacity: 0 }
             }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            style={{ overflow: isOverflowVisible ? "visible" : "hidden" }}
-            className="relative z-10"
+            className="overflow-hidden"
           >
             <ConditionSelector condition={condition} onUpdate={onConditionChange} availableFields={availableFields} />
           </motion.div>

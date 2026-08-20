@@ -108,18 +108,6 @@ export function DisplayFormTimePicker({ question, questionNumber, description, r
     setOpen(false);
   };
 
-  useEffect(() => {
-    const onDoc = (e) => {
-      if (!open) return;
-      const t = e.target;
-      if (triggerRef.current && !triggerRef.current.contains(t)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
-
   const display = parsed ? toDisplay(parsed) : "Saat seçin";
 
   const control = (
@@ -141,7 +129,7 @@ export function DisplayFormTimePicker({ question, questionNumber, description, r
 
         <AnimatePresence>
           {open && (
-            <TimePicker hour={tempHour} minute={tempMinute}
+            <TimePicker hour={tempHour} minute={tempMinute} anchor={triggerRef}
               onChange={(h, m) => { setTempHour(h); setTempMinute(m); }}
               onCancel={() => setOpen(false)}
               onConfirm={handleApply}
@@ -170,9 +158,9 @@ export function DisplayFormTimePicker({ question, questionNumber, description, r
           )}
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
+              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
-            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            {description && ( <RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
           </div>
         </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
+import { Floating } from "./Floating";
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 
@@ -23,7 +24,7 @@ const itemVariants = {
   exit: { opacity: 0, y: 5, filter: "blur(2px)", transition: { duration: 0.15 } },
 };
 
-export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm, onClear, className = "" }) {
+export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm, onClear, anchor, className = "" }) {
   const hours = useMemo(() => Array.from({ length: 24 }, (_, i) => i), []);
   const minutes = useMemo(() => {
     const arr = [];
@@ -47,8 +48,9 @@ export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm
   }, []);
 
   return (
+    <Floating anchor={anchor} onDismiss={onCancel}>
     <motion.div variants={panelVariants} initial="hidden" animate="visible" exit="exit" onMouseDown={(e) => e.stopPropagation()}
-      className={`absolute z-20 mt-2 w-[280px] rounded-xl border border-white/10 bg-neutral-900/40 p-2.5 shadow-lg backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30 ${className}`}
+      className={`w-[280px] rounded-xl border border-white/10 bg-neutral-900/40 p-2.5 shadow-lg backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30 ${className}`}
     >
       <motion.div variants={staggerContainerVariants} className="flex flex-col">
         
@@ -98,5 +100,6 @@ export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm
 
       </motion.div>
     </motion.div>
+    </Floating>
   );
 }

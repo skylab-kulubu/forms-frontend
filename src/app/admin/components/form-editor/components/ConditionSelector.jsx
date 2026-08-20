@@ -155,15 +155,6 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
         }
     }, [timeOpen]);
 
-    useEffect(() => {
-        const onDoc = (e) => {
-            if (dateOpen && dateRef.current && !dateRef.current.contains(e.target)) setDateOpen(false);
-            if (timeOpen && timeRef.current && !timeRef.current.contains(e.target)) setTimeOpen(false);
-        };
-        document.addEventListener("mousedown", onDoc);
-        return () => document.removeEventListener("mousedown", onDoc);
-    }, [dateOpen, timeOpen]);
-
     const selectedDate = useMemo(() => parseYMD(current.value), [current.value]);
     const parsedTime = useMemo(() => parseTime(current.value), [current.value]);
     const dateDisplay = selectedDate ? `${pad2(selectedDate.getDate())} ${months[selectedDate.getMonth()]} ${selectedDate.getFullYear()}` : "Tarih seçin";
@@ -229,7 +220,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                                     </button>
                                     <AnimatePresence>
                                         {dateOpen && (
-                                            <DatePicker value={selectedDate}
+                                            <DatePicker value={selectedDate} anchor={dateRef}
                                                 onChange={(date) => handleChange("value", toYMD(date))}
                                                 onClose={() => setDateOpen(false)}
                                             />
@@ -246,7 +237,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                                     </button>
                                     <AnimatePresence>
                                         {timeOpen && (
-                                            <TimePicker hour={tempHour} minute={tempMinute}
+                                            <TimePicker hour={tempHour} minute={tempMinute} anchor={timeRef}
                                                 onChange={(h, m) => { setTempHour(h); setTempMinute(m); }}
                                                 onCancel={() => setTimeOpen(false)}
                                                 onConfirm={() => { handleChange("value", formatTime24({ h: tempHour, m: tempMinute })); setTimeOpen(false); }}
