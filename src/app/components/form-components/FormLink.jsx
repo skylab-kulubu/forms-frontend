@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
+import { RichText } from "@/app/components/rich-text/RichText";
 
 function getProviderIcon(input) {
   if (!input || typeof input !== "string") return LinkIcon;
@@ -210,9 +211,9 @@ export function DisplayFormLink({ question, questionNumber, description, require
 
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
+              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
-            {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
           </div>
         </div>
 

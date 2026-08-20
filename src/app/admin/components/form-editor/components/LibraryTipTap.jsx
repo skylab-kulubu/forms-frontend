@@ -21,6 +21,13 @@ export function LibraryTipTap() {
                 heading: { levels: [1, 2, 3] },
                 bulletList: { keepMarks: true },
                 orderedList: { keepMarks: true },
+                link: {
+                    openOnClick: false,
+                    autolink: true,
+                    defaultProtocol: "https",
+                    protocols: ["http", "https", "mailto"],
+                    HTMLAttributes: { target: "_blank", rel: "noopener noreferrer nofollow" },
+                },
             }),
             Underline,
         ],
@@ -161,7 +168,8 @@ export function LibraryTipTap() {
                 
                 <EditorContent 
                     editor={editor} 
-                    className="h-full w-full overflow-y-auto pr-1 text-sm leading-relaxed text-neutral-100 scrollbar 
+                    className="h-full w-full overflow-y-auto pr-1 text-sm leading-relaxed text-neutral-100 scrollbar
+                        [&_a]:text-skylab-300 [&_a]:underline [&_a]:decoration-skylab-300/30 [&_a]:underline-offset-2 [&_a]:wrap-break-word
                         [&_blockquote]:border-l-2 [&_blockquote]:border-neutral-700 [&_blockquote]:pl-3 
                         [&_ol]:list-decimal [&_ol]:pl-5 
                         [&_ul]:list-disc [&_ul]:pl-5 

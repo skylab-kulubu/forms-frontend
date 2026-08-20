@@ -1,6 +1,7 @@
 "use client";
 
 import { FilePreview } from "./FilePreview";
+import { RichText } from "@/app/components/rich-text/RichText";
 
 const formatAnswer = (answer) => {
   if (answer == null) return "";
@@ -56,7 +57,7 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
         )}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-neutral-100 wrap-break-word">
-            {questionText || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}
+            {questionText ? <RichText text={questionText} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}
           </p>
         </div>
       </div>

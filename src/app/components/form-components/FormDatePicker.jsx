@@ -6,6 +6,7 @@ import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
+import { RichText } from "@/app/components/rich-text/RichText";
 import { AnimatePresence } from "framer-motion";
 import DatePicker from "../utils/DatePicker";
 

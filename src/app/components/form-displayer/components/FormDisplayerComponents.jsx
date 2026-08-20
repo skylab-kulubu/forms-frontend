@@ -1,6 +1,6 @@
 "use client";
 
-import DOMPurify from "dompurify";
+import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import { useSession } from "next-auth/react";
 import { UserRoundX, UserRound } from "lucide-react";
 
@@ -36,7 +36,7 @@ export function FormDisplayerHeader({ title, description }) {
 
   if (!hasTitle && !hasDescription) return null;
 
-  const sanitizedDescription = hasDescription ? DOMPurify.sanitize(description) : "";
+  const sanitizedDescription = hasDescription ? sanitizeFormHtml(description) : "";
 
   return (
     <div className="rounded-xl px-4 pb-5 max-w-2xl">
@@ -50,6 +50,7 @@ export function FormDisplayerHeader({ title, description }) {
         <div
           className="mt-3 text-2xs leading-relaxed text-neutral-200 space-y-2 opacity-90
             [&_p]:m-0 [&_p+p]:mt-2 [&_strong]:text-neutral-100 [&_em]:text-neutral-300
+            [&_a]:text-skylab-300 [&_a]:underline [&_a]:decoration-skylab-300/30 [&_a]:underline-offset-2 [&_a]:wrap-break-word [&_a:hover]:decoration-skylab-300/70
             [&_blockquote]:border-l-2 [&_blockquote]:border-white/10 [&_blockquote]:pl-3 [&_blockquote]:text-neutral-100 [&_blockquote]:italic
             [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
             [&_h1]:text-sm [&_h1]:font-semibold

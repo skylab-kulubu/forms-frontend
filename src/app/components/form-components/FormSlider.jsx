@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
+import { RichText } from "@/app/components/rich-text/RichText";
 
 export function CreateFormSlider({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
   const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
@@ -82,9 +83,9 @@ export function DisplayFormSlider({ question, questionNumber, description, requi
           )}
           <div className="flex flex-col w-full">
             <p className="text-sm font-medium text-neutral-100">
-              {question || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-200/70">*</span>}
+              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-200/70">*</span>}
             </p>
-            {description && ( <p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            {description && ( <RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
           </div>
         </div>
 

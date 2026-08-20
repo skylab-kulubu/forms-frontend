@@ -5,6 +5,7 @@ import { Upload, X, File as FileIcon, Loader2 } from "lucide-react";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
+import { RichText } from "@/app/components/rich-text/RichText";
 import { uploadWithProgress } from "@/lib/apiClient";
 
 function formatBytes(bytes) {
@@ -213,9 +214,9 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
           )}
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
-              {question || <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-400/80">*</span>}
+              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-400/80">*</span>}
             </p>
-            {description && (<p className="my-1 text-xs text-neutral-400">{description}</p>)}
+            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
           </div>
         </div>
 
