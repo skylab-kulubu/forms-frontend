@@ -10,6 +10,7 @@ import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database, ChartColumn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import WaffleMenu from "@/app/components/WaffleMenu";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
@@ -268,6 +269,7 @@ export default function Sidebar({ user, children }) {
           <div className="ml-2 min-w-0 flex-1">
             <Breadcrumbs labels={dynamicBreadcrumbLabels} />
           </div>
+          <WaffleMenu />
           <div id="admin-header-slot-mobile" className="ml-2 flex shrink-0 items-center" />
         </div>
       </div>
@@ -301,7 +303,10 @@ export default function Sidebar({ user, children }) {
       <div className="md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden md:rounded-xl md:border md:border-white/5 md:bg-neutral-900">
         <div className="hidden md:flex h-10 shrink-0 items-center border-b border-white/5 px-6">
           <Breadcrumbs labels={dynamicBreadcrumbLabels} />
-          <div id="admin-header-slot" className="ml-auto flex shrink-0 items-center" />
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <WaffleMenu />
+            <div id="admin-header-slot" className="flex shrink-0 items-center" />
+          </div>
         </div>
         <div className="md:min-h-0 md:flex-1">{children}</div>
       </div>

@@ -9,6 +9,7 @@ import Link from "next/link";
 import LoginButton from "./utils/LoginButton";
 import HoverCard from "./utils/HoverCard";
 import Avatar from "./utils/Avatar";
+import WaffleMenu from "./WaffleMenu";
 import { useScrollContainer } from "./landing/utils";
 
 const TOP_THRESHOLD = 40;
@@ -83,6 +84,7 @@ export default function MainHeader() {
         </Link>
 
         <div className="flex items-center gap-3">
+          {isAuthed ? <WaffleMenu /> : null}
           {status === "loading" ? (
             <div className="w-24 h-8 rounded-xl bg-white/5 animate-pulse" />
           ) : !isAuthed ? (
