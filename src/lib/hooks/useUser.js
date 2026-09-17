@@ -23,7 +23,7 @@ export const fetchUserByMail = async ({ email, roles }) => {
     }
     const params = new URLSearchParams();
     if (email) params.set("q", email);
-    params.set("clientId", "dotnet");
+    params.set("clientId", "forms");
     params.set("role", "skyforms:access");
     return request(`/v1/users?${params.toString()}`);
 }
