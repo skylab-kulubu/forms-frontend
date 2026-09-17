@@ -16,6 +16,16 @@ function formatFullName(firstName, lastName) {
     return fullName.replace(/(^|\s)(\S)/g, (_, space, char) => space + char.toLocaleUpperCase("tr-TR"));
 };
 
+function collaboratorUser(selectedUser) {
+    const fullName = formatFullName(selectedUser.firstName, selectedUser.lastName);
+    return {
+        id: selectedUser.id,
+        fullName: fullName === "--" ? (selectedUser.firstName || selectedUser.email || "--") : fullName,
+        email: selectedUser.email,
+        profilePictureUrl: selectedUser.profilePictureUrl || null,
+    };
+}
+
 export function LibrarySettingsEditors() {
     const { state, dispatch } = useFormEditor();
     const { editors, userRole } = state;
@@ -53,12 +63,7 @@ export function LibrarySettingsEditors() {
         if (editorsList.find((e) => e.user.id === selectedUser.id)) return;
 
         const newCollaborator = {
-            user: {
-                id: selectedUser.id,
-                fullName: selectedUser.firstName,
-                email: selectedUser.email,
-                profilePictureUrl: selectedUser.profilePictureUrl || null,
-            },
+            user: collaboratorUser(selectedUser),
             role: 1
         };
 
@@ -78,12 +83,7 @@ export function LibrarySettingsEditors() {
             const newCollaborators = list
                 .filter((u) => u?.id && !existingIds.has(u.id))
                 .map((u) => ({
-                    user: {
-                        id: u.id,
-                        fullName: u.firstName,
-                        email: u.email,
-                        profilePictureUrl: u.profilePictureUrl || null,
-                    },
+                    user: collaboratorUser(u),
                     role: 1,
                 }));
             if (newCollaborators.length > 0) {
