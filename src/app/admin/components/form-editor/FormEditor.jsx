@@ -22,6 +22,12 @@ import ApprovalOverlay from "../ApprovalOverlay";
 import ShareOverlay from "../ShareOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 import { FormPreview } from "./components/FormPreview";
+import {
+    captureReturnTo,
+    editPathWithReturnTo,
+    readStoredReturnTo,
+    returnToEventHref,
+} from "@/lib/return-to";
 
 import { REGISTRY } from "../../../components/form-registry";
 import { migrateSchema } from "../../../components/form-migrate";
@@ -92,6 +98,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
     const [hasDraft, setHasDraft] = useState(!!draft);
     const [draftNotice, setDraftNotice] = useState(false);
+    const [returnHref, setReturnHref] = useState(null);
+    const [hasReturnTo, setHasReturnTo] = useState(false);
+
+    useEffect(() => {
+        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+        const raw =
+            typeof window === "undefined"
+                ? null
+                : new URLSearchParams(window.location.search).get("returnTo");
+        const stored = captureReturnTo(raw, storage);
+        setHasReturnTo(Boolean(stored));
+        setReturnHref(state.id && stored ? returnToEventHref(stored, state.id) : null);
+    }, [state.id]);
 
     useEffect(() => {
         if (!draft) return;
@@ -188,7 +207,15 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
 
                 if (isNewForm) {
                     const nextId = data?.data?.id ?? data?.id;
-                    if (nextId) router.push(`/admin/forms/${nextId}/edit`);
+                    if (nextId) {
+                        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+                        const raw =
+                            typeof window === "undefined"
+                                ? null
+                                : new URLSearchParams(window.location.search).get("returnTo");
+                        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
+                        router.push(editPathWithReturnTo(nextId, stored));
+                    }
                     return;
                 }
 
@@ -358,6 +385,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         <DndContext collisionDetection={pointerWithin} sensors={sensors} {...handlers}>
             <EditorHeaderActions
                 saveStatus={saveStatusChip}
+                returnHref={returnHref}
                 onPreview={() => setPreviewOpen(true)}
                 onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
                 isShareDisabled={isNewForm}
@@ -376,6 +404,11 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 onDraftNoticeClose={() => setDraftNotice(false)}
             />
             <div ref={editorRef} className="relative">
+                {hasReturnTo && !returnHref ? (
+                    <p className="px-4 pt-3 text-2xs text-neutral-400">
+                        Formu kaydettikten sonra etkinliğe dönebilirsin.
+                    </p>
+                ) : null}
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>

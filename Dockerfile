@@ -8,8 +8,10 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL=https://api.yildizskylab.com
 ARG NEXT_PUBLIC_SITE_URL=https://forms.yildizskylab.com
+ARG NEXT_PUBLIC_ADMIN_URL=https://admin.yildizskylab.com
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_ADMIN_URL=$NEXT_PUBLIC_ADMIN_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

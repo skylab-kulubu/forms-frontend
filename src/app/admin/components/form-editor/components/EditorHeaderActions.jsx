@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, Share2, Trash2, Undo2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, Share2, Trash2, Undo2 } from "lucide-react";
 import Popover from "@/app/components/utils/Popover";
 import Tip from "@/app/admin/components/utils/Tip";
 
@@ -82,7 +82,7 @@ export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSavin
  */
 const emptySubscribe = () => () => {};
 
-export function EditorHeaderActions({ saveStatus, onPreview, onShare, isShareDisabled, hasDraft, onDiscardDraft, isDiscardingDraft, onUndo, canUndo, onDelete, isDeleteDisabled, onSave, isPending, isError, error, draftNotice, onDraftNoticeClose }) {
+export function EditorHeaderActions({ saveStatus, returnHref, onPreview, onShare, isShareDisabled, hasDraft, onDiscardDraft, isDiscardingDraft, onUndo, canUndo, onDelete, isDeleteDisabled, onSave, isPending, isError, error, draftNotice, onDraftNoticeClose }) {
     // SSR'da false, hydration sonrası true; slot div'leri o noktada DOM'da hazır.
     const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
@@ -94,6 +94,16 @@ export function EditorHeaderActions({ saveStatus, onPreview, onShare, isShareDis
 
     const content = (
         <div className="flex items-center gap-1 text-neutral-500">
+            {returnHref ? (
+                <Tip label="Etkinliğe dön">
+                    <a href={returnHref} aria-label="Etkinliğe dön"
+                        className="mr-1 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/15 hover:text-skylab-200"
+                    >
+                        <ArrowLeft size={14} />
+                        Etkinliğe dön
+                    </a>
+                </Tip>
+            ) : null}
             {saveStatus && <div className="mr-2 hidden sm:block">{saveStatus}</div>}
             <Tip label="Önizleme">
                 <button type="button" aria-label="Önizleme" onClick={onPreview} disabled={!onPreview}
