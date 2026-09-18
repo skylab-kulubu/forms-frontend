@@ -5,6 +5,9 @@ import {
   DEFAULT_FORMS_ORIGIN,
   captureReturnTo,
   editPathWithReturnTo,
+  eventAdminHref,
+  eventIdFromReturnTo,
+  eventRefFromForm,
   publicFormUrl,
   readStoredReturnTo,
   returnToEventHref,
@@ -46,5 +49,28 @@ describe("skyforms returnTo", () => {
       `/admin/forms/form-1/edit?returnTo=${encodeURIComponent(saved)}`,
     );
     assert.equal(DEFAULT_ADMIN_ORIGIN, "https://admin.yildizskylab.com");
+  });
+
+  it("reads the event id from returnTo and builds the admin event href", () => {
+    assert.equal(
+      eventIdFromReturnTo("https://admin.yildizskylab.com/events/11111111-1111-4111-8111-111111111111?formSlot=apply"),
+      "11111111-1111-4111-8111-111111111111",
+    );
+    assert.equal(eventIdFromReturnTo("https://admin.yildizskylab.com/events/new?formSlot=apply"), null);
+    assert.equal(eventIdFromReturnTo("https://admin.yildizskylab.com/events"), null);
+    assert.equal(
+      eventAdminHref("11111111-1111-4111-8111-111111111111"),
+      "https://admin.yildizskylab.com/events/11111111-1111-4111-8111-111111111111",
+    );
+    assert.deepEqual(
+      eventRefFromForm(
+        { event: { id: "11111111-1111-4111-8111-111111111111", name: "SkyDays" } },
+      ),
+      {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "SkyDays",
+        href: "https://admin.yildizskylab.com/events/11111111-1111-4111-8111-111111111111",
+      },
+    );
   });
 });

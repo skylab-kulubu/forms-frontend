@@ -62,3 +62,35 @@ export function editPathWithReturnTo(formId, returnTo, adminHref = adminOrigin()
   if (!allowed) return path;
   return `${path}?returnTo=${encodeURIComponent(allowed)}`;
 }
+
+const EVENT_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function eventIdFromReturnTo(returnTo, adminHref = adminOrigin()) {
+  const allowed = sanitizeReturnTo(returnTo, adminHref);
+  if (!allowed) return null;
+  try {
+    const parts = new URL(allowed).pathname.split("/").filter(Boolean);
+    if (parts[0] !== "events" || parts.length < 2) return null;
+    const id = parts[1];
+    return EVENT_ID_RE.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+export function eventAdminHref(eventId, adminHref = adminOrigin()) {
+  const id = String(eventId || "").trim();
+  if (!EVENT_ID_RE.test(id)) return null;
+  return `${String(adminHref).replace(/\/+$/, "")}/events/${id}`;
+}
+
+export function eventRefFromForm(form, returnTo, adminHref = adminOrigin()) {
+  const nested = form?.event && typeof form.event === "object" ? form.event : null;
+  const id = nested?.id || form?.eventId || eventIdFromReturnTo(returnTo, adminHref);
+  if (!id) return null;
+  const href = eventAdminHref(id, adminHref);
+  if (!href) return null;
+  const name = nested?.name || form?.eventName || "";
+  return { id, name, href };
+}

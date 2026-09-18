@@ -157,8 +157,8 @@ export function EditorHeaderActions({ saveStatus, returnHref, onPreview, onShare
     return targets.map((target) => createPortal(content, target, target.id));
 }
 
-export function EventReturnBar({ returnHref, pending }) {
-    if (!returnHref && !pending) return null;
+export function EventReturnBar({ returnHref, pending, eventHref, eventName }) {
+    if (!returnHref && !pending && !eventHref) return null;
     return (
         <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-neutral-900/95 px-4 py-2.5 backdrop-blur">
             {returnHref ? (
@@ -168,10 +168,20 @@ export function EventReturnBar({ returnHref, pending }) {
                     <ArrowLeft size={14} />
                     Etkinliğe dön
                 </a>
-            ) : (
+            ) : pending ? (
                 <p className="text-2xs text-neutral-400">Formu kaydettikten sonra etkinliğe dönebilirsin.</p>
+            ) : (
+                <span />
             )}
-            <p className="hidden text-3xs text-neutral-500 sm:block">Kayıt, form adresini etkinlik sayfasına yazar.</p>
+            {eventHref ? (
+                <a href={eventHref} target="_blank" rel="noreferrer" aria-label="Etkinliği adminde aç"
+                    className="inline-flex max-w-[16rem] items-center truncate rounded-md border border-white/10 bg-white/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:border-white/20 hover:bg-white/10"
+                >
+                    {eventName || "Etkinlik"}
+                </a>
+            ) : (
+                <p className="hidden text-3xs text-neutral-500 sm:block">Kayıt, form adresini etkinlik sayfasına yazar.</p>
+            )}
         </div>
     );
 }
