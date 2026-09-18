@@ -95,14 +95,12 @@ export function EditorHeaderActions({ saveStatus, returnHref, onPreview, onShare
     const content = (
         <div className="flex items-center gap-1 text-neutral-500">
             {returnHref ? (
-                <Tip label="Etkinliğe dön">
-                    <a href={returnHref} aria-label="Etkinliğe dön"
-                        className="mr-1 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/15 hover:text-skylab-200"
-                    >
-                        <ArrowLeft size={14} />
-                        Etkinliğe dön
-                    </a>
-                </Tip>
+                <a href={returnHref} aria-label="Etkinliğe dön"
+                    className="mr-1 inline-flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 hover:text-skylab-200"
+                >
+                    <ArrowLeft size={14} />
+                    Etkinliğe dön
+                </a>
             ) : null}
             {saveStatus && <div className="mr-2 hidden sm:block">{saveStatus}</div>}
             <Tip label="Önizleme">
@@ -157,4 +155,23 @@ export function EditorHeaderActions({ saveStatus, returnHref, onPreview, onShare
     );
 
     return targets.map((target) => createPortal(content, target, target.id));
+}
+
+export function EventReturnBar({ returnHref, pending }) {
+    if (!returnHref && !pending) return null;
+    return (
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-neutral-900/95 px-4 py-2.5 backdrop-blur">
+            {returnHref ? (
+                <a href={returnHref} aria-label="Etkinliğe dön"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-skylab-400/40 bg-skylab-500/10 px-3 text-2xs font-medium text-skylab-300 transition-colors hover:border-skylab-300/60 hover:bg-skylab-400/20"
+                >
+                    <ArrowLeft size={14} />
+                    Etkinliğe dön
+                </a>
+            ) : (
+                <p className="text-2xs text-neutral-400">Formu kaydettikten sonra etkinliğe dönebilirsin.</p>
+            )}
+            <p className="hidden text-3xs text-neutral-500 sm:block">Kayıt, form adresini etkinlik sayfasına yazar.</p>
+        </div>
+    );
 }
