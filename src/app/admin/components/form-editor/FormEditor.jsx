@@ -27,6 +27,9 @@ import {
     pickTemplateGroup,
     readNewFormDraft,
     writeNewFormDraft,
+    ensureEventIdentityFields,
+    isIdentityField,
+    identityKeyOf,
 } from "@/lib/event-handoff";
 import ApprovalOverlay from "../ApprovalOverlay";
 import ShareOverlay from "../ShareOverlay";
@@ -134,6 +137,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             ),
         );
     }, [state.id, handoff?.eventId, handoff?.title, formEvent]);
+
+    const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id);
+
+    useEffect(() => {
+        if (!eventLinked) return;
+        const next = ensureEventIdentityFields(state.schema);
+        if (JSON.stringify(next) !== JSON.stringify(state.schema)) {
+            dispatch({ type: "SET_SCHEMA", payload: next });
+        }
+        if (!state.allowAnonymousResponses) {
+            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: true } });
+        }
+    }, [eventLinked, state.schema, state.allowAnonymousResponses, dispatch]);
 
     useEffect(() => {
         if (!draft) return;
@@ -275,12 +291,13 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     }, [publishedFlash]);
 
     const setSchemaBridge = useCallback((newSchemaOrUpdater) => {
+        const wrap = (schema) => (eventLinked ? ensureEventIdentityFields(schema) : schema);
         if (typeof newSchemaOrUpdater === 'function') {
-            dispatch({ type: "SET_SCHEMA", payload: newSchemaOrUpdater(state.schema) });
+            dispatch({ type: "SET_SCHEMA", payload: wrap(newSchemaOrUpdater(state.schema)) });
         } else {
-            dispatch({ type: "SET_SCHEMA", payload: newSchemaOrUpdater });
+            dispatch({ type: "SET_SCHEMA", payload: wrap(newSchemaOrUpdater) });
         }
-    }, [state.schema, dispatch]);
+    }, [state.schema, dispatch, eventLinked]);
 
     const { dragSource, activeDragItem, handlers } = useFormDnD(state.schema, setSchemaBridge, libraryDropElRef);
 
@@ -289,10 +306,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             Id: state.id || null,
             Title: state.title,
             Description: state.description,
-            Schema: state.schema,
+            Schema: eventLinked ? ensureEventIdentityFields(state.schema) : state.schema,
             Status: state.status,
-            AllowMultipleResponses: state.allowAnonymousResponses ? true : state.allowMultipleResponses,
-            AllowAnonymousResponses: state.allowAnonymousResponses,
+            AllowMultipleResponses: eventLinked || state.allowAnonymousResponses ? true : state.allowMultipleResponses,
+            AllowAnonymousResponses: eventLinked ? true : state.allowAnonymousResponses,
             RequiresManualReview: state.requiresManualReview,
             LinkedFormId: state.allowAnonymousResponses ? null : (state.linkedFormId || null),
             Collaborators: state.editors.map((editor) => ({
@@ -357,7 +374,21 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     };
 
     const updateField = (id, updates) => {
-        const nextSchema = state.schema.map((field) => (field.id === id ? { ...field, ...updates } : field));
+        const nextSchema = state.schema.map((field) => {
+            if (field.id !== id) return field;
+            const next = { ...field, ...updates };
+            const key = identityKeyOf(field) || identityKeyOf(next);
+            if (!key) return next;
+            return {
+                ...next,
+                props: {
+                    ...(next.props ?? {}),
+                    identity: key,
+                    required: true,
+                    inputType: key === "email" ? "email" : "name",
+                },
+            };
+        });
         dispatch({ type: "SET_SCHEMA", payload: nextSchema });
     };
 
@@ -365,6 +396,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         const index = state.schema.findIndex((field) => field.id === id);
         if (index === -1) return;
         const source = state.schema[index];
+        if (isIdentityField(source)) return;
         const copy = { ...source, id: genFieldId(), props: structuredClone(source.props ?? {}) };
         const next = [...state.schema];
         next.splice(index + 1, 0, copy);
@@ -372,6 +404,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     };
 
     const deleteField = (id) => {
+        if (isIdentityField(state.schema.find((field) => field.id === id))) return;
         // Silinen alana bağlı koşullar da temizlenir (sürükle-sil ile aynı davranış).
         const next = state.schema.filter((field) => field.id !== id).map((field) => {
             if (field.condition?.fieldId !== id) return field;
@@ -590,6 +623,9 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
     } : handoff?.eventLinked ? {
         title: handoff.title || "Yeni Form",
         status: handoff.open ? FORM_STATUS_OPEN : 1,
+        allowAnonymousResponses: true,
+        allowMultipleResponses: true,
+        schema: ensureEventIdentityFields([]),
     } : null;
 
     return (
