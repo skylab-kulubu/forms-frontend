@@ -14,10 +14,20 @@ import { GhostComponent, Canvas, CanvasItem, DropSlot, InsertSlot } from "./comp
 import { genFieldId } from "./fieldId";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
-import { EditorHeaderActions, HeaderStatusPill } from "./components/EditorHeaderActions";
+import { EditorHeaderActions, EventReturnBar, HeaderStatusPill } from "./components/EditorHeaderActions";
+import { PreviousDraftPicker } from "./components/PreviousDraftPicker";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
 import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
+import { request } from "@/lib/apiClient";
+import {
+    FORM_STATUS_OPEN,
+    clearNewFormDraft,
+    cloneSchema,
+    pickTemplateGroup,
+    readNewFormDraft,
+    writeNewFormDraft,
+} from "@/lib/event-handoff";
 import ApprovalOverlay from "../ApprovalOverlay";
 import ShareOverlay from "../ShareOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
@@ -73,7 +83,7 @@ class SmartKeyboardSensor extends KeyboardSensor {
   ];
 }
 
-function FormEditorContent({ isNewForm, draft, onRefresh }) {
+function FormEditorContent({ isNewForm, draft, onRefresh, handoff }) {
     const router = useRouter();
     const { data: session } = useSession();
     const { setTitle: setGlobalTitle, setStatus: setGlobalStatus } = useFormContext();
@@ -100,6 +110,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     const [draftNotice, setDraftNotice] = useState(false);
     const [returnHref, setReturnHref] = useState(null);
     const [hasReturnTo, setHasReturnTo] = useState(false);
+    const [seededFrom, setSeededFrom] = useState(null);
 
     useEffect(() => {
         const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
@@ -119,6 +130,90 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         const timer = setTimeout(() => setDraftNotice(false), 4000);
         return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        if (!isNewForm) return;
+        let cancelled = false;
+        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+        const raw =
+            typeof window === "undefined"
+                ? null
+                : new URLSearchParams(window.location.search).get("returnTo");
+        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
+
+        (async () => {
+            const local = readNewFormDraft(storage, stored);
+            if (local?.schema?.length) {
+                if (cancelled) return;
+                dispatch({ type: "LOAD_DRAFT", payload: local });
+                setSeededFrom("local");
+                setDraftNotice(true);
+                return;
+            }
+            if (handoff?.fromForm) {
+                try {
+                    const payload = await request(`/api/admin/forms/${handoff.fromForm}`);
+                    const row = payload?.data ?? payload;
+                    const schema = cloneSchema(row?.schema);
+                    if (cancelled || !schema.length) return;
+                    dispatch({
+                        type: "LOAD_DRAFT",
+                        payload: { schema, status: handoff.open ? FORM_STATUS_OPEN : row?.status },
+                    });
+                    setSeededFrom("form");
+                    setDraftNotice(true);
+                    return;
+                } catch {
+                    /* picker remains */
+                }
+            }
+            if (!handoff?.ownerTeam) return;
+            try {
+                const groupsPayload = await request("/api/admin/forms/component-groups?PageSize=50");
+                const items = groupsPayload?.data?.items ?? [];
+                const match = pickTemplateGroup(items, handoff.ownerTeam);
+                if (cancelled || !match) return;
+                dispatch({ type: "SET_SCHEMA", payload: cloneSchema(match.schema) });
+                setSeededFrom("group");
+                setDraftNotice(true);
+            } catch {
+                /* picker remains */
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isNewForm, handoff?.fromForm, handoff?.ownerTeam, handoff?.open, dispatch]);
+
+    useEffect(() => {
+        if (!isNewForm) return;
+        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+        const raw =
+            typeof window === "undefined"
+                ? null
+                : new URLSearchParams(window.location.search).get("returnTo");
+        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
+        if (!stored || !state.schema.length) return;
+        writeNewFormDraft(storage, stored, {
+            title: state.title,
+            description: state.description,
+            schema: state.schema,
+            status: state.status,
+            allowAnonymousResponses: state.allowAnonymousResponses,
+            allowMultipleResponses: state.allowMultipleResponses,
+            requiresManualReview: state.requiresManualReview,
+        });
+    }, [
+        isNewForm,
+        state.title,
+        state.description,
+        state.schema,
+        state.status,
+        state.allowAnonymousResponses,
+        state.allowMultipleResponses,
+        state.requiresManualReview,
+    ]);
 
     useEffect(() => {
         setGlobalTitle(state.title);
@@ -204,16 +299,17 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 dispatch({ type: "MARK_SAVED" });
                 setLastSavedAt(new Date());
                 setPublishedFlash(true);
+                const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+                const raw =
+                    typeof window === "undefined"
+                        ? null
+                        : new URLSearchParams(window.location.search).get("returnTo");
+                const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
+                clearNewFormDraft(storage, stored);
 
                 if (isNewForm) {
                     const nextId = data?.data?.id ?? data?.id;
                     if (nextId) {
-                        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-                        const raw =
-                            typeof window === "undefined"
-                                ? null
-                                : new URLSearchParams(window.location.search).get("returnTo");
-                        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
                         router.push(editPathWithReturnTo(nextId, stored));
                     }
                     return;
@@ -348,6 +444,18 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                                     {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Bileşen panelini açın."}
                                 </p>
                             </div>
+                            {isNewForm ? (
+                                <PreviousDraftPicker
+                                    ownerTeam={handoff?.ownerTeam}
+                                    busy={Boolean(seededFrom === "loading")}
+                                    onApply={({ schema }) => {
+                                        dispatch({ type: "SET_SCHEMA", payload: schema });
+                                        if (handoff?.open) dispatch({ type: "SET_STATUS", payload: FORM_STATUS_OPEN });
+                                        setSeededFrom("picker");
+                                        setDraftNotice(true);
+                                    }}
+                                />
+                            ) : null}
                         </div>
                     </div>
                 ) : (
@@ -404,11 +512,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 onDraftNoticeClose={() => setDraftNotice(false)}
             />
             <div ref={editorRef} className="relative">
-                {hasReturnTo && !returnHref ? (
-                    <p className="px-4 pt-3 text-2xs text-neutral-400">
-                        Formu kaydettikten sonra etkinliğe dönebilirsin.
-                    </p>
-                ) : null}
+                <EventReturnBar returnHref={returnHref} pending={hasReturnTo && !returnHref} />
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
@@ -455,7 +559,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     );
 }
 
-export default function FormEditor({ initialForm = null, draft = null, onRefresh }) {
+export default function FormEditor({ initialForm = null, draft = null, onRefresh, handoff = null }) {
     const normalizedInitialData = initialForm ? {
         id: initialForm.id,
         schema: migrateSchema(initialForm.schema),
@@ -470,11 +574,14 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
         status: initialForm.status || 1,
         isChildForm: initialForm.isChildForm || false,
         userRole: initialForm.userRole || 3
+    } : handoff?.eventLinked ? {
+        title: handoff.title || "Yeni Form",
+        status: handoff.open ? FORM_STATUS_OPEN : 1,
     } : null;
 
     return (
         <FormEditorProvider initialData={normalizedInitialData}>
-            <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} />
+            <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} handoff={handoff} />
         </FormEditorProvider>
     );
 }
