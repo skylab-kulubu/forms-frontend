@@ -198,6 +198,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
                             >
                               <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionCounter} value={formValues[field.id]}
                                 onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing}
+                                disableAutoFill={Boolean(field.props?.identity || activeForm?.eventId)}
                                 onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
                               />
                             </motion.div>
