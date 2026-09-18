@@ -76,6 +76,11 @@ export function useFormDnD(schema, setSchema, libraryDropElRef) {
 
         if (from === "canvas" && isOverLibrary) {
             const fieldId = active.data.current.id;
+            const dragging = schema.find((field) => field.id === fieldId);
+            if (dragging?.props?.identity) {
+                resetDragState();
+                return;
+            }
 
             setSchema((prev) => {
                 const newSchema = prev.filter((field) => field.id !== fieldId);

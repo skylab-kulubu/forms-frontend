@@ -8,6 +8,8 @@ import {
   pickTemplateGroup,
   readNewFormDraft,
   writeNewFormDraft,
+  ensureEventIdentityFields,
+  isIdentityField,
 } from "./event-handoff.js";
 
 describe("event handoff seed", () => {
@@ -75,5 +77,26 @@ describe("event handoff seed", () => {
     const loaded = readNewFormDraft(storage, returnTo);
     assert.equal(loaded.title, "SkyDays");
     assert.equal(loaded.schema[0].id, "q1");
+  });
+
+  it("locks ad, soyad and email on event-linked schemas", () => {
+    const schema = ensureEventIdentityFields([
+      { id: "q-ad", type: "short_text", props: { question: "Adınız", required: false } },
+      { id: "why", type: "long_text", props: { question: "Neden?", required: false } },
+    ]);
+    assert.equal(schema[0].id, "q-ad");
+    assert.equal(schema[0].props.identity, "firstName");
+    assert.equal(schema[0].props.required, true);
+    assert.equal(schema[1].props.identity, "lastName");
+    assert.equal(schema[1].props.question, "Soyad");
+    assert.equal(schema[2].props.identity, "email");
+    assert.equal(schema[2].props.inputType, "email");
+    assert.equal(schema[3].id, "why");
+    assert.equal(isIdentityField(schema[3]), false);
+    const again = ensureEventIdentityFields(schema);
+    assert.equal(again.filter((field) => isIdentityField(field)).length, 3);
+    const empty = ensureEventIdentityFields([]);
+    assert.equal(empty[0].id, "identity:firstName");
+    assert.equal(empty[2].id, "identity:email");
   });
 });

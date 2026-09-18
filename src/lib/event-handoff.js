@@ -115,3 +115,83 @@ export function pickTemplateGroup(groups, ownerTeam) {
     ) ?? null
   );
 }
+
+export const IDENTITY_FIRST_NAME = "firstName";
+export const IDENTITY_LAST_NAME = "lastName";
+export const IDENTITY_EMAIL = "email";
+export const EVENT_IDENTITY_KEYS = [IDENTITY_FIRST_NAME, IDENTITY_LAST_NAME, IDENTITY_EMAIL];
+
+const IDENTITY_SPECS = {
+  [IDENTITY_FIRST_NAME]: { question: "Ad", inputType: "name" },
+  [IDENTITY_LAST_NAME]: { question: "Soyad", inputType: "name" },
+  [IDENTITY_EMAIL]: { question: "E-posta", inputType: "email" },
+};
+
+export function identityKeyOf(field) {
+  const key = field?.props?.identity;
+  return EVENT_IDENTITY_KEYS.includes(key) ? key : null;
+}
+
+export function isIdentityField(field) {
+  return Boolean(identityKeyOf(field));
+}
+
+function guessIdentityKey(field, used) {
+  const marked = identityKeyOf(field);
+  if (marked && !used.has(marked)) return marked;
+  if (field?.type !== "short_text") return null;
+  const input = fold(field?.props?.inputType);
+  const question = fold(field?.props?.question);
+  if (!used.has(IDENTITY_EMAIL) && (input === "email" || question.includes("eposta") || question === "email" || question === "mail")) {
+    return IDENTITY_EMAIL;
+  }
+  if (!used.has(IDENTITY_LAST_NAME) && (question.includes("soyad") || question === "lastname" || question === "surname")) {
+    return IDENTITY_LAST_NAME;
+  }
+  if (
+    !used.has(IDENTITY_FIRST_NAME) &&
+    (question === "ad" || question === "adiniz" || question === "isim" || question === "isminiz" || question === "firstname" || question === "name")
+  ) {
+    return IDENTITY_FIRST_NAME;
+  }
+  if (!used.has(IDENTITY_FIRST_NAME) && input === "name") return IDENTITY_FIRST_NAME;
+  return null;
+}
+
+function stampIdentity(field, key) {
+  const spec = IDENTITY_SPECS[key];
+  const props = { ...(field.props ?? {}) };
+  props.identity = key;
+  props.required = true;
+  props.inputType = spec.inputType;
+  if (!props.question) props.question = spec.question;
+  const next = { ...field, props };
+  if (next.condition) {
+    const { condition, ...rest } = next;
+    return rest;
+  }
+  return next;
+}
+
+export function ensureEventIdentityFields(schema) {
+  const source = Array.isArray(schema) ? schema.map((field) => ({ ...field, props: { ...(field.props ?? {}) } })) : [];
+  const used = new Set();
+  const byKey = {};
+  const claimed = new Set();
+  for (const field of source) {
+    const key = guessIdentityKey(field, used);
+    if (!key) continue;
+    used.add(key);
+    byKey[key] = stampIdentity(field, key);
+    claimed.add(field.id);
+  }
+  const identity = EVENT_IDENTITY_KEYS.map((key) => {
+    if (byKey[key]) return byKey[key];
+    return stampIdentity(
+      { id: `identity:${key}`, type: "short_text", props: { question: IDENTITY_SPECS[key].question } },
+      key,
+    );
+  });
+  const rest = source.filter((field) => !claimed.has(field.id));
+  return [...identity, ...rest];
+}
