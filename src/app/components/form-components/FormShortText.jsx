@@ -27,9 +27,10 @@ function normalizeName(name) {
 export function CreateFormShortText({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
   const currentType = prop.inputType || "text";
+  const locked = Boolean(prop.identity);
 
   return (
-    <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
+    <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => { if (!locked) toggle("required", v); }} hideRequired={locked} compact={compact} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
         <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Sorunuzu buraya yazın." />
@@ -49,8 +50,8 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
             const Icon = type.icon;
             const isActive = currentType === type.id;
             return (
-              <button key={type.id} type="button" onClick={() => patch({ inputType: type.id })}
-                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
+              <button key={type.id} type="button" disabled={locked} onClick={() => { if (!locked) patch({ inputType: type.id }); }}
+                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${locked ? "opacity-60 cursor-not-allowed" : ""} ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
               >
                 <Icon size={14} />
                 {type.label}
@@ -81,13 +82,14 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
   );
 }
 
-export function DisplayFormShortText({ question, questionNumber, description, required = false, inputType = "text", allowMultiple = false, disableAutoFill = false, compact = false, value, onChange, missing = false }) {
+export function DisplayFormShortText({ question, questionNumber, description, required = false, inputType = "text", allowMultiple = false, disableAutoFill = false, identity, compact = false, value, onChange, missing = false }) {
   const { data: session, status } = useSession();
   const isAuthed = status === "authenticated";
+  const skipFill = disableAutoFill || Boolean(identity);
 
-  const autoFilled = !disableAutoFill && isAuthed && inputType === "name" && session?.user?.fullName ? normalizeName(session.user.fullName) : null;
+  const autoFilled = !skipFill && isAuthed && inputType === "name" && session?.user?.fullName ? normalizeName(session.user.fullName) : null;
 
-  const autoDefault = !disableAutoFill && isAuthed && inputType === "email" && session?.user?.email ? session.user.email : null;
+  const autoDefault = !skipFill && isAuthed && inputType === "email" && session?.user?.email ? session.user.email : null;
 
   const [internalValue, setInternalValue] = useState(value || "");
   const [wasAutoFilled, setWasAutoFilled] = useState(false);
