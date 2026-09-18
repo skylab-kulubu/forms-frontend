@@ -1,3 +1,5 @@
+import { eventIdFromReturnTo } from "./return-to.js";
+
 export const FORM_STATUS_CLOSED = 1;
 export const FORM_STATUS_OPEN = 2;
 export const NEW_FORM_DRAFT_KEY = "skyforms:newFormDraft";
@@ -47,11 +49,13 @@ export function eventHandoffFromSearch(search) {
   };
   const returnTo = get("returnTo");
   const published = get("published");
-  const eventLinked = Boolean(returnTo);
+  const eventId = get("eventId") || eventIdFromReturnTo(returnTo);
+  const eventLinked = Boolean(returnTo) || Boolean(eventId);
   return {
     title: get("title"),
     ownerTeam: get("ownerTeam"),
     fromForm: get("fromForm") || null,
+    eventId: eventId || null,
     eventLinked,
     open: eventLinked && published !== "0" && published !== "false",
   };

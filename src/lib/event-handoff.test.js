@@ -21,6 +21,14 @@ describe("event handoff seed", () => {
     assert.equal(linked.open, true);
     assert.equal(linked.title, "GECEKODU SkyDays 2026");
     assert.equal(linked.ownerTeam, "GECEKODU");
+    assert.equal(
+      eventHandoffFromSearch(
+        new URLSearchParams(
+          "returnTo=https://admin.yildizskylab.com/events/11111111-1111-4111-8111-111111111111&eventId=11111111-1111-4111-8111-111111111111",
+        ),
+      ).eventId,
+      "11111111-1111-4111-8111-111111111111",
+    );
     assert.equal(eventHandoffFromSearch(new URLSearchParams()).eventLinked, false);
     assert.equal(eventHandoffFromSearch(new URLSearchParams()).open, false);
     assert.equal(
