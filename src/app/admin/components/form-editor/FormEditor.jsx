@@ -35,6 +35,7 @@ import { FormPreview } from "./components/FormPreview";
 import {
     captureReturnTo,
     editPathWithReturnTo,
+    eventRefFromForm,
     readStoredReturnTo,
     returnToEventHref,
 } from "@/lib/return-to";
@@ -83,7 +84,7 @@ class SmartKeyboardSensor extends KeyboardSensor {
   ];
 }
 
-function FormEditorContent({ isNewForm, draft, onRefresh, handoff }) {
+function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) {
     const router = useRouter();
     const { data: session } = useSession();
     const { setTitle: setGlobalTitle, setStatus: setGlobalStatus } = useFormContext();
@@ -110,6 +111,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff }) {
     const [draftNotice, setDraftNotice] = useState(false);
     const [returnHref, setReturnHref] = useState(null);
     const [hasReturnTo, setHasReturnTo] = useState(false);
+    const [eventRef, setEventRef] = useState(null);
     const [seededFrom, setSeededFrom] = useState(null);
 
     useEffect(() => {
@@ -119,9 +121,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff }) {
                 ? null
                 : new URLSearchParams(window.location.search).get("returnTo");
         const stored = captureReturnTo(raw, storage);
-        setHasReturnTo(Boolean(stored));
+        setHasReturnTo(Boolean(stored) || Boolean(handoff?.eventId));
         setReturnHref(state.id && stored ? returnToEventHref(stored, state.id) : null);
-    }, [state.id]);
+        setEventRef(
+            eventRefFromForm(
+                {
+                    event: formEvent || { id: handoff?.eventId, name: handoff?.title },
+                    eventId: formEvent?.id || handoff?.eventId,
+                    eventName: formEvent?.name || handoff?.title,
+                },
+                stored,
+            ),
+        );
+    }, [state.id, handoff?.eventId, handoff?.title, formEvent]);
 
     useEffect(() => {
         if (!draft) return;
@@ -286,7 +298,8 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff }) {
             Collaborators: state.editors.map((editor) => ({
                 UserId: editor.user.id,
                 Role: Number(editor.role)
-            }))
+            })),
+            EventId: eventRef?.id || handoff?.eventId || null
         };
 
         saveForm({
@@ -512,7 +525,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff }) {
                 onDraftNoticeClose={() => setDraftNotice(false)}
             />
             <div ref={editorRef} className="relative">
-                <EventReturnBar returnHref={returnHref} pending={hasReturnTo && !returnHref} />
+                <EventReturnBar returnHref={returnHref} pending={hasReturnTo && !returnHref} eventHref={eventRef?.href} eventName={eventRef?.name} />
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
@@ -581,7 +594,7 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
 
     return (
         <FormEditorProvider initialData={normalizedInitialData}>
-            <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} handoff={handoff} />
+            <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} handoff={handoff} formEvent={initialForm?.event ?? null} />
         </FormEditorProvider>
     );
 }
