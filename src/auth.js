@@ -11,9 +11,7 @@ function decodeJwtPayload(accessToken) {
 }
 
 function skyformsRolesFrom(jwtPayload) {
-    return jwtPayload.resource_access?.forms?.roles
-        ?? jwtPayload.resource_access?.dotnet?.roles
-        ?? [];
+    return jwtPayload.resource_access?.forms?.roles ?? [];
 }
 
 const EXPIRY_BUFFER_MS = 60 * 1000;
