@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowDown, ArrowUp, ChevronRight, ClipboardCheck, CornerDownRight, FileText, PencilLine, Repeat2, UserX, ChartColumn, Archive } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
+import { eventRefFromForm } from "@/lib/return-to";
 
 const FORM_GRID = [
   "grid items-center gap-3",
@@ -62,6 +63,18 @@ function LinkedFormChip({ id, title }) {
         <span className="block truncate text-3xs text-neutral-500">{id}</span>
       </span>
     </Link>
+  );
+}
+
+function EventChip({ event }) {
+  if (!event?.href) return null;
+  return (
+    <a href={event.href} target="_blank" rel="noreferrer" title={`Etkinliği aç: ${event.name || event.id}`}
+      className="relative z-10 inline-flex max-w-[12rem] items-center truncate rounded-md border border-skylab-400/30 bg-skylab-500/10 px-1.5 py-0.5 text-3xs font-medium text-skylab-200 hover:border-skylab-300/50"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {event.name || "Etkinlik"}
+    </a>
   );
 }
 
@@ -265,6 +278,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, classNa
   const linkedId = linkedForm?.id;
   const linkedTitle = linkedForm?.title || "--";
   const hasLinked = Boolean(linkedId);
+  const event = eventRefFromForm(form);
   const responsesHref = viewHref ? `${viewHref}/responses` : undefined;
   const canEdit = Number(form.userRole) >= 2;
   const responseCount = form.responseCount ?? 0;
@@ -285,6 +299,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, classNa
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2">
               <h3 className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">{form.title || "--"}</h3>
+              <EventChip event={event} />
               <span className="md:hidden"><RoleBadge role={form.userRole} /></span>
             </div>
             <div className="mt-0.5 flex min-w-0 items-center gap-2">

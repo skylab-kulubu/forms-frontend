@@ -1,0 +1,85 @@
+name: GHCR
+
+on:
+  push:
+    branches: [main, production]
+    tags: ["v*.*.*"]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - id: tags
+        run: |
+          img=ghcr.io/skylab-kulubu/forms-frontend
+          sha='${{ github.sha }}'
+          ref='${{ github.ref_name }}'
+          if [ "$ref" = production ]; then
+            echo "list=${img}:production,${img}:${sha}" >> "$GITHUB_OUTPUT"
+          elif [ "$ref" = main ]; then
+            echo "list=${img}:latest,${img}:sandbox,${img}:${sha}" >> "$GITHUB_OUTPUT"
+          else
+            echo "list=${img}:${sha}" >> "$GITHUB_OUTPUT"
+          fi
+      - id: environment
+        run: |
+          ref='${{ github.ref_name }}'
+          if [ "$ref" = production ] || [[ "$ref" == v* ]]; then
+            echo "api_url=https://api.yildizskylab.com" >> "$GITHUB_OUTPUT"
+            echo "site_url=https://forms.yildizskylab.com" >> "$GITHUB_OUTPUT"
+            echo "admin_url=https://admin.yildizskylab.com" >> "$GITHUB_OUTPUT"
+            echo "forms_admin_url=https://forms.yildizskylab.com/admin" >> "$GITHUB_OUTPUT"
+            echo "mail_url=https://mail.yildizskylab.com" >> "$GITHUB_OUTPUT"
+            echo "short_origin=https://skyl.app" >> "$GITHUB_OUTPUT"
+            echo "arge_url=https://arge.yildizskylab.com" >> "$GITHUB_OUTPUT"
+          else
+            echo "api_url=https://sandbox-api.yildizskylab.com" >> "$GITHUB_OUTPUT"
+            echo "site_url=https://sandbox-forms.yildizskylab.com" >> "$GITHUB_OUTPUT"
+            echo "admin_url=https://sandbox-admin.yildizskylab.com" >> "$GITHUB_OUTPUT"
+            echo "forms_admin_url=https://sandbox-forms.yildizskylab.com/admin" >> "$GITHUB_OUTPUT"
+            echo "mail_url=https://sandbox-mail.yildizskylab.com" >> "$GITHUB_OUTPUT"
+            echo "short_origin=https://sandbox-api.yildizskylab.com/v1/go" >> "$GITHUB_OUTPUT"
+            echo "arge_url=https://sandbox-arge.yildizskylab.com" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.tags.outputs.list }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ steps.environment.outputs.api_url }}
+            NEXT_PUBLIC_SITE_URL=${{ steps.environment.outputs.site_url }}
+            NEXT_PUBLIC_ADMIN_URL=${{ steps.environment.outputs.admin_url }}
+            NEXT_PUBLIC_FORMS_ADMIN_URL=${{ steps.environment.outputs.forms_admin_url }}
+            NEXT_PUBLIC_MAIL_URL=${{ steps.environment.outputs.mail_url }}
+            NEXT_PUBLIC_CORE_API_URL=${{ steps.environment.outputs.api_url }}
+            NEXT_PUBLIC_SHORT_ORIGIN=${{ steps.environment.outputs.short_origin }}
+            NEXT_PUBLIC_ARGE_URL=${{ steps.environment.outputs.arge_url }}
+      - name: Notify Dokploy
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          SANDBOX_HOOK: ${{ secrets.DOKPLOY_SANDBOX_DEPLOY_HOOK }}
+          PRODUCTION_HOOK: ${{ secrets.DOKPLOY_DEPLOY_HOOK }}
+        run: |
+          if [ "$REF_NAME" = main ]; then
+            HOOK="$SANDBOX_HOOK"
+          else
+            HOOK="$PRODUCTION_HOOK"
+          fi
+          if [ -z "$HOOK" ]; then
+            echo "Dokploy hook unset for ${REF_NAME}; skip"
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK"

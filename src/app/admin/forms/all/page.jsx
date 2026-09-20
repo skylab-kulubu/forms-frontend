@@ -10,6 +10,7 @@ import Pagination from "../../components/utils/Pagination";
 import { useAllFormsQuery } from "@/lib/hooks/useFormAdmin";
 import StateCard from "@/app/components/StateCard";
 import { FileSearchCorner, FileXCorner } from "lucide-react";
+import { eventRefFromForm } from "@/lib/return-to";
 
 const formatDate = (value) => {
   if (!value) return "--";
@@ -25,10 +26,21 @@ function normalizeName(name) {
     .join(" ");
 }
 
+function personDisplayName(user) {
+  if (!user) return null;
+  return (
+    user.fullName ||
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    user.email ||
+    null
+  );
+}
+
 function AllFormItem({ form }) {
   const createdBy = form.createdBy ?? null;
-  const ownerName = normalizeName(createdBy?.fullName ?? null);
+  const ownerName = normalizeName(personDisplayName(createdBy));
   const statusActive = form.status === 2;
+  const event = eventRefFromForm(form);
 
   return (
     <div className="group/row relative flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/3">
@@ -37,6 +49,14 @@ function AllFormItem({ form }) {
       <div className="flex-1 min-w-0 relative z-10">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-sm font-medium text-neutral-100 truncate max-w-xs">{form.title || "--"}</p>
+          {event?.href ? (
+            <a href={event.href} target="_blank" rel="noreferrer"
+              className="relative z-10 shrink-0 rounded-md border border-skylab-400/30 bg-skylab-500/10 px-1.5 py-0.5 text-4xs uppercase tracking-[0.18em] text-skylab-200 hover:border-skylab-300/50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {event.name || "Etkinlik"}
+            </a>
+          ) : null}
           <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-4xs uppercase tracking-[0.18em] ${statusActive ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-red-500/30 bg-red-500/10 text-red-200"}`}>
             {statusActive ? "Aktif" : "Pasif"}
           </span>

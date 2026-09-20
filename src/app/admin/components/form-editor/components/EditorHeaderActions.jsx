@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, Share2, Trash2, Undo2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, Share2, Trash2, Undo2 } from "lucide-react";
 import Popover from "@/app/components/utils/Popover";
 import Tip from "@/app/admin/components/utils/Tip";
 
@@ -82,7 +82,7 @@ export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSavin
  */
 const emptySubscribe = () => () => {};
 
-export function EditorHeaderActions({ saveStatus, onPreview, onShare, isShareDisabled, hasDraft, onDiscardDraft, isDiscardingDraft, onUndo, canUndo, onDelete, isDeleteDisabled, onSave, isPending, isError, error, draftNotice, onDraftNoticeClose }) {
+export function EditorHeaderActions({ saveStatus, returnHref, onPreview, onShare, isShareDisabled, hasDraft, onDiscardDraft, isDiscardingDraft, onUndo, canUndo, onDelete, isDeleteDisabled, onSave, isPending, isError, error, draftNotice, onDraftNoticeClose }) {
     // SSR'da false, hydration sonrası true; slot div'leri o noktada DOM'da hazır.
     const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
@@ -94,6 +94,14 @@ export function EditorHeaderActions({ saveStatus, onPreview, onShare, isShareDis
 
     const content = (
         <div className="flex items-center gap-1 text-neutral-500">
+            {returnHref ? (
+                <a href={returnHref} aria-label="Etkinliğe dön"
+                    className="mr-1 inline-flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 hover:text-skylab-200"
+                >
+                    <ArrowLeft size={14} />
+                    Etkinliğe dön
+                </a>
+            ) : null}
             {saveStatus && <div className="mr-2 hidden sm:block">{saveStatus}</div>}
             <Tip label="Önizleme">
                 <button type="button" aria-label="Önizleme" onClick={onPreview} disabled={!onPreview}
@@ -147,4 +155,33 @@ export function EditorHeaderActions({ saveStatus, onPreview, onShare, isShareDis
     );
 
     return targets.map((target) => createPortal(content, target, target.id));
+}
+
+export function EventReturnBar({ returnHref, pending, eventHref, eventName }) {
+    if (!returnHref && !pending && !eventHref) return null;
+    return (
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-neutral-900/95 px-4 py-2.5 backdrop-blur">
+            {returnHref ? (
+                <a href={returnHref} aria-label="Etkinliğe dön"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-skylab-400/40 bg-skylab-500/10 px-3 text-2xs font-medium text-skylab-300 transition-colors hover:border-skylab-300/60 hover:bg-skylab-400/20"
+                >
+                    <ArrowLeft size={14} />
+                    Etkinliğe dön
+                </a>
+            ) : pending ? (
+                <p className="text-2xs text-neutral-400">Formu kaydettikten sonra etkinliğe dönebilirsin.</p>
+            ) : (
+                <span />
+            )}
+            {eventHref ? (
+                <a href={eventHref} target="_blank" rel="noreferrer" aria-label="Etkinliği adminde aç"
+                    className="inline-flex max-w-[16rem] items-center truncate rounded-md border border-white/10 bg-white/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:border-white/20 hover:bg-white/10"
+                >
+                    {eventName || "Etkinlik"}
+                </a>
+            ) : (
+                <p className="hidden text-3xs text-neutral-500 sm:block">Kayıt, form adresini etkinlik sayfasına yazar.</p>
+            )}
+        </div>
+    );
 }

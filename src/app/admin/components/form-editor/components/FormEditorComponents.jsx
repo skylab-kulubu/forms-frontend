@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, Copy, CopyPlus, PencilLine, Plus, Trash2 } from "lucide-react";
 
 import { REGISTRY, COMPONENTS } from "../../../../components/form-registry";
+import { isIdentityField } from "@/lib/event-handoff";
 
 export function GhostComponent({ active, schema }) {
     if (!active) return null;
@@ -125,11 +126,11 @@ export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDupli
                     <ItemActionButton label="Aşağı taşı" onClick={() => onMove(field.id, 1)} disabled={!canMoveDown}>
                         <ArrowDown size={13} />
                     </ItemActionButton>
-                    <ItemActionButton label="Çoğalt" onClick={() => onDuplicate(field.id)}>
+                    <ItemActionButton label="Çoğalt" onClick={() => onDuplicate(field.id)} disabled={isIdentityField(field)}>
                         <Copy size={13} />
                     </ItemActionButton>
                     <span className="mx-0.5 h-4 w-px bg-white/10" />
-                    <ItemActionButton label="Sil" onClick={() => onDelete(field.id)} danger>
+                    <ItemActionButton label="Sil" onClick={() => onDelete(field.id)} danger disabled={isIdentityField(field)}>
                         <Trash2 size={13} />
                     </ItemActionButton>
                 </div>

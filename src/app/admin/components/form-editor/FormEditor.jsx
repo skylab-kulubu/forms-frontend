@@ -14,14 +14,34 @@ import { GhostComponent, Canvas, CanvasItem, DropSlot, InsertSlot } from "./comp
 import { genFieldId } from "./fieldId";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
-import { EditorHeaderActions, HeaderStatusPill } from "./components/EditorHeaderActions";
+import { EditorHeaderActions, EventReturnBar, HeaderStatusPill } from "./components/EditorHeaderActions";
+import { PreviousDraftPicker } from "./components/PreviousDraftPicker";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
 import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
+import { request } from "@/lib/apiClient";
+import {
+    FORM_STATUS_OPEN,
+    clearNewFormDraft,
+    cloneSchema,
+    pickTemplateGroup,
+    readNewFormDraft,
+    writeNewFormDraft,
+    ensureEventIdentityFields,
+    isIdentityField,
+    identityKeyOf,
+} from "@/lib/event-handoff";
 import ApprovalOverlay from "../ApprovalOverlay";
 import ShareOverlay from "../ShareOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 import { FormPreview } from "./components/FormPreview";
+import {
+    captureReturnTo,
+    editPathWithReturnTo,
+    eventRefFromForm,
+    readStoredReturnTo,
+    returnToEventHref,
+} from "@/lib/return-to";
 
 import { REGISTRY } from "../../../components/form-registry";
 import { migrateSchema } from "../../../components/form-migrate";
@@ -67,7 +87,7 @@ class SmartKeyboardSensor extends KeyboardSensor {
   ];
 }
 
-function FormEditorContent({ isNewForm, draft, onRefresh }) {
+function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) {
     const router = useRouter();
     const { data: session } = useSession();
     const { setTitle: setGlobalTitle, setStatus: setGlobalStatus } = useFormContext();
@@ -92,6 +112,44 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
     const [hasDraft, setHasDraft] = useState(!!draft);
     const [draftNotice, setDraftNotice] = useState(false);
+    const [returnHref, setReturnHref] = useState(null);
+    const [hasReturnTo, setHasReturnTo] = useState(false);
+    const [eventRef, setEventRef] = useState(null);
+    const [seededFrom, setSeededFrom] = useState(null);
+
+    useEffect(() => {
+        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+        const raw =
+            typeof window === "undefined"
+                ? null
+                : new URLSearchParams(window.location.search).get("returnTo");
+        const stored = captureReturnTo(raw, storage);
+        setHasReturnTo(Boolean(stored) || Boolean(handoff?.eventId));
+        setReturnHref(state.id && stored ? returnToEventHref(stored, state.id) : null);
+        setEventRef(
+            eventRefFromForm(
+                {
+                    event: formEvent || { id: handoff?.eventId, name: handoff?.title },
+                    eventId: formEvent?.id || handoff?.eventId,
+                    eventName: formEvent?.name || handoff?.title,
+                },
+                stored,
+            ),
+        );
+    }, [state.id, handoff?.eventId, handoff?.title, formEvent]);
+
+    const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id);
+
+    useEffect(() => {
+        if (!eventLinked) return;
+        const next = ensureEventIdentityFields(state.schema);
+        if (JSON.stringify(next) !== JSON.stringify(state.schema)) {
+            dispatch({ type: "SET_SCHEMA", payload: next });
+        }
+        if (!state.allowAnonymousResponses) {
+            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: true } });
+        }
+    }, [eventLinked, state.schema, state.allowAnonymousResponses, dispatch]);
 
     useEffect(() => {
         if (!draft) return;
@@ -100,6 +158,90 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         const timer = setTimeout(() => setDraftNotice(false), 4000);
         return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        if (!isNewForm) return;
+        let cancelled = false;
+        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+        const raw =
+            typeof window === "undefined"
+                ? null
+                : new URLSearchParams(window.location.search).get("returnTo");
+        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
+
+        (async () => {
+            const local = readNewFormDraft(storage, stored);
+            if (local?.schema?.length) {
+                if (cancelled) return;
+                dispatch({ type: "LOAD_DRAFT", payload: local });
+                setSeededFrom("local");
+                setDraftNotice(true);
+                return;
+            }
+            if (handoff?.fromForm) {
+                try {
+                    const payload = await request(`/api/admin/forms/${handoff.fromForm}`);
+                    const row = payload?.data ?? payload;
+                    const schema = cloneSchema(row?.schema);
+                    if (cancelled || !schema.length) return;
+                    dispatch({
+                        type: "LOAD_DRAFT",
+                        payload: { schema, status: handoff.open ? FORM_STATUS_OPEN : row?.status },
+                    });
+                    setSeededFrom("form");
+                    setDraftNotice(true);
+                    return;
+                } catch {
+                    /* picker remains */
+                }
+            }
+            if (!handoff?.ownerTeam) return;
+            try {
+                const groupsPayload = await request("/api/admin/forms/component-groups?PageSize=50");
+                const items = groupsPayload?.data?.items ?? [];
+                const match = pickTemplateGroup(items, handoff.ownerTeam);
+                if (cancelled || !match) return;
+                dispatch({ type: "SET_SCHEMA", payload: cloneSchema(match.schema) });
+                setSeededFrom("group");
+                setDraftNotice(true);
+            } catch {
+                /* picker remains */
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isNewForm, handoff?.fromForm, handoff?.ownerTeam, handoff?.open, dispatch]);
+
+    useEffect(() => {
+        if (!isNewForm) return;
+        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+        const raw =
+            typeof window === "undefined"
+                ? null
+                : new URLSearchParams(window.location.search).get("returnTo");
+        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
+        if (!stored || !state.schema.length) return;
+        writeNewFormDraft(storage, stored, {
+            title: state.title,
+            description: state.description,
+            schema: state.schema,
+            status: state.status,
+            allowAnonymousResponses: state.allowAnonymousResponses,
+            allowMultipleResponses: state.allowMultipleResponses,
+            requiresManualReview: state.requiresManualReview,
+        });
+    }, [
+        isNewForm,
+        state.title,
+        state.description,
+        state.schema,
+        state.status,
+        state.allowAnonymousResponses,
+        state.allowMultipleResponses,
+        state.requiresManualReview,
+    ]);
 
     useEffect(() => {
         setGlobalTitle(state.title);
@@ -149,12 +291,13 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     }, [publishedFlash]);
 
     const setSchemaBridge = useCallback((newSchemaOrUpdater) => {
+        const wrap = (schema) => (eventLinked ? ensureEventIdentityFields(schema) : schema);
         if (typeof newSchemaOrUpdater === 'function') {
-            dispatch({ type: "SET_SCHEMA", payload: newSchemaOrUpdater(state.schema) });
+            dispatch({ type: "SET_SCHEMA", payload: wrap(newSchemaOrUpdater(state.schema)) });
         } else {
-            dispatch({ type: "SET_SCHEMA", payload: newSchemaOrUpdater });
+            dispatch({ type: "SET_SCHEMA", payload: wrap(newSchemaOrUpdater) });
         }
-    }, [state.schema, dispatch]);
+    }, [state.schema, dispatch, eventLinked]);
 
     const { dragSource, activeDragItem, handlers } = useFormDnD(state.schema, setSchemaBridge, libraryDropElRef);
 
@@ -163,16 +306,17 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
             Id: state.id || null,
             Title: state.title,
             Description: state.description,
-            Schema: state.schema,
+            Schema: eventLinked ? ensureEventIdentityFields(state.schema) : state.schema,
             Status: state.status,
-            AllowMultipleResponses: state.allowAnonymousResponses ? true : state.allowMultipleResponses,
-            AllowAnonymousResponses: state.allowAnonymousResponses,
+            AllowMultipleResponses: eventLinked || state.allowAnonymousResponses ? true : state.allowMultipleResponses,
+            AllowAnonymousResponses: eventLinked ? true : state.allowAnonymousResponses,
             RequiresManualReview: state.requiresManualReview,
             LinkedFormId: state.allowAnonymousResponses ? null : (state.linkedFormId || null),
             Collaborators: state.editors.map((editor) => ({
                 UserId: editor.user.id,
                 Role: Number(editor.role)
-            }))
+            })),
+            EventId: eventRef?.id || handoff?.eventId || null
         };
 
         saveForm({
@@ -185,10 +329,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 dispatch({ type: "MARK_SAVED" });
                 setLastSavedAt(new Date());
                 setPublishedFlash(true);
+                const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
+                const raw =
+                    typeof window === "undefined"
+                        ? null
+                        : new URLSearchParams(window.location.search).get("returnTo");
+                const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
+                clearNewFormDraft(storage, stored);
 
                 if (isNewForm) {
                     const nextId = data?.data?.id ?? data?.id;
-                    if (nextId) router.push(`/admin/forms/${nextId}/edit`);
+                    if (nextId) {
+                        router.push(editPathWithReturnTo(nextId, stored));
+                    }
                     return;
                 }
 
@@ -221,7 +374,21 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     };
 
     const updateField = (id, updates) => {
-        const nextSchema = state.schema.map((field) => (field.id === id ? { ...field, ...updates } : field));
+        const nextSchema = state.schema.map((field) => {
+            if (field.id !== id) return field;
+            const next = { ...field, ...updates };
+            const key = identityKeyOf(field) || identityKeyOf(next);
+            if (!key) return next;
+            return {
+                ...next,
+                props: {
+                    ...(next.props ?? {}),
+                    identity: key,
+                    required: true,
+                    inputType: key === "email" ? "email" : "name",
+                },
+            };
+        });
         dispatch({ type: "SET_SCHEMA", payload: nextSchema });
     };
 
@@ -229,6 +396,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         const index = state.schema.findIndex((field) => field.id === id);
         if (index === -1) return;
         const source = state.schema[index];
+        if (isIdentityField(source)) return;
         const copy = { ...source, id: genFieldId(), props: structuredClone(source.props ?? {}) };
         const next = [...state.schema];
         next.splice(index + 1, 0, copy);
@@ -236,6 +404,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     };
 
     const deleteField = (id) => {
+        if (isIdentityField(state.schema.find((field) => field.id === id))) return;
         // Silinen alana bağlı koşullar da temizlenir (sürükle-sil ile aynı davranış).
         const next = state.schema.filter((field) => field.id !== id).map((field) => {
             if (field.condition?.fieldId !== id) return field;
@@ -321,6 +490,18 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                                     {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Bileşen panelini açın."}
                                 </p>
                             </div>
+                            {isNewForm ? (
+                                <PreviousDraftPicker
+                                    ownerTeam={handoff?.ownerTeam}
+                                    busy={Boolean(seededFrom === "loading")}
+                                    onApply={({ schema }) => {
+                                        dispatch({ type: "SET_SCHEMA", payload: schema });
+                                        if (handoff?.open) dispatch({ type: "SET_STATUS", payload: FORM_STATUS_OPEN });
+                                        setSeededFrom("picker");
+                                        setDraftNotice(true);
+                                    }}
+                                />
+                            ) : null}
                         </div>
                     </div>
                 ) : (
@@ -358,6 +539,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
         <DndContext collisionDetection={pointerWithin} sensors={sensors} {...handlers}>
             <EditorHeaderActions
                 saveStatus={saveStatusChip}
+                returnHref={returnHref}
                 onPreview={() => setPreviewOpen(true)}
                 onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
                 isShareDisabled={isNewForm}
@@ -376,6 +558,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
                 onDraftNoticeClose={() => setDraftNotice(false)}
             />
             <div ref={editorRef} className="relative">
+                <EventReturnBar returnHref={returnHref} pending={hasReturnTo && !returnHref} eventHref={eventRef?.href} eventName={eventRef?.name} />
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
@@ -422,7 +605,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh }) {
     );
 }
 
-export default function FormEditor({ initialForm = null, draft = null, onRefresh }) {
+export default function FormEditor({ initialForm = null, draft = null, onRefresh, handoff = null }) {
     const normalizedInitialData = initialForm ? {
         id: initialForm.id,
         schema: migrateSchema(initialForm.schema),
@@ -437,11 +620,17 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
         status: initialForm.status || 1,
         isChildForm: initialForm.isChildForm || false,
         userRole: initialForm.userRole || 3
+    } : handoff?.eventLinked ? {
+        title: handoff.title || "Yeni Form",
+        status: handoff.open ? FORM_STATUS_OPEN : 1,
+        allowAnonymousResponses: true,
+        allowMultipleResponses: true,
+        schema: ensureEventIdentityFields([]),
     } : null;
 
     return (
         <FormEditorProvider initialData={normalizedInitialData}>
-            <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} />
+            <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} handoff={handoff} formEvent={initialForm?.event ?? null} />
         </FormEditorProvider>
     );
 }

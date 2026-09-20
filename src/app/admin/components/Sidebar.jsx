@@ -10,6 +10,7 @@ import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database, ChartColumn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ClubSwitcher from "./ClubSwitcher";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
@@ -221,6 +222,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
 
       <div className="mt-auto space-y-2">
         <NavItem href="/admin/how-to-use" icon={BookOpen} label="Nasıl Kullanılır" active={pathname === "/admin/how-to-use"} onClick={onItemClick} />
+        <ClubSwitcher />
       </div>
     </div>
   );
@@ -301,7 +303,9 @@ export default function Sidebar({ user, children }) {
       <div className="md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden md:rounded-xl md:border md:border-white/5 md:bg-neutral-900">
         <div className="hidden md:flex h-10 shrink-0 items-center border-b border-white/5 px-6">
           <Breadcrumbs labels={dynamicBreadcrumbLabels} />
-          <div id="admin-header-slot" className="ml-auto flex shrink-0 items-center" />
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <div id="admin-header-slot" className="flex shrink-0 items-center" />
+          </div>
         </div>
         <div className="md:min-h-0 md:flex-1">{children}</div>
       </div>

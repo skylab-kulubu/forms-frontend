@@ -10,6 +10,10 @@ function decodeJwtPayload(accessToken) {
     }
 }
 
+function skyformsRolesFrom(jwtPayload) {
+    return jwtPayload.resource_access?.forms?.roles ?? [];
+}
+
 const EXPIRY_BUFFER_MS = 60 * 1000;
 
 async function refreshAccessToken(token) {
@@ -30,6 +34,7 @@ async function refreshAccessToken(token) {
         if (!response.ok) { throw refreshedTokens; }
 
         const jwtPayload = decodeJwtPayload(refreshedTokens.access_token);
+        const skyformsRoles = skyformsRolesFrom(jwtPayload);
 
         return {
             ...token,
@@ -37,7 +42,7 @@ async function refreshAccessToken(token) {
             idToken: refreshedTokens.id_token ?? token.idToken,
             expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
             refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-            skyformsRoles: jwtPayload.resource_access?.dotnet?.roles ?? token.skyformsRoles ?? [],
+            skyformsRoles: skyformsRoles.length ? skyformsRoles : (token.skyformsRoles ?? []),
             realmRoles: jwtPayload.realm_access?.roles ?? token.realmRoles ?? [],
             error: undefined,
         }
@@ -75,7 +80,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     idToken: account.id_token,
                     expiresAt: account.expires_at ? account.expires_at * 1000 : Date.now() + (account.expires_in ?? 300) * 1000,
                     refreshToken: account.refresh_token,
-                    skyformsRoles: jwtPayload.resource_access?.dotnet?.roles ?? [],
+                    skyformsRoles: skyformsRolesFrom(jwtPayload),
                     realmRoles: jwtPayload.realm_access?.roles ?? [],
                     user: {
                         id: jwtPayload.sub,

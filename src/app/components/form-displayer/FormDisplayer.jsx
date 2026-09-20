@@ -198,6 +198,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
                             >
                               <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionCounter} value={formValues[field.id]}
                                 onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing}
+                                disableAutoFill={Boolean(field.props?.identity || activeForm?.eventId)}
                                 onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
                               />
                             </motion.div>
@@ -246,7 +247,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
         >
           <div className="flex flex-col items-center gap-1.5">
             <div className="flex items-center gap-2">
-              <a href="https://forms.yildizskylab.com" target="_blank" rel="noopener noreferrer"
+              <a href={process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100"
               >
                 <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
