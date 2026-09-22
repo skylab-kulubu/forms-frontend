@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { logout } from "@/lib/authActions";
-import { useFormContext } from "../providers";
+import { useFormContext, useWorkflowContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database, ChartColumn } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database, ChartColumn, Workflow } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ClubSwitcher from "./ClubSwitcher";
 
@@ -20,6 +20,8 @@ const breadcrumbLabels = {
   "/admin/how-to-use": "Nasıl Kullanılır",
   "/admin/component-groups": "Bileşen Grupları",
   "/admin/component-groups/new-group": "Yeni Grup",
+  "/admin/workflows": "Akışlar",
+  "/admin/workflows/new-workflow": "Yeni Akış",
 };
 
 function SectionLabel({ children }) {
@@ -130,7 +132,7 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
   );
 }
 
-function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, onItemClick, status, formId, form, formLoading }) {
+function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, onItemClick, status, formId, form, formLoading, workflowId, workflow, workflowLoading }) {
   const isSuperAdmin = skyformsRoles.includes("skyforms:*");
   const subtitle = user?.email?.trim() || user?.username?.trim() || "--";
   const imageUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
@@ -158,6 +160,14 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
       ],
     }
   : null;
+
+  const activeWorkflowItem = workflowId
+    ? {
+        href: `/admin/workflows/${workflowId}`,
+        icon: Workflow,
+        label: workflowLoading ? "..." : (workflow?.name?.trim() || "..."),
+      }
+    : null;
 
   return (
     <div className="flex h-full w-full flex-col gap-4 px-4 py-6">
@@ -211,6 +221,14 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
             ...(activeFormItem ? [activeFormItem] : []),
           ]}
         />
+        <NavGroup icon={Workflow} label="Akışlar"
+          pathname={pathname} onItemClick={onItemClick}
+          items={[
+            { href: "/admin/workflows/new-workflow", icon: Plus, label: "Yeni Akış" },
+            { href: "/admin/workflows", icon: List, label: "Akışları Görüntüle" },
+            ...(activeWorkflowItem ? [activeWorkflowItem] : []),
+          ]}
+        />
         <NavGroup icon={Layers} label="Gruplar"
           pathname={pathname} onItemClick={onItemClick}
           items={[
@@ -236,28 +254,37 @@ export default function Sidebar({ user, children }) {
   const resolvedUser = user ?? session?.user;
 
   const { formId, form, loading: formLoading } = useFormContext();
+  const { workflowId, workflow, loading: workflowLoading } = useWorkflowContext();
 
   const dynamicBreadcrumbLabels = useMemo(() => {
-    const base = breadcrumbLabels;
+    let labels = breadcrumbLabels;
 
-    if (!formId) return base;
+    if (formId) {
+      const title = (form?.title || "...").trim();
+      labels = {
+        ...labels,
+        [`/admin/forms/${formId}`]: formLoading ? "..." : title,
+        [`/admin/forms/${formId}/edit`]: "Düzenleme",
+        [`/admin/forms/${formId}/responses`]: "Cevaplar",
+        [`/admin/forms/${formId}/analytics`]: "Analitik",
+      };
+    }
 
-    const title = (form?.title || "...").trim();
+    if (workflowId) {
+      labels = {
+        ...labels,
+        [`/admin/workflows/${workflowId}`]: workflowLoading ? "..." : (workflow?.name?.trim() || "..."),
+      };
+    }
 
-    return {
-      ...base,
-      [`/admin/forms/${formId}`]: formLoading ? "..." : title,
-      [`/admin/forms/${formId}/edit`]: "Düzenleme",
-      [`/admin/forms/${formId}/responses`]: "Cevaplar",
-      [`/admin/forms/${formId}/analytics`]: "Analitik",
-    };
-  }, [formId, form?.title, formLoading]);
+    return labels;
+  }, [formId, form?.title, formLoading, workflowId, workflow?.name, workflowLoading]);
 
   return (
     <div className="min-h-dvh md:h-dvh md:bg-neutral-950 md:pl-66 md:pr-2 md:py-2">
 
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 bg-neutral-950">
-        <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} />
+        <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} workflowId={workflowId} workflow={workflow} workflowLoading={workflowLoading} />
       </aside>
 
       <div className="md:hidden sticky top-0 z-40 border-b border-neutral-950/70 bg-neutral-950/40 backdrop-blur">
@@ -287,7 +314,7 @@ export default function Sidebar({ user, children }) {
               transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
             >
               <div ref={panelRef} className="pointer-events-auto h-full w-72 border-r border-neutral-800 bg-[#070707] shadow-xl">
-                <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} onItemClick={() => setOpen(false)} />
+                <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} workflowId={workflowId} workflow={workflow} workflowLoading={workflowLoading} onItemClick={() => setOpen(false)} />
               </div>
               <button type="button" onClick={() => setOpen(false)}
                 className="group pointer-events-auto relative flex w-5 -ml-0.5 h-full flex-col items-center justify-center rounded-r-full border-y border-r border-neutral-800 bg-[#070707] text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"

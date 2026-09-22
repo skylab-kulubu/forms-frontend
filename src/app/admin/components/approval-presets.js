@@ -1,6 +1,30 @@
-import { Shredder } from "lucide-react";
+import { Rocket, Shredder, Workflow } from "lucide-react";
 
 export const APPROVAL_PRESETS = {
+    "publish-workflow": {
+        variant: "delayed",
+        delaySeconds: 2,
+        icon: Rocket,
+        title: "Akışı yayınla",
+        highlights: (ctx) => ctx.highlights ?? [],
+        approveLabel: (ctx) => ctx.isPending ? "Yayınlanıyor..." : "Yayınla",
+        rejectLabel: () => "Vazgeç",
+    },
+
+    "archive-workflow": {
+        variant: "phrase",
+        requiredPhrase: "Kabul ediyorum",
+        icon: Workflow,
+        title: "Bu akışı arşivle",
+        highlights: () => [
+            "Akış yayından kalkar, yeni başvuru başlatılamaz.",
+            "Devam eden başvurular bulundukları sürümde kalmaya devam eder.",
+            "Akıştaki formlar ve cevapları silinmez.",
+        ],
+        approveLabel: (ctx) => ctx.isPending ? "Arşivleniyor..." : "Akışı arşivle",
+        rejectLabel: () => "Vazgeç",
+    },
+
     "delete-form": {
         variant: "phrase",
         requiredPhrase: "Kabul ediyorum",

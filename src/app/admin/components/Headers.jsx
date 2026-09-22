@@ -224,6 +224,33 @@ export function GroupsHeader(toolbarProps) {
   );
 }
 
+function WorkflowsToolbar({ compact = false, searchValue = "", onSearchChange, onRefresh, onCreate }) {
+  const buttonSize = compact ? "sm" : "md";
+
+  return (
+    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
+      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Akış ara" />
+      <div className="flex items-center gap-1.5 shrink-0">
+        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
+        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni akış ekle" aria-label="Yeni akış ekle" />
+      </div>
+    </div>
+  );
+}
+
+export function WorkflowsHeader(toolbarProps) {
+  return (
+    <>
+      <HeaderSlotPortal>
+        <WorkflowsToolbar compact {...toolbarProps} />
+      </HeaderSlotPortal>
+      <div className="md:hidden">
+        <WorkflowsToolbar {...toolbarProps} />
+      </div>
+    </>
+  );
+}
+
 export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "desc", onSortChange, allowAnonymous = null, onAllowAnonymousChange,
   allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange,
   onRefresh, stats = { count: 0 }

@@ -124,7 +124,7 @@ export function FormListHeader({ sortField, sortDirection, onSort }) {
     <div className={`${FORM_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
       <SortHeader field="status" title="Duruma göre sırala" {...sortProps} />
       <span className={COLUMN_LABEL}>Form Adı</span>
-      <span className={COLUMN_LABEL}>Akış</span>
+      <SortHeader label="Akış" field="workflow" align="left" title="Akışa göre sırala" {...sortProps} />
       <SortHeader label="Güncellendi" field="updatedAt" visibility="hidden sm:flex" title="Güncellenme tarihine göre sırala" {...sortProps} />
       <SortHeader label="Yanıt" field="responseCount" visibility="hidden lg:flex" title="Yanıt sayısına göre sırala" {...sortProps} />
       <SortHeader label="Yetki" field="userRole" visibility="hidden lg:flex" title="Yetkiye göre sırala" {...sortProps} />

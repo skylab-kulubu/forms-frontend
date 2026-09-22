@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSession } from "next-auth/react";
 import { request } from "../apiClient";
 
-const fetchFormById = async (formId) => {
+export const fetchFormById = async (formId) => {
   return request(`/api/admin/forms/${formId}`);
 };
 
