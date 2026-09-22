@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronRight, ClipboardCheck, CornerDownRight, FileText, PencilLine, Repeat2, UserX, ChartColumn, Archive } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, ClipboardCheck, FileText, PencilLine, Repeat2, UserX, ChartColumn, Archive, Workflow } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { eventRefFromForm } from "@/lib/return-to";
 
@@ -52,17 +52,17 @@ export function StatusDot({ status }) {
   return <span title={active ? "Aktif form" : "Pasif form"} className={`relative z-10 size-1.5 shrink-0 rounded-full ${tone}`} />;
 }
 
-function LinkedFormChip({ id, title }) {
+function WorkflowChip({ workflow }) {
+  const role = workflow.isStart ? "Başlangıç formu" : "Akış adımı";
+
   return (
-    <Link href={`/admin/forms/${id}`} title={`Bağlı forma git: ${title}`}
-      className="relative z-10 flex w-full min-w-0 max-w-60 items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2 py-1 transition-colors hover:border-white/20 hover:bg-white/5"
-    >
-      <CornerDownRight size={12} className="shrink-0 text-neutral-500" />
+    <span className="flex w-full min-w-0 max-w-60 items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2 py-1">
+      <Workflow size={12} className="shrink-0 text-neutral-500" />
       <span className="min-w-0">
-        <span className="block truncate text-2xs font-medium text-neutral-200">{title}</span>
-        <span className="block truncate text-3xs text-neutral-500">{id}</span>
+        <span className="block truncate text-2xs font-medium text-neutral-200">{workflow.name || "Adsız akış"}</span>
+        <span className="block truncate text-3xs text-neutral-500">{workflow.isPublished ? role : `${role} · Taslak`}</span>
       </span>
-    </Link>
+    </span>
   );
 }
 
@@ -124,7 +124,7 @@ export function FormListHeader({ sortField, sortDirection, onSort }) {
     <div className={`${FORM_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
       <SortHeader field="status" title="Duruma göre sırala" {...sortProps} />
       <span className={COLUMN_LABEL}>Form Adı</span>
-      <SortHeader label="Bağlı Form" field="linkedForm" align="left" title="Bağlı forma göre sırala" {...sortProps} />
+      <span className={COLUMN_LABEL}>Akış</span>
       <SortHeader label="Güncellendi" field="updatedAt" visibility="hidden sm:flex" title="Güncellenme tarihine göre sırala" {...sortProps} />
       <SortHeader label="Yanıt" field="responseCount" visibility="hidden lg:flex" title="Yanıt sayısına göre sırala" {...sortProps} />
       <SortHeader label="Yetki" field="userRole" visibility="hidden lg:flex" title="Yetkiye göre sırala" {...sortProps} />
@@ -272,12 +272,9 @@ export function ResponseListItem({ formId, response, className = "" }) {
   );
 }
 
-export default function ListItem({ form, linkedForm, viewHref, editHref, className = "" }) {
+export default function ListItem({ form, viewHref, editHref, className = "" }) {
   if (!form) return null;
 
-  const linkedId = linkedForm?.id;
-  const linkedTitle = linkedForm?.title || "--";
-  const hasLinked = Boolean(linkedId);
   const event = eventRefFromForm(form);
   const responsesHref = viewHref ? `${viewHref}/responses` : undefined;
   const canEdit = Number(form.userRole) >= 2;
@@ -310,7 +307,7 @@ export default function ListItem({ form, linkedForm, viewHref, editHref, classNa
         </div>
 
         <div className="min-w-0">
-          {hasLinked ? <LinkedFormChip id={linkedId} title={linkedTitle} /> : <span className="pl-1 text-2xs text-neutral-700">—</span>}
+          {form.workflow ? <WorkflowChip workflow={form.workflow} /> : <span className="pl-1 text-2xs text-neutral-700">—</span>}
         </div>
 
         <span className="hidden text-center text-2xs tabular-nums text-neutral-500 sm:block">

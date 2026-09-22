@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Clock, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { ArrowRight, Check, Clock, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { useResponseStatusMutation, useResponseArchiveMutation } from "@/lib/hooks/useResponse";
 import { useCreateResponseShareMutation, useRevokeResponseTokenMutation } from "@/lib/hooks/useResponseShare";
@@ -51,6 +51,24 @@ function StatBlock({ label, value, icon: Icon, color = "text-neutral-100" }) {
   );
 }
 
+function describeRoute(route, decision) {
+  if (!route) return null;
+  if (route.endsFlow) return decision === 2 ? "Başvuru tamamlanır" : "Başvuru sonlanır";
+  return `${route.formTitle || "Sonraki adım"} adımı açılır`;
+}
+
+function RouteHint({ label, dot, text }) {
+  if (!text) return null;
+  return (
+    <p className="flex min-w-0 items-center gap-1.5 text-3xs text-neutral-500">
+      <span className={`size-1.5 shrink-0 rounded-full ${dot}`} />
+      <span className="shrink-0">{label}</span>
+      <ArrowRight size={10} className="shrink-0 text-neutral-600" />
+      <span className="truncate text-neutral-300">{text}</span>
+    </p>
+  );
+}
+
 function UserCard({ name, email, userId, photoUrl, hasUser, size = "normal" }) {
   const nameSize = size === "small" ? "text-xs" : "text-sm";
   const subSize = "text-3xs";
@@ -75,12 +93,19 @@ export function ResponseActions({ response, readOnly = false }) {
   const canReview = statusValue !== 0;
   const archivedAt = response?.archivedAt;
   const isArchived = Boolean(response?.isArchived);
-  const canEditReview = !readOnly && canReview && !isArchived;
+  const workflow = response?.workflow ?? null;
+  const isWorkflowStep = Boolean(workflow);
+  const isRouteOpen = !isWorkflowStep || Boolean(workflow.onApprove || workflow.onDecline);
+  const canEditReview = !readOnly && canReview && !isArchived && isRouteOpen;
+  const isArchiveBlocked = isWorkflowStep && statusValue === 1;
+  const approveOutcome = describeRoute(workflow?.onApprove, 2);
+  const declineOutcome = describeRoute(workflow?.onDecline, 3);
   const timeSpent = response?.timeSpent ?? null;
 
   const [note, setNote] = useState(reviewDescription);
   const [isEditing, setIsEditing] = useState(canEditReview && !reviewedAt);
   const [actionState, setActionState] = useState("idle");
+  const [pendingDecision, setPendingDecision] = useState(null);
   const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
   const actionTimerRef = useRef(null);
   const responseId = response?.id;
@@ -117,6 +142,7 @@ export function ResponseActions({ response, readOnly = false }) {
   if (prevResponseId !== responseId) {
     setPrevResponseId(responseId);
     setActionState("idle");
+    setPendingDecision(null);
   }
 
   useEffect(() => () => {
@@ -173,6 +199,20 @@ export function ResponseActions({ response, readOnly = false }) {
     );
   };
 
+  const requestDecision = (nextStatus) => {
+    if (isWorkflowStep) {
+      setPendingDecision(nextStatus);
+      return;
+    }
+    submitStatus(nextStatus);
+  };
+
+  const confirmDecision = () => {
+    const nextStatus = pendingDecision;
+    setPendingDecision(null);
+    submitStatus(nextStatus);
+  };
+
   const showReviewDetails = canReview && Boolean(reviewedAt) && (!isEditing || readOnly) && actionState === "idle";
   const actionTone = actionState === "error" ? "border-red-500/30 bg-red-500/10 text-red-200" : actionState === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5 text-neutral-200";
   const StatusIcon = statusInfo.Icon;
@@ -196,8 +236,10 @@ export function ResponseActions({ response, readOnly = false }) {
               <Share2 size={15} />
             </button>
             <Popover open={isError} error={error} variant="error" align="bottom-right">
-              <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
-                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-white/5"}`}
+              <button type="button" aria-label="Cevabı sil"
+                title={isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce onaylayın ya da reddedin." : "Cevabı sil"}
+                disabled={isArchivePending || isError || isSuccess || isArchived || isArchiveBlocked} onClick={() => archiveMutate(responseId)}
+                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-white/5"}`}
               >
                 <Archive size={15} />
               </button>
@@ -281,20 +323,50 @@ export function ResponseActions({ response, readOnly = false }) {
                     <SectionTitle>Değerlendirme</SectionTitle>
 
                     <AnimatePresence mode="wait" initial={false}>
-                      {actionState === "idle" ? (
-                        <motion.div layout key="actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex items-center gap-3"
+                      {actionState === "idle" && pendingDecision ? (
+                        <motion.div layout key="confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="rounded-xl border border-white/10 bg-white/3 p-3"
                         >
-                          <button type="button" onClick={() => submitStatus(2)} disabled={isPending} aria-label="Onayla" title="Onayla"
-                            className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Check size={16} className="mx-auto" />
-                          </button>
-                          <button type="button" onClick={() => submitStatus(3)} disabled={isPending} aria-label="Reddet" title="Reddet"
-                            className="flex-1 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <X size={16} className="mx-auto" />
-                          </button>
+                          <p className="text-xs font-medium text-neutral-100">{pendingDecision === 2 ? "Cevabı onayla" : "Cevabı reddet"}</p>
+                          {(pendingDecision === 2 ? approveOutcome : declineOutcome) && (
+                            <p className="mt-1 text-2xs text-neutral-300">{pendingDecision === 2 ? approveOutcome : declineOutcome}.</p>
+                          )}
+                          <p className="mt-1 text-3xs leading-relaxed text-neutral-500">Bu karar başvurunun yönünü belirler ve geri alınamaz.</p>
+                          <div className="mt-3 flex items-center gap-2">
+                            <button type="button" onClick={() => setPendingDecision(null)}
+                              className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                            >
+                              Vazgeç
+                            </button>
+                            <button type="button" onClick={confirmDecision} disabled={isPending}
+                              className={`flex-1 rounded-lg border px-3 py-1.5 text-2xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-50 ${pendingDecision === 2 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20" : "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20"}`}
+                            >
+                              {pendingDecision === 2 ? "Onayla" : "Reddet"}
+                            </button>
+                          </div>
+                        </motion.div>
+                      ) : actionState === "idle" ? (
+                        <motion.div layout key="actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <button type="button" onClick={() => requestDecision(2)} disabled={isPending} aria-label="Onayla" title="Onayla"
+                              className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Check size={16} className="mx-auto" />
+                            </button>
+                            <button type="button" onClick={() => requestDecision(3)} disabled={isPending} aria-label="Reddet" title="Reddet"
+                              className="flex-1 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <X size={16} className="mx-auto" />
+                            </button>
+                          </div>
+                          {isWorkflowStep && (approveOutcome || declineOutcome) && (
+                            <div className="mt-3 space-y-1">
+                              <RouteHint label="Onaylanırsa" dot="bg-emerald-400/70" text={approveOutcome} />
+                              <RouteHint label="Reddedilirse" dot="bg-red-400/70" text={declineOutcome} />
+                            </div>
+                          )}
                         </motion.div>
                       ) : (
                         <motion.div layout key="feedback" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -341,7 +413,9 @@ export function ResponseActions({ response, readOnly = false }) {
         <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
           resource="response" resourceId={responseId}
           title="Cevabı Paylaş"
-          description="Bu bağlantıyla paylaşılan kişi cevabı görüntüleyebilir. Bağlantı 1 saat geçerlidir."
+          description={isWorkflowStep
+            ? "Bu bağlantı başvurunun tüm adımlarını açar. Bağlantı 1 saat geçerlidir."
+            : "Bu bağlantıyla paylaşılan kişi cevabı görüntüleyebilir. Bağlantı 1 saat geçerlidir."}
           shareMutation={shareMutation}
           revokeMutation={revokeMutation}
         />

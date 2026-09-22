@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Timer, User2, ToggleLeft, ToggleRight, Link2, Hash, Shield, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
+import { Timer, User2, ToggleLeft, ToggleRight, Workflow, Hash, Shield, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { ROLE_BADGE } from "../../ListItem";
 import Avatar from "@/app/components/utils/Avatar";
@@ -202,14 +202,14 @@ function FormInfoList({ formData }) {
   const formSchema = formData?.data?.schema ?? formData?.schema ?? [];
   const allowAnonymous = formData?.data?.allowAnonymousResponses ?? formData?.allowAnonymousResponses;
   const allowMultiple = formData?.data?.allowMultipleResponses ?? formData?.allowMultipleResponses;
-  const linkedFormId = formData?.data?.linkedFormId ?? formData?.linkedFormId;
+  const workflow = formData?.data?.workflow ?? formData?.workflow ?? null;
   const userRole = formData?.data?.userRole ?? formData?.userRole;
 
   const items = [
     { icon: Hash, label: "Soru", value: formSchema.length },
     { icon: User2, label: "Anonim", value: allowAnonymous ? "Açık" : "Kapalı" },
     { icon: allowMultiple ? ToggleRight : ToggleLeft, label: "Çoklu cevap", value: allowMultiple ? "Açık" : "Kapalı" },
-    { icon: Link2, label: "Bağlı form", value: linkedFormId || "Yok", href: linkedFormId ? `/admin/forms/${linkedFormId}` : null },
+    { icon: Workflow, label: "Akış", value: workflow ? `${workflow.name || "Adsız akış"} · ${workflow.isStart ? "Başlangıç" : "Adım"}` : "Yok" },
     { icon: Shield, label: "Rol", value: userRole === 0 ? "Yok" : (ROLE_BADGE[userRole]?.label ?? ROLE_BADGE.default.label) },
   ];
 

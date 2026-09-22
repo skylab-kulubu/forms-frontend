@@ -2,7 +2,7 @@
 
 import { useState, useEffect, forwardRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, ClockPlusIcon, ChevronsLeft, ListX, TextSearch,  } from "lucide-react";
+import { ChevronRight, ClockPlusIcon, ChevronsLeft, ListX, TextSearch } from "lucide-react";
 
 import { useResponsePreviewQuery } from "@/lib/hooks/useResponseShare";
 import { ResponseListItem, ResponseListSkeleton } from "./components/ResponseDisplayerComponents";
@@ -43,14 +43,21 @@ ActionTrigger.displayName = "ActionTrigger";
 
 const slideVariants = {
   enter: (direction) => ({
-    x: direction === 0 ? 0 : direction > 0 ? -90 : 90,
+    x: direction === 0 ? 0 : direction > 0 ? 90 : -90,
     opacity: 0,
   }),
   center: { x: 0, opacity: 1 },
   exit: (direction) => ({
-    x: direction === 0 ? 0 : direction > 0 ? 90 : -90,
+    x: direction === 0 ? 0 : direction > 0 ? -90 : 90,
     opacity: 0,
   }),
+};
+
+const STEP_STATUS = {
+  0: { label: "Gönderildi", dot: "bg-neutral-400" },
+  1: { label: "Beklemede", dot: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40" },
+  2: { label: "Onaylandı", dot: "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40" },
+  3: { label: "Reddedildi", dot: "bg-red-400 shadow-[0_0_6px] shadow-red-400/40" },
 };
 
 const formatDateTime = (value) => {
@@ -60,19 +67,51 @@ const formatDateTime = (value) => {
   return date.toLocaleString();
 };
 
+function WorkflowSteps({ steps, viewStage, onSelect }) {
+  return (
+    <nav aria-label="Başvuru adımları" className="mx-auto mt-3 w-full max-w-2xl overflow-x-auto scrollbar">
+      <ol className="flex items-center gap-1 pb-1">
+        {steps.map((step, index) => {
+          const isAnswered = Boolean(step.responseId);
+          const isActive = step.stage === viewStage;
+          const status = isAnswered ? STEP_STATUS[step.status] ?? STEP_STATUS[0] : null;
+          const title = isAnswered ? `${step.formTitle || "Adsız form"} · ${status.label}` : "Bu adım henüz cevaplanmadı";
+
+          return (
+            <li key={step.stage} className="flex shrink-0 items-center gap-1">
+              {index > 0 && <ChevronRight size={12} className="shrink-0 text-neutral-700" />}
+              <button type="button" disabled={!isAnswered} onClick={() => onSelect(step.stage)} title={title} aria-current={isActive ? "step" : undefined}
+                className={`flex max-w-52 items-center gap-2 rounded-md border px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isActive ? "border-white/15 bg-white/5" : isAnswered ? "border-transparent hover:bg-white/3" : "cursor-not-allowed border-transparent opacity-50"}`}
+              >
+                <span className="text-3xs tabular-nums text-neutral-500">{step.stage}</span>
+                <span className={`truncate text-2xs font-medium ${isActive ? "text-neutral-100" : "text-neutral-400"}`}>{step.formTitle || "Adsız form"}</span>
+                {status
+                  ? <span className={`size-1.5 shrink-0 rounded-full ${status.dot}`} />
+                  : <span className="size-1.5 shrink-0 rounded-full border border-neutral-600" />}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
 export default function ResponseDisplayer({ response, token = null }) {
   const schema = Array.isArray(response?.schema) ? response.schema : [];
-  const relationship = Number(response?.relationship ?? 0);
-  const linkedResponseId = response?.linkedResponseId ?? "";
   const isSharedView = Boolean(response?.sharedBy);
+  const steps = Array.isArray(response?.workflow?.steps) ? response.workflow.steps : [];
+  const ownStage = response?.workflow?.stage ?? null;
 
-  const canNavigateLinked = (relationship === 1 || relationship === 2) && Boolean(linkedResponseId);
-  const isChild = relationship === 2;
-  const baseArrowSide = isChild ? "left" : "right";
-  const slideDirection = isChild ? 1 : -1;
-
-  const [activeView, setActiveView] = useState("responses");
+  const [viewStage, setViewStage] = useState(ownStage);
   const [direction, setDirection] = useState(0);
+
+  const [prevResponseId, setPrevResponseId] = useState(response?.id);
+  if (prevResponseId !== response?.id) {
+    setPrevResponseId(response?.id);
+    setViewStage(ownStage);
+    setDirection(0);
+  }
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const isLgUp = useMediaQuery("(min-width: 1024px)");
@@ -83,22 +122,19 @@ export default function ResponseDisplayer({ response, token = null }) {
     }
   }, [isLgUp]);
 
-  const linkedEnabled = canNavigateLinked && activeView === "linked";
-  const { data: linkedData, isLoading: isLinkedLoading, error: linkedError } = useResponsePreviewQuery(linkedResponseId, token, { enabled: linkedEnabled });
-  const linkedResponse = linkedData?.data ?? linkedData ?? null;
-  const linkedSchema = Array.isArray(linkedResponse?.schema) ? linkedResponse.schema : [];
+  const viewedStep = steps.find((step) => step.stage === viewStage) ?? null;
+  const isOwnView = !viewedStep || viewStage === ownStage;
+  const otherResponseId = isOwnView ? null : viewedStep.responseId;
 
-  const handleToggleLinked = () => {
-    if (!canNavigateLinked) return;
-    const nextView = activeView === "responses" ? "linked" : "responses";
-    const nextDirection = nextView === "linked" ? slideDirection : -slideDirection;
-    setDirection(nextDirection);
-    setActiveView(nextView);
+  const { data: otherData, isLoading: isOtherLoading, error: otherError } = useResponsePreviewQuery(otherResponseId, token, { enabled: Boolean(otherResponseId) });
+  const otherResponse = otherData?.data ?? otherData ?? null;
+  const otherSchema = Array.isArray(otherResponse?.schema) ? otherResponse.schema : [];
+
+  const handleSelectStage = (stage) => {
+    if (stage === viewStage) return;
+    setDirection(stage > viewStage ? 1 : -1);
+    setViewStage(stage);
   };
-
-
-  const arrowSide = activeView === "responses" ? baseArrowSide : baseArrowSide === "left" ? "right" : "left";
-  const ArrowIcon = arrowSide === "left" ? ArrowLeft : ArrowRight;
 
   const renderSchemaList = (items) => {
     if (!items || items.length === 0) {
@@ -130,95 +166,67 @@ export default function ResponseDisplayer({ response, token = null }) {
     }, 0);
   };
 
-  const responsesContent = renderSchemaList(schema);
-
-  let linkedContent = null;
-  if (isLinkedLoading) {
-    linkedContent = <ResponseListSkeleton />;
-  } else if (linkedError) {
-    linkedContent = (
+  let content = null;
+  if (isOwnView) {
+    content = renderSchemaList(schema);
+  } else if (isOtherLoading) {
+    content = <ResponseListSkeleton />;
+  } else if (otherError) {
+    content = (
       <div className="flex min-h-[40vh]">
-        <StateCard title={"Hata oluştu"} Icon={ListX} description={"Yanır verileri çekilirken bir hata oluştu."} />
+        <StateCard title={"Hata oluştu"} Icon={ListX} description={"Yanıt verileri çekilirken bir hata oluştu."} />
       </div>
     )
-  } else if (!linkedResponse) {
-    linkedContent = (
+  } else if (!otherResponse) {
+    content = (
       <div className="flex min-h-[40vh]">
         <StateCard title={"Yanıta ulaşılamadı"} Icon={TextSearch} description={"Bu yanıtta gösterilebilecek soru yok."} />
       </div>
     )
   } else {
-    linkedContent = renderSchemaList(linkedSchema);
+    content = renderSchemaList(otherSchema);
   }
 
-  const answeredCount = activeView === "linked" ? (isLinkedLoading || linkedError || !linkedResponse ? "--" : countAnswered(linkedSchema)) : countAnswered(schema);
-  const activeId = activeView === "linked" ? (linkedResponse?.id ?? linkedResponseId) : response?.id;
-  const activeResponse = activeView === "linked" ? linkedResponse : response;
-  const actionsLoading = activeView === "linked" && isLinkedLoading;
+  const isOtherUnavailable = !isOwnView && (isOtherLoading || otherError || !otherResponse);
+  const answeredCount = isOtherUnavailable ? "--" : countAnswered(isOwnView ? schema : otherSchema);
+  const activeResponse = isOwnView ? response : otherResponse;
+  const activeId = isOwnView ? response?.id : (otherResponse?.id ?? otherResponseId);
+  const actionsLoading = !isOwnView && isOtherLoading;
 
   const renderMainContent = (className) => (
     <motion.div className={`${className} h-full`} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
     >
-      <div className="relative h-full">
-        <AnimatePresence mode="wait">
-          {canNavigateLinked && (
-            <motion.button key={arrowSide} type="button" onClick={handleToggleLinked} aria-label={"Diğer cevaplar"}
-              className={`absolute inset-y-0 my-auto ${arrowSide === "left" ? "-left-3" : "-right-3"} z-20 hidden lg:flex w-5 h-[60%] items-center justify-center rounded-md border border-white/10 bg-white/5 text-neutral-300 transition hover:bg-white/10 hover:text-neutral-100 opacity-80`}
-              initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <ArrowIcon size={16} />
-            </motion.button>
+      <div className="flex h-full flex-col">
+        <div className="flex items-center gap-2 px-1 lg:h-7">
+          <span className="text-2xs font-medium text-neutral-500 lg:text-base">Cevaplar</span>
+          <span className="h-px flex-1 bg-white/5" />
+          <span className="shrink-0 text-3xs tabular-nums text-neutral-500">Cevaplanan {answeredCount}</span>
+        </div>
+
+        {steps.length > 0 && (
+          <WorkflowSteps steps={steps} viewStage={isOwnView ? ownStage : viewStage} onSelect={handleSelectStage} />
+        )}
+
+        <div className="mx-auto mt-2 flex w-full max-w-2xl items-center justify-between gap-3">
+          {activeId && (
+            <span className="min-w-0 truncate text-3xs text-neutral-600" title={activeId}>ID {activeId}</span>
           )}
-        </AnimatePresence>
+          <span className="flex shrink-0 items-center gap-1 text-3xs text-neutral-500">
+            <ClockPlusIcon size={11} />
+            {formatDateTime(activeResponse?.submittedAt)}
+          </span>
+        </div>
 
-        <div className="flex h-full flex-col">
-          <div className="flex items-center gap-2 px-1 lg:h-7">
-            <span className="text-2xs font-medium text-neutral-500 lg:text-base">Cevaplar</span>
-            <span className="h-px flex-1 bg-white/5" />
-            <span className="shrink-0 text-3xs tabular-nums text-neutral-500">Cevaplanan {answeredCount}</span>
-          </div>
-
-          <div className="mx-auto mt-2 flex w-full max-w-2xl items-center justify-between gap-3">
-            {activeId && (
-              <span className="min-w-0 truncate text-3xs text-neutral-600" title={activeId}>ID {activeId}</span>
-            )}
-            <span className="flex shrink-0 items-center gap-1 text-3xs text-neutral-500">
-              <ClockPlusIcon size={11} />
-              {formatDateTime(activeResponse?.submittedAt)}
-            </span>
-          </div>
-
-          {canNavigateLinked && (
-            <button type="button" onClick={handleToggleLinked} aria-label="Diğer cevaplar"
-              className="lg:hidden mt-3 flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-neutral-400 transition-colors hover:bg-white/10 hover:text-neutral-200"
+        <div className="relative mt-4 min-h-0 flex-1 overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div key={isOwnView ? "own" : `stage-${viewStage}`} custom={direction} variants={slideVariants}
+              initial="enter" animate="center" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
             >
-              {arrowSide === "left" && <ArrowIcon size={13} />}
-              <span>{activeView === "responses" ? "Bağlı yanıta geç" : "Ana yanıta dön"}</span>
-              {arrowSide === "right" && <ArrowIcon size={13} />}
-            </button>
-          )}
-
-          <div className="relative mt-4 min-h-0 flex-1 overflow-hidden">
-            <AnimatePresence mode="wait" custom={direction}>
-              {activeView === "responses" ? (
-                <motion.div key="responses" custom={direction} variants={slideVariants}
-                  initial="enter" animate="center" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
-                >
-                  {responsesContent}
-                </motion.div>
-              ) : (
-                <motion.div key="linked" custom={direction} variants={slideVariants}
-                  initial="enter" animate="center" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-0 overflow-y-auto pr-1 scrollbar"
-                >
-                  {linkedContent}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+              {content}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
@@ -245,29 +253,18 @@ export default function ResponseDisplayer({ response, token = null }) {
 
   return (
     <div className="relative min-h-0 w-full flex-1">
-        {isLgUp ? (
-            <div className="grid min-h-0 flex-1 grid-cols-12 gap-6 p-4 pt-8 lg:p-6 lg:pt-10">
-                {renderMainContent("col-span-12 lg:col-span-8")}
-                <motion.div className="col-span-4 h-full min-h-0" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
-                >
-                    {drawerContent}
-                </motion.div>
-            </div>
-        ) : (
-            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                <div className="flex h-full w-full">
-                    <div className="min-w-0 flex-1 p-4 pt-8">
-                        {renderMainContent("h-full")}
-                    </div>
-                    <ActionTrigger />
+        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <div className="flex h-full w-full">
+                <div className="min-w-0 flex-1 p-4 pt-8">
+                    {renderMainContent("h-full")}
                 </div>
+                <ActionTrigger />
+            </div>
 
-                <DrawerContent className="h-full" rootClassName="overflow-visible" wrapperClassName="">
-                    {drawerContent}
-                </DrawerContent>
-            </Drawer>
-        )}
+            <DrawerContent className="h-full" rootClassName="overflow-visible" wrapperClassName="">
+                {drawerContent}
+            </DrawerContent>
+        </Drawer>
     </div>
   );
 }

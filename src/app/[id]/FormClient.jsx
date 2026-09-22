@@ -20,7 +20,9 @@ export default function FormClient() {
     <FormStatusHandler withBackground
       isLoading={sessionLoading || isLoading || (isAuthed && draftLoading)} error={error} data={data}
       renderForm={(responseData) => (
-        <FormDisplayer form={responseData.data.form} step={responseData.data.step} draft={isAuthed ? (draftData?.data ?? null) : null}/>
+        <FormDisplayer form={responseData.data.form} stage={responseData.data.stage ?? 0} isWorkflow={responseData.data.state != null}
+          startFormId={responseData.data.startFormId ?? null} draft={isAuthed ? (draftData?.data ?? null) : null}
+        />
       )}
     />
   );

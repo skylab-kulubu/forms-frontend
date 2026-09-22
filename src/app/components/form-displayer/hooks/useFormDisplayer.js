@@ -3,7 +3,7 @@ import { useSession } from "next-auth/react";
 import { useSubmitFormMutation, useDisplayFormQuery } from "@/lib/hooks/useForm";
 import { useDeleteResponseDraftMutation } from "@/lib/hooks/useDraft";
 import { useResponseDraftAutoSave } from "./useResponseDraftAutoSave";
-import { FORM_ACCESS_STATUS } from "../../FormStatusHandler";
+import { FORM_ACCESS_STATUS, WORKFLOW_STATE, getSubmitErrorState } from "../../FormStatusHandler";
 import { getVisibleFields } from "../components/conditionChecker";
 import { migrateSchema } from "@/app/components/form-migrate";
 
@@ -20,11 +20,14 @@ function getSubmissionState(status) {
 
 const initialState = {
   form: null,
-  step: 0,
-  linkedFormId: null,
+  stage: 0,
+  isWorkflow: false,
+  startFormId: null,
+  nextFormId: null,
   values: {},
   submissionState: null,
   submissionStatus: null,
+  submissionMessage: null,
   errorMessage: null,
   missingFieldIds: [],
   uploadingFields: {},
@@ -52,15 +55,27 @@ function reducer(state, action) {
       return { ...state, missingFieldIds: [] };
 
     case "SUBMIT_SUCCESS": {
-      const { linkedFormId, status, step } = action;
-      if (linkedFormId && status !== FORM_ACCESS_STATUS.PENDING_APPROVAL) {
-        return { ...state, step: step ?? state.step, linkedFormId };
+      const { status, data } = action;
+      const stage = data?.stage ?? state.stage;
+      const startFormId = data?.startFormId ?? state.startFormId;
+      const isWorkflow = state.isWorkflow || data?.state != null;
+      if (data?.state === WORKFLOW_STATE.SHOW_FORM && data?.nextFormId) {
+        return { ...state, stage, startFormId, isWorkflow, nextFormId: data.nextFormId };
       }
-      return { ...state, step: step ?? state.step, submissionState: getSubmissionState(status), submissionStatus: status ?? null };
+      return { ...state, stage, startFormId, isWorkflow, submissionState: getSubmissionState(status), submissionStatus: status ?? null };
     }
 
-    case "LOAD_LINKED_FORM":
-      return { ...initialState, form: action.form, step: action.step };
+    case "SUBMIT_FAILURE":
+      return {
+        ...state,
+        startFormId: action.startFormId ?? state.startFormId,
+        submissionState: action.submissionState,
+        submissionStatus: action.status ?? null,
+        submissionMessage: action.message ?? null,
+      };
+
+    case "LOAD_NEXT_FORM":
+      return { ...initialState, form: action.form, stage: action.stage ?? state.stage, isWorkflow: true, startFormId: state.startFormId };
 
     case "DISCARD_DRAFT":
       return { ...state, values: {}, draftPromptVisible: false };
@@ -76,15 +91,34 @@ function reducer(state, action) {
   }
 }
 
-export function useFormDisplayer(form, step, draft) {
-  const [state, dispatch] = useReducer(reducer, { ...initialState, form, step });
+function submitFailureAction(error) {
+  const status = error?.body?.status ?? error?.status;
+  const submissionState = getSubmitErrorState(status);
+  if (!submissionState) return null;
+  return {
+    type: "SUBMIT_FAILURE",
+    submissionState,
+    status,
+    message: submissionState === "rejected" ? (error?.body?.message ?? null) : null,
+    startFormId: error?.body?.data?.startFormId ?? null,
+  };
+}
+
+export function useFormDisplayer(form, draft, workflow = {}) {
+  const [state, dispatch] = useReducer(reducer, {
+    ...initialState,
+    form,
+    stage: workflow.stage ?? 0,
+    isWorkflow: Boolean(workflow.isWorkflow),
+    startFormId: workflow.startFormId ?? null,
+  });
 
   const { status } = useSession();
   const isAuthed = status === "authenticated";
 
   const submitMutation = useSubmitFormMutation();
   const { mutate: deleteDraft, isPending: isDiscarding } = useDeleteResponseDraftMutation();
-  const { data: linkedFormData } = useDisplayFormQuery(state.linkedFormId);
+  const { data: nextFormData, error: nextFormError } = useDisplayFormQuery(state.nextFormId);
 
   const draftAppliedRef = useRef(false);
   const missingTimeoutRef = useRef(null);
@@ -93,19 +127,21 @@ export function useFormDisplayer(form, step, draft) {
   useEffect(() => { startTimeRef.current = Date.now(); }, []);
 
   useEffect(() => {
-    if (!linkedFormData?.data) return;
-    if (linkedFormData?.status === FORM_ACCESS_STATUS.FULLY_COMPLETED) {
-      dispatch({
-        type: "SUBMIT_SUCCESS",
-        status: linkedFormData.status,
-        step: linkedFormData.data?.step,
-      });
+    if (!nextFormData) return;
+    const payload = nextFormData.data;
+    if (nextFormData.status === FORM_ACCESS_STATUS.AVAILABLE && payload?.form) {
+      dispatch({ type: "LOAD_NEXT_FORM", form: payload.form, stage: payload.stage });
+      draftAppliedRef.current = false;
+      startTimeRef.current = Date.now();
       return;
     }
-    dispatch({ type: "LOAD_LINKED_FORM", form: linkedFormData.data.form, step: linkedFormData.data.step });
-    draftAppliedRef.current = false;
-    startTimeRef.current = Date.now();
-  }, [linkedFormData]);
+    dispatch({ type: "SUBMIT_SUCCESS", status: nextFormData.status, data: payload });
+  }, [nextFormData]);
+
+  useEffect(() => {
+    if (!nextFormError) return;
+    dispatch(submitFailureAction(nextFormError) ?? { type: "SUBMIT_FAILURE", submissionState: "genericError" });
+  }, [nextFormError]);
 
   useEffect(() => {
     if (draftAppliedRef.current || !draft?.responses) return;
@@ -155,14 +191,14 @@ export function useFormDisplayer(form, step, draft) {
 
     submitMutation.mutate(payload, {
       onSuccess: (response) => {
-        dispatch({
-          type: "SUBMIT_SUCCESS",
-          linkedFormId: response?.data?.linkedFormId,
-          status: response?.status,
-          step: response?.data?.step,
-        });
+        dispatch({ type: "SUBMIT_SUCCESS", status: response?.status, data: response?.data });
       },
       onError: (error) => {
+        const failure = submitFailureAction(error);
+        if (failure) {
+          dispatch(failure);
+          return;
+        }
         // On 401 the SessionExpiredHandler banner supplies the re-login button; the button
         // label only needs to say why the submit failed.
         const message = error?.status === 401 ? "Oturum süresi doldu" : "Bir hata oluştu.";

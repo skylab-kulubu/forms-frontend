@@ -52,14 +52,15 @@ function DraftPrompt({ savedAt, onDiscard, isDiscarding }) {
   );
 }
 
-export default function FormDisplayer({ form, step, draft = null }) {
+export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null }) {
   const {
     state, schema, visibleFields,
     isAuthed, isDiscarding, isAnyFileUploading, isSubmitting, lastSavedAt,
     handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields,
-  } = useFormDisplayer(form, step, draft);
+  } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId });
 
-  const { form: activeForm, step: activeStep, values: formValues, submissionState, submissionStatus, errorMessage, missingFieldIds, draftPromptVisible } = state;
+  const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, values: formValues,
+    submissionState, submissionMessage, errorMessage, missingFieldIds, draftPromptVisible } = state;
 
   const title = activeForm?.title ?? "";
   const description = activeForm?.description ?? "";
@@ -127,7 +128,7 @@ export default function FormDisplayer({ form, step, draft = null }) {
       <div className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6">
 
         <div className="w-full max-w-2xl shrink-0 mt-8 mb-4">
-          <FormResponseStatus step={activeStep} status={submissionStatus} />
+          <FormResponseStatus stage={activeStage} isWorkflow={activeIsWorkflow} submissionState={submissionState} />
         </div>
 
         <div className="flex-1 w-full flex flex-col items-center">
@@ -235,7 +236,9 @@ export default function FormDisplayer({ form, step, draft = null }) {
             <motion.div key="success-screen" className="w-full flex-1 flex flex-col"
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <FormStatusDisplayer state={submissionState} step={activeStep} />
+              <FormStatusDisplayer state={submissionState} message={submissionMessage} stage={activeStage}
+                startFormId={activeStartFormId} progressOffset={activeIsWorkflow}
+              />
             </motion.div>
           )}
         </AnimatePresence>
