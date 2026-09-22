@@ -19,7 +19,6 @@ export default function FormsPage() {
   const [roleValue, setRoleValue] = useState("all");
   const [allowAnonymous, setAllowAnonymous] = useState(null);
   const [allowMultiple, setAllowMultiple] = useState(null);
-  const [hasLinkedForm, setHasLinkedForm] = useState(null);
   const [requiresManualReview, setRequiresManualReview] = useState(null);
   const [page, setPage] = useState(1);
 
@@ -30,7 +29,7 @@ export default function FormsPage() {
     return () => clearTimeout(handle);
   }, [searchValue]);
 
-  const filterKey = `${debouncedSearch}-${sortField}-${sortValue}-${roleValue}-${allowAnonymous}-${allowMultiple}-${hasLinkedForm}-${requiresManualReview}`;
+  const filterKey = `${debouncedSearch}-${sortField}-${sortValue}-${roleValue}-${allowAnonymous}-${allowMultiple}-${requiresManualReview}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (filterKey !== prevFilterKey) {
     setPrevFilterKey(filterKey);
@@ -55,7 +54,7 @@ export default function FormsPage() {
 
   const sortDirection = sortValue === "asc" ? "ascending" : "descending";
 
-  const { data: formsData, isLoading, error, refetch } = useUserFormsQuery({ page, search: debouncedSearch || undefined, role: roleParam, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview, sortBy: sortField, sortDirection });
+  const { data: formsData, isLoading, error, refetch } = useUserFormsQuery({ page, search: debouncedSearch || undefined, role: roleParam, allowAnonymous, allowMultiple, requiresManualReview, sortBy: sortField, sortDirection });
 
   const formsMeta = formsData?.data ?? {};
   const forms = useMemo(() => {
@@ -73,13 +72,13 @@ export default function FormsPage() {
 
   const totalCount = formsMeta.totalCount ?? forms.length;
   const hasError = Boolean(error);
-  const contentKey = `${sortField}-${sortValue}-${roleValue}-${allowAnonymous}-${allowMultiple}-${hasLinkedForm}-${requiresManualReview}-${debouncedSearch}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
+  const contentKey = `${sortField}-${sortValue}-${roleValue}-${allowAnonymous}-${allowMultiple}-${requiresManualReview}-${debouncedSearch}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-4 lg:p-6">
       <FormsHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={(dir) => { setSortField("updatedAt"); setSortValue(dir); }} roleValue={roleValue} onRoleChange={setRoleValue}
-        allowAnonymous={allowAnonymous} onAllowAnonymousChange={setAllowAnonymous} allowMultiple={allowMultiple} onAllowMultipleChange={setAllowMultiple} hasLinkedForm={hasLinkedForm}
-        onHasLinkedFormChange={setHasLinkedForm} requiresManualReview={requiresManualReview} onRequiresManualReviewChange={setRequiresManualReview}
+        allowAnonymous={allowAnonymous} onAllowAnonymousChange={setAllowAnonymous} allowMultiple={allowMultiple} onAllowMultipleChange={setAllowMultiple}
+        requiresManualReview={requiresManualReview} onRequiresManualReviewChange={setRequiresManualReview}
         onRefresh={() => refetch()} onCreate={() => router.push("/admin/forms/new-form")}
       />
 
@@ -96,13 +95,13 @@ export default function FormsPage() {
             ) : forms.length === 0 ? (
               <StateCard title={"Form bulunamadı"} Icon={FileSearchCorner}
                 description={searchValue !== "" ? "Aranılan kelimede form bulunamadı."
-                : (roleValue !== null || allowAnonymous !== null || allowMultiple !== null || hasLinkedForm !== null || requiresManualReview !== null) ? "Verilen filtrelere uygun form bulunamadı."
+                : (roleValue !== null || allowAnonymous !== null || allowMultiple !== null || requiresManualReview !== null) ? "Verilen filtrelere uygun form bulunamadı."
                 : "Erişiminiz olduğu bir form bulunamadı."
             }/>
             ) : (
               <div className="divide-y divide-white/5">
                 {forms.map((form) => (
-                  <ListItem key={form.id} form={form} linkedForm={form?.linkedForm || null}
+                  <ListItem key={form.id} form={form}
                     viewHref={`/admin/forms/${form.id}`} editHref={`/admin/forms/${form.id}/edit`}
                   />
                 ))}

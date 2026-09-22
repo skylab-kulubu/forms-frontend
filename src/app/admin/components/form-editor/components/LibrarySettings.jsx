@@ -1,9 +1,6 @@
-import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LibrarySettingsEditors } from "./LibrarySettingsEditors";
-import { LibrarySettingsLinkedForm } from "./LibrarySettingsLinkedForm";
 import { useFormEditor } from "../FormEditorContext";
-import ApprovalOverlay from "../../ApprovalOverlay";
 
 const alertVariants = {
     hidden: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" },
@@ -13,45 +10,19 @@ const alertVariants = {
 
 export function LibrarySettings() {
     const { state, dispatch } = useFormEditor();
-    const { id, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, linkedFormId } = state;
-
-    const [anonymousWarningOpen, setAnonymousWarningOpen] = useState(false);
-
-    const isNewForm = !id;
+    const { status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview } = state;
 
     const handleAnonymousToggle = () => {
         const nextValue = !allowAnonymousResponses;
-
-        if (nextValue && linkedFormId) {
-            setAnonymousWarningOpen(true);
-        } else {
-            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: nextValue } });
-            if (nextValue) {
-                dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: true } });
-            }
+        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: nextValue } });
+        if (nextValue) {
+            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: true } });
         }
-    };
-
-    const confirmAnonymousToggle = () => {
-        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: "" } });
-        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormTitle", value: "" } });
-        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: true } });
-        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: true } });
-
-        setAnonymousWarningOpen(false);
     };
 
     return (
         <div className="flex flex-col divide-y divide-neutral-800/60 p-4 text-sm text-neutral-200">
-            <ApprovalOverlay
-                open={anonymousWarningOpen}
-                preset="anonymous-toggle"
-                onApprove={confirmAnonymousToggle}
-                onReject={() => setAnonymousWarningOpen(false)}
-            />
             <LibrarySettingsEditors />
-
-            {!isNewForm ? (<LibrarySettingsLinkedForm alertVariants={alertVariants} />) : null}
 
             <section className="py-6 space-y-4">
                 <div className="flex items-start justify-between gap-4">

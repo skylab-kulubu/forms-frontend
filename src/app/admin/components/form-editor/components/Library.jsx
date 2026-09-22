@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { LibraryComponents } from "./LibraryComponents";
 import { LibrarySettings } from "./LibrarySettings";
-import { useFormEditor } from "../FormEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
@@ -17,30 +16,13 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect }) {
     const showTrash = from === "canvas";
     const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
 
-    const { state } = useFormEditor();
-    const { isChildForm } = state;
-
     const renderContent = () => {
         switch (activeTab) {
             case "components":
                 return <LibraryComponents layout={layout} onSelect={onLibrarySelect} onGroupSelect={onGroupSelect} />;
 
             case "settings":
-                return (
-                    <div className="relative h-full">
-                        <div className={isChildForm ? "pointer-events-none opacity-40" : ""}>
-                            <LibrarySettings />
-                        </div>
-                        {isChildForm && (
-                            <div className="pointer-events-auto absolute inset-0 flex items-center justify-center">
-                                <div className="mx-4 max-w-xs rounded-lg border border-neutral-700 bg-neutral-900/90 px-4 py-3 text-center shadow-lg">
-                                    <p className="mb-1 text-sm font-semibold text-neutral-500 uppercase tracking-[0.18em]">Ayarlar kilitli</p>
-                                    <p className="text-2xs leading-relaxed text-neutral-300">Bu formun ayarları ana form tarafından yönetilmektedir.</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
+                return <LibrarySettings />;
 
             case "description":
                 return (

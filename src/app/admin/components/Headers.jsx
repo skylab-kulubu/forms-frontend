@@ -91,11 +91,11 @@ function HeaderShell({ title, description, label, labelType = 1, actions, childr
 export default HeaderShell;
 
 function FormsToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange, allowAnonymous = null,
-  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange, onRefresh, onCreate
+  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange, onRefresh, onCreate
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, hasLinkedForm !== null, requiresManualReview !== null].filter(Boolean).length;
+  const activeFilters = [sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
   const buttonSize = compact ? "sm" : "md";
 
@@ -111,7 +111,6 @@ function FormsToolbar({ compact = false, searchValue = "", onSearchChange, sortV
             sortValue={sortValue} onSortChange={onSortChange} roleValue={roleValue} onRoleChange={onRoleChange}
             allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
             allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
-            hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={onHasLinkedFormChange}
             requiresManualReview={requiresManualReview} onRequiresManualReviewChange={onRequiresManualReviewChange}
           />
         </div>
@@ -226,12 +225,12 @@ export function GroupsHeader(toolbarProps) {
 }
 
 export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "desc", onSortChange, allowAnonymous = null, onAllowAnonymousChange,
-  allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange,
+  allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange,
   onRefresh, stats = { count: 0 }
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", allowAnonymous !== null, allowMultiple !== null, hasLinkedForm !== null, requiresManualReview !== null].filter(Boolean).length;
+  const activeFilters = [sortValue !== "desc", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
 
   return (
@@ -246,7 +245,6 @@ export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "
             sortValue={sortValue} onSortChange={onSortChange}
             allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
             allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
-            hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={onHasLinkedFormChange}
             requiresManualReview={requiresManualReview} onRequiresManualReviewChange={onRequiresManualReviewChange}
           />
         </div>

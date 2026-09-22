@@ -109,7 +109,6 @@ export default function AllFormsPage() {
   const [sortValue, setSortValue] = useState("desc");
   const [allowAnonymous, setAllowAnonymous] = useState(null);
   const [allowMultiple, setAllowMultiple] = useState(null);
-  const [hasLinkedForm, setHasLinkedForm] = useState(null);
   const [requiresManualReview, setRequiresManualReview] = useState(null);
   const [page, setPage] = useState(1);
 
@@ -118,23 +117,23 @@ export default function AllFormsPage() {
     return () => clearTimeout(handle);
   }, [searchValue]);
 
-  useEffect(() => { setPage(1); }, [debouncedSearch, sortValue, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview]);
+  useEffect(() => { setPage(1); }, [debouncedSearch, sortValue, allowAnonymous, allowMultiple, requiresManualReview]);
 
   const sortDirection = sortValue === "asc" ? "ascending" : "descending";
 
-  const { data, isLoading, error, refetch } = useAllFormsQuery({ page, search: debouncedSearch || undefined, sortDirection, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview });
+  const { data, isLoading, error, refetch } = useAllFormsQuery({ page, search: debouncedSearch || undefined, sortDirection, allowAnonymous, allowMultiple, requiresManualReview });
 
   const meta = data?.data ?? {};
   const forms = Array.isArray(meta.items) ? meta.items : Array.isArray(data) ? data : [];
   const totalCount = meta.totalCount ?? forms.length;
   const hasError = Boolean(error);
-  const contentKey = `${sortValue}-${allowAnonymous}-${allowMultiple}-${hasLinkedForm}-${requiresManualReview}-${debouncedSearch}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
+  const contentKey = `${sortValue}-${allowAnonymous}-${allowMultiple}-${requiresManualReview}-${debouncedSearch}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-4 lg:p-6">
       <DatabaseHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={setSortValue}
         allowAnonymous={allowAnonymous} onAllowAnonymousChange={setAllowAnonymous} allowMultiple={allowMultiple} onAllowMultipleChange={setAllowMultiple}
-        hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={setHasLinkedForm} requiresManualReview={requiresManualReview} onRequiresManualReviewChange={setRequiresManualReview}
+        requiresManualReview={requiresManualReview} onRequiresManualReviewChange={setRequiresManualReview}
         onRefresh={() => refetch()} stats={{ count: isLoading ? "--" : totalCount }}
       />
 

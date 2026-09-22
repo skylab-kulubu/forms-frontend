@@ -94,7 +94,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const { state, dispatch } = useFormEditor();
 
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
@@ -311,7 +310,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             AllowMultipleResponses: eventLinked || state.allowAnonymousResponses ? true : state.allowMultipleResponses,
             AllowAnonymousResponses: eventLinked ? true : state.allowAnonymousResponses,
             RequiresManualReview: state.requiresManualReview,
-            LinkedFormId: state.allowAnonymousResponses ? null : (state.linkedFormId || null),
             Collaborators: state.editors.map((editor) => ({
                 UserId: editor.user.id,
                 Role: Number(editor.role)
@@ -574,20 +572,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                     {activeDragItem ? <GhostComponent active={activeDragItem} schema={state.schema} /> : null}
                 </DragOverlay>
 
-                <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
-                    onApprove={() => {
-                        if (linkOverlay.scenario?.includes("link")) {
-                            const isRemove = linkOverlay.scenario === "link-remove";
-                            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: isRemove ? "" : linkOverlay.nextId } });
-                            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormTitle", value: isRemove ? "" : (linkOverlay.nextTitle || "") } });
-                        }
-                        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
-                    }}
-                    onReject={() => {
-                        if (linkOverlay.reason === "anonymous-toggle") dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: false } });
-                        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
-                    }}
-                />
                 <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form" context={{ isPending: isDeletePending }}
                     onApprove={() => deleteForm(state.id, { onSuccess: () => router.push("/admin/forms"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
@@ -611,14 +595,11 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
         schema: migrateSchema(initialForm.schema),
         title: initialForm.title || "Yeni Form",
         description: initialForm.description || "",
-        linkedFormId: initialForm.linkedForm?.id || initialForm.linkedFormId || "",
-        linkedFormTitle: initialForm.linkedForm?.title || "",
         allowMultipleResponses: initialForm.allowMultipleResponses || false,
         allowAnonymousResponses: initialForm.allowAnonymousResponses || false,
         requiresManualReview: initialForm.requiresManualReview || false,
         editors: initialForm.collaborators || [],
         status: initialForm.status || 1,
-        isChildForm: initialForm.isChildForm || false,
         userRole: initialForm.userRole || 3
     } : handoff?.eventLinked ? {
         title: handoff.title || "Yeni Form",
