@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BookOpen, ChevronsUpDown, GraduationCap, Plus, X } from "lucide-react";
-import { FieldShell } from "./FieldShell";
+import { BookOpen, ChevronsUpDown, GraduationCap, Lock, Plus, X } from "lucide-react";
+import { FieldShell, LOCKED_OPTION_HINT } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
@@ -34,9 +34,11 @@ function normalizeOptions(choices) {
   });
 }
 
-export function CreateFormCombobox({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
+export function CreateFormCombobox({ questionNumber, props, onPropsChange, readOnly, compact = false, workflowLock = null, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
   const [choicesOpen, setChoicesOpen] = useState(false);
+  const lockedValues = workflowLock?.values ?? [];
+  const isLockedChoice = (index) => lockedValues.includes((prop.choices ?? [])[index]);
 
   const activePreset = useMemo(() => {
     const current = prop.choices ?? [];
@@ -50,18 +52,21 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
     patch({ choices: next });
   };
   const updateChoice = (index, value) => {
+    if (isLockedChoice(index)) return;
     const next = [...(prop.choices ?? [])];
     next[index] = value;
     patch({ choices: next });
   };
 
   const removeChoice = (index) => {
+    if (isLockedChoice(index)) return;
     const array = prop.choices ?? [];
     const next = array.length > 1 ? array.filter((_, i) => i !== index) : array;
     patch({ choices: next });
   };
 
   const handlePaste = (e, index) => {
+    if (isLockedChoice(index)) return;
     const text = e.clipboardData.getData("text");
     const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     if (lines.length <= 1) return;
@@ -72,7 +77,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
   };
 
   return (
-    <FieldShell number={questionNumber} title="Açılır Liste" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
+    <FieldShell number={questionNumber} title="Açılır Liste" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} workflowLock={workflowLock} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="cb-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
           Soru Metni
@@ -101,9 +106,12 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
           {CHOICE_PRESETS.map((preset) => {
             const Icon = preset.icon;
             const isActive = activePreset === preset.id;
+            const keepsLockedChoices = lockedValues.every((value) => preset.data.includes(value));
             return (
-              <button key={preset.id} type="button" onClick={() => patch({ choices: preset.data, preset: preset.id })}
-                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
+              <button key={preset.id} type="button" disabled={!keepsLockedChoices}
+                title={keepsLockedChoices ? undefined : "Bu liste akış koşulunun karşılaştırdığı seçenekleri içermiyor."}
+                onClick={() => patch({ choices: preset.data, preset: preset.id })}
+                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
               >
                 <Icon size={14} />
                 {preset.label}
@@ -138,6 +146,12 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
             <span className="ml-1.5 rounded-md bg-white/10 px-1.5 py-0.5 text-3xs font-semibold text-neutral-300">
               {(prop.choices ?? []).length}
             </span>
+            {lockedValues.length > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 text-3xs font-normal normal-case tracking-normal text-neutral-500">
+                <Lock size={10} />
+                {lockedValues.length} kilitli
+              </span>
+            )}
           </span>
           <ChevronsUpDown size={14} className={`text-neutral-400 transition-transform ${choicesOpen ? "rotate-180" : ""}`} />
         </button>
@@ -148,20 +162,26 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
               transition={{ duration: 0.2, ease: "easeInOut" }} className="overflow-hidden"
             >
               <div className="flex flex-col gap-2 pt-0.5">
-                {prop.choices.map((choice, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input type="text"
-                      className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
-                      placeholder={`Seçenek ${idx + 1}`} value={choice} onChange={(e) => updateChoice(idx, e.target.value)} onPaste={(e) => handlePaste(e, idx)}
-                    />
-                    <button type="button" onClick={() => removeChoice(idx)}
-                      className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-2xs text-neutral-300 hover:text-neutral-100 disabled:opacity-50"
-                      disabled={prop.choices.length <= 1}
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                ))}
+                {prop.choices.map((choice, idx) => {
+                  const locked = isLockedChoice(idx);
+                  return (
+                    <div key={idx} className="flex items-center gap-2">
+                      <div className="relative w-full">
+                        <input type="text" readOnly={locked} title={locked ? LOCKED_OPTION_HINT : undefined}
+                          className={`block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${locked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
+                          placeholder={`Seçenek ${idx + 1}`} value={choice} onChange={(e) => updateChoice(idx, e.target.value)} onPaste={(e) => handlePaste(e, idx)}
+                        />
+                        {locked && <Lock size={12} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500" />}
+                      </div>
+                      <button type="button" onClick={() => removeChoice(idx)} title={locked ? LOCKED_OPTION_HINT : undefined}
+                        className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-2xs text-neutral-300 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={prop.choices.length <= 1 || locked}
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                  );
+                })}
                 <div>
                   <button type="button" onClick={addChoice}
                     className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-neutral-100 hover:bg-white/10"

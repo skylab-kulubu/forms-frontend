@@ -2,18 +2,19 @@ import { useState } from "react";
 import { LibraryComponents } from "./LibraryComponents";
 import { LibrarySettings } from "./LibrarySettings";
 import { AnimatePresence, motion } from "framer-motion";
-import { Trash, Trash2 } from "lucide-react";
+import { Lock, Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import dynamic from "next/dynamic";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
 
-export function Library({ layout = "grid", onLibrarySelect, onGroupSelect }) {
+export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLockedDrag = false }) {
     const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
     const from = active?.data?.current?.from;
     const showTrash = from === "canvas";
+    const isDeleteTarget = isOver && !isLockedDrag;
     const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
 
     const renderContent = () => {
@@ -90,19 +91,21 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect }) {
 
             <AnimatePresence>
                 {showTrash && (
-                    <motion.div key="trash-overlay" className={`m-4 rounded-xl pointer-events-none bg-neutral-100/2 absolute inset-0 grid place-items-center border-3 ${isOver ? "border-red-500/60" : "border-neutral-200/30 border-dashed"}`}
+                    <motion.div key="trash-overlay" className={`m-4 rounded-xl pointer-events-none bg-neutral-100/2 absolute inset-0 grid place-items-center border-3 ${isDeleteTarget ? "border-red-500/60" : "border-neutral-200/30 border-dashed"}`}
                         initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
                         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     >
                         <div className="flex flex-col items-center gap-2 text-center">
-                            {isOver ? (
+                            {isLockedDrag ? (
+                                <Lock size={48} className="text-neutral-600" />
+                            ) : isDeleteTarget ? (
                                 <Trash2 size={56} className="text-red-500/60 drop-shadow-sm animate-pulse" />
                             ) : (
                                 <Trash size={56} className="text-neutral-600" />
                             )}
-                            <span className={`font-semibold text-sm tracking-wide transition-colors ${isOver ? "text-red-600/60 animate-pulse" : "text-neutral-400/50"}`}
+                            <span className={`font-semibold text-sm tracking-wide transition-colors ${isDeleteTarget ? "text-red-600/60 animate-pulse" : "text-neutral-400/50"}`}
                             >
-                                Bileşenleri buraya bırakarak silebilirsiniz
+                                {isLockedDrag ? "Bu soru akış koşulunda kullanılıyor, silinemez" : "Bileşenleri buraya bırakarak silebilirsiniz"}
                             </span>
                         </div>
                     </motion.div>

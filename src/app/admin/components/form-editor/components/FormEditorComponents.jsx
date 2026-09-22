@@ -81,7 +81,7 @@ function ItemActionButton({ label, onClick, disabled, danger, children }) {
     );
 }
 
-export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDuplicate, onDelete, onMove, canMoveUp, canMoveDown }) {
+export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDuplicate, onDelete, onMove, canMoveUp, canMoveDown, workflowLock = null }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
         id: field.id,
         data: { from: "canvas", id: field.id },
@@ -130,7 +130,9 @@ export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDupli
                         <Copy size={13} />
                     </ItemActionButton>
                     <span className="mx-0.5 h-4 w-px bg-white/10" />
-                    <ItemActionButton label="Sil" onClick={() => onDelete(field.id)} danger disabled={isIdentityField(field)}>
+                    <ItemActionButton label={workflowLock ? "Akış koşulu bu soruyu okuyor; silinemez" : "Sil"} onClick={() => onDelete(field.id)} danger
+                        disabled={isIdentityField(field) || Boolean(workflowLock)}
+                    >
                         <Trash2 size={13} />
                     </ItemActionButton>
                 </div>
@@ -141,6 +143,7 @@ export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDupli
                     condition={field.condition}
                     onConditionChange={(cond) => onUpdate(field.id, { condition: cond })}
                     availableFields={availableFields}
+                    workflowLock={workflowLock}
                 />
             ) : null}
         </div>

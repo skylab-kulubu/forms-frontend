@@ -54,15 +54,18 @@ export function StatusDot({ status }) {
 
 function WorkflowChip({ workflow }) {
   const role = workflow.isStart ? "Başlangıç formu" : "Akış adımı";
+  const name = workflow.name || "Adsız akış";
 
   return (
-    <span className="flex w-full min-w-0 max-w-60 items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2 py-1">
+    <Link href={`/admin/workflows/${workflow.id}`} title={`Akışa git: ${name}`}
+      className="relative z-10 flex w-full min-w-0 max-w-60 items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2 py-1 transition-colors hover:border-white/20 hover:bg-white/5"
+    >
       <Workflow size={12} className="shrink-0 text-neutral-500" />
       <span className="min-w-0">
-        <span className="block truncate text-2xs font-medium text-neutral-200">{workflow.name || "Adsız akış"}</span>
+        <span className="block truncate text-2xs font-medium text-neutral-200">{name}</span>
         <span className="block truncate text-3xs text-neutral-500">{workflow.isPublished ? role : `${role} · Taslak`}</span>
       </span>
-    </span>
+    </Link>
   );
 }
 

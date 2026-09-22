@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { LibrarySettingsEditors } from "./LibrarySettingsEditors";
+import { WorkflowLockMark, WorkflowMembershipSection } from "./WorkflowMembership";
 import { useFormEditor } from "../FormEditorContext";
 
 const alertVariants = {
@@ -10,7 +11,11 @@ const alertVariants = {
 
 export function LibrarySettings() {
     const { state, dispatch } = useFormEditor();
-    const { status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview } = state;
+    const { status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow } = state;
+
+    const isWorkflowLocked = Boolean(workflow?.isPublished);
+    const isStatusLocked = isWorkflowLocked && status === 2;
+    const isAnonymousLocked = isWorkflowLocked && !allowAnonymousResponses;
 
     const handleAnonymousToggle = () => {
         const nextValue = !allowAnonymousResponses;
@@ -23,6 +28,8 @@ export function LibrarySettings() {
     return (
         <div className="flex flex-col divide-y divide-neutral-800/60 p-4 text-sm text-neutral-200">
             <LibrarySettingsEditors />
+
+            {workflow ? <WorkflowMembershipSection workflow={workflow} /> : null}
 
             <section className="py-6 space-y-4">
                 <div className="flex items-start justify-between gap-4">
@@ -42,7 +49,8 @@ export function LibrarySettings() {
                             <p className="text-3xs text-neutral-500">Kapattığınızda kullanıcılar formu görebilir fakat gönderemez.</p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button type="button" onClick={() => dispatch({ type: "SET_STATUS", payload: status === 2 ? 1 : 2 })} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${status === 2 ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}>
+                            {isStatusLocked ? <WorkflowLockMark /> : null}
+                            <button type="button" disabled={isStatusLocked} onClick={() => dispatch({ type: "SET_STATUS", payload: status === 2 ? 1 : 2 })} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition disabled:cursor-not-allowed disabled:opacity-50 ${status === 2 ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}>
                                 <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${status === 2 ? "translate-x-5" : "translate-x-0"}`} />
                             </button>
                         </div>
@@ -63,9 +71,12 @@ export function LibrarySettings() {
                             <p className="text-sm font-semibold text-neutral-100">Anonim cevap izni</p>
                             <p className="text-3xs text-neutral-500">Kimlik bilgisi olmadan gönderime izin ver.</p>
                         </div>
-                        <button type="button" onClick={handleAnonymousToggle} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${allowAnonymousResponses ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}>
-                            <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${allowAnonymousResponses ? "translate-x-5" : "translate-x-0"}`} />
-                        </button>
+                        <div className="flex items-center gap-3">
+                            {isAnonymousLocked ? <WorkflowLockMark /> : null}
+                            <button type="button" disabled={isAnonymousLocked} onClick={handleAnonymousToggle} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition disabled:cursor-not-allowed disabled:opacity-50 ${allowAnonymousResponses ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}>
+                                <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${allowAnonymousResponses ? "translate-x-5" : "translate-x-0"}`} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className={`flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5 transition-opacity duration-300 ${allowAnonymousResponses ? "opacity-20" : ""}`}>
@@ -82,9 +93,12 @@ export function LibrarySettings() {
                             <p className="text-sm font-semibold text-neutral-100">Cevap kontrolü</p>
                             <p className="text-3xs text-neutral-500">Cevapların onaylanması için manuel eylem gerekli olsun.</p>
                         </div>
-                        <button type="button" disabled={allowAnonymousResponses} onClick={() => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "requiresManualReview", value: !requiresManualReview } })} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${requiresManualReview ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}>
-                            <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${requiresManualReview ? "translate-x-5" : "translate-x-0"}`} />
-                        </button>
+                        <div className="flex items-center gap-3">
+                            {isWorkflowLocked ? <WorkflowLockMark /> : null}
+                            <button type="button" disabled={allowAnonymousResponses || isWorkflowLocked} onClick={() => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "requiresManualReview", value: !requiresManualReview } })} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition disabled:cursor-not-allowed ${isWorkflowLocked ? "disabled:opacity-50" : ""} ${requiresManualReview ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}>
+                                <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${requiresManualReview ? "translate-x-5" : "translate-x-0"}`} />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>

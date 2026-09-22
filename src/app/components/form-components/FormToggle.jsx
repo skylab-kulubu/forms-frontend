@@ -1,17 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FieldShell } from "./FieldShell";
+import { Lock } from "lucide-react";
+import { FieldShell, LOCKED_OPTION_HINT } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
 
-export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
+export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnly, compact = false, workflowLock = null, ...rest }) {
     const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
+    const lockedValues = workflowLock?.values ?? [];
+    const trueLocked = lockedValues.includes(prop.trueLabel || "Evet");
+    const falseLocked = lockedValues.includes(prop.falseLabel || "Hayır");
 
     return (
-        <FieldShell number={questionNumber} title="Anahtar" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} {...rest}>
+        <FieldShell number={questionNumber} title="Anahtar" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} compact={compact} workflowLock={workflowLock} {...rest}>
             <div className="flex flex-col gap-1.5">
                 <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
                 <AutoResizeTextarea {...bind("question")}
@@ -33,15 +37,21 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
                     <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açık Metni</label>
-                    <input type="text" {...bind("trueLabel")} placeholder="Evet"
-                        className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
-                    />
+                    <div className="relative">
+                        <input type="text" {...bind("trueLabel")} placeholder="Evet" readOnly={trueLocked} title={trueLocked ? LOCKED_OPTION_HINT : undefined}
+                            className={`block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${trueLocked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
+                        />
+                        {trueLocked && <Lock size={12} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500" />}
+                    </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
                     <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Kapalı Metni</label>
-                    <input type="text" {...bind("falseLabel")} placeholder="Hayır"
-                        className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
-                    />
+                    <div className="relative">
+                        <input type="text" {...bind("falseLabel")} placeholder="Hayır" readOnly={falseLocked} title={falseLocked ? LOCKED_OPTION_HINT : undefined}
+                            className={`block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${falseLocked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
+                        />
+                        {falseLocked && <Lock size={12} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500" />}
+                    </div>
                 </div>
             </div>
         </FieldShell>

@@ -209,7 +209,7 @@ function FormInfoList({ formData }) {
     { icon: Hash, label: "Soru", value: formSchema.length },
     { icon: User2, label: "Anonim", value: allowAnonymous ? "Açık" : "Kapalı" },
     { icon: allowMultiple ? ToggleRight : ToggleLeft, label: "Çoklu cevap", value: allowMultiple ? "Açık" : "Kapalı" },
-    { icon: Workflow, label: "Akış", value: workflow ? `${workflow.name || "Adsız akış"} · ${workflow.isStart ? "Başlangıç" : "Adım"}` : "Yok" },
+    { icon: Workflow, label: "Akış", value: workflow ? `${workflow.name || "Adsız akış"} · ${workflow.isStart ? "Başlangıç" : "Adım"}` : "Yok", href: workflow ? `/admin/workflows/${workflow.id}` : null },
     { icon: Shield, label: "Rol", value: userRole === 0 ? "Yok" : (ROLE_BADGE[userRole]?.label ?? ROLE_BADGE.default.label) },
   ];
 

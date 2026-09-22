@@ -23,6 +23,7 @@ const initialFormState = {
     status: 1,
     isSaved: true,
     userRole: 3,
+    workflow: null,
     _history: [],
 };
 

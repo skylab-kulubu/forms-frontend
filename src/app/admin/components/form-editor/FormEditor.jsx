@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -16,6 +16,7 @@ import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
 import { EditorHeaderActions, EventReturnBar, HeaderStatusPill } from "./components/EditorHeaderActions";
 import { PreviousDraftPicker } from "./components/PreviousDraftPicker";
+import { WorkflowMembershipChip } from "./components/WorkflowMembership";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
 import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
@@ -298,7 +299,16 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         }
     }, [state.schema, dispatch, eventLinked]);
 
-    const { dragSource, activeDragItem, handlers } = useFormDnD(state.schema, setSchemaBridge, libraryDropElRef);
+    const workflow = state.workflow ?? null;
+    const isWorkflowLocked = Boolean(workflow?.isPublished);
+    const lockedById = useMemo(() => new Map(
+        isWorkflowLocked
+            ? (workflow.lockedQuestions ?? []).map((question) => [question.id, { values: Array.isArray(question.values) ? question.values : [] }])
+            : []
+    ), [workflow, isWorkflowLocked]);
+
+    const { dragSource, activeDragItem, handlers } = useFormDnD(state.schema, setSchemaBridge, libraryDropElRef, (fieldId) => lockedById.has(fieldId));
+    const isLockedDrag = dragSource === "canvas" && lockedById.has(activeDragItem?.data?.current?.id);
 
     const handleSave = () => {
         const payload = {
@@ -403,6 +413,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
 
     const deleteField = (id) => {
         if (isIdentityField(state.schema.find((field) => field.id === id))) return;
+        if (lockedById.has(id)) return;
         // Silinen alana bağlı koşullar da temizlenir (sürükle-sil ile aynı davranış).
         const next = state.schema.filter((field) => field.id !== id).map((field) => {
             if (field.condition?.fieldId !== id) return field;
@@ -475,6 +486,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             <Canvas dragSource={dragSource} schemaTitle={state.title}
                 setSchemaTitle={(val) => dispatch({ type: "SET_TITLE", payload: val })}
                 span={isLgUp ? 8 : 11}
+                toolbar={workflow ? <WorkflowMembershipChip workflow={workflow} /> : null}
             >
                 {state.schema.length === 0 ? (
                     <div className="grid h-full place-items-center">
@@ -514,6 +526,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                                         dragActive={!!dragSource}
                                         onDuplicate={duplicateField} onDelete={deleteField} onMove={moveField}
                                         canMoveUp={index > 0} canMoveDown={index < state.schema.length - 1}
+                                        workflowLock={lockedById.get(field.id) ?? null}
                                     />
                                     {dragSource === "library"
                                         ? <DropSlot index={index + 1} enabled />
@@ -525,10 +538,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 )}
             </Canvas>
 
-            {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} />}
+            {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} isLockedDrag={isLockedDrag} />}
 
             {isLgUp && (
-                <Library layout="grid" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} />
+                <Library layout="grid" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag} />
             )}
         </div>
     );
@@ -547,7 +560,8 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 onUndo={handleUndo}
                 canUndo={canUndo}
                 onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
-                isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
+                isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3 || isWorkflowLocked}
+                deleteLabel={isWorkflowLocked ? "Yayındaki akışta kullanıldığı için silinemez" : "Formu sil"}
                 onSave={handleSave}
                 isPending={isPending}
                 isError={isError}
@@ -561,7 +575,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
-                            <Library layout="drawer" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} />
+                            <Library layout="drawer" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag} />
                         </DrawerContent>
                     </Drawer>
                 ) : (
@@ -600,7 +614,8 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
         requiresManualReview: initialForm.requiresManualReview || false,
         editors: initialForm.collaborators || [],
         status: initialForm.status || 1,
-        userRole: initialForm.userRole || 3
+        userRole: initialForm.userRole || 3,
+        workflow: initialForm.workflow ?? null
     } : handoff?.eventLinked ? {
         title: handoff.title || "Yeni Form",
         status: handoff.open ? FORM_STATUS_OPEN : 1,
