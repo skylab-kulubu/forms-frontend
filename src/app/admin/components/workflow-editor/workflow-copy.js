@@ -119,6 +119,11 @@ export function validationAction(issue) {
   return VALIDATION_COPY[issue?.code]?.action ?? null;
 }
 
+export const CONNECTION_COPY = {
+  cycle: { hint: "döngü oluşturur", message: "Bu bağlantı döngü oluşturur" },
+  depth: { hint: "rota üç formu aşar", message: "Bu bağlantıyla rota üç formu aşar" },
+};
+
 export const ELIGIBILITY_COPY = {
   formClosed: "Cevap kabul etmiyor",
   formAnonymous: "Anonim cevaba açık",

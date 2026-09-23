@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Archive, CircleAlert, CircleGauge, Rocket, TriangleAlert, Undo2 } from "lucide-react";
+import { Archive, CircleAlert, CircleGauge, TriangleAlert, Undo2 } from "lucide-react";
 import Popover from "@/app/components/utils/Popover";
 import Tip from "@/app/admin/components/utils/Tip";
 import { HeaderStatusPill } from "../../form-editor/components/EditorHeaderActions";
@@ -52,7 +52,7 @@ export default function WorkflowHeaderActions({
         <button type="button" onClick={onPublish} disabled={isPublishing || !canPublish} aria-label="Akışı yayınla"
           className="ml-1 flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-50"
         >
-          {isPublishing ? <CircleGauge size={14} className="animate-spin" /> : isError ? <CircleAlert size={14} className="text-red-400" /> : <Rocket size={14} />}
+          {isPublishing ? <CircleGauge size={14} className="animate-spin" /> : isError ? <CircleAlert size={14} className="text-red-400" /> : null}
           Yayınla
         </button>
       </Popover>

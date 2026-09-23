@@ -2,10 +2,8 @@ export const TRIGGER = { SUBMITTED: 0, APPROVED: 1, DECLINED: 2 };
 
 export const MAX_ROUTE_LENGTH = 3;
 
-export const END_NODE_KEY = "__end";
-
-const COLUMN_WIDTH = 236;
-const ROW_HEIGHT = 104;
+const COLUMN_WIDTH = 330;
+const ROW_HEIGHT = 140;
 const ORIGIN_X = 24;
 const ORIGIN_Y = 32;
 
@@ -48,6 +46,10 @@ export function descendantsOf(nodeKey, transitions) {
   }
 
   return seen;
+}
+
+export function wouldCreateCycle(sourceKey, targetKey, transitions) {
+  return sourceKey === targetKey || descendantsOf(targetKey, transitions).has(sourceKey);
 }
 
 export function hasCycle(nodes, transitions) {
@@ -102,16 +104,11 @@ function longestTail(nodeKey, transitions, visiting) {
   return longest;
 }
 
-export function allowedTargets(sourceKey, nodes, transitions) {
-  const forbidden = descendantsOf(sourceKey, transitions);
-
-  return nodes.filter((node) => {
-    if (node.nodeKey === sourceKey) return false;
-    if (forbidden.has(node.nodeKey) && descendantsOf(node.nodeKey, transitions).has(sourceKey)) return false;
-    if (descendantsOf(node.nodeKey, transitions).has(sourceKey)) return false;
-    if (wouldExceedDepth(sourceKey, node.nodeKey, nodes, transitions)) return false;
-    return true;
-  });
+export function connectionError(sourceKey, targetKey, nodes, transitions) {
+  if (!targetKey) return null;
+  if (wouldCreateCycle(sourceKey, targetKey, transitions)) return "cycle";
+  if (wouldExceedDepth(sourceKey, targetKey, nodes, transitions)) return "depth";
+  return null;
 }
 
 /**
@@ -170,31 +167,79 @@ export function guaranteedAncestors(nodeKey, nodes, transitions) {
   return nodes.filter((node) => node.nodeKey !== nodeKey && own.has(node.nodeKey));
 }
 
+function routeOrder(a, b) {
+  const byTrigger = Number(a.trigger) - Number(b.trigger);
+  if (byTrigger !== 0) return byTrigger;
+  if (Boolean(a.condition) !== Boolean(b.condition)) return a.condition ? -1 : 1;
+  return (a.priority ?? 0) - (b.priority ?? 0);
+}
+
+export function flowOrder(nodes, transitions) {
+  const depths = depthMap(nodes, transitions);
+  const discovered = new Map();
+  const startNode = nodes.find((node) => node.isStart);
+
+  if (startNode) {
+    discovered.set(startNode.nodeKey, 0);
+    const queue = [startNode.nodeKey];
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      const routes = outgoing(transitions, current).sort(routeOrder);
+
+      for (const route of routes) {
+        if (discovered.has(route.targetNodeKey)) continue;
+        discovered.set(route.targetNodeKey, discovered.size);
+        queue.push(route.targetNodeKey);
+      }
+    }
+  }
+
+  const inserted = new Map(nodes.map((node, index) => [node.nodeKey, index]));
+
+  return [...nodes].sort((a, b) => {
+    const depthA = depths.get(a.nodeKey) ?? Infinity;
+    const depthB = depths.get(b.nodeKey) ?? Infinity;
+    if (depthA !== depthB) return depthA - depthB;
+
+    const seenA = discovered.get(a.nodeKey) ?? Infinity;
+    const seenB = discovered.get(b.nodeKey) ?? Infinity;
+    if (seenA !== seenB) return seenA - seenB;
+
+    return inserted.get(a.nodeKey) - inserted.get(b.nodeKey);
+  });
+}
+
 export function autoLayout(nodes, transitions) {
   const depths = depthMap(nodes, transitions);
-  const columns = new Map();
-  const positions = {};
-
   const maxDepth = nodes.reduce((max, node) => Math.max(max, depths.get(node.nodeKey) ?? 0), 0);
+  const columns = new Map();
 
-  nodes.forEach((node) => {
+  flowOrder(nodes, transitions).forEach((node) => {
     const depth = depths.get(node.nodeKey) ?? maxDepth + 1;
-    const rows = columns.get(depth) ?? [];
-    rows.push(node.nodeKey);
-    columns.set(depth, rows);
+    columns.set(depth, [...(columns.get(depth) ?? []), node.nodeKey]);
   });
 
+  const tallest = Math.max(1, ...[...columns.values()].map((rows) => rows.length));
+  const centerY = ORIGIN_Y + ((tallest - 1) * ROW_HEIGHT) / 2;
+  const positions = {};
+
   columns.forEach((rows, depth) => {
-    const offset = ((rows.length - 1) * ROW_HEIGHT) / 2;
-    rows.forEach((key, index) => {
-      positions[key] = {
+    rows.forEach((nodeKey, index) => {
+      positions[nodeKey] = {
         x: ORIGIN_X + (depth - 1) * COLUMN_WIDTH,
-        y: Math.max(ORIGIN_Y, ORIGIN_Y + 120 + index * ROW_HEIGHT - offset),
+        y: Math.round(centerY + (index - (rows.length - 1) / 2) * ROW_HEIGHT),
       };
     });
   });
 
   return positions;
+}
+
+export function nextNodePosition(nodes) {
+  if (nodes.length === 0) return { x: ORIGIN_X, y: ORIGIN_Y + ROW_HEIGHT };
+  const rightMost = nodes.reduce((max, node) => Math.max(max, node.position?.x ?? 0), 0);
+  return { x: rightMost + COLUMN_WIDTH, y: ORIGIN_Y + (nodes.length % 3) * ROW_HEIGHT };
 }
 
 export function withPositions(nodes, transitions) {
@@ -203,12 +248,6 @@ export function withPositions(nodes, transitions) {
 
   const layout = autoLayout(nodes, transitions);
   return nodes.map((node) => (node.position && typeof node.position.x === "number" ? node : { ...node, position: layout[node.nodeKey] ?? { x: ORIGIN_X, y: ORIGIN_Y } }));
-}
-
-export function endNodePosition(nodes) {
-  const rightMost = nodes.reduce((max, node) => Math.max(max, node.position?.x ?? 0), 0);
-  const bottom = nodes.reduce((max, node) => Math.max(max, node.position?.y ?? 0), 0);
-  return { x: rightMost + COLUMN_WIDTH, y: bottom + 40 };
 }
 
 export function groupTransitions(transitions, nodeKey, trigger) {

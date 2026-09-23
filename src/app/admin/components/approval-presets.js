@@ -1,10 +1,10 @@
-import { Rocket, Shredder, Workflow } from "lucide-react";
+import { Shredder, Workflow } from "lucide-react";
 
 export const APPROVAL_PRESETS = {
     "publish-workflow": {
         variant: "delayed",
         delaySeconds: 2,
-        icon: Rocket,
+        icon: Workflow,
         title: "Akışı yayınla",
         highlights: (ctx) => ctx.highlights ?? [],
         approveLabel: (ctx) => ctx.isPending ? "Yayınlanıyor..." : "Yayınla",

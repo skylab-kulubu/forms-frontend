@@ -14,12 +14,12 @@ import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 import { HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
 import { LibraryTrigger } from "../form-editor/components/LibraryTrigger";
-import { WorkflowEditorProvider, useWorkflowEditor } from "./WorkflowEditorContext";
+import { EMPTY_RULE, WorkflowEditorProvider, useWorkflowEditor } from "./WorkflowEditorContext";
 import WorkflowCanvas from "./components/WorkflowCanvas";
 import WorkflowInspector from "./components/WorkflowInspector";
 import WorkflowHeaderActions from "./components/WorkflowHeaderActions";
-import { TRIGGER, groupTransitions, toDefinitionPayload } from "./workflow-graph";
-import { COMPARISON_SYMBOL, VALUELESS_COMPARISONS, fieldQuestionLabel, validationMessage } from "./workflow-copy";
+import { TRIGGER, connectionError, groupTransitions, toDefinitionPayload } from "./workflow-graph";
+import { COMPARISON_SYMBOL, CONNECTION_COPY, VALUELESS_COMPARISONS, fieldQuestionLabel, validationMessage } from "./workflow-copy";
 
 const DEFINITION_DEBOUNCE_MS = 1200;
 const META_DEBOUNCE_MS = 900;
@@ -61,6 +61,13 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   const [issuesOpen, setIssuesOpen] = useState(false);
   const [publishedFlash, setPublishedFlash] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const focusNonce = state.focus?.nonce ?? 0;
+  const [seenFocusNonce, setSeenFocusNonce] = useState(focusNonce);
+  if (seenFocusNonce !== focusNonce) {
+    setSeenFocusNonce(focusNonce);
+    if (!isLgUp && state.focus?.localId) setDrawerOpen(true);
+  }
 
   useEffect(() => {
     setGlobalName(state.name);
@@ -222,6 +229,8 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
 
   const globalIssues = issues.filter((issue) => !issue.nodeKey);
 
+  const loadingFormIds = new Set(formQueries.flatMap((query, index) => (query.isLoading && state.nodes[index] ? [state.nodes[index].formId] : [])));
+
   const questionCounts = useMemo(() => {
     const counts = {};
     Object.entries(schemasByFormId).forEach(([formId, form]) => {
@@ -364,7 +373,33 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
         </button>
   ) : null;
 
+  const handleConnect = (sourceKey, trigger, targetKey) => {
+    const error = connectionError(sourceKey, targetKey, state.nodes, state.transitions);
+    if (error) return { ok: false, reason: CONNECTION_COPY[error].message };
+
+    const group = groupTransitions(state.transitions, sourceKey, trigger);
+
+    if (group.length === 0) {
+      if (targetKey) dispatch({ type: "ADD_TRANSITION", sourceNodeKey: sourceKey, trigger, targetNodeKey: targetKey, condition: null, focus: true });
+      else dispatch({ type: "FOCUS_PORT", nodeKey: sourceKey, trigger });
+      return { ok: true };
+    }
+
+    const existing = group.find((transition) => (transition.targetNodeKey ?? null) === (targetKey ?? null));
+    if (existing) {
+      dispatch({ type: "FOCUS_ROUTE", localId: existing.localId });
+      return { ok: true };
+    }
+
+    dispatch({
+      type: "ADD_TRANSITION", sourceNodeKey: sourceKey, trigger, targetNodeKey: targetKey,
+      condition: { operator: 0, rules: [{ ...EMPTY_RULE }] }, focus: true,
+    });
+    return { ok: true };
+  };
+
   const openPicker = () => {
+    dispatch({ type: "SELECT", nodeKey: null });
     if (!isLgUp) setDrawerOpen(true);
     ensureRef.current()
       .then(() => setPickerOpen(true))
@@ -387,11 +422,15 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
     <div className="grid grid-cols-12 gap-4">
       <WorkflowCanvas
         nodes={state.nodes} transitions={state.transitions} selectedKey={state.selectedKey}
-        issuesByNode={issuesByNode} questionCounts={questionCounts}
+        issuesByNode={issuesByNode} questionCounts={questionCounts} loadingFormIds={loadingFormIds}
         name={state.name} onNameChange={(value) => dispatch({ type: "SET_META", key: "name", value })}
         onSelect={(nodeKey) => dispatch({ type: "SELECT", nodeKey })}
         onMove={(nodeKey, position) => dispatch({ type: "MOVE_NODE", nodeKey, position })}
         onAddStep={openPicker}
+        onConnect={handleConnect}
+        onFocusRoute={(localId) => dispatch({ type: "FOCUS_ROUTE", localId })}
+        onFocusPort={(nodeKey, trigger) => dispatch({ type: "FOCUS_PORT", nodeKey, trigger })}
+        highlightedRouteId={state.focus?.localId ?? null}
         labelForTransition={labelForTransition}
         span={isLgUp ? 8 : 11} isLgUp={isLgUp} overlay={issuesOverlay}
       />

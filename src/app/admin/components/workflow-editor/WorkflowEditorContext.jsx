@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
-import { autoLayout, slugifyNodeKey, withPositions, triggersForNode } from "./workflow-graph";
+import { autoLayout, nextNodePosition, slugifyNodeKey, withPositions } from "./workflow-graph";
 
 const MAX_HISTORY = 20;
 const HISTORY_DEBOUNCE_MS = 800;
@@ -12,7 +12,7 @@ const TRACKABLE_ACTIONS = new Set([
 ]);
 
 let transitionSeq = 0;
-export const nextTransitionId = () => {
+const nextTransitionId = () => {
   transitionSeq += 1;
   return `t${transitionSeq}`;
 };
@@ -28,9 +28,14 @@ const initialState = {
   nodes: [],
   transitions: [],
   selectedKey: null,
+  focus: null,
   isSaved: true,
   _history: [],
 };
+
+function nextFocus(state, localId) {
+  return { localId, nonce: (state.focus?.nonce ?? 0) + 1 };
+}
 
 function normalizeNodes(apiNodes) {
   return (Array.isArray(apiNodes) ? apiNodes : []).map((node) => ({
@@ -107,7 +112,7 @@ function buildInitialState(workflow) {
     status: workflow.status ?? 0,
     nodes,
     transitions,
-    selectedKey: nodes.find((node) => node.isStart)?.nodeKey ?? nodes[0]?.nodeKey ?? null,
+    selectedKey: null,
   };
 }
 
@@ -122,19 +127,29 @@ function reducer(state, action) {
     case "SELECT":
       return { ...state, selectedKey: action.nodeKey };
 
+    case "FOCUS_ROUTE": {
+      const target = state.transitions.find((transition) => transition.localId === action.localId);
+      if (!target) return state;
+      return { ...state, selectedKey: target.sourceNodeKey, focus: nextFocus(state, target.localId) };
+    }
+
+    case "FOCUS_PORT":
+      return { ...state, selectedKey: action.nodeKey, focus: nextFocus(state, `implicit-${action.trigger}`) };
+
+    case "CLEAR_FOCUS":
+      return state.focus?.localId ? { ...state, focus: { ...state.focus, localId: null } } : state;
+
     case "ADD_NODE": {
       const { form } = action;
       const takenKeys = state.nodes.map((node) => node.nodeKey);
       const nodeKey = slugifyNodeKey(form.title, takenKeys);
-      const rightMost = state.nodes.reduce((max, node) => Math.max(max, node.position?.x ?? 0), 0);
-
       const node = {
         nodeKey,
         formId: form.id,
         formTitle: form.title || "Adsız form",
         requiresManualReview: Boolean(form.requiresManualReview),
         isStart: state.nodes.length === 0,
-        position: state.nodes.length === 0 ? { x: 24, y: 140 } : { x: rightMost + 236, y: 60 + (state.nodes.length % 3) * 104 },
+        position: nextNodePosition(state.nodes),
       };
 
       return touched(state, { nodes: [...state.nodes, node], selectedKey: nodeKey });
@@ -152,7 +167,7 @@ function reducer(state, action) {
       return touched(state, {
         nodes: nextNodes,
         transitions: renumber(transitions),
-        selectedKey: nextNodes[0]?.nodeKey ?? null,
+        selectedKey: null,
       });
     }
 
@@ -184,7 +199,10 @@ function reducer(state, action) {
       };
 
       const withNew = [...state.transitions, transition];
-      return touched(state, { transitions: renumber(ensureDefaultRoute(withNew, action.sourceNodeKey, action.trigger)) });
+      return touched(state, {
+        transitions: renumber(ensureDefaultRoute(withNew, action.sourceNodeKey, action.trigger)),
+        ...(action.focus ? { selectedKey: action.sourceNodeKey, focus: nextFocus(state, transition.localId) } : {}),
+      });
     }
 
     case "UPDATE_TRANSITION": {
@@ -257,7 +275,7 @@ function editorReducer(state, action) {
     const history = state._history;
     if (history.length === 0) return state;
     const previous = history[history.length - 1];
-    return { ...previous, _history: history.slice(0, -1), isSaved: false };
+    return { ...previous, _history: history.slice(0, -1), isSaved: false, focus: state.focus ? { ...state.focus, localId: null } : null };
   }
 
   if (action.type === "_COMMIT_HISTORY") {
@@ -315,8 +333,4 @@ export function useWorkflowEditor() {
   const context = useContext(WorkflowEditorContext);
   if (!context) throw new Error("useWorkflowEditor must be used within a WorkflowEditorProvider");
   return context;
-}
-
-export function allowedTriggers(node) {
-  return triggersForNode(node);
 }
