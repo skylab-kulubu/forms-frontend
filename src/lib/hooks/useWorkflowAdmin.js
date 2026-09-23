@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../apiClient";
 
-const fetchWorkflows = async ({ page = 1, pageSize, search, sortDirection } = {}) => {
+const fetchWorkflows = async ({ page = 1, pageSize, search, sortDirection, showArchived = false } = {}) => {
   const params = new URLSearchParams();
   if (page !== undefined && page !== null) params.set("Page", page);
   if (pageSize !== undefined && pageSize !== null) params.set("PageSize", pageSize);
   if (search) params.set("Search", search);
   if (sortDirection) params.set("SortDirection", sortDirection);
+  params.set("ShowArchived", showArchived ? "true" : "false");
   const query = params.toString();
   return request(`/api/admin/workflows${query ? `?${query}` : ""}`);
 };
@@ -31,10 +32,10 @@ const publishWorkflow = async (workflowId) => request(`/api/admin/workflows/${wo
 const archiveWorkflow = async (workflowId) => request(`/api/admin/workflows/${workflowId}`, { method: "DELETE" });
 
 export const useWorkflowsQuery = (options = {}) => {
-  const { page = 1, pageSize, search, sortDirection, ...queryOptions } = options;
+  const { page = 1, pageSize, search, sortDirection, showArchived = false, ...queryOptions } = options;
   return useQuery({
-    queryKey: ["workflows", page, pageSize, search, sortDirection],
-    queryFn: () => fetchWorkflows({ page, pageSize, search, sortDirection }),
+    queryKey: ["workflows", page, pageSize, search, sortDirection, showArchived],
+    queryFn: () => fetchWorkflows({ page, pageSize, search, sortDirection, showArchived }),
     retry: queryOptions.retry ?? false,
     ...queryOptions,
   });

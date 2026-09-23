@@ -15,19 +15,24 @@ export default function WorkflowsPage() {
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [sortValue, setSortValue] = useState("desc");
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(searchValue.trim()), 500);
     return () => clearTimeout(handle);
   }, [searchValue]);
 
-  const [prevSearch, setPrevSearch] = useState(debouncedSearch);
-  if (prevSearch !== debouncedSearch) {
-    setPrevSearch(debouncedSearch);
+  const filterKey = `${debouncedSearch}|${sortValue}|${showArchived}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey);
     if (page !== 1) setPage(1);
   }
 
-  const { data, isLoading, error, refetch } = useWorkflowsQuery({ page, search: debouncedSearch || undefined });
+  const { data, isLoading, error, refetch } = useWorkflowsQuery({
+    page, search: debouncedSearch || undefined, sortDirection: sortValue === "asc" ? "ascending" : "descending", showArchived,
+  });
 
   const payload = data?.data ?? data;
   const meta = Array.isArray(payload) || !payload ? {} : payload;
@@ -38,11 +43,12 @@ export default function WorkflowsPage() {
 
   const totalCount = meta.totalCount ?? workflows.length;
   const hasError = Boolean(error);
-  const contentKey = `${debouncedSearch}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
+  const contentKey = `${filterKey}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-4 lg:p-6">
       <WorkflowsHeader searchValue={searchValue} onSearchChange={setSearchValue}
+        sortValue={sortValue} onSortChange={setSortValue} showArchived={showArchived} onShowArchivedChange={setShowArchived}
         onRefresh={() => refetch()} onCreate={() => router.push("/admin/workflows/new-workflow")}
       />
 
@@ -58,7 +64,7 @@ export default function WorkflowsPage() {
               <StateCard title="Akışlar yüklenemedi" Icon={FileXCorner} description="Akış verileri yüklenirken hata oluştu." />
             ) : workflows.length === 0 ? (
               <StateCard title="Akış bulunamadı" Icon={FileSearchCorner}
-                description={debouncedSearch ? "Aranılan kelimede akış bulunamadı." : "Henüz bir akış oluşturmadınız."}
+                description={debouncedSearch ? "Aranılan kelimede akış bulunamadı." : showArchived ? "Henüz bir akış oluşturmadınız." : "Gösterilecek akış yok. Arşivlenen akışlar filtrelerden açılabilir."}
               />
             ) : (
               <div className="divide-y divide-white/5">

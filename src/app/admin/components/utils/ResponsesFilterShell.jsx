@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Archive, ArchiveX, ArrowDown, ArrowUp, CheckCircle2, Clock, SlidersHorizontal, User, UserX, Users, XCircle } from "lucide-react";
 
-function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
+export function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   const count = Math.max(options.length, 1);
   const activeIndex = Math.max(0, options.findIndex((option) => option.value === value));
   const indicatorStyle = {
@@ -35,7 +35,7 @@ function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   );
 }
 
-function TwoStateIconButton({ value = false, onChange, icon: Icon, label }) {
+export function TwoStateIconButton({ value = false, onChange, icon: Icon, label }) {
   const nextValue = !value;
 
   const stateClass = value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300";

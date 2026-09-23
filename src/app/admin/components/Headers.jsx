@@ -8,6 +8,7 @@ import ActionButton from "./utils/ActionButton";
 import Tip from "./utils/Tip";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
 import FormsFilterShell, { DatabaseFilterShell } from "./utils/FormsFilterShell";
+import WorkflowsFilterShell from "./utils/WorkflowsFilterShell";
 
 const fadeIn = {
   initial: { opacity: 0, y: -6 },
@@ -224,13 +225,27 @@ export function GroupsHeader(toolbarProps) {
   );
 }
 
-function WorkflowsToolbar({ compact = false, searchValue = "", onSearchChange, onRefresh, onCreate }) {
+function WorkflowsToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", onSortChange,
+  showArchived = false, onShowArchivedChange, onRefresh, onCreate
+}) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterButtonRef = useRef(null);
+  const activeFilters = [sortValue !== "desc", showArchived !== false].filter(Boolean).length;
+  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
   const buttonSize = compact ? "sm" : "md";
 
   return (
     <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
       <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Akış ara" />
       <div className="flex items-center gap-1.5 shrink-0">
+        <div ref={filterButtonRef} className="relative">
+          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
+            variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
+          />
+          <WorkflowsFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
+            sortValue={sortValue} onSortChange={onSortChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange}
+          />
+        </div>
         <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
         <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni akış ekle" aria-label="Yeni akış ekle" />
       </div>
