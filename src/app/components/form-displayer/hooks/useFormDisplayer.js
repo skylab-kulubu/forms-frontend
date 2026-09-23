@@ -24,6 +24,7 @@ const initialState = {
   isWorkflow: false,
   startFormId: null,
   nextFormId: null,
+  nextStage: null,
   values: {},
   submissionState: null,
   submissionStatus: null,
@@ -60,7 +61,7 @@ function reducer(state, action) {
       const startFormId = data?.startFormId ?? state.startFormId;
       const isWorkflow = state.isWorkflow || data?.state != null;
       if (data?.state === WORKFLOW_STATE.SHOW_FORM && data?.nextFormId) {
-        return { ...state, stage, startFormId, isWorkflow, nextFormId: data.nextFormId };
+        return { ...state, startFormId, isWorkflow, nextFormId: data.nextFormId, nextStage: data.stage ?? null };
       }
       return { ...state, stage, startFormId, isWorkflow, submissionState: getSubmissionState(status), submissionStatus: status ?? null };
     }
@@ -75,7 +76,7 @@ function reducer(state, action) {
       };
 
     case "LOAD_NEXT_FORM":
-      return { ...initialState, form: action.form, stage: action.stage ?? state.stage, isWorkflow: true, startFormId: state.startFormId };
+      return { ...initialState, form: action.form, stage: action.stage ?? state.nextStage ?? state.stage + 1, isWorkflow: true, startFormId: state.startFormId };
 
     case "DISCARD_DRAFT":
       return { ...state, values: {}, draftPromptVisible: false };
@@ -161,7 +162,7 @@ export function useFormDisplayer(form, draft, workflow = {}) {
 
   const { lastSavedAt } = useResponseDraftAutoSave(
     state.form?.id, state.values, schema, startTimeRef,
-    isAuthed && !state.draftPromptVisible && !state.submissionState
+    isAuthed && !state.draftPromptVisible && !state.submissionState && !state.nextFormId
   );
 
   const visibleFields = useMemo(() => getVisibleFields(schema, state.values), [schema, state.values]);
@@ -219,7 +220,7 @@ export function useFormDisplayer(form, draft, workflow = {}) {
     setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 2000);
   };
 
-  return { state, dispatch, schema, visibleFields, isAuthed, isDiscarding, isAnyFileUploading, isSubmitting: submitMutation.isPending,
+  return { state, dispatch, schema, visibleFields, isAuthed, isDiscarding, isAnyFileUploading, isSubmitting: submitMutation.isPending || Boolean(state.nextFormId),
     lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields
   };
 }

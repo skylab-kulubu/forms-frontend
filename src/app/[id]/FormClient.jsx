@@ -14,7 +14,8 @@ export default function FormClient() {
   const sessionLoading = status === "loading";
 
   const { data, isLoading, error } = useDisplayFormQuery(id);
-  const { data: draftData, isLoading: draftLoading } = useResponseDraftQuery(id, isAuthed);
+  const displayedFormId = data?.data?.form?.id ?? null;
+  const { data: draftData, isLoading: draftLoading } = useResponseDraftQuery(displayedFormId, isAuthed);
 
   return (
     <FormStatusHandler withBackground
