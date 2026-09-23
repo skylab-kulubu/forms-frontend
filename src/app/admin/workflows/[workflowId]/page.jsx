@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { FileXCorner } from "lucide-react";
 import WorkflowEditor from "../../components/workflow-editor/WorkflowEditor";
 import WorkflowEditorSkeleton from "../../components/workflow-editor/components/WorkflowEditorSkeleton";
@@ -11,6 +11,7 @@ export default function WorkflowEditorPage() {
   const params = useParams();
   const rawId = params?.workflowId;
   const workflowId = Array.isArray(rawId) ? rawId[0] : rawId;
+  const initialFormId = useSearchParams().get("form");
 
   const { data, isLoading, error, refetch } = useWorkflowQuery(workflowId);
   const workflow = data?.data ?? data ?? null;
@@ -25,5 +26,5 @@ export default function WorkflowEditorPage() {
     );
   }
 
-  return <WorkflowEditor workflow={workflow} onRefresh={refetch} />;
+  return <WorkflowEditor workflow={workflow} onRefresh={refetch} initialFormId={initialFormId} />;
 }

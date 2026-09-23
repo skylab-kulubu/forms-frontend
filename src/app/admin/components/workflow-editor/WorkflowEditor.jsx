@@ -146,7 +146,6 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
       if (!node || !form) return;
       map[node.formId] = {
         title: form.title ?? node.formTitle,
-        requiresManualReview: Boolean(form.requiresManualReview),
         schema: Array.isArray(form.schema) ? form.schema : [],
       };
     });
@@ -481,9 +480,9 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   );
 }
 
-export default function WorkflowEditor({ workflow, onRefresh }) {
+export default function WorkflowEditor({ workflow, onRefresh, initialFormId = null }) {
   return (
-    <WorkflowEditorProvider workflow={workflow}>
+    <WorkflowEditorProvider workflow={workflow} initialFormId={initialFormId}>
       <WorkflowEditorContent workflow={workflow} onRefresh={onRefresh} />
     </WorkflowEditorProvider>
   );

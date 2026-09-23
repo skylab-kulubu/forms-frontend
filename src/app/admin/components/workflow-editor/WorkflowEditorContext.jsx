@@ -1,13 +1,13 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
-import { autoLayout, nextNodePosition, slugifyNodeKey, withPositions } from "./workflow-graph";
+import { TRIGGER, autoLayout, nextNodePosition, slugifyNodeKey, withPositions } from "./workflow-graph";
 
 const MAX_HISTORY = 20;
 const HISTORY_DEBOUNCE_MS = 800;
 
 const TRACKABLE_ACTIONS = new Set([
-  "SET_META", "ADD_NODE", "REMOVE_NODE", "MOVE_NODE", "RELAYOUT", "SET_START",
+  "SET_META", "ADD_NODE", "REMOVE_NODE", "MOVE_NODE", "RELAYOUT", "SET_START", "SET_NODE_REVIEW",
   "ADD_TRANSITION", "UPDATE_TRANSITION", "REMOVE_TRANSITION", "MOVE_TRANSITION",
 ]);
 
@@ -96,7 +96,7 @@ function touched(state, patch) {
   return { ...state, ...patch, isSaved: false };
 }
 
-function buildInitialState(workflow) {
+function buildInitialState({ workflow, initialFormId }) {
   if (!workflow) return initialState;
 
   const definition = workflow.draft ?? workflow.published ?? { nodes: [], transitions: [] };
@@ -112,7 +112,7 @@ function buildInitialState(workflow) {
     status: workflow.status ?? 0,
     nodes,
     transitions,
-    selectedKey: null,
+    selectedKey: (initialFormId && nodes.find((node) => node.formId === initialFormId)?.nodeKey) || null,
   };
 }
 
@@ -188,6 +188,25 @@ function reducer(state, action) {
         nodes: state.nodes.map((node) => ({ ...node, isStart: node.nodeKey === action.nodeKey })),
       });
 
+    case "SET_NODE_REVIEW": {
+      const target = state.nodes.find((node) => node.nodeKey === action.nodeKey);
+      if (!target || target.requiresManualReview === action.value) return state;
+
+      const transitions = state.transitions
+        .filter((transition) => action.value || transition.sourceNodeKey !== action.nodeKey || transition.trigger !== TRIGGER.DECLINED)
+        .map((transition) => {
+          if (transition.sourceNodeKey !== action.nodeKey) return transition;
+          if (action.value && transition.trigger === TRIGGER.SUBMITTED) return { ...transition, trigger: TRIGGER.APPROVED };
+          if (!action.value && transition.trigger === TRIGGER.APPROVED) return { ...transition, trigger: TRIGGER.SUBMITTED };
+          return transition;
+        });
+
+      return touched(state, {
+        nodes: state.nodes.map((node) => (node.nodeKey === action.nodeKey ? { ...node, requiresManualReview: action.value } : node)),
+        transitions: renumber(transitions),
+      });
+    }
+
     case "ADD_TRANSITION": {
       const transition = {
         localId: action.localId ?? nextTransitionId(),
@@ -254,9 +273,9 @@ function reducer(state, action) {
       const nodes = state.nodes.map((node) => {
         const form = action.forms[node.formId];
         if (!form) return node;
-        if (node.formTitle === form.title && node.requiresManualReview === form.requiresManualReview) return node;
+        if (node.formTitle === form.title) return node;
         changed = true;
-        return { ...node, formTitle: form.title, requiresManualReview: form.requiresManualReview };
+        return { ...node, formTitle: form.title };
       });
 
       return changed ? { ...state, nodes } : state;
@@ -289,8 +308,8 @@ function editorReducer(state, action) {
 
 const WorkflowEditorContext = createContext(null);
 
-export function WorkflowEditorProvider({ children, workflow }) {
-  const [state, rawDispatch] = useReducer(editorReducer, workflow, buildInitialState);
+export function WorkflowEditorProvider({ children, workflow, initialFormId = null }) {
+  const [state, rawDispatch] = useReducer(editorReducer, { workflow, initialFormId }, buildInitialState);
 
   const stateRef = useRef(state);
   useEffect(() => {

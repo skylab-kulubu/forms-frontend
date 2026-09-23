@@ -7,6 +7,7 @@ import { Timer, User2, ToggleLeft, ToggleRight, Workflow, Hash, Shield, Trending
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { ROLE_BADGE } from "../../ListItem";
 import Avatar from "@/app/components/utils/Avatar";
+import { effectiveFormSettings } from "@/lib/form-settings";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -200,15 +201,18 @@ function CollaboratorsSection({ formData }) {
 
 function FormInfoList({ formData }) {
   const formSchema = formData?.data?.schema ?? formData?.schema ?? [];
-  const allowAnonymous = formData?.data?.allowAnonymousResponses ?? formData?.allowAnonymousResponses;
-  const allowMultiple = formData?.data?.allowMultipleResponses ?? formData?.allowMultipleResponses;
+  const settings = effectiveFormSettings(formData?.data ?? formData);
   const workflow = formData?.data?.workflow ?? formData?.workflow ?? null;
   const userRole = formData?.data?.userRole ?? formData?.userRole;
 
   const items = [
     { icon: Hash, label: "Soru", value: formSchema.length },
-    { icon: User2, label: "Anonim", value: allowAnonymous ? "Açık" : "Kapalı" },
-    { icon: allowMultiple ? ToggleRight : ToggleLeft, label: "Çoklu cevap", value: allowMultiple ? "Açık" : "Kapalı" },
+    { icon: User2, label: "Anonim", value: settings.allowAnonymousResponses ? "Açık" : "Kapalı" },
+    {
+      icon: settings.allowMultipleResponses ? ToggleRight : ToggleLeft,
+      label: settings.managedByWorkflow ? "Tekrar başlatma" : "Çoklu cevap",
+      value: settings.allowMultipleResponses ? "Açık" : "Kapalı",
+    },
     { icon: Workflow, label: "Akış", value: workflow ? `${workflow.name || "Adsız akış"} · ${workflow.isStart ? "Başlangıç" : "Adım"}` : "Yok", href: workflow ? `/admin/workflows/${workflow.id}` : null },
     { icon: Shield, label: "Rol", value: userRole === 0 ? "Yok" : (ROLE_BADGE[userRole]?.label ?? ROLE_BADGE.default.label) },
   ];

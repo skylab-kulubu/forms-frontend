@@ -517,9 +517,7 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
   return (
     <div className="flex flex-col divide-y divide-neutral-800/60 p-4 text-sm text-neutral-200">
       <section className="space-y-4 pb-6">
-        <SectionHeader title="Adım ayarları"
-          description={`${schema ? `${questionCount} soru` : "Sorular yükleniyor"} · ${selectedNode.requiresManualReview ? "cevaplar manuel onaylanır" : "cevaplar onay beklemeden ilerler"}`}
-        />
+        <SectionHeader title="Adım ayarları" description={schema ? `${questionCount} soru` : "Sorular yükleniyor"} />
 
         {nodeIssues.map((issue, index) => (
           <div key={`${issue.code}-${index}`} className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-100 shadow-sm">
@@ -531,6 +529,13 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
             )}
           </div>
         ))}
+
+        <ToggleRow title="Manuel onay" checked={selectedNode.requiresManualReview}
+          description={selectedNode.requiresManualReview
+            ? "Cevap yetkili onayını bekler; onaylanınca ve reddedilince ayrı yönlendirilir."
+            : "Cevap gönderilince onay beklemeden sonraki adıma geçer."}
+          onChange={() => dispatch({ type: "SET_NODE_REVIEW", nodeKey: selectedNode.nodeKey, value: !selectedNode.requiresManualReview })}
+        />
 
         <div className="flex flex-wrap gap-2">
           <Link href={formHref} target="_blank" className={`${BULK} ${BULK_TONE} min-w-fit flex-1`}>

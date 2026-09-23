@@ -267,6 +267,7 @@ export function toDefinitionPayload(nodes, transitions) {
       nodeKey: node.nodeKey,
       formId: node.formId,
       isStart: Boolean(node.isStart),
+      requiresManualReview: Boolean(node.requiresManualReview),
       position: node.position ? { x: Math.round(node.position.x), y: Math.round(node.position.y) } : null,
     })),
     transitions: transitions.map((transition, index) => ({

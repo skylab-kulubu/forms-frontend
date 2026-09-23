@@ -95,7 +95,7 @@ export const VALIDATION_COPY = {
   cycleDetected: { message: "Akış kendi üzerine dönüyor." },
   nodeUnreachable: { message: "Bu adıma başlangıçtan ulaşan bir yol yok." },
   depthExceeded: { message: "Bu adımdan geçen rota üç formdan uzun." },
-  triggerNotAllowed: { message: "Yönlendirme, formun cevap kontrolü ayarıyla uyuşmuyor.", action: "openForm" },
+  triggerNotAllowed: { message: "Yönlendirme, adımın manuel onay ayarıyla uyuşmuyor." },
   defaultRouteMissing: { message: "Koşullu yönlendirmelerin bir \"aksi halde\" yolu yok.", action: "addDefaultRoute" },
   defaultRouteDuplicated: { message: "Aynı tetikleyicide iki koşulsuz yönlendirme var." },
   priorityDuplicated: { message: "İki yönlendirme aynı sırada." },

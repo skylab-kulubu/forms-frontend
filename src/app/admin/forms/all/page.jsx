@@ -11,6 +11,7 @@ import { useAllFormsQuery } from "@/lib/hooks/useFormAdmin";
 import StateCard from "@/app/components/StateCard";
 import { FileSearchCorner, FileXCorner } from "lucide-react";
 import { eventRefFromForm } from "@/lib/return-to";
+import { effectiveFormSettings } from "@/lib/form-settings";
 
 const formatDate = (value) => {
   if (!value) return "--";
@@ -41,6 +42,7 @@ function AllFormItem({ form }) {
   const ownerName = normalizeName(personDisplayName(createdBy));
   const statusActive = form.status === 2;
   const event = eventRefFromForm(form);
+  const settings = effectiveFormSettings(form);
 
   return (
     <div className="group/row relative flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/3">
@@ -86,13 +88,13 @@ function AllFormItem({ form }) {
           <ChartColumn size={11} />
           {form.responseCount ?? 0}
         </div>
-        <div title="Çoklu cevap" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.allowMultipleResponses ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
+        <div title={settings.managedByWorkflow ? "Tekrar başlatma (akış)" : "Çoklu cevap"} className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${settings.allowMultipleResponses ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
           <Repeat2 size={13} />
         </div>
-        <div title="Anonim cevap" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.allowAnonymousResponses ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
+        <div title="Anonim cevap" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${settings.allowAnonymousResponses ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
           <UserX size={13} />
         </div>
-        <div title="Manuel inceleme" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.requiresManualReview ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
+        <div title={settings.managedByWorkflow ? "Manuel inceleme (akıştaki adım)" : "Manuel inceleme"} className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${settings.requiresManualReview ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
           <ClipboardCheck size={13} />
         </div>
         <Link href={`/admin/forms/${form.id}`} className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-neutral-500 hover:bg-white/5 hover:text-neutral-200 transition-colors">

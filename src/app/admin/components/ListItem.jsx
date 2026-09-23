@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, ChevronRight, ClipboardCheck, FileText, PencilLine, Repeat2, UserX, ChartColumn, Archive, Workflow } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { eventRefFromForm } from "@/lib/return-to";
+import { effectiveFormSettings } from "@/lib/form-settings";
 
 const FORM_GRID = [
   "grid items-center gap-3",
@@ -26,19 +27,20 @@ const formatPersonName = (name) =>
   name?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map((w) => w.replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR"))).join(" ") || "";
 
 const FEATURES = [
-  { key: "allowMultipleResponses", Icon: Repeat2, on: "Birden fazla cevap açık" },
+  { key: "allowMultipleResponses", Icon: Repeat2, on: "Birden fazla cevap açık", managed: "Akışta tekrar başlatma açık" },
   { key: "allowAnonymousResponses", Icon: UserX, on: "Anonim cevap açık" },
-  { key: "requiresManualReview", Icon: ClipboardCheck, on: "Manuel onay gerekli" },
+  { key: "requiresManualReview", Icon: ClipboardCheck, on: "Manuel onay gerekli", managed: "Akıştaki adımda manuel onay açık" },
 ];
 
 export function FeatureIcons({ form, className = "" }) {
-  const items = FEATURES.filter((f) => form[f.key]);
+  const settings = effectiveFormSettings(form);
+  const items = FEATURES.filter((f) => settings[f.key]);
   if (items.length === 0) return null;
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
-      {items.map(({ key, Icon, on }) => (
-        <span key={key} title={on} className="relative z-10 inline-flex">
+      {items.map(({ key, Icon, on, managed }) => (
+        <span key={key} title={settings.managedByWorkflow && managed ? managed : on} className="relative z-10 inline-flex">
           <Icon size={11} className="text-skylab-400" strokeWidth={1.75} />
         </span>
       ))}
