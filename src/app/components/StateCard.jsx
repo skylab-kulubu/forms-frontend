@@ -14,7 +14,7 @@ const TONE_ICON_COLOR = {
     brand: "text-skylab-300",
 };
 
-export default function StateCard({ title, description, Icon, isLoading, tone = "neutral", meta, children }) {
+export default function StateCard({ title, description, Icon, isLoading, tone = "neutral", meta, top, children }) {
     const iconColor = TONE_ICON_COLOR[tone] ?? TONE_ICON_COLOR.neutral;
 
     return (
@@ -22,6 +22,8 @@ export default function StateCard({ title, description, Icon, isLoading, tone = 
             <motion.div variants={cardVariants} initial="initial" animate="animate" exit="exit"
                 className="mx-auto flex w-full max-w-md flex-col items-center px-6 text-center"
             >
+                {top ? <div className="mb-8 w-full max-w-85">{top}</div> : null}
+
                 {isLoading ? (
                     <SkylabLoader size={80} color="#e5e5e5" />
                 ) : Icon ? (

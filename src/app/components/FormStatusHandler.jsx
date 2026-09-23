@@ -6,6 +6,7 @@ import { loginWithKeycloak } from "@/lib/authActions";
 import LoginButton from "./utils/LoginButton";
 import StateCard from "./StateCard";
 import Background from "./Background";
+import WorkflowProgress, { workflowProgressStatus } from "./form-displayer/components/WorkflowProgress";
 
 export const FORM_ACCESS_STATUS = {
     AVAILABLE: 200,
@@ -142,7 +143,7 @@ export function getSubmitErrorState(status) {
     }
 }
 
-export function FormStatusDisplayer({ state, message, stage = 0, startFormId = null, progressOffset = false, reviewNote, reviewedAt, variant = "form" }) {
+export function FormStatusDisplayer({ state, message, stage = 0, startFormId = null, isWorkflow = false, reviewNote, reviewedAt, variant = "form" }) {
     const configSet = variant === "response" ? responseStateConfigs : stateConfigs;
     const config = configSet[state];
 
@@ -156,6 +157,7 @@ export function FormStatusDisplayer({ state, message, stage = 0, startFormId = n
     const showReport = state === "faulted";
     const normalizedReviewNote = typeof reviewNote === "string" ? reviewNote.trim() : "";
     const showReviewDetails = (state === "approved" || state === "declined") && (normalizedReviewNote || reviewedAt);
+    const progressStatus = variant === "form" && isWorkflow && stage > 0 ? workflowProgressStatus(state) : null;
 
     const handleSignIn = () => {
         const callbackUrl = typeof window !== "undefined" ? window.location.href : "/";
@@ -166,7 +168,9 @@ export function FormStatusDisplayer({ state, message, stage = 0, startFormId = n
         <motion.div key={state} className="relative z-10 flex min-h-[85vh] w-full flex-col items-center p-4"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
         >
-            <StateCard title={config.title} description={description} Icon={Icon} isLoading={state === "loading"}>
+            <StateCard title={config.title} description={description} Icon={Icon} isLoading={state === "loading"}
+                top={progressStatus ? <WorkflowProgress stage={stage} status={progressStatus} /> : null}
+            >
                 {showReviewDetails && (
                     <div className={`rounded-xl border mx-auto px-4 py-3 max-w-xs text-left bg-neutral-800/50 border-neutral-700`}>
                         <div className="">
@@ -203,8 +207,6 @@ export function FormStatusDisplayer({ state, message, stage = 0, startFormId = n
                     </motion.div>
                 )}
             </StateCard>
-
-            {progressOffset && <div className="mb-auto hidden sm:block h-10"></div>}
         </motion.div>
     );
 }
@@ -213,6 +215,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
     const reviewNote = data?.data?.reviewNote ?? null;
     const reviewedAt = data?.data?.reviewedAt ?? null;
     const stage = data?.data?.stage ?? 0;
+    const isWorkflow = data?.data?.state != null;
     const startFormId = error?.body?.data?.startFormId ?? data?.data?.startFormId ?? null;
 
     const getUiState = () => {
@@ -286,7 +289,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
             {uiState === "success" ? renderForm(data) : (
                 <AnimatePresence mode="wait">
                     <FormStatusDisplayer key={uiState} state={uiState} message={message} stage={stage} startFormId={startFormId}
-                        reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant}
+                        isWorkflow={isWorkflow} reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant}
                     />
                 </AnimatePresence>
             )}

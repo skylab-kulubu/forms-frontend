@@ -4,7 +4,7 @@ import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater, isRepeaterComplete } from "@/app/components/form-components/FormRepeater";
 import { FormDisplayerHeader, FormRespondentBadge } from "./components/FormDisplayerComponents";
-import { FormResponseStatus } from "./components/FormResponseStatus";
+import WorkflowProgress from "./components/WorkflowProgress";
 import { useFormDisplayer } from "./hooks/useFormDisplayer";
 import { FormStatusDisplayer } from "../FormStatusHandler";
 import Background from "../Background";
@@ -22,6 +22,14 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
   exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } }
 };
+
+function hasAnswer(value) {
+  if (value === undefined || value === null) return false;
+  if (typeof value === "string") return value.trim() !== "";
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") return Object.keys(value).length > 0;
+  return true;
+}
 
 function formatSavedAt(date) {
   if (!date) return null;
@@ -66,6 +74,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const description = activeForm?.description ?? "";
   const hasSchema = schema.length > 0;
   const isFinished = submissionState !== null;
+  const questionFields = visibleFields.filter((field) => field.type !== "separator");
+  const answeredCount = questionFields.filter((field) => hasAnswer(formValues[field.id])).length;
 
   const onSubmit = () => {
     setTimeout(() => {
@@ -127,9 +137,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
       <div className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6">
 
-        <div className="w-full max-w-2xl shrink-0 mt-8 mb-4">
-          <FormResponseStatus stage={activeStage} isWorkflow={activeIsWorkflow} submissionState={submissionState} />
-        </div>
+        <div className="h-12 w-full shrink-0" />
 
         <div className="flex-1 w-full flex flex-col items-center">
         <AnimatePresence mode="wait">
@@ -147,6 +155,12 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
             <div className="w-full flex-1 flex flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
               <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
+
+                {activeIsWorkflow && (
+                  <motion.div variants={itemVariants} className="px-4">
+                    <WorkflowProgress stage={activeStage} answered={answeredCount} total={questionFields.length} />
+                  </motion.div>
+                )}
 
                 <motion.div variants={itemVariants}>
                   <FormDisplayerHeader title={title} description={description} />
@@ -237,7 +251,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
             >
               <FormStatusDisplayer state={submissionState} message={submissionMessage} stage={activeStage}
-                startFormId={activeStartFormId} progressOffset={activeIsWorkflow}
+                startFormId={activeStartFormId} isWorkflow={activeIsWorkflow}
               />
             </motion.div>
           )}
