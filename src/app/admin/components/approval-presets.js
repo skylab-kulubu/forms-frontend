@@ -11,6 +11,23 @@ export const APPROVAL_PRESETS = {
         rejectLabel: () => "Vazgeç",
     },
 
+    "close-workflow": {
+        variant: "delayed",
+        delaySeconds: 2,
+        icon: Workflow,
+        title: "Akışı kapat",
+        highlights: (ctx) => [
+            "Akıştaki bütün adımlar cevap almayı bırakır; yeni başvuru da başlatılamaz.",
+            ctx.activeRunCount > 0
+                ? `Devam eden ${ctx.activeRunCount} başvuru, akış yeniden açılana kadar bekler.`
+                : "Devam eden başvurular, akış yeniden açılana kadar bekler.",
+            "İnceleyenler bekleyen cevaplar için karar vermeye devam edebilir.",
+            "Tamamlanan başvuruların sonucu görünmeye devam eder.",
+        ],
+        approveLabel: (ctx) => ctx.isPending ? "Kapatılıyor..." : "Akışı kapat",
+        rejectLabel: () => "Vazgeç",
+    },
+
     "archive-workflow": {
         variant: "phrase",
         requiredPhrase: "Kabul ediyorum",

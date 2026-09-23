@@ -69,6 +69,7 @@ function reducer(state, action) {
     case "SUBMIT_FAILURE":
       return {
         ...state,
+        stage: action.stage ?? state.stage,
         startFormId: action.startFormId ?? state.startFormId,
         submissionState: action.submissionState,
         submissionStatus: action.status ?? null,
@@ -94,7 +95,7 @@ function reducer(state, action) {
 
 function submitFailureAction(error) {
   const status = error?.body?.status ?? error?.status;
-  const submissionState = getSubmitErrorState(status);
+  const submissionState = getSubmitErrorState(status, error?.body?.data);
   if (!submissionState) return null;
   return {
     type: "SUBMIT_FAILURE",
@@ -102,6 +103,7 @@ function submitFailureAction(error) {
     status,
     message: submissionState === "rejected" ? (error?.body?.message ?? null) : null,
     startFormId: error?.body?.data?.startFormId ?? null,
+    stage: error?.body?.data?.stage || null,
   };
 }
 

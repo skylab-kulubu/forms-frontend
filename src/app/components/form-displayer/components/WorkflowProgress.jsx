@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 const TONE = {
   active: { fill: "bg-skylab-500", label: "Başvurunuz devam ediyor" },
   pending: { fill: "bg-amber-400", label: "İncelemede" },
+  paused: { fill: "bg-neutral-400", label: "Durduruldu" },
   declined: { fill: "bg-red-400", label: "Sonuçlandı" },
   done: { fill: "bg-emerald-400", label: "Tamamlandı" },
 };
@@ -12,6 +13,7 @@ const TONE = {
 export function workflowProgressStatus(submissionState) {
   switch (submissionState) {
     case "pending": return "pending";
+    case "workflowPaused": return "paused";
     case "declined": return "declined";
     case "completed":
     case "approved":
@@ -24,7 +26,7 @@ export default function WorkflowProgress({ stage, status = "active", answered = 
   const tone = TONE[status] ?? TONE.active;
   const current = Math.max(1, Number(stage) || 1);
   const isActive = status === "active";
-  const continues = isActive || status === "pending";
+  const continues = isActive || status === "pending" || status === "paused";
   const fill = isActive ? (total > 0 ? Math.max(0.06, answered / total) : 0.06) : 1;
   const label = isActive && total > 0 ? `${answered}/${total} soru` : tone.label;
 

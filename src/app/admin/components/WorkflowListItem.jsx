@@ -61,16 +61,24 @@ export function WorkflowListItemSkeleton({ count = 4, className = "" }) {
 export default function WorkflowListItem({ workflow, className = "" }) {
   if (!workflow) return null;
 
-  const status = WORKFLOW_STATUS[Number(workflow.status)] ?? WORKFLOW_STATUS[0];
+  const isLive = Number(workflow.status) === 1;
+  const intake = Number(workflow.intake ?? 0);
+  const status = isLive && intake === 2
+    ? { label: "Kapalı", dot: "bg-red-400 shadow-[0_0_6px] shadow-red-400/40" }
+    : WORKFLOW_STATUS[Number(workflow.status)] ?? WORKFLOW_STATUS[0];
   const href = `/admin/workflows/${workflow.id}`;
   const startForm = workflow.startForm ?? null;
   const versionLabel = workflow.publishedVersion ? `v${workflow.publishedVersion}` : "--";
 
-  const subtitle = workflow.hasUnpublishedChanges
-    ? "Yayınlanmamış değişiklik var"
-    : workflow.publishedVersion
-      ? "Yayında"
-      : "Henüz yayınlanmadı";
+  const subtitle = isLive && intake === 2
+    ? "Başvurular kapalı"
+    : isLive && intake === 1
+      ? "Yeni başvuru alınmıyor"
+      : workflow.hasUnpublishedChanges
+        ? "Yayınlanmamış değişiklik var"
+        : workflow.publishedVersion
+          ? "Yayında"
+          : "Henüz yayınlanmadı";
 
   return (
     <div className={`group/row relative transition-colors hover:bg-white/3 ${className}`}>
@@ -89,7 +97,7 @@ export default function WorkflowListItem({ workflow, className = "" }) {
             <h3 className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">
               {workflow.name || "Adsız akış"}
             </h3>
-            <p className="mt-0.5 truncate text-3xs text-neutral-500">{subtitle}</p>
+            <p className={`mt-0.5 truncate text-3xs ${isLive && intake === 1 ? "text-amber-300/80" : "text-neutral-500"}`}>{subtitle}</p>
           </div>
         </div>
 

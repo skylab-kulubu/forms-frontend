@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LibrarySettingsEditors } from "./LibrarySettingsEditors";
 import { WorkflowLockMark, WorkflowManagedRow, WorkflowMembershipSection } from "./WorkflowMembership";
 import { useFormEditor } from "../FormEditorContext";
+import { WORKFLOW_INTAKE, effectiveFormSettings } from "@/lib/form-settings";
 
 const alertVariants = {
     hidden: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" },
@@ -14,8 +15,9 @@ export function LibrarySettings() {
     const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow } = state;
 
     const isWorkflowLocked = Boolean(workflow?.isPublished);
-    const isStatusLocked = isWorkflowLocked && status === 2;
     const isAnonymousLocked = isWorkflowLocked && !allowAnonymousResponses;
+    const isAccepting = effectiveFormSettings(state).isOpen;
+    const intake = Number(workflow?.intake ?? WORKFLOW_INTAKE.OPEN);
 
     const handleAnonymousToggle = () => {
         const nextValue = !allowAnonymousResponses;
@@ -37,27 +39,32 @@ export function LibrarySettings() {
                         <p className="font-semibold text-neutral-100">Form durumu</p>
                         <p className="mt-1 text-2xs text-neutral-500 leading-relaxed">Formu yayından kaldırmadan önce geçici olarak duraklatabilir veya yeniden açabilirsiniz.</p>
                     </div>
-                    <span className={`rounded-full border px-3 py-0.5 text-3xs font-semibold uppercase tracking-[0.18em] ${status === 2 ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-neutral-700 bg-neutral-900/60 text-neutral-400"}`}>
-                        {status === 2 ? "Yayında" : "Duraklatıldı"}
+                    <span className={`rounded-full border px-3 py-0.5 text-3xs font-semibold uppercase tracking-[0.18em] ${isAccepting ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-neutral-700 bg-neutral-900/60 text-neutral-400"}`}>
+                        {isAccepting ? "Yayında" : "Duraklatıldı"}
                     </span>
                 </div>
 
                 <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5">
-                        <div>
-                            <p className="text-sm font-semibold text-neutral-100">Cevap kabulü</p>
-                            <p className="text-3xs text-neutral-500">Kapattığınızda kullanıcılar formu görebilir fakat gönderemez.</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            {isStatusLocked ? <WorkflowLockMark /> : null}
-                            <button type="button" disabled={isStatusLocked} onClick={() => dispatch({ type: "SET_STATUS", payload: status === 2 ? 1 : 2 })} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition disabled:cursor-not-allowed disabled:opacity-50 ${status === 2 ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}>
+                    {isWorkflowLocked ? (
+                        <WorkflowManagedRow title="Cevap kabulü" href={`/admin/workflows/${workflow.id}`}
+                            description={workflow.isStart
+                                ? `Akış yönetiyor · yeni başvurular ${intake === WORKFLOW_INTAKE.OPEN ? "açık" : "kapalı"}`
+                                : `Akış yönetiyor · başvuru kabulü ${intake === WORKFLOW_INTAKE.CLOSED ? "kapalı" : "açık"}`}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5">
+                            <div>
+                                <p className="text-sm font-semibold text-neutral-100">Cevap kabulü</p>
+                                <p className="text-3xs text-neutral-500">Kapattığınızda kullanıcılar formu görebilir fakat gönderemez.</p>
+                            </div>
+                            <button type="button" onClick={() => dispatch({ type: "SET_STATUS", payload: status === 2 ? 1 : 2 })} className={`relative inline-flex h-7 w-12 items-center rounded-full border px-1 transition ${status === 2 ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}>
                                 <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${status === 2 ? "translate-x-5" : "translate-x-0"}`} />
                             </button>
                         </div>
-                    </div>
+                    )}
 
                     <AnimatePresence>
-                        {status !== 2 && (
+                        {!isWorkflowLocked && status !== 2 && (
                             <motion.div key={"status-paused-alert"} variants={alertVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
                                 <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 shadow-sm mb-3">
                                     Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.

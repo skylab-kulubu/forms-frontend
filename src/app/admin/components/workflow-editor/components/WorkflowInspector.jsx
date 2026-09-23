@@ -10,6 +10,7 @@ import {
 import { Dropdown } from "@/app/components/utils/Dropdown";
 import { Floating } from "@/app/components/utils/Floating";
 import AddStepPicker from "./AddStepPicker";
+import { WORKFLOW_INTAKE } from "@/lib/form-settings";
 import { EMPTY_RULE } from "../WorkflowEditorContext";
 import { TRIGGER, connectionError, depthMap, flowOrder, groupTransitions, guaranteedAncestors, triggersForNode } from "../workflow-graph";
 import {
@@ -30,6 +31,13 @@ const PILL_TONE = {
   skylab: "border-skylab-400/30 text-skylab-300/80",
   neutral: "border-white/10 text-neutral-400",
   amber: "border-amber-400/35 text-amber-300",
+  red: "border-red-400/35 text-red-300",
+};
+
+const INTAKE_STATE = {
+  [WORKFLOW_INTAKE.OPEN]: { pill: "Açık", tone: "skylab" },
+  [WORKFLOW_INTAKE.NEW_RUNS_CLOSED]: { pill: "Yeni başvuru kapalı", tone: "amber" },
+  [WORKFLOW_INTAKE.CLOSED]: { pill: "Kapalı", tone: "red" },
 };
 
 const BULK = "group flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-2xs font-medium text-neutral-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:pointer-events-none disabled:opacity-40";
@@ -106,6 +114,52 @@ function ToggleRow({ title, description, checked, onChange, disabled = false, di
       </div>
       <Switch checked={checked} onChange={onChange} disabled={disabled} label={title} />
     </div>
+  );
+}
+
+function IntakeSection({ intakeControl, allowMultipleRuns, onToggleMultipleRuns }) {
+  const intake = intakeControl?.intake ?? WORKFLOW_INTAKE.OPEN;
+  const info = intakeControl ? INTAKE_STATE[intake] ?? INTAKE_STATE[WORKFLOW_INTAKE.OPEN] : { pill: "Taslak", tone: "neutral" };
+  const isOpen = intake !== WORKFLOW_INTAKE.CLOSED;
+  const acceptsNewRuns = intake === WORKFLOW_INTAKE.OPEN;
+
+  return (
+    <section className="space-y-4 py-6 first:pt-0">
+      <SectionHeader title="Başvuru durumu" pill={info.pill} pillTone={info.tone}
+        description={intakeControl
+          ? "Akışı tamamen ya da yalnız yeni başvurulara kapatabilirsin."
+          : "Akış yayınlanınca başvuru kabulünü de buradan yönetirsin."}
+      />
+
+      <div className="space-y-3">
+        {intakeControl && (
+          <>
+            <ToggleRow title="Başvuru kabulü" checked={isOpen} disabled={intakeControl.isPending}
+              description="Kapatınca bütün adımlar durur; devam eden başvurular da bekler."
+              onChange={() => (isOpen ? intakeControl.onRequestClose() : intakeControl.onChange(WORKFLOW_INTAKE.OPEN))}
+            />
+            <ToggleRow title="Yeni başvurular" checked={acceptsNewRuns} disabled={intakeControl.isPending || !isOpen} dimmed={!isOpen}
+              description="Kapatınca kimse yeni başvuru başlatamaz; devam edenler sürer."
+              onChange={() => intakeControl.onChange(acceptsNewRuns ? WORKFLOW_INTAKE.NEW_RUNS_CLOSED : WORKFLOW_INTAKE.OPEN)}
+            />
+          </>
+        )}
+        <ToggleRow title="Tekrar başlatma" checked={allowMultipleRuns}
+          description="Aynı kişi akışı birden fazla kez başlatabilsin."
+          onChange={onToggleMultipleRuns}
+        />
+      </div>
+
+      {intakeControl && intake !== WORKFLOW_INTAKE.OPEN && (
+        <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 shadow-sm">
+          {intake === WORKFLOW_INTAKE.CLOSED
+            ? "Akış kapalı. Başvuranlar kapalı ekranını görür; devam eden başvurular akış açılınca kaldığı yerden sürer."
+            : "Yeni başvuru alınmıyor. Başlamış başvurular normal şekilde devam ediyor."}
+        </div>
+      )}
+
+      {intakeControl?.isError && <p className="text-2xs text-red-300">Başvuru durumu değiştirilemedi. Lütfen tekrar deneyin.</p>}
+    </section>
   );
 }
 
@@ -564,13 +618,17 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
   );
 }
 
-function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versions }) {
+function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versions, intakeControl }) {
   const depths = depthMap(state.nodes, state.transitions);
   const orderedNodes = flowOrder(state.nodes, state.transitions);
 
   return (
     <div className="flex flex-col divide-y divide-neutral-800/60 p-4 text-sm text-neutral-200">
-      <section className="space-y-4 pb-6">
+      <IntakeSection intakeControl={intakeControl} allowMultipleRuns={state.allowMultipleRuns}
+        onToggleMultipleRuns={() => dispatch({ type: "SET_META", key: "allowMultipleRuns", value: !state.allowMultipleRuns })}
+      />
+
+      <section className="space-y-4 py-6">
         <SectionHeader title="Adımlar" description="Başlangıçtan itibaren akıştaki sırasıyla. Birine tıklayınca ayarları açılır." />
 
         {orderedNodes.length === 0 ? (
@@ -632,14 +690,6 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
       </section>
 
       <section className="space-y-4 py-6">
-        <SectionHeader title="Başvuru kuralları" description="Aynı kişinin akışı ne kadar kullanabileceği." />
-        <ToggleRow title="Tekrar başlatma" checked={state.allowMultipleRuns}
-          description="Aynı kişi akışı birden fazla kez doldurabilsin."
-          onChange={() => dispatch({ type: "SET_META", key: "allowMultipleRuns", value: !state.allowMultipleRuns })}
-        />
-      </section>
-
-      <section className="space-y-4 py-6">
         <SectionHeader title="Sürümler" description="Devam eden başvurular başladıkları sürümde kalır." />
         {versions.length === 0 ? (
           <p className="text-2xs text-neutral-600">Henüz yayınlanmış sürüm yok.</p>
@@ -662,7 +712,7 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
   );
 }
 
-export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, layout = "grid" }) {
+export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, layout = "grid" }) {
   const { nodes, transitions, selectedKey, focus } = state;
   const selectedNode = nodes.find((node) => node.nodeKey === selectedKey) ?? null;
 
@@ -734,7 +784,9 @@ export default function WorkflowInspector({ state, dispatch, schemasByFormId, is
                   issuesByNode={issuesByNode} openKey={openKey} setOpenKey={setOpenKey} flashKey={flash?.key ?? null}
                 />
               ) : (
-                <FlowPanel state={state} dispatch={dispatch} schemasByFormId={schemasByFormId} picker={picker} onRelayout={onRelayout} versions={versions} />
+                <FlowPanel state={state} dispatch={dispatch} schemasByFormId={schemasByFormId} picker={picker} onRelayout={onRelayout}
+                  versions={versions} intakeControl={intakeControl}
+                />
               )}
             </motion.div>
           </AnimatePresence>

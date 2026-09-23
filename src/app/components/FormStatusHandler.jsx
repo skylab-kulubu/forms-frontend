@@ -31,6 +31,7 @@ export const WORKFLOW_STATE = {
     DECLINED: 4,
     FAULTED: 5,
     REQUIRES_PREVIOUS_STEP: 6,
+    CLOSED: 7,
 };
 
 const REPORT_MAILTO = "mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi";
@@ -86,6 +87,21 @@ const stateConfigs = {
         title: "Form bulunamadı",
         description: "Form silinmiş olabilir, hiç oluşturulmamış olabilir ya da adres hatalı olabilir.",
     },
+    newRunsClosed: {
+        icon: FileLock2,
+        title: "Yeni başvuru alınmıyor",
+        description: "Bu başvuru şu anda yeni başvuru kabul etmiyor.",
+    },
+    workflowClosed: {
+        icon: FileLock2,
+        title: "Başvurular kapalı",
+        description: "Bu başvuru şu anda kapalı.",
+    },
+    workflowPaused: {
+        icon: FileClock,
+        title: "Başvurular geçici olarak durduruldu",
+        description: "Başvurunuz kayıtlı. Başvurular yeniden açıldığında kaldığınız yerden devam edebilirsiniz.",
+    },
     notAvailable: {
         icon: FileLock2,
         title: "Form erişime kapalı",
@@ -133,11 +149,17 @@ const formatReviewDate = (value) => {
     return date.toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
 };
 
-export function getSubmitErrorState(status) {
+function closedStateFor(data) {
+    if (data?.reason === "newRunsClosed") return "newRunsClosed";
+    if (data?.reason === "workflowClosed") return Number(data?.stage) > 0 ? "workflowPaused" : "workflowClosed";
+    return "notAvailable";
+}
+
+export function getSubmitErrorState(status, data = null) {
     switch (status) {
         case FORM_ACCESS_STATUS.REQUIRES_PARENT_APPROVAL: return "requiresParent";
         case FORM_ACCESS_STATUS.WORKFLOW_FAULTED:         return "faulted";
-        case FORM_ACCESS_STATUS.NOT_AVAILABLE:            return "notAvailable";
+        case FORM_ACCESS_STATUS.NOT_AVAILABLE:            return closedStateFor(data);
         case FORM_ACCESS_STATUS.BAD_REQUEST:              return "rejected";
         default:                                          return null;
     }
@@ -214,8 +236,8 @@ export function FormStatusDisplayer({ state, message, stage = 0, startFormId = n
 export function FormStatusHandler({ isLoading, error, data, renderForm, variant = "form", withBackground = false }) {
     const reviewNote = data?.data?.reviewNote ?? null;
     const reviewedAt = data?.data?.reviewedAt ?? null;
-    const stage = data?.data?.stage ?? 0;
-    const isWorkflow = data?.data?.state != null;
+    const stage = data?.data?.stage ?? error?.body?.data?.stage ?? 0;
+    const isWorkflow = data?.data?.state != null || Boolean(error?.body?.data?.reason);
     const startFormId = error?.body?.data?.startFormId ?? data?.data?.startFormId ?? null;
 
     const getUiState = () => {
@@ -242,7 +264,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
                 case FORM_ACCESS_STATUS.NOT_FOUND:
                     return "notFound";
                 case FORM_ACCESS_STATUS.NOT_AVAILABLE:
-                    return "notAvailable";
+                    return closedStateFor(error.body?.data);
                 case FORM_ACCESS_STATUS.UNAUTHORIZED:
                     return "unAuthorized";
                 case FORM_ACCESS_STATUS.NOT_AUTHORIZED:

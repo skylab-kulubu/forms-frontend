@@ -48,10 +48,11 @@ export function FeatureIcons({ form, className = "" }) {
   );
 }
 
-export function StatusDot({ status }) {
-  const active = Number(status) === 2;
-  const tone = active ? "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40" : "bg-red-400 shadow-[0_0_6px] shadow-red-400/40";
-  return <span title={active ? "Aktif form" : "Pasif form"} className={`relative z-10 size-1.5 shrink-0 rounded-full ${tone}`} />;
+export function StatusDot({ form }) {
+  const { isOpen, managedByWorkflow } = effectiveFormSettings(form);
+  const tone = isOpen ? "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40" : "bg-red-400 shadow-[0_0_6px] shadow-red-400/40";
+  const title = isOpen ? "Aktif form" : managedByWorkflow ? "Akış bu formda cevap almıyor" : "Pasif form";
+  return <span title={title} className={`relative z-10 size-1.5 shrink-0 rounded-full ${tone}`} />;
 }
 
 function WorkflowChip({ workflow }) {
@@ -291,7 +292,7 @@ export default function ListItem({ form, viewHref, editHref, className = "" }) {
       <div className={`${FORM_GRID} px-3 py-2.5`}>
 
         <div className="flex justify-center">
-          <StatusDot status={form.status} />
+          <StatusDot form={form} />
         </div>
 
         <div className="flex min-w-0 items-center gap-3">

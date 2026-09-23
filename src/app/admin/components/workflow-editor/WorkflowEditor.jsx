@@ -7,8 +7,9 @@ import { X } from "lucide-react";
 import { fetchFormById } from "@/lib/hooks/useFormAdmin";
 import {
   useArchiveWorkflowMutation, useCreateWorkflowMutation, usePublishWorkflowMutation, useSaveDefinitionMutation,
-  useUpdateWorkflowMutation, useWorkflowVersionsQuery, useAvailableFormsQuery,
+  useUpdateWorkflowIntakeMutation, useUpdateWorkflowMutation, useWorkflowVersionsQuery, useAvailableFormsQuery,
 } from "@/lib/hooks/useWorkflowAdmin";
+import { WORKFLOW_INTAKE } from "@/lib/form-settings";
 import { useWorkflowContext } from "../../providers";
 import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
@@ -61,6 +62,15 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   const [issuesOpen, setIssuesOpen] = useState(false);
   const [publishedFlash, setPublishedFlash] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
+
+  const propIntake = workflow?.intake;
+  const [intake, setIntake] = useState(Number(propIntake ?? WORKFLOW_INTAKE.OPEN));
+  const [trackedPropIntake, setTrackedPropIntake] = useState(propIntake);
+  if (trackedPropIntake !== propIntake) {
+    setTrackedPropIntake(propIntake);
+    if (propIntake !== undefined && propIntake !== null) setIntake(Number(propIntake));
+  }
 
   const focusNonce = state.focus?.nonce ?? 0;
   const [seenFocusNonce, setSeenFocusNonce] = useState(focusNonce);
@@ -91,6 +101,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   const updateWorkflowMutation = useUpdateWorkflowMutation();
   const publishMutation = usePublishWorkflowMutation();
   const archiveMutation = useArchiveWorkflowMutation();
+  const intakeMutation = useUpdateWorkflowIntakeMutation();
 
   const creatingRef = useRef(null);
   const ensureWorkflow = useCallback(() => {
@@ -331,6 +342,29 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
 
   const versionsPayload = versionsData?.data ?? versionsData;
   const versions = Array.isArray(versionsPayload) ? versionsPayload : versionsPayload?.items ?? [];
+  const isLive = Boolean(workflow?.published) || versions.some((version) => Number(version.status) === 1);
+
+  const changeIntake = (next, onDone) => {
+    if (!state.id) return;
+    const previous = intake;
+    setIntake(next);
+    intakeMutation.mutate({ workflowId: state.id, intake: next }, {
+      onSuccess: (response) => {
+        const saved = response?.data?.intake;
+        if (saved !== undefined && saved !== null) setIntake(Number(saved));
+        onDone?.();
+      },
+      onError: () => {
+        setIntake(previous);
+        onDone?.();
+      },
+    });
+  };
+
+  const showIntake = () => {
+    dispatch({ type: "SELECT", nodeKey: null });
+    if (!isLgUp) setDrawerOpen(true);
+  };
 
   const issuesOverlay = issuesOpen && issues.length > 0 ? (
         <div className="max-h-56 overflow-y-auto rounded-lg border border-red-400/25 bg-neutral-900/95 p-3 shadow-xl backdrop-blur scrollbar">
@@ -414,6 +448,13 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
         onSelect: (form) => { dispatch({ type: "ADD_NODE", form }); setPickerOpen(false); },
       }}
       onRelayout={() => dispatch({ type: "RELAYOUT" })}
+      intakeControl={isLive ? {
+        intake,
+        isPending: intakeMutation.isPending,
+        isError: intakeMutation.isError,
+        onChange: (next) => changeIntake(next),
+        onRequestClose: () => setCloseOpen(true),
+      } : null}
     />
   );
 
@@ -444,6 +485,8 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
       <WorkflowHeaderActions
         saveStatus={<HeaderStatusPill dirty={!state.isSaved} isSaving={saveDefinitionMutation.isPending || createMutation.isPending}
           isFailed={saveDefinitionMutation.isError || createMutation.isError} lastSavedAt={savedAt} publishedFlash={publishedFlash} />}
+        intake={isLive ? intake : WORKFLOW_INTAKE.OPEN}
+        onShowIntake={showIntake}
         issueCount={issues.length}
         onShowIssues={() => setIssuesOpen((open) => !open)}
         onUndo={() => dispatch({ type: "UNDO" })}
@@ -470,6 +513,12 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
         <ApprovalOverlay open={publishOpen} preset="publish-workflow"
           context={{ highlights: lockedHighlights, isPending: publishMutation.isPending }}
           onApprove={handlePublish} onReject={() => setPublishOpen(false)}
+        />
+
+        <ApprovalOverlay open={closeOpen} preset="close-workflow"
+          context={{ activeRunCount: workflow?.activeRunCount ?? null, isPending: intakeMutation.isPending }}
+          onApprove={() => changeIntake(WORKFLOW_INTAKE.CLOSED, () => setCloseOpen(false))}
+          onReject={() => setCloseOpen(false)}
         />
 
         <ApprovalOverlay open={deleteOpen} preset="archive-workflow" context={{ isPending: archiveMutation.isPending }}

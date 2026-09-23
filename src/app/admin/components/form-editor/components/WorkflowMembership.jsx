@@ -56,7 +56,7 @@ export function WorkflowMembershipSection({ workflow }) {
                     <p className="mt-1 text-2xs text-neutral-500 leading-relaxed">
                         {workflow.isPublished
                             ? "Akış yayında olduğu için bu formun akışın dayandığı kısımları kilitli."
-                            : "Akış henüz yayınlanmadı; yayınlanana kadar bu formda hiçbir şey kilitlenmez. Yayınlanınca çoklu cevap ve onay ayarlarını akış yönetir."}
+                            : "Akış henüz yayınlanmadı; yayınlanana kadar bu formda hiçbir şey kilitlenmez. Yayınlanınca cevap kabulü, çoklu cevap ve onay ayarlarını akış yönetir."}
                     </p>
                 </div>
                 <span className={`rounded-full border px-3 py-0.5 text-3xs font-semibold uppercase tracking-[0.18em] ${workflow.isPublished ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-neutral-700 bg-neutral-900/60 text-neutral-400"}`}>
@@ -81,11 +81,11 @@ export function WorkflowMembershipSection({ workflow }) {
                 <ul className="space-y-2">
                     <li className="flex items-start gap-2 text-2xs leading-relaxed text-neutral-400">
                         <Lock size={11} className="mt-0.5 shrink-0 text-neutral-500" />
-                        <span>Cevap kabulü ve anonim cevap ayarları değiştirilemez; form silinemez.</span>
+                        <span>Anonim cevaba açılamaz ve silinemez.</span>
                     </li>
                     <li className="flex items-start gap-2 text-2xs leading-relaxed text-neutral-400">
                         <Workflow size={11} className="mt-0.5 shrink-0 text-neutral-500" />
-                        <span>Çoklu cevap ve onay ayarlarını akış yönetir; bu formdaki karşılıkları kullanılmaz.</span>
+                        <span>Cevap kabulü, çoklu cevap ve onay ayarlarını akış yönetir; bu formdaki karşılıkları kullanılmaz.</span>
                     </li>
                     {lockedCount > 0 && (
                         <li className="flex items-start gap-2 text-2xs leading-relaxed text-neutral-400">

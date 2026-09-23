@@ -40,9 +40,9 @@ function personDisplayName(user) {
 function AllFormItem({ form }) {
   const createdBy = form.createdBy ?? null;
   const ownerName = normalizeName(personDisplayName(createdBy));
-  const statusActive = form.status === 2;
   const event = eventRefFromForm(form);
   const settings = effectiveFormSettings(form);
+  const statusActive = settings.isOpen;
 
   return (
     <div className="group/row relative flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/3">

@@ -12,7 +12,7 @@ const emptySubscribe = () => () => {};
 const ICON_BUTTON = "rounded-lg p-1.5 transition-colors hover:bg-neutral-800/70 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-inherit";
 
 export default function WorkflowHeaderActions({
-  saveStatus, issueCount, onShowIssues, onUndo, canUndo, onArchive, isArchiveDisabled,
+  saveStatus, intake = 0, onShowIntake, issueCount, onShowIssues, onUndo, canUndo, onArchive, isArchiveDisabled,
   onPublish, isPublishing, isError, error, canPublish,
 }) {
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
@@ -24,6 +24,19 @@ export default function WorkflowHeaderActions({
   const content = (
     <div className="flex items-center gap-1 text-neutral-500">
       {saveStatus && <div className="mr-2 hidden sm:block">{saveStatus}</div>}
+
+      {intake !== 0 && (
+        <Tip label="Başvuru durumunu göster">
+          <button type="button" onClick={onShowIntake}
+            className={`mr-1 inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-2xs font-medium transition-colors ${
+              intake === 2 ? "border-red-400/30 bg-red-500/10 text-red-200 hover:bg-red-500/20" : "border-amber-400/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20"
+            }`}
+          >
+            <span className={`size-1.5 rounded-full ${intake === 2 ? "bg-red-400" : "bg-amber-400"}`} />
+            {intake === 2 ? "Kapalı" : "Yeni başvuru kapalı"}
+          </button>
+        </Tip>
+      )}
 
       <Tip label="Geri al">
         <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo} className={ICON_BUTTON}>
