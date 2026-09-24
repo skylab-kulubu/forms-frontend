@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -41,27 +41,22 @@ import {
     eventRefFromForm,
     readStoredReturnTo,
     returnToEventHref,
+    sanitizeReturnTo,
 } from "@/lib/return-to";
 
 import { REGISTRY } from "../../../components/form-registry";
 import { migrateSchema } from "../../../components/form-migrate";
 
-function useMediaQuery(query) {
-    const [matches, setMatches] = useState(() => {
-        if (typeof window === "undefined") return false;
-        return window.matchMedia(query).matches;
-    });
+const emptySubscribe = () => () => {};
 
-    useEffect(() => {
-        if (typeof window === "undefined") return;
+function useMediaQuery(query) {
+    const subscribe = useCallback((onChange) => {
         const media = window.matchMedia(query);
-        const handleChange = (event) => setMatches(event.matches);
-        media.addEventListener("change", handleChange);
-        setMatches(media.matches);
-        return () => media.removeEventListener("change", handleChange);
+        media.addEventListener("change", onChange);
+        return () => media.removeEventListener("change", onChange);
     }, [query]);
 
-    return matches;
+    return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false);
 }
 
 class SmartKeyboardSensor extends KeyboardSensor {
@@ -109,32 +104,30 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const { cancel: cancelDraftAutoSave, syncStatus: draftSyncStatus, draftSavedAt } = useDraftAutoSave(isNewForm ? null : state.id, state);
     const [publishedFlash, setPublishedFlash] = useState(false);
     const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
+    const [initialDraft] = useState(draft);
     const [hasDraft, setHasDraft] = useState(!!draft);
-    const [draftNotice, setDraftNotice] = useState(false);
-    const [returnHref, setReturnHref] = useState(null);
-    const [hasReturnTo, setHasReturnTo] = useState(false);
-    const [eventRef, setEventRef] = useState(null);
+    const [draftNotice, setDraftNotice] = useState(!!draft);
+
+    const rawReturnTo = useSyncExternalStore(
+        emptySubscribe,
+        () => new URLSearchParams(window.location.search).get("returnTo"),
+        () => null,
+    );
+    const returnTo = sanitizeReturnTo(rawReturnTo);
+    const hasReturnTo = Boolean(returnTo) || Boolean(handoff?.eventId);
+    const returnHref = state.id && returnTo ? returnToEventHref(returnTo, state.id) : null;
+    const eventRef = eventRefFromForm(
+        {
+            event: formEvent || { id: handoff?.eventId, name: handoff?.title },
+            eventId: formEvent?.id || handoff?.eventId,
+            eventName: formEvent?.name || handoff?.title,
+        },
+        returnTo,
+    );
 
     useEffect(() => {
-        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-        const raw =
-            typeof window === "undefined"
-                ? null
-                : new URLSearchParams(window.location.search).get("returnTo");
-        const stored = captureReturnTo(raw, storage);
-        setHasReturnTo(Boolean(stored) || Boolean(handoff?.eventId));
-        setReturnHref(state.id && stored ? returnToEventHref(stored, state.id) : null);
-        setEventRef(
-            eventRefFromForm(
-                {
-                    event: formEvent || { id: handoff?.eventId, name: handoff?.title },
-                    eventId: formEvent?.id || handoff?.eventId,
-                    eventName: formEvent?.name || handoff?.title,
-                },
-                stored,
-            ),
-        );
-    }, [state.id, handoff?.eventId, handoff?.title, formEvent]);
+        captureReturnTo(rawReturnTo, typeof sessionStorage === "undefined" ? null : sessionStorage);
+    }, [rawReturnTo]);
 
     const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id);
 
@@ -150,12 +143,11 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     }, [eventLinked, state.schema, state.allowAnonymousResponses, dispatch]);
 
     useEffect(() => {
-        if (!draft) return;
-        dispatch({ type: "LOAD_DRAFT", payload: draft });
-        setDraftNotice(true);
+        if (!initialDraft) return;
+        dispatch({ type: "LOAD_DRAFT", payload: initialDraft });
         const timer = setTimeout(() => setDraftNotice(false), 4000);
         return () => clearTimeout(timer);
-    }, []);
+    }, [initialDraft, dispatch]);
 
     useEffect(() => {
         if (!isNewForm) return;
