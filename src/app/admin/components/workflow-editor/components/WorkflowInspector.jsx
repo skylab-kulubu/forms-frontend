@@ -4,11 +4,13 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowDown, ArrowRight, ArrowUp, Check, ChevronDown, ChevronRight, CornerDownRight, ExternalLink, Flag, LayoutGrid,
-  Plus, Trash2, X,
+  ArrowDown, ArrowRight, ArrowUp, ChevronRight, CornerDownRight, ExternalLink, Flag, LayoutGrid, Plus, Trash2, X,
 } from "lucide-react";
 import { Dropdown } from "@/app/components/utils/Dropdown";
-import { Floating } from "@/app/components/utils/Floating";
+import {
+  ACTION_ICON, FOCUS_RING, MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTabs, PanelTextarea,
+  ROW, ROW_HOVER, SectionHeader, TILE, ToggleRow, actionClass, panelShellClass,
+} from "@/app/admin/components/utils/SidePanel";
 import AddStepPicker from "./AddStepPicker";
 import { WORKFLOW_INTAKE } from "@/lib/form-settings";
 import { EMPTY_RULE } from "../WorkflowEditorContext";
@@ -21,17 +23,13 @@ import {
 const END_VALUE = "__end";
 const FLASH_MS = 1200;
 
+const FLOW_TAB = { id: "flow", label: "Akış" };
+const DESCRIPTION_TAB = { id: "description", label: "Açıklama" };
+
 const TRIGGER_SECTION = {
   [TRIGGER.SUBMITTED]: { label: "Gönderildiğinde", description: "Cevap gönderilince başvuru nereye gider?", dot: "bg-neutral-500" },
   [TRIGGER.APPROVED]: { label: "Onaylandığında", description: "Cevap onaylanınca başvuru nereye gider?", dot: "bg-emerald-400" },
   [TRIGGER.DECLINED]: { label: "Reddedildiğinde", description: "Cevap reddedilince başvuru nereye gider?", dot: "bg-red-400" },
-};
-
-const PILL_TONE = {
-  skylab: "border-skylab-400/30 text-skylab-300/80",
-  neutral: "border-white/10 text-neutral-400",
-  amber: "border-amber-400/35 text-amber-300",
-  red: "border-red-400/35 text-red-300",
 };
 
 const INTAKE_STATE = {
@@ -40,12 +38,6 @@ const INTAKE_STATE = {
   [WORKFLOW_INTAKE.CLOSED]: { pill: "Kapalı", tone: "red" },
 };
 
-const BULK = "group flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-2xs font-medium text-neutral-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:pointer-events-none disabled:opacity-40";
-const BULK_TONE = "hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300";
-const BULK_DANGER = "hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300";
-const BULK_ICON = "shrink-0 text-neutral-400 transition-colors group-hover:text-current";
-const ROW = "rounded-xl border bg-neutral-900/40 shadow-sm transition-[border-color,box-shadow] duration-200";
-const TILE = "grid size-9 shrink-0 place-items-center rounded-lg border bg-neutral-900/60 text-xs font-semibold";
 const INLINE_INPUT = "w-24 min-w-0 border-b border-dotted border-white/25 bg-transparent px-0.5 py-0.5 text-2xs text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-skylab-400/60";
 
 function linkClass(active = false) {
@@ -78,45 +70,6 @@ function useScrollIntoView(active) {
   return ref;
 }
 
-function SectionHeader({ title, description, pill, pillTone = "skylab", dot }) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <p className="flex items-center gap-2 font-semibold text-neutral-100">
-          {dot ? <span className={`size-1.5 shrink-0 rounded-full ${dot}`} /> : null}
-          <span className="min-w-0 truncate">{title}</span>
-        </p>
-        {description ? <p className="mt-1 text-2xs leading-relaxed text-neutral-500">{description}</p> : null}
-      </div>
-      {pill ? (
-        <span className={`shrink-0 rounded-full border px-3 py-0.5 text-3xs font-semibold uppercase tracking-[0.18em] ${PILL_TONE[pillTone]}`}>{pill}</span>
-      ) : null}
-    </div>
-  );
-}
-
-function Switch({ checked, onChange, label, disabled = false }) {
-  return (
-    <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={onChange} disabled={disabled}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border px-1 transition disabled:cursor-not-allowed ${checked ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"}`}
-    >
-      <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${checked ? "translate-x-5" : "translate-x-0"}`} />
-    </button>
-  );
-}
-
-function ToggleRow({ title, description, checked, onChange, disabled = false, dimmed = false }) {
-  return (
-    <div className={`flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5 transition-opacity duration-300 ${dimmed ? "opacity-40" : ""}`}>
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-neutral-100">{title}</p>
-        <p className="text-3xs text-neutral-500">{description}</p>
-      </div>
-      <Switch checked={checked} onChange={onChange} disabled={disabled} label={title} />
-    </div>
-  );
-}
-
 function IntakeSection({ intakeControl, allowMultipleRuns, onToggleMultipleRuns }) {
   const intake = intakeControl?.intake ?? WORKFLOW_INTAKE.OPEN;
   const info = intakeControl ? INTAKE_STATE[intake] ?? INTAKE_STATE[WORKFLOW_INTAKE.OPEN] : { pill: "Taslak", tone: "neutral" };
@@ -124,7 +77,7 @@ function IntakeSection({ intakeControl, allowMultipleRuns, onToggleMultipleRuns 
   const acceptsNewRuns = intake === WORKFLOW_INTAKE.OPEN;
 
   return (
-    <section className="space-y-4 py-6 first:pt-0">
+    <section className={PANEL_SECTION}>
       <SectionHeader title="Başvuru durumu" pill={info.pill} pillTone={info.tone}
         description={intakeControl
           ? "Akışı tamamen ya da yalnız yeni başvurulara kapatabilirsin."
@@ -151,87 +104,15 @@ function IntakeSection({ intakeControl, allowMultipleRuns, onToggleMultipleRuns 
       </div>
 
       {intakeControl && intake !== WORKFLOW_INTAKE.OPEN && (
-        <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-100 shadow-sm">
+        <PanelNotice>
           {intake === WORKFLOW_INTAKE.CLOSED
             ? "Akış kapalı. Başvuranlar kapalı ekranını görür; devam eden başvurular akış açılınca kaldığı yerden sürer."
             : "Yeni başvuru alınmıyor. Başlamış başvurular normal şekilde devam ediyor."}
-        </div>
+        </PanelNotice>
       )}
 
       {intakeControl?.isError && <p className="text-2xs text-red-300">Başvuru durumu değiştirilemedi. Lütfen tekrar deneyin.</p>}
     </section>
-  );
-}
-
-function TargetMenu({ value, options, onSelect, onDelete, deleteHint, open: controlledOpen, onOpenChange }) {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
-  const open = controlledOpen ?? uncontrolledOpen;
-  const setOpen = onOpenChange ?? setUncontrolledOpen;
-  const anchorRef = useRef(null);
-
-  const current = options.find((option) => option.value === value);
-  const isEnd = value === END_VALUE;
-  const stop = (event) => event.stopPropagation();
-
-  const choose = (option) => {
-    if (option.disabled) return;
-    setOpen(false);
-    if (option.value !== value) onSelect(option.value);
-  };
-
-  return (
-    <>
-      <button ref={anchorRef} type="button" aria-haspopup="menu" aria-expanded={open}
-        onClick={(event) => { event.stopPropagation(); setOpen(!open); }} onKeyDown={stop}
-        className={`flex max-w-36 shrink-0 items-center gap-1 rounded-lg border px-2.5 py-1 text-2xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isEnd ? "italic" : ""} ${
-          open ? "border-white/20 bg-[#1e1e1e] text-neutral-50"
-            : `border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:text-neutral-50 ${isEnd ? "text-neutral-400" : "text-neutral-300"}`
-        }`}
-      >
-        <span className="truncate">{current?.label ?? "Akış biter"}</span>
-        <ChevronDown size={11} className={`shrink-0 opacity-70 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <Floating anchor={anchorRef} onDismiss={() => setOpen(false)} placement="bottom-end" offset={6}>
-            <motion.div role="menu" onClick={stop} onKeyDown={stop}
-              initial={{ opacity: 0, y: 4, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }}
-              transition={{ duration: 0.1 }}
-              className="max-h-72 min-w-44 max-w-64 overflow-y-auto rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-xl scrollbar"
-            >
-              {options.map((option) => {
-                const isSelected = option.value === value;
-                return (
-                  <button key={option.value} type="button" role="menuitem" disabled={option.disabled} onClick={() => choose(option)}
-                    className={`flex w-full items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${
-                      option.disabled ? "cursor-not-allowed text-neutral-600"
-                        : isSelected ? "bg-skylab-500/10 text-skylab-300"
-                        : "text-neutral-300 hover:bg-white/5 hover:text-white"
-                    }`}
-                  >
-                    <span className="truncate">{option.label}</span>
-                    {isSelected ? <Check size={12} className="shrink-0" /> : option.hint ? <span className="shrink-0 text-3xs text-neutral-600">{option.hint}</span> : null}
-                  </button>
-                );
-              })}
-
-              {onDelete !== undefined && (
-                <>
-                  <div className="mx-1 my-1 h-px bg-white/10" />
-                  <button type="button" role="menuitem" disabled={!onDelete} onClick={() => { setOpen(false); onDelete?.(); }}
-                    className="flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left text-2xs text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:text-neutral-600 disabled:hover:bg-transparent"
-                  >
-                    Yönlendirmeyi sil
-                    {!onDelete && deleteHint ? <span className="text-3xs text-neutral-600">{deleteHint}</span> : null}
-                  </button>
-                </>
-              )}
-            </motion.div>
-          </Floating>
-        )}
-      </AnimatePresence>
-    </>
   );
 }
 
@@ -324,7 +205,7 @@ function ConditionTitle({ condition, sourceNode, nodes, schemasByFormId }) {
   const joiner = Number(condition?.operator ?? 0) === 1 ? "veya" : "ve";
 
   return (
-    <p className="truncate text-sm font-semibold text-neutral-50">
+    <p className="truncate text-sm font-semibold text-neutral-100">
       {rules.map((rule, index) => {
         const ruleNode = rule.nodeKey ? nodes.find((node) => node.nodeKey === rule.nodeKey) : sourceNode;
         const field = schemasByFormId[ruleNode?.formId]?.schema?.find((item) => item.id === rule.questionId);
@@ -439,6 +320,7 @@ function RouteEditor({ transition, kind, order, conditionalCount, group, sourceN
 
 function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode, nodes, transitions, schemasByFormId, dispatch, isOpen, isFlashing, onToggle }) {
   const rowRef = useScrollIntoView(isFlashing);
+  const target = transition.targetNodeKey ?? END_VALUE;
 
   const subtitle = kind === "cond"
     ? (conditionalCount > 1 ? `${order}. sırada kontrol edilir` : "Koşul uyarsa bu yola gider")
@@ -446,14 +328,14 @@ function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode
 
   return (
     <div ref={rowRef} data-route-row={transition.localId}
-      className={`${ROW} ${isOpen ? "border-skylab-400/30" : "border-white/10"} ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}
+      className={`${ROW} ${isOpen ? "border-skylab-400/30" : `border-white/10 ${ROW_HOVER}`} ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}
     >
       <div role="button" tabIndex={0} aria-expanded={isOpen} onClick={onToggle}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget) return;
           if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onToggle(); }
         }}
-        className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+        className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 ${FOCUS_RING}`}
       >
         <span className={`${TILE} border-white/10 ${kind === "cond" ? "text-neutral-300" : "text-neutral-500"}`}>
           {kind === "cond" ? order : kind === "fallback" ? <CornerDownRight size={14} /> : <ArrowRight size={14} />}
@@ -463,13 +345,13 @@ function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode
           {kind === "cond"
             ? <ConditionTitle condition={transition.condition} sourceNode={sourceNode} nodes={nodes} schemasByFormId={schemasByFormId} />
             : <p className="truncate text-sm font-medium italic text-neutral-300">{kind === "fallback" ? "Aksi halde" : "Her zaman"}</p>}
-          <p className="truncate text-3xs text-neutral-500">{subtitle}</p>
+          <p className="truncate text-2xs text-neutral-500">{subtitle}</p>
         </div>
 
-        <TargetMenu value={transition.targetNodeKey ?? END_VALUE} options={targetOptions(sourceNode, nodes, transitions)}
+        <MenuPill value={target} options={targetOptions(sourceNode, nodes, transitions)} placeholder="Akış biter" italic={target === END_VALUE}
           onSelect={(value) => dispatch({ type: "UPDATE_TRANSITION", localId: transition.localId, patch: { targetNodeKey: value === END_VALUE ? null : value } })}
           onDelete={kind === "fallback" ? null : () => dispatch({ type: "REMOVE_TRANSITION", localId: transition.localId })}
-          deleteHint="Önce koşullu yolları kaldır"
+          deleteLabel="Yönlendirmeyi sil" deleteHint="Önce koşullu yolları kaldır"
         />
       </div>
 
@@ -501,9 +383,10 @@ function ImplicitRow({ trigger, sourceNode, nodes, transitions, dispatch, isFlas
         <span className={`${TILE} border-white/10 text-neutral-500`}><ArrowRight size={14} /></span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium italic text-neutral-300">Her zaman</p>
-          <p className="truncate text-3xs text-neutral-500">Yönlendirme yok; akış burada biter</p>
+          <p className="truncate text-2xs text-neutral-500">Yönlendirme yok; akış burada biter</p>
         </div>
-        <TargetMenu value={END_VALUE} options={targetOptions(sourceNode, nodes, transitions)} open={menuOpen} onOpenChange={onMenuOpenChange}
+        <MenuPill value={END_VALUE} options={targetOptions(sourceNode, nodes, transitions)} placeholder="Akış biter" italic
+          open={menuOpen} onOpenChange={onMenuOpenChange}
           onSelect={(value) => {
             if (value === END_VALUE) return;
             dispatch({ type: "ADD_TRANSITION", sourceNodeKey: sourceNode.nodeKey, trigger, targetNodeKey: value, condition: null, focus: true });
@@ -532,7 +415,7 @@ function TriggerSection({ trigger, sourceNode, nodes, transitions, schemasByForm
   };
 
   return (
-    <section className="space-y-4 py-6">
+    <section className={PANEL_SECTION}>
       <SectionHeader title={section.label} description={section.description} dot={section.dot} />
 
       <div className="space-y-3">
@@ -553,10 +436,7 @@ function TriggerSection({ trigger, sourceNode, nodes, transitions, schemasByForm
         })}
       </div>
 
-      <button type="button" onClick={addRoute} className={`${BULK} ${BULK_TONE} w-full`}>
-        <Plus size={14} className={BULK_ICON} />
-        Yönlendirme ekle
-      </button>
+      <PanelButton icon={Plus} onClick={addRoute} className="w-full">Yönlendirme ekle</PanelButton>
     </section>
   );
 }
@@ -569,19 +449,19 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
   const formHref = `/admin/forms/${selectedNode.formId}/edit`;
 
   return (
-    <div className="flex flex-col divide-y divide-neutral-800/60 p-4 text-sm text-neutral-200">
-      <section className="space-y-4 pb-6">
+    <div className={PANEL_STACK}>
+      <section className={PANEL_SECTION}>
         <SectionHeader title="Adım ayarları" description={schema ? `${questionCount} soru` : "Sorular yükleniyor"} />
 
         {nodeIssues.map((issue, index) => (
-          <div key={`${issue.code}-${index}`} className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-100 shadow-sm">
+          <PanelNotice key={`${issue.code}-${index}`} tone="red">
             {validationMessage(issue)}
             {validationAction(issue) === "openForm" && (
               <Link href={formHref} target="_blank" className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-white">
                 Formu düzenle
               </Link>
             )}
-          </div>
+          </PanelNotice>
         ))}
 
         <ToggleRow title="Manuel onay" checked={selectedNode.requiresManualReview}
@@ -592,20 +472,18 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
         />
 
         <div className="flex flex-wrap gap-2">
-          <Link href={formHref} target="_blank" className={`${BULK} ${BULK_TONE} min-w-fit flex-1`}>
-            <ExternalLink size={13} className={BULK_ICON} />
+          <Link href={formHref} target="_blank" className={`${actionClass()} min-w-fit flex-1`}>
+            <ExternalLink size={13} className={ACTION_ICON} />
             Formu aç
           </Link>
-          <button type="button" disabled={selectedNode.isStart} onClick={() => dispatch({ type: "SET_START", nodeKey: selectedNode.nodeKey })}
-            className={`${BULK} ${BULK_TONE} min-w-fit flex-1`}
+          <PanelButton icon={Flag} disabled={selectedNode.isStart} onClick={() => dispatch({ type: "SET_START", nodeKey: selectedNode.nodeKey })}
+            className="min-w-fit flex-1"
           >
-            <Flag size={13} className={BULK_ICON} />
             Başlangıç yap
-          </button>
-          <button type="button" onClick={() => dispatch({ type: "REMOVE_NODE", nodeKey: selectedNode.nodeKey })} className={`${BULK} ${BULK_DANGER} min-w-fit flex-1`}>
-            <Trash2 size={13} className={BULK_ICON} />
+          </PanelButton>
+          <PanelButton icon={Trash2} danger onClick={() => dispatch({ type: "REMOVE_NODE", nodeKey: selectedNode.nodeKey })} className="min-w-fit flex-1">
             Adımı çıkar
-          </button>
+          </PanelButton>
         </div>
       </section>
 
@@ -623,12 +501,12 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
   const orderedNodes = flowOrder(state.nodes, state.transitions);
 
   return (
-    <div className="flex flex-col divide-y divide-neutral-800/60 p-4 text-sm text-neutral-200">
+    <div className={PANEL_STACK}>
       <IntakeSection intakeControl={intakeControl} allowMultipleRuns={state.allowMultipleRuns}
         onToggleMultipleRuns={() => dispatch({ type: "SET_META", key: "allowMultipleRuns", value: !state.allowMultipleRuns })}
       />
 
-      <section className="space-y-4 py-6">
+      <section className={PANEL_SECTION}>
         <SectionHeader title="Adımlar" description="Başlangıçtan itibaren akıştaki sırasıyla. Birine tıklayınca ayarları açılır." />
 
         {orderedNodes.length === 0 ? (
@@ -646,14 +524,14 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
 
               return (
                 <button key={node.nodeKey} type="button" onClick={() => dispatch({ type: "SELECT", nodeKey: node.nodeKey })}
-                  className={`${ROW} flex w-full items-center gap-3 border-white/10 px-3 py-2.5 text-left hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40`}
+                  className={`${ROW} ${ROW_HOVER} ${FOCUS_RING} flex w-full items-center gap-3 border-white/10 px-3 py-2.5 text-left`}
                 >
                   <span className={`${TILE} ${node.isStart ? "border-skylab-400/40 text-skylab-300" : "border-white/10 text-neutral-300"}`}>
                     {node.isStart ? 1 : depth ?? "?"}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-neutral-50">{node.formTitle}</span>
-                    {meta ? <span className="block truncate text-3xs text-neutral-500">{meta}</span> : null}
+                    <span className="block truncate text-sm font-semibold text-neutral-100">{node.formTitle}</span>
+                    {meta ? <span className="block truncate text-2xs text-neutral-500">{meta}</span> : null}
                   </span>
                   <ChevronRight size={14} className="shrink-0 text-neutral-600" />
                 </button>
@@ -663,16 +541,14 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
         )}
 
         <div className="relative flex flex-wrap gap-2">
-          <button type="button" onClick={picker.onOpen} className={`${BULK} ${BULK_TONE} min-w-fit flex-1`}>
-            <Plus size={14} className={BULK_ICON} />
+          <PanelButton icon={Plus} chevron active={picker.open} onClick={picker.onOpen} className="min-w-fit flex-1">
             Adım ekle
-          </button>
-          <button type="button" onClick={onRelayout} disabled={state.nodes.length < 2} title="Adımları başlangıçtan itibaren akış sırasına göre dizer"
-            className={`${BULK} ${BULK_TONE} min-w-fit flex-1`}
+          </PanelButton>
+          <PanelButton icon={LayoutGrid} onClick={onRelayout} disabled={state.nodes.length < 2} title="Adımları başlangıçtan itibaren akış sırasına göre dizer"
+            className="min-w-fit flex-1"
           >
-            <LayoutGrid size={14} className={BULK_ICON} />
             Otomatik yerleştir
-          </button>
+          </PanelButton>
 
           <AddStepPicker open={picker.open} forms={picker.forms} usedFormIds={picker.usedFormIds} isLoading={picker.isLoading}
             onClose={picker.onClose} onSelect={picker.onSelect}
@@ -680,16 +556,7 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
         </div>
       </section>
 
-      <section className="space-y-4 py-6">
-        <SectionHeader title="Açıklama" description="Akışın ne için kullanıldığını ekip arkadaşların için yaz." />
-        <textarea rows={3} value={state.description ?? ""} aria-label="Akış açıklaması"
-          onChange={(event) => dispatch({ type: "SET_META", key: "description", value: event.target.value })}
-          placeholder="Bu akış ne için kullanılıyor?"
-          className="w-full resize-y rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/40"
-        />
-      </section>
-
-      <section className="space-y-4 py-6">
+      <section className={PANEL_SECTION}>
         <SectionHeader title="Sürümler" description="Devam eden başvurular başladıkları sürümde kalır." />
         {versions.length === 0 ? (
           <p className="text-2xs text-neutral-600">Henüz yayınlanmış sürüm yok.</p>
@@ -712,9 +579,24 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
   );
 }
 
+function DescriptionPanel({ description, dispatch }) {
+  return (
+    <div className="flex flex-col gap-4 p-4 text-sm text-neutral-200">
+      <SectionHeader title="Akış açıklaması" description="Akışın ne için kullanıldığını ekip arkadaşların için yaz." />
+      <PanelTextarea rows={6} value={description ?? ""} aria-label="Akış açıklaması" placeholder="Bu akış ne için kullanılıyor?"
+        onChange={(event) => dispatch({ type: "SET_META", key: "description", value: event.target.value })}
+      />
+    </div>
+  );
+}
+
 export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, layout = "grid" }) {
-  const { nodes, transitions, selectedKey, focus } = state;
+  const { nodes, transitions, selectedKey, focus, panelTab } = state;
   const selectedNode = nodes.find((node) => node.nodeKey === selectedKey) ?? null;
+  const view = selectedNode && panelTab === "step" ? "step" : panelTab === "description" ? "description" : "flow";
+  const tabs = selectedNode
+    ? [FLOW_TAB, { id: "step", label: selectedNode.formTitle, title: selectedNode.formTitle }, DESCRIPTION_TAB]
+    : [FLOW_TAB, DESCRIPTION_TAB];
 
   const [openKey, setOpenKey] = useState(() => {
     const target = focus?.localId ? transitions.find((transition) => transition.localId === focus.localId) : null;
@@ -749,40 +631,26 @@ export default function WorkflowInspector({ state, dispatch, schemasByFormId, is
 
   useEffect(() => () => dispatch({ type: "CLEAR_FOCUS" }), [dispatch]);
 
-  const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
-
   return (
-    <motion.div className={`relative flex min-w-0 max-w-xl overflow-hidden rounded-xl p-2 ${layoutClass}`}
+    <motion.div className={panelShellClass(layout)}
       initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
     >
       <div className="flex h-full min-w-0 flex-1 flex-col rounded-xl">
-        <nav aria-label="Panel konumu" className="flex h-10 min-w-0 items-center gap-1.5 border-b border-neutral-800 px-4 text-sm font-semibold tracking-wide">
-          {selectedNode ? (
-            <>
-              <button type="button" onClick={() => dispatch({ type: "SELECT", nodeKey: null })}
-                className="shrink-0 rounded text-neutral-500 transition-colors hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-              >
-                Akış
-              </button>
-              <ChevronRight size={13} className="shrink-0 text-neutral-600" />
-              <span className="min-w-0 truncate text-neutral-200" aria-current="page">{selectedNode.formTitle}</span>
-            </>
-          ) : (
-            <span className="text-neutral-200" aria-current="page">Akış</span>
-          )}
-        </nav>
+        <PanelTabs tabs={tabs} active={view} onChange={(tab) => dispatch({ type: "SET_PANEL_TAB", tab })} />
 
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-1 scrollbar">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar">
           <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={selectedNode ? `step-${selectedNode.nodeKey}` : "flow"}
-              initial={{ opacity: 0, x: selectedNode ? 10 : -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+            <motion.div key={view === "step" ? `step-${selectedNode.nodeKey}` : view}
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="h-full"
             >
-              {selectedNode ? (
+              {view === "step" ? (
                 <StepPanel selectedNode={selectedNode} state={state} dispatch={dispatch} schemasByFormId={schemasByFormId}
                   issuesByNode={issuesByNode} openKey={openKey} setOpenKey={setOpenKey} flashKey={flash?.key ?? null}
                 />
+              ) : view === "description" ? (
+                <DescriptionPanel description={state.description} dispatch={dispatch} />
               ) : (
                 <FlowPanel state={state} dispatch={dispatch} schemasByFormId={schemasByFormId} picker={picker} onRelayout={onRelayout}
                   versions={versions} intakeControl={intakeControl}

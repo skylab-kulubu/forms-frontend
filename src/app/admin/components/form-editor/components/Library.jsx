@@ -5,8 +5,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Lock, Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
 import dynamic from "next/dynamic";
+import { PanelTabs, SectionHeader, panelShellClass } from "@/app/admin/components/utils/SidePanel";
 
 const LibraryTipTap = dynamic(() => import("./LibraryTipTap").then((mod) => mod.LibraryTipTap), { ssr: false });
+
+const TABS = [
+    { id: "components", label: "Bileşenler" },
+    { id: "settings", label: "Ayarlar" },
+    { id: "description", label: "Açıklama" },
+];
 
 export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLockedDrag = false }) {
     const [activeTab, setActiveTab] = useState("components");
@@ -15,7 +22,6 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLoc
     const from = active?.data?.current?.from;
     const showTrash = from === "canvas";
     const isDeleteTarget = isOver && !isLockedDrag;
-    const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
 
     const renderContent = () => {
         switch (activeTab) {
@@ -28,17 +34,10 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLoc
             case "description":
                 return (
                     <div className="flex h-full min-h-0 flex-col gap-4 p-4 text-sm text-neutral-200">
-                        <section className="flex flex-1 min-h-0 flex-col gap-4">
-                            <div>
-                                <p className="font-semibold text-neutral-100">Form açıklaması</p>
-                                <p className="mt-1 text-2xs leading-relaxed text-neutral-500">
-                                    Formu görüntüleyen kişiler için kısa bir açıklama ekleyin.
-                                </p>
-                            </div>
-                            <div className="flex-1 min-h-0">
-                                <LibraryTipTap />
-                            </div>
-                        </section>
+                        <SectionHeader title="Form açıklaması" description="Formu görüntüleyen kişiler için kısa bir açıklama ekleyin." />
+                        <div className="flex min-h-0 flex-1 flex-col">
+                            <LibraryTipTap />
+                        </div>
                     </div>
                 );
 
@@ -48,7 +47,7 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLoc
     };
 
     return (
-        <motion.div ref={setNodeRef} className={`relative flex min-w-0 rounded-xl p-2 overflow-hidden max-w-xl ${layoutClass}`}
+        <motion.div ref={setNodeRef} className={panelShellClass(layout)}
             initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
         >
@@ -57,28 +56,8 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLoc
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
-                <div className="h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 text-sm tracking-wide border-b border-neutral-800 overflow-visible">
-                    <div className="flex items-center grow justify-center sm:justify-start">
-                        <button type="button" onClick={() => setActiveTab("components")}
-                            className={`font-semibold w-full transition-colors ${activeTab === "components" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-                        >
-                            Bileşenler
-                        </button>
-                        <span className="mx-2 h-3 w-px bg-neutral-800" />
-                        <button type="button" onClick={() => setActiveTab("settings")}
-                            className={`font-semibold w-full transition-colors ${activeTab === "settings" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-                        >
-                            Ayarlar
-                        </button>
-                        <span className="mx-2 h-3 w-px bg-neutral-800" />
-                        <button type="button" onClick={() => setActiveTab("description")}
-                            className={`font-semibold w-full transition-colors ${activeTab === "description" ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-                        >
-                            Açıklama
-                        </button>
-                    </div>
-                </div>
-                <div className={`flex-1 min-h-0 p-1 ${activeTab === "description" || activeTab === "components" ? "overflow-hidden flex flex-col" : "overflow-y-auto overflow-x-hidden scrollbar"}`}>
+                <PanelTabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
+                <div className={`min-h-0 flex-1 ${activeTab === "settings" ? "overflow-y-auto overflow-x-hidden scrollbar" : "flex flex-col overflow-hidden"}`}>
                     <AnimatePresence mode="wait" initial={false}>
                         <motion.div key={activeTab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="h-full"

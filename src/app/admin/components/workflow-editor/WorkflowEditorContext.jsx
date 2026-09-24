@@ -28,6 +28,7 @@ const initialState = {
   nodes: [],
   transitions: [],
   selectedKey: null,
+  panelTab: "flow",
   focus: null,
   isSaved: true,
   _history: [],
@@ -102,6 +103,7 @@ function buildInitialState({ workflow, initialFormId }) {
   const definition = workflow.draft ?? workflow.published ?? { nodes: [], transitions: [] };
   const transitions = normalizeTransitions(definition?.transitions);
   const nodes = withPositions(normalizeNodes(definition?.nodes), transitions);
+  const selectedKey = (initialFormId && nodes.find((node) => node.formId === initialFormId)?.nodeKey) || null;
 
   return {
     ...initialState,
@@ -112,7 +114,8 @@ function buildInitialState({ workflow, initialFormId }) {
     status: workflow.status ?? 0,
     nodes,
     transitions,
-    selectedKey: (initialFormId && nodes.find((node) => node.formId === initialFormId)?.nodeKey) || null,
+    selectedKey,
+    panelTab: selectedKey ? "step" : "flow",
   };
 }
 
@@ -125,16 +128,20 @@ function reducer(state, action) {
       return touched(state, { [action.key]: action.value });
 
     case "SELECT":
-      return { ...state, selectedKey: action.nodeKey };
+      return { ...state, selectedKey: action.nodeKey, panelTab: action.nodeKey ? "step" : "flow" };
+
+    case "SET_PANEL_TAB":
+      if (action.tab === "step" && !state.selectedKey) return state;
+      return state.panelTab === action.tab ? state : { ...state, panelTab: action.tab };
 
     case "FOCUS_ROUTE": {
       const target = state.transitions.find((transition) => transition.localId === action.localId);
       if (!target) return state;
-      return { ...state, selectedKey: target.sourceNodeKey, focus: nextFocus(state, target.localId) };
+      return { ...state, selectedKey: target.sourceNodeKey, panelTab: "step", focus: nextFocus(state, target.localId) };
     }
 
     case "FOCUS_PORT":
-      return { ...state, selectedKey: action.nodeKey, focus: nextFocus(state, `implicit-${action.trigger}`) };
+      return { ...state, selectedKey: action.nodeKey, panelTab: "step", focus: nextFocus(state, `implicit-${action.trigger}`) };
 
     case "CLEAR_FOCUS":
       return state.focus?.localId ? { ...state, focus: { ...state.focus, localId: null } } : state;
@@ -152,7 +159,7 @@ function reducer(state, action) {
         position: nextNodePosition(state.nodes),
       };
 
-      return touched(state, { nodes: [...state.nodes, node], selectedKey: nodeKey });
+      return touched(state, { nodes: [...state.nodes, node], selectedKey: nodeKey, panelTab: "step" });
     }
 
     case "REMOVE_NODE": {
@@ -168,6 +175,7 @@ function reducer(state, action) {
         nodes: nextNodes,
         transitions: renumber(transitions),
         selectedKey: null,
+        panelTab: "flow",
       });
     }
 
@@ -220,7 +228,7 @@ function reducer(state, action) {
       const withNew = [...state.transitions, transition];
       return touched(state, {
         transitions: renumber(ensureDefaultRoute(withNew, action.sourceNodeKey, action.trigger)),
-        ...(action.focus ? { selectedKey: action.sourceNodeKey, focus: nextFocus(state, transition.localId) } : {}),
+        ...(action.focus ? { selectedKey: action.sourceNodeKey, panelTab: "step", focus: nextFocus(state, transition.localId) } : {}),
       });
     }
 

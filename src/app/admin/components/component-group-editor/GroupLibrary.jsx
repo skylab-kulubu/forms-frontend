@@ -1,21 +1,27 @@
+import { useState } from "react";
 import { LibraryComponents } from "../form-editor/components/LibraryComponents";
 import { useGroupEditor } from "./GroupEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, CircleAlert, CircleGauge, Share2, Trash, Trash2, Undo2 } from "lucide-react";
+import { Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
-import Popover from "@/app/components/utils/Popover";
+import { PanelTabs, PanelTextarea, SectionHeader, panelShellClass } from "@/app/admin/components/utils/SidePanel";
 
-export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onUndo, canUndo, onShare, onDelete, isPending, isError, error, isSuccess, isDeleteDisabled, isShareDisabled }) {
+const TABS = [
+    { id: "components", label: "Bileşenler" },
+    { id: "description", label: "Açıklama" },
+];
+
+export function GroupLibrary({ layout = "grid", onLibrarySelect }) {
+    const [activeTab, setActiveTab] = useState("components");
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
     const from = active?.data?.current?.from;
     const showTrash = from === "canvas";
-    const layoutClass = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
 
     const { state, dispatch } = useGroupEditor();
 
     return (
-        <motion.div ref={setNodeRef} className={`relative flex min-w-0 rounded-xl p-2 overflow-hidden max-w-xl ${layoutClass}`}
+        <motion.div ref={setNodeRef} className={panelShellClass(layout)}
             initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
         >
@@ -24,48 +30,24 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect, onSave, onUndo,
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 style={{ pointerEvents: showTrash ? "none" : "auto" }}
             >
-                <div className="h-10 flex flex-wrap-reverse items-center justify-start gap-y-1 px-4 text-sm tracking-wide border-b border-neutral-800 overflow-visible">
-                    <div className="flex items-center grow justify-center sm:justify-start mr-4">
-                        <span className="font-semibold text-neutral-200">Bileşenler</span>
-                    </div>
-                    <div className="ml-auto flex items-center gap-1 text-neutral-500">
-                        <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo}
-                            className={`rounded-lg p-1.5 transition-colors ${canUndo ? "hover:text-neutral-100 hover:bg-neutral-800/70" : "opacity-50 cursor-not-allowed"}`}
+                <PanelTabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                    <AnimatePresence mode="wait" initial={false}>
+                        <motion.div key={activeTab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="h-full"
                         >
-                            <Undo2 size={16} />
-                        </button>
-                        <button type="button" aria-label="Grubu paylaş" onClick={onShare} disabled={isShareDisabled || !onShare}
-                            className={`rounded-lg p-1.5 transition-colors ${(isShareDisabled || !onShare) ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-                        >
-                            <Share2 size={16} />
-                        </button>
-                        <button type="button" aria-label="Grubu sil" onClick={onDelete} disabled={isDeleteDisabled}
-                            className={`rounded-lg p-1.5 transition-colors ${isDeleteDisabled ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                        <Popover open={isError} error={error} variant="error" align="bottom-right">
-                            <button onClick={onSave} disabled={isPending} type="button" aria-label="Onayla" className="rounded-lg p-1.5 hover:text-neutral-100 hover:bg-neutral-800/70 transition-colors">
-                                {isPending ? (<CircleGauge size={16} className="animate-spin" />) : isError ? (<CircleAlert size={16} className="text-red-400" />) : isSuccess ? (<CheckCircle2 size={16} className="text-skylab-400" />) : (<CheckCircle2 size={16} />)}
-                            </button>
-                        </Popover>
-                    </div>
-                </div>
-
-                <div className="space-y-3 p-4 border-b border-neutral-800">
-                    <div>
-                        <label className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                            Grup Açıklaması
-                        </label>
-                        <textarea value={state.description} onChange={(e) => dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })}
-                            placeholder="Bu grup hakkında kısa bir açıklama..." rows={2}
-                            className="mt-1 w-full resize-none rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-skylab-400/50 focus:outline-none"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex-1 min-h-0 p-1 overflow-y-auto overflow-x-hidden scrollbar">
-                    <LibraryComponents layout={layout} onSelect={onLibrarySelect} />
+                            {activeTab === "components" ? (
+                                <LibraryComponents layout={layout} onSelect={onLibrarySelect} />
+                            ) : (
+                                <div className="flex flex-col gap-4 p-4 text-sm text-neutral-200">
+                                    <SectionHeader title="Grup açıklaması" description="Gruplar listesinde grup adının altında görünür." />
+                                    <PanelTextarea rows={6} value={state.description} aria-label="Grup açıklaması" placeholder="Bu grup hakkında kısa bir açıklama..."
+                                        onChange={(e) => dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })}
+                                    />
+                                </div>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
             </motion.div>
 

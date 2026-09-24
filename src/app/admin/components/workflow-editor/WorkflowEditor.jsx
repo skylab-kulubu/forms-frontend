@@ -362,7 +362,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   };
 
   const showIntake = () => {
-    dispatch({ type: "SELECT", nodeKey: null });
+    dispatch({ type: "SET_PANEL_TAB", tab: "flow" });
     if (!isLgUp) setDrawerOpen(true);
   };
 
@@ -432,7 +432,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   };
 
   const openPicker = () => {
-    dispatch({ type: "SELECT", nodeKey: null });
+    dispatch({ type: "SET_PANEL_TAB", tab: "flow" });
     if (!isLgUp) setDrawerOpen(true);
     ensureRef.current()
       .then(() => setPickerOpen(true))

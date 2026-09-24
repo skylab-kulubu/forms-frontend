@@ -172,6 +172,21 @@ All design tokens live in [`src/app/globals.css`](src/app/globals.css) under `@t
 - **Buttons**: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40`
 - **Text inputs**: `focus:border-skylab-400/50`, plus a soft `focus:ring-skylab-400/20` where the input already renders a ring
 
+### Side panels
+
+The right-hand panels of the form, component group and workflow editors share one layout, built from the atoms in [`SidePanel.jsx`](src/app/admin/components/utils/SidePanel.jsx). Compose new panel content from those atoms instead of restyling a copy.
+
+- **Header row**: a 40px `PanelTabs` row whose tabs spread across the full width. A selected child (a workflow step) gets its own tab right after its parent (`Akış · Adım · Açıklama`) instead of replacing the row, so the sibling tabs stay one click away. Actions never live here; save, undo, share and delete render in the page header through the `admin-header-slot` portal, like `EditorHeaderActions`.
+- **Sections**: `PANEL_STACK` separates each `PANEL_SECTION` with a `divide-neutral-800/60` hairline. A section opens with `SectionHeader` (14px title, 11px description, optional status pill on the right) and is never boxed.
+- **Rows**: every row uses the same `ROW` box (`rounded-lg border-white/10`, no fill, no shadow). A clickable row adds `ROW_HOVER`; an open row switches to `border-skylab-400/30`. A leading tile is always `TILE` (36px), the same size as `Avatar size="md"`.
+- **Row trail**: a `Switch` (via `ToggleRow`), a `MenuPill`, a chevron or a link pill. Role and route-target menus are both `MenuPill`, a floating menu, because an attached dropdown gets clipped by the panel's scroll container.
+- **Buttons**: `PanelButton` is 28px (`h-7`). A button that opens a picker carries a trailing chevron (`chevron`); a direct action carries only its leading icon. The primary button (`Kaydet`, `Yayınla`) belongs to the page header, not the panel.
+- **Text boxes**: `PanelInput` (32px, leading icon) for search and lookup fields; `PanelTextarea` or `PANEL_BOX` for multi-line text. A rich-text toolbar sits inside the same box as its top strip.
+- **Two text sizes**: 14px for titles and row names; 11px (`text-2xs`) for descriptions, subtitles, buttons and menu items. 10px uppercase is reserved for status pills, and a pill appears only for a state that can change (`Yayında`, `Taslak`, `Kapalı`), never for a constant label or a count.
+- **One left edge**: header text, sections, rows and boxes start 24px inside the panel edge (the shell's `p-2` plus the content's `px-4`), so scroll bodies carry no extra padding.
+
+> **Radius note:** panel controls are shorter than `h-9` but keep `rounded-lg` so their corners match the rows beside them.
+
 ### Shared primitives
 
 Reach for these before hand-rolling a new variant:
@@ -181,6 +196,7 @@ Reach for these before hand-rolling a new variant:
 | `Avatar`       | `src/app/components/utils/Avatar.jsx`         | Any user photo/initials box (`sm`/`md`/`lg`)       |
 | `ActionButton` | `src/app/admin/components/utils/ActionButton.jsx` | Admin icon buttons; `primary` is the accent reference |
 | `ROLE_BADGE`   | `src/app/admin/components/ListItem.jsx`       | Role chip labels and styles                        |
+| `SidePanel`    | `src/app/admin/components/utils/SidePanel.jsx` | Editor side panels: tabs, sections, rows, pills, buttons, inputs |
 | `StateCard`    | `src/app/components/StateCard.jsx`            | Empty/error states in lists                        |
 
 > **Exempt on purpose:** the landing family (`components/landing/`, `Landing.jsx`, `Headers.jsx`, `Footer.jsx`) and miniature demo mockups (`admin/how-to-use/components/Demo.jsx`) keep their own sizes, colors and choreography (`Magnetic` + `Spotlight` helpers, scroll reveals). Do not normalize them.

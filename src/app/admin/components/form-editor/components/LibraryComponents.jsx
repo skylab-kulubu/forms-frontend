@@ -2,10 +2,11 @@ import { useDraggable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, ChevronsUpDown, GripVertical, Layers, Plus, Rows3, Search } from "lucide-react";
+import { CheckCircle2, GripVertical, Layers, Plus, Rows3 } from "lucide-react";
 import { COMPONENTS } from "@/app/components/form-registry";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import SearchPicker from "@/app/components/utils/SearchPicker";
+import { FOCUS_RING, PanelButton, PanelInput, ROW, ROW_HOVER, TILE } from "@/app/admin/components/utils/SidePanel";
 
 function GroupPicker({ onGroupSelect }) {
     const [open, setOpen] = useState(false);
@@ -39,38 +40,33 @@ function GroupPicker({ onGroupSelect }) {
     };
 
     return (
-        <div ref={ref}>
-            <div className="relative">
-                <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500"><ChevronsUpDown size={13} /></span>
-                <button type="button" onClick={() => setOpen((p) => !p)}
-                    className="flex w-full items-center rounded-lg border border-white/10 bg-neutral-900/60 pl-8 pr-3 py-2 text-left text-xs text-neutral-400 transition hover:bg-white/5 focus:border-skylab-400/50 focus:outline-none"
-                >
-                    Hazır grup ekle...
-                </button>
+        <div ref={ref} className="min-w-fit flex-1">
+            <PanelButton icon={Layers} chevron active={open} aria-expanded={open} onClick={() => setOpen((p) => !p)} className="w-full">
+                Hazır grup ekle
+            </PanelButton>
 
-                <AnimatePresence>
-                    {open && (
-                        <SearchPicker searchValue={search} onSearchChange={setSearch} autoFocus items={groups} itemsPerPage={4}
-                            getItemId={(g) => g.id} onSelect={handleSelect} footerText="Gruptaki tüm bileşenler eklenir."
-                            renderItem={(group, { onSelect }) => {
-                                const count = Array.isArray(group.schema) ? group.schema.length : 0;
-                                const isJustAdded = justAdded === group.id;
-                                return (
-                                    <button type="button" onClick={onSelect}
-                                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${isJustAdded ? "bg-skylab-500/10" : ""}`}
-                                    >
-                                        <Layers size={13} className={isJustAdded ? "text-skylab-300" : "text-neutral-500"} />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-medium text-neutral-200 truncate">{group.title}</p>
-                                        </div>
-                                        <span className="text-3xs text-neutral-600 shrink-0">{count} bileşen</span>
-                                    </button>
-                                );
-                            }}
-                        />
-                    )}
-                </AnimatePresence>
-            </div>
+            <AnimatePresence>
+                {open && (
+                    <SearchPicker searchValue={search} onSearchChange={setSearch} autoFocus items={groups} itemsPerPage={4}
+                        getItemId={(g) => g.id} onSelect={handleSelect} footerText="Gruptaki tüm bileşenler eklenir."
+                        renderItem={(group, { onSelect }) => {
+                            const count = Array.isArray(group.schema) ? group.schema.length : 0;
+                            const isJustAdded = justAdded === group.id;
+                            return (
+                                <button type="button" onClick={onSelect}
+                                    className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${isJustAdded ? "bg-skylab-500/10" : ""}`}
+                                >
+                                    <Layers size={13} className={isJustAdded ? "text-skylab-300" : "text-neutral-500"} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-medium text-neutral-200 truncate">{group.title}</p>
+                                    </div>
+                                    <span className="text-3xs text-neutral-600 shrink-0">{count} bileşen</span>
+                                </button>
+                            );
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }
@@ -85,14 +81,9 @@ function RepeaterAddButton({ onSelect }) {
     };
 
     return (
-        <button type="button" onClick={handleClick}
-            className={`relative flex w-full items-center rounded-lg border pl-8 pr-3 py-2 text-left text-xs transition focus:outline-none ${added ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-neutral-900/60 text-neutral-400 hover:bg-white/5 focus:border-skylab-400/50"}`}
-        >
-            <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500">
-                {added ? <CheckCircle2 size={13} className="text-skylab-300" /> : <Rows3 size={13} />}
-            </span>
-            {added ? "Grup eklendi" : "Tekrarlanan grup ekle..."}
-        </button>
+        <PanelButton icon={added ? CheckCircle2 : Rows3} active={added} onClick={handleClick} className="min-w-fit flex-1">
+            {added ? "Grup eklendi" : "Tekrarlanan grup ekle"}
+        </PanelButton>
     );
 }
 
@@ -106,22 +97,6 @@ const CATEGORIES = [
 export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect }) {
     const [search, setSearch] = useState("");
 
-    if (layout === "drawer") {
-        return (
-            <div className="flex h-full min-h-0 flex-col">
-                <div className="flex flex-col gap-2 px-2 pt-2 shrink-0">
-                    {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
-                    <RepeaterAddButton onSelect={onSelect} />
-                </div>
-                <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 space-y-1 overflow-y-auto overflow-x-hidden scrollbar p-2">
-                    {COMPONENTS.map((component) => (
-                        <LibraryItem key={component.type} item={component} layout={layout} onSelect={onSelect} />
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
     const query = search.trim().toLowerCase();
     const byType = Object.fromEntries(COMPONENTS.map((c) => [c.type, c]));
     const sections = CATEGORIES.map((category) => ({
@@ -133,23 +108,20 @@ export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect }) 
 
     return (
         <div className="flex h-full min-h-0 flex-col">
-            <div className="flex flex-col gap-1.5 px-2 pt-2 shrink-0">
-                <div className="relative">
-                    <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Bileşen ara..."
-                        className="w-full rounded-lg border border-white/10 bg-neutral-900/60 py-2 pl-8 pr-3 text-xs text-neutral-200 placeholder-neutral-600 transition-colors focus:border-skylab-400/50 focus:outline-none"
-                    />
+            <div className="flex shrink-0 flex-col gap-2 px-4 pt-3">
+                <PanelInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Bileşen ara..." aria-label="Bileşen ara" />
+                <div className="relative flex flex-wrap gap-2">
+                    {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
+                    <RepeaterAddButton onSelect={onSelect} />
                 </div>
-                {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
-                <RepeaterAddButton onSelect={onSelect} />
             </div>
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar p-2">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar px-4 pb-4 pt-3">
                 {sections.length === 0 ? (
-                    <p className="px-1 py-4 text-center text-2xs text-neutral-600">Eşleşen bileşen yok.</p>
+                    <p className="py-4 text-center text-2xs text-neutral-600">Eşleşen bileşen yok.</p>
                 ) : (
                     sections.map((section) => (
                         <div key={section.label}>
-                            <div className="mb-2 flex items-center gap-2 px-1">
+                            <div className="mb-2 flex items-center gap-2">
                                 <span className="text-2xs font-medium text-neutral-500">{section.label}</span>
                                 <span className="h-px flex-1 bg-white/5" />
                             </div>
@@ -193,23 +165,20 @@ export function LibraryItem({ item, onSelect, layout = "grid" }) {
 
     if (layout === "drawer") {
         return (
-            <motion.button type="button" onClick={handleClick} whileTap={{ scale: 0.98, backgroundColor: "rgba(255,255,255,0.08)" }}
-                animate={justAdded ? { backgroundColor: "rgba(129, 140, 248, 0.18)", borderColor: "rgba(129, 140, 248, 0.4)" } : { backgroundColor: "rgba(23, 23, 23, 0.6)", borderColor: "rgba(255, 255, 255, 0.05)" }}
-                className="group relative flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors"
+            <button type="button" onClick={handleClick}
+                className={`${ROW} ${FOCUS_RING} flex w-full items-center gap-3 px-3 py-2.5 text-left ${justAdded ? "border-skylab-400/40 bg-skylab-500/10" : `border-white/10 ${ROW_HOVER}`}`}
             >
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-neutral-900 border border-white/10 text-neutral-400 group-hover:text-neutral-200">
-                     <item.icon size={20} /> 
-                </div>
-
-                <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-neutral-200 group-hover:text-neutral-50">{item.label}</p>
-                    <p className="text-2xs text-neutral-500 truncate">Forma eklemek için dokunun</p>
-                </div>
-
-                <div className={`grid h-8 w-8 place-items-center rounded-lg transition-colors ${justAdded ? "bg-skylab-500 text-skylab-900" : "bg-white/5 text-neutral-400 group-hover:bg-white/10 group-hover:text-neutral-200"}`}>
-                    {justAdded ? <CheckCircle2 size={16} /> : <Plus size={16} />}
-                </div>
-            </motion.button>
+                <span className={`${TILE} border-white/10 text-neutral-400`}>
+                    <item.icon size={14} />
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-neutral-100">{item.label}</span>
+                    <span className="block truncate text-2xs text-neutral-500">Eklemek için dokunun</span>
+                </span>
+                <span className={`grid size-7 shrink-0 place-items-center rounded-lg transition-colors ${justAdded ? "bg-skylab-500 text-skylab-900" : "bg-white/5 text-neutral-400"}`}>
+                    {justAdded ? <CheckCircle2 size={14} /> : <Plus size={14} />}
+                </span>
+            </button>
         );
     }
 

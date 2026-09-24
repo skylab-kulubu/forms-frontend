@@ -10,7 +10,9 @@ import { GroupEditorProvider, useGroupEditor } from "./GroupEditorContext";
 import { useFormDnD } from "../form-editor/hooks/useFormDnD";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "../form-editor/components/FormEditorComponents";
 import { LibraryTrigger } from "../form-editor/components/LibraryTrigger";
+import { HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
 import { GroupLibrary } from "./GroupLibrary";
+import GroupHeaderActions from "./GroupHeaderActions";
 import { useGroupMutation, useDeleteGroupMutation } from "@/lib/hooks/useGroupAdmin";
 import { useCreateGroupShareMutation } from "@/lib/hooks/useGroupShare";
 import ApprovalOverlay from "../ApprovalOverlay";
@@ -58,6 +60,7 @@ function GroupEditorContent({ isNewGroup }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
     const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
+    const [savedAt, setSavedAt] = useState(null);
 
     const editorRef = useRef(null);
     const libraryDropElRef = useRef(null);
@@ -97,6 +100,8 @@ function GroupEditorContent({ isNewGroup }) {
             isUpdate: !isNewGroup,
         }, {
             onSuccess: (data) => {
+                dispatch({ type: "MARK_SAVED" });
+                setSavedAt(new Date());
                 if (!isNewGroup) return;
                 const group = data?.data ?? data;
                 const nextId = group?.id;
@@ -173,46 +178,30 @@ function GroupEditorContent({ isNewGroup }) {
 
             {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} />}
 
-            {isLgUp && (
-                <GroupLibrary layout="grid"
-                    onSave={handleSave}
-                    onUndo={handleUndo}
-                    canUndo={canUndo}
-                    onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
-                    onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
-                    isPending={isPending}
-                    isSuccess={isSuccess}
-                    isError={isError}
-                    error={error}
-                    isDeleteDisabled={isNewGroup || isDeletePending}
-                    isShareDisabled={isNewGroup}
-                    onLibrarySelect={handleLibrarySelect}
-                />
-            )}
+            {isLgUp && <GroupLibrary layout="grid" onLibrarySelect={handleLibrarySelect} />}
         </div>
     );
 
     return (
         <DndContext collisionDetection={pointerWithin} sensors={sensors} {...handlers}>
+            <GroupHeaderActions
+                saveStatus={<HeaderStatusPill dirty={!state.isSaved} isSaving={isPending} isFailed={isError} lastSavedAt={savedAt} />}
+                onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
+                onUndo={handleUndo}
+                canUndo={canUndo}
+                onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
+                isDeleteDisabled={isNewGroup || isDeletePending}
+                onSave={handleSave}
+                isPending={isPending}
+                isError={isError}
+                error={error}
+            />
             <div ref={editorRef} className="relative">
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
-                            <GroupLibrary layout="drawer"
-                                onSave={handleSave}
-                                onUndo={handleUndo}
-                                canUndo={canUndo}
-                                onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
-                                onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
-                                isPending={isPending}
-                                isSuccess={isSuccess}
-                                isError={isError}
-                                error={error}
-                                isDeleteDisabled={isNewGroup || isDeletePending}
-                                isShareDisabled={isNewGroup}
-                                onLibrarySelect={handleLibrarySelect}
-                            />
+                            <GroupLibrary layout="drawer" onLibrarySelect={handleLibrarySelect} />
                         </DrawerContent>
                     </Drawer>
                 ) : (

@@ -64,25 +64,26 @@ export default function WorkflowEditorSkeleton() {
         </div>
 
         <div className="col-span-4 hidden h-[calc(100dvh-5.5rem)] min-w-0 max-w-xl flex-col rounded-xl p-2 lg:flex">
-          <div className="flex h-10 items-center border-b border-neutral-800 px-4 text-sm font-semibold tracking-wide text-neutral-700">
-            <span className="w-full">Adım</span>
-            <span className="mx-2 h-3 w-px bg-neutral-800" />
+          <div className="flex h-10 items-center border-b border-neutral-800 px-4 text-center text-sm font-semibold tracking-wide text-neutral-700">
             <span className="w-full">Akış</span>
+            <span className="mx-2 h-3 w-px shrink-0 bg-neutral-800" />
+            <span className="w-full">Açıklama</span>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-hidden p-1">
+          <div className="min-h-0 flex-1 overflow-hidden">
             <div className="flex flex-col divide-y divide-neutral-800/60 p-4">
               <section className="space-y-4 pb-6">
                 <GhostSectionHeader pill />
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5">
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <Bar className="h-3.5 w-24" />
-                    <Bar className="h-2.5 w-48 max-w-full" />
-                  </div>
-                  <span className="h-7 w-12 shrink-0 rounded-full border border-white/10 bg-white/5" />
-                </div>
-                <div className="flex gap-2">
-                  {[0, 1, 2].map((index) => <span key={index} className="h-8 flex-1 rounded-lg border border-white/10 bg-white/5" />)}
+                <div className="space-y-3">
+                  {[0, 1].map((index) => (
+                    <div key={index} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5">
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <Bar className="h-3.5 w-24" />
+                        <Bar className="h-2.5 w-48 max-w-full" />
+                      </div>
+                      <span className="h-7 w-12 shrink-0 rounded-full border border-white/10 bg-white/5" />
+                    </div>
+                  ))}
                 </div>
               </section>
 
@@ -90,17 +91,18 @@ export default function WorkflowEditorSkeleton() {
                 <GhostSectionHeader />
                 <div className="space-y-3">
                   {[0, 1].map((index) => (
-                    <div key={index} className="flex items-center gap-3 rounded-xl border border-white/10 bg-neutral-900/40 px-3 py-2.5 shadow-sm">
+                    <div key={index} className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2.5">
                       <span className="size-9 shrink-0 rounded-lg border border-white/10 bg-neutral-900/60" />
                       <div className="min-w-0 flex-1 space-y-1.5">
                         <Bar className="h-3.5 w-3/5" />
                         <Bar className="h-2.5 w-2/5" />
                       </div>
-                      <Bar className="h-6 w-20 shrink-0 rounded-lg" />
                     </div>
                   ))}
                 </div>
-                <span className="block h-8 rounded-lg border border-white/10 bg-white/5" />
+                <div className="flex gap-2">
+                  {[0, 1].map((index) => <span key={index} className="h-7 flex-1 rounded-lg border border-white/10 bg-white/5" />)}
+                </div>
               </section>
             </div>
           </div>

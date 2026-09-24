@@ -38,6 +38,9 @@ function coreReducer(state, action) {
         case "SET_SCHEMA":
             return { ...state, schema: action.payload, isSaved: false };
 
+        case "MARK_SAVED":
+            return state.isSaved ? state : { ...state, isSaved: true };
+
         case "RESET_GROUP":
             return { ...initialGroupState };
 
