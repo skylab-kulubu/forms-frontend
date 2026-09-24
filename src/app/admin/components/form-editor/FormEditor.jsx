@@ -15,7 +15,6 @@ import { genFieldId } from "./fieldId";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
 import { EditorHeaderActions, EventReturnBar, HeaderStatusPill } from "./components/EditorHeaderActions";
-import { PreviousDraftPicker } from "./components/PreviousDraftPicker";
 import { WorkflowMembershipChip } from "./components/WorkflowMembership";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
@@ -115,7 +114,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const [returnHref, setReturnHref] = useState(null);
     const [hasReturnTo, setHasReturnTo] = useState(false);
     const [eventRef, setEventRef] = useState(null);
-    const [seededFrom, setSeededFrom] = useState(null);
 
     useEffect(() => {
         const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
@@ -174,7 +172,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             if (local?.schema?.length) {
                 if (cancelled) return;
                 dispatch({ type: "LOAD_DRAFT", payload: local });
-                setSeededFrom("local");
                 setDraftNotice(true);
                 return;
             }
@@ -188,12 +185,9 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                         type: "LOAD_DRAFT",
                         payload: { schema, status: handoff.open ? FORM_STATUS_OPEN : row?.status },
                     });
-                    setSeededFrom("form");
                     setDraftNotice(true);
                     return;
-                } catch {
-                    /* picker remains */
-                }
+                } catch {}
             }
             if (!handoff?.ownerTeam) return;
             try {
@@ -202,11 +196,8 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 const match = pickTemplateGroup(items, handoff.ownerTeam);
                 if (cancelled || !match) return;
                 dispatch({ type: "SET_SCHEMA", payload: cloneSchema(match.schema) });
-                setSeededFrom("group");
                 setDraftNotice(true);
-            } catch {
-                /* picker remains */
-            }
+            } catch {}
         })();
 
         return () => {
@@ -500,18 +491,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                                     {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Bileşen panelini açın."}
                                 </p>
                             </div>
-                            {isNewForm ? (
-                                <PreviousDraftPicker
-                                    ownerTeam={handoff?.ownerTeam}
-                                    busy={Boolean(seededFrom === "loading")}
-                                    onApply={({ schema }) => {
-                                        dispatch({ type: "SET_SCHEMA", payload: schema });
-                                        if (handoff?.open) dispatch({ type: "SET_STATUS", payload: FORM_STATUS_OPEN });
-                                        setSeededFrom("picker");
-                                        setDraftNotice(true);
-                                    }}
-                                />
-                            ) : null}
                         </div>
                     </div>
                 ) : (
