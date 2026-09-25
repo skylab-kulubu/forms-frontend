@@ -8,7 +8,7 @@ async function fetchMeta(groupId, token) {
     if (!groupId || !token) return null;
     try {
         const res = await fetch(
-            `${API_URL}/api/component-groups/${groupId}/meta?token=${encodeURIComponent(token)}`,
+            `${API_URL}/api/forms/component-groups/${groupId}/meta?token=${encodeURIComponent(token)}`,
             { cache: "no-store" }
         );
         if (!res.ok) return null;
