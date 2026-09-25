@@ -34,10 +34,8 @@ import ShareOverlay from "../ShareOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 import { FormPreview } from "./components/FormPreview";
 import {
-    captureReturnTo,
     editPathWithReturnTo,
     eventRefFromForm,
-    readStoredReturnTo,
     returnToEventHref,
     sanitizeReturnTo,
 } from "@/lib/return-to";
@@ -105,6 +103,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const [initialDraft] = useState(draft);
     const [draftNotice, setDraftNotice] = useState(!!draft);
     const hasUnsavedDraft = hasDraftChanges(state);
+    const storedDraftRef = useRef(false);
 
     const rawReturnTo = useSyncExternalStore(
         emptySubscribe,
@@ -122,10 +121,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         },
         returnTo,
     );
-
-    useEffect(() => {
-        captureReturnTo(rawReturnTo, typeof sessionStorage === "undefined" ? null : sessionStorage);
-    }, [rawReturnTo]);
 
     const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id);
 
@@ -150,14 +145,9 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         if (!isNewForm) return;
         let cancelled = false;
         const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-        const raw =
-            typeof window === "undefined"
-                ? null
-                : new URLSearchParams(window.location.search).get("returnTo");
-        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
 
         (async () => {
-            const local = readNewFormDraft(storage, stored);
+            const local = readNewFormDraft(storage, returnTo);
             if (local?.schema?.length) {
                 if (cancelled) return;
                 dispatch({ type: "LOAD_DRAFT", payload: local });
@@ -192,28 +182,30 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         return () => {
             cancelled = true;
         };
-    }, [isNewForm, handoff?.fromForm, handoff?.ownerTeam, handoff?.open, dispatch]);
+    }, [isNewForm, returnTo, handoff?.fromForm, handoff?.ownerTeam, handoff?.open, dispatch]);
 
     useEffect(() => {
-        if (!isNewForm) return;
+        if (!isNewForm || !returnTo) return;
         const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-        const raw =
-            typeof window === "undefined"
-                ? null
-                : new URLSearchParams(window.location.search).get("returnTo");
-        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
-        if (!stored || !state.schema.length) return;
-        writeNewFormDraft(storage, stored, {
-            title: state.title,
-            description: state.description,
-            schema: state.schema,
-            status: state.status,
-            allowAnonymousResponses: state.allowAnonymousResponses,
-            allowMultipleResponses: state.allowMultipleResponses,
-            requiresManualReview: state.requiresManualReview,
-        });
+        if (hasUnsavedDraft) {
+            storedDraftRef.current = true;
+            writeNewFormDraft(storage, returnTo, {
+                title: state.title,
+                description: state.description,
+                schema: state.schema,
+                status: state.status,
+                allowAnonymousResponses: state.allowAnonymousResponses,
+                allowMultipleResponses: state.allowMultipleResponses,
+                requiresManualReview: state.requiresManualReview,
+            });
+        } else if (storedDraftRef.current) {
+            storedDraftRef.current = false;
+            clearNewFormDraft(storage, returnTo);
+        }
     }, [
         isNewForm,
+        returnTo,
+        hasUnsavedDraft,
         state.title,
         state.description,
         state.schema,
@@ -318,18 +310,12 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 setLastSavedAt(new Date());
                 setPublishedFlash(true);
                 setDraftNotice(false);
-                const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-                const raw =
-                    typeof window === "undefined"
-                        ? null
-                        : new URLSearchParams(window.location.search).get("returnTo");
-                const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
-                clearNewFormDraft(storage, stored);
 
                 if (isNewForm) {
+                    clearNewFormDraft(typeof sessionStorage === "undefined" ? null : sessionStorage, returnTo);
                     const nextId = data?.data?.id ?? data?.id;
                     if (nextId) {
-                        router.push(editPathWithReturnTo(nextId, stored));
+                        router.push(editPathWithReturnTo(nextId, returnTo));
                     }
                 }
             },
