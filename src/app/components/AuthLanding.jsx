@@ -1,13 +1,13 @@
 "use client";
 
-import { CircleAlert, FolderHeart, Share2, ShieldAlert, User2 } from "lucide-react";
+import { CircleAlert, LayoutTemplate, Share2, ShieldAlert, User2 } from "lucide-react";
 import { loginWithKeycloak } from "@/lib/authActions";
 import Background from "@/app/components/Background";
 import LoginButton from "@/app/components/utils/LoginButton";
 import StateCard from "@/app/components/StateCard";
 
 const ICON_MAP = {
-    "component-group": FolderHeart,
+    "component-group": LayoutTemplate,
     response: Share2,
 };
 
@@ -25,7 +25,7 @@ export default function AuthLanding({
     actionHint = "Görüntülemek için giriş yapman gerekiyor.",
 }) {
     const handleLogin = () => loginWithKeycloak(callbackUrl);
-    const ResourceIcon = ICON_MAP[resource] ?? FolderHeart;
+    const ResourceIcon = ICON_MAP[resource] ?? LayoutTemplate;
 
     let content;
 

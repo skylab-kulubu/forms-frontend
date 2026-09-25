@@ -21,8 +21,8 @@ export default function GroupHeaderActions({ saveStatus, onShare, onUndo, canUnd
     <div className="flex items-center gap-1 text-neutral-500">
       {saveStatus && <div className="mr-2 hidden sm:block">{saveStatus}</div>}
 
-      <Tip label="Grubu paylaş">
-        <button type="button" aria-label="Grubu paylaş" onClick={onShare} disabled={!onShare} className={ICON_BUTTON}>
+      <Tip label="Şablonu paylaş">
+        <button type="button" aria-label="Şablonu paylaş" onClick={onShare} disabled={!onShare} className={ICON_BUTTON}>
           <Share2 size={16} />
         </button>
       </Tip>
@@ -33,14 +33,14 @@ export default function GroupHeaderActions({ saveStatus, onShare, onUndo, canUnd
         </button>
       </Tip>
 
-      <Tip label="Grubu sil">
-        <button type="button" aria-label="Grubu sil" onClick={onDelete} disabled={isDeleteDisabled || !onDelete} className={ICON_BUTTON}>
+      <Tip label="Şablonu sil">
+        <button type="button" aria-label="Şablonu sil" onClick={onDelete} disabled={isDeleteDisabled || !onDelete} className={ICON_BUTTON}>
           <Trash2 size={16} />
         </button>
       </Tip>
 
       <Popover open={isError} error={error} variant="error" align="bottom-right">
-        <button type="button" onClick={onSave} disabled={isPending} aria-label="Grubu kaydet"
+        <button type="button" onClick={onSave} disabled={isPending} aria-label="Şablonu kaydet"
           className="ml-1 flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-60"
         >
           {isPending ? <CircleGauge size={14} className="animate-spin" /> : isError ? <CircleAlert size={14} className="text-red-400" /> : <CheckCircle2 size={14} />}

@@ -13,7 +13,7 @@ const buildShareUrl = (resource, id, token) => {
   const origin = window.location.origin;
   switch (resource) {
     case "component-group":
-      return token ? `${origin}/component-groups/${id}?token=${encodeURIComponent(token)}` : "";
+      return token ? `${origin}/templates/${id}?token=${encodeURIComponent(token)}` : "";
     case "response":
       return token ? `${origin}/responses/${id}?token=${encodeURIComponent(token)}` : "";
     case "form":
@@ -79,7 +79,7 @@ export default function ShareOverlay({
   resource = "component-group",
   resourceId,
   title = "Bağlantıyı Paylaş",
-  description = "Bu bağlantıyla paylaşılan kişi grubu görüntüleyip kendi gruplarına ekleyebilir.",
+  description = "Bu bağlantıyla paylaşılan kişi şablonu görüntüleyip kendi şablonlarına ekleyebilir.",
   shareMutation,
   revokeMutation,
 }) {

@@ -11,7 +11,7 @@ const TRACKABLE_ACTIONS = new Set([
 
 const initialGroupState = {
     id: null,
-    title: "Yeni Grup",
+    title: "Yeni Şablon",
     description: "",
     schema: [],
     isSaved: true,
@@ -25,7 +25,7 @@ function coreReducer(state, action) {
                 ...state,
                 ...action.payload,
                 schema: Array.isArray(action.payload.schema) ? action.payload.schema : [],
-                title: action.payload.title || "Yeni Grup",
+                title: action.payload.title || "Yeni Şablon",
                 isSaved: true,
             };
 

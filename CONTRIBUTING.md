@@ -30,7 +30,7 @@ src/
 │   │   ├── page.jsx                   # Dynamic metadata + SSR
 │   │   └── FormClient.jsx             # Client-side form renderer
 │   │
-│   ├── component-groups/[groupId]/    # Public shared group preview (tokenized)
+│   ├── templates/[groupId]/           # Public shared template preview (tokenized)
 │   ├── responses/[responseId]/        # Public shared response preview (tokenized)
 │   │
 │   ├── admin/                         # Protected admin panel
@@ -43,20 +43,20 @@ src/
 │   │   │   ├── new-form/              # Create form
 │   │   │   └── [formId]/              # Form detail, edit, responses
 │   │   │
-│   │   ├── component-groups/          # Reusable component management
-│   │   │   ├── page.jsx               # Groups list
-│   │   │   ├── new-group/             # Create group
-│   │   │   └── [groupId]/             # Group detail
+│   │   ├── templates/                 # Reusable template management
+│   │   │   ├── page.jsx               # Templates list
+│   │   │   ├── new-template/          # Create template
+│   │   │   └── [groupId]/             # Template detail
 │   │   │
 │   │   ├── how-to-use/                # Built-in documentation
 │   │   │
 │   │   └── components/                # Admin UI components
-│   │       ├── ShareOverlay.jsx       # Reusable share-link modal (group/response/form)
+│   │       ├── ShareOverlay.jsx       # Reusable share-link modal (template/response/form)
 │   │       ├── form-editor/           # Form builder
 │   │       │   └── hooks/             # Editor-specific hooks
 │   │       ├── form-overview/         # Form analytics
 │   │       ├── response-displayer/    # Response viewer
-│   │       └── component-group-editor/# Group builder (incl. SharedGroupPreview, GroupEditorContext)
+│   │       └── component-group-editor/# Template builder (incl. SharedGroupPreview, GroupEditorContext)
 │   │
 │   ├── components/                    # Shared components
 │   │   ├── AuthLanding.jsx            # Sign-in gate for shared resources
@@ -81,8 +81,8 @@ src/
 │       ├── useFormAdmin.js            # Form CRUD mutations
 │       ├── useResponse.js             # Response management
 │       ├── useResponseShare.js        # Response share token create/revoke/preview
-│       ├── useGroupAdmin.js           # Component group operations
-│       ├── useGroupShare.js           # Group share token create + preview + clone
+│       ├── useGroupAdmin.js           # Template operations
+│       ├── useGroupShare.js           # Template share token create + preview + clone
 │       ├── useForm.js                 # Public form display & submission
 │       ├── useFormContext.js          # Form editor context helper
 │       ├── useDraft.js                # Draft queries & mutations
@@ -95,6 +95,8 @@ src/
 ```
 
 > Outside `src/`, the repository root also holds [`mail-templates/`](mail-templates/): standalone transactional email templates that are **not imported by the app**; they are rendered by a separate notification service and kept here for version control and design consistency (see the README's *Email Templates* section).
+
+> **Templates are still "component groups" in code.** The UI and page routes say *template*, but identifiers (`GroupEditor`, `useGroupAdmin`), the `[groupId]` route param and the backend API (`/api/admin/forms/component-groups`) keep the old name until the backend entity is renamed. The old `/component-groups` and `/admin/component-groups` URLs redirect to the new routes through `next.config.mjs`.
 
 ---
 
@@ -114,10 +116,10 @@ User ──▶ Next.js (App Router) ──▶ React Query ──▶ apiClient.js
 - **Server Components** for initial page loads and SEO metadata
 - **Client Components** for interactive features (form editor, responses)
 - **React Query** for all server state: caching, background refetching, optimistic updates
-- **Context Providers** for form editor and group editor local state
+- **Context Providers** for form editor and template editor local state
 - **Custom Hooks** (`useFormAdmin`, `useResponse`, `useGroupAdmin`, `useGroupShare`, `useResponseShare`) encapsulate all API logic
 - **Component Registry** pattern for extensible field types
-- **Tokenized share links** for component groups and responses: the public preview pages (`/component-groups/[groupId]`, `/responses/[responseId]`) read the `?token=` query param, fetch metadata server-side for SEO, and fall back to `AuthLanding` when the token is missing or expired
+- **Tokenized share links** for templates and responses: the public preview pages (`/templates/[groupId]`, `/responses/[responseId]`) read the `?token=` query param, fetch metadata server-side for SEO, and fall back to `AuthLanding` when the token is missing or expired
 - **Reliable auto-save**: both the form editor and respondent drafts share `useReliableSave`, a debounced primitive that serializes in-flight requests (no out-of-order writes), retries transient failures, and flushes the latest pending change on unmount / tab close via a `keepalive` request
 
 ---
@@ -174,7 +176,7 @@ All design tokens live in [`src/app/globals.css`](src/app/globals.css) under `@t
 
 ### Side panels
 
-The right-hand panels of the form, component group and workflow editors share one layout, built from the atoms in [`SidePanel.jsx`](src/app/admin/components/utils/SidePanel.jsx). Compose new panel content from those atoms instead of restyling a copy.
+The right-hand panels of the form, template and workflow editors share one layout, built from the atoms in [`SidePanel.jsx`](src/app/admin/components/utils/SidePanel.jsx). Compose new panel content from those atoms instead of restyling a copy.
 
 - **Header row**: a 40px `PanelTabs` row whose tabs spread across the full width. A selected child (a workflow step) gets its own tab right after its parent (`Akış · Adım · Açıklama`) instead of replacing the row, so the sibling tabs stay one click away. Actions never live here; save, undo, share and delete render in the page header through the `admin-header-slot` portal, like `EditorHeaderActions`.
 - **Sections**: `PANEL_STACK` separates each `PANEL_SECTION` with a `divide-neutral-800/60` hairline. A section opens with `SectionHeader` (14px title, 11px description, optional status pill on the right) and is never boxed.

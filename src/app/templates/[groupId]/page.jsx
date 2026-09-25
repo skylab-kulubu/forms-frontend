@@ -28,14 +28,14 @@ export async function generateMetadata({ params, searchParams }) {
 
     if (!meta) {
         return {
-            title: "Bileşen Grubu",
+            title: "Şablon",
             description: "Bu paylaşım bağlantısı geçersiz veya süresi dolmuş.",
             robots: { index: false, follow: false },
         };
     }
 
     const sharedByName = meta.sharedBy?.fullName || null;
-    const description = meta.description || (sharedByName ? `${sharedByName} tarafından paylaşıldı.` : "Sana bir bileşen grubu paylaşıldı.");
+    const description = meta.description || (sharedByName ? `${sharedByName} tarafından paylaşıldı.` : "Sana bir şablon paylaşıldı.");
     const ogTitle = sharedByName ? `${meta.title} — ${sharedByName} tarafından paylaşıldı` : meta.title;
 
     return {
@@ -68,16 +68,16 @@ export default async function ShareGatewayPage({ params, searchParams }) {
 
     if (isLoggedIn && hasAccess) {
         const target = token
-            ? `/admin/component-groups/${groupId}?token=${encodeURIComponent(token)}`
-            : `/admin/component-groups/${groupId}`;
+            ? `/admin/templates/${groupId}?token=${encodeURIComponent(token)}`
+            : `/admin/templates/${groupId}`;
         redirect(target);
     }
 
     const meta = await fetchMeta(groupId, token);
 
     const callbackUrl = token
-        ? `/component-groups/${groupId}?token=${encodeURIComponent(token)}`
-        : `/component-groups/${groupId}`;
+        ? `/templates/${groupId}?token=${encodeURIComponent(token)}`
+        : `/templates/${groupId}`;
 
     return (
         <AuthLanding
@@ -90,8 +90,8 @@ export default async function ShareGatewayPage({ params, searchParams }) {
             title={meta?.title}
             description={meta?.description}
             sharedByName={meta?.sharedBy?.fullName}
-            fallbackTitle="Bileşen Grubu Paylaşımı"
-            actionHint="Görüntülemek ve kendi gruplarına eklemek için giriş yapman gerekiyor."
+            fallbackTitle="Şablon Paylaşımı"
+            actionHint="Görüntülemek ve kendi şablonlarına eklemek için giriş yapman gerekiyor."
         />
     );
 }

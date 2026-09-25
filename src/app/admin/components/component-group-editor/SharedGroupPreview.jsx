@@ -71,7 +71,7 @@ function SharedByPanel({ group, token, expiresAt }) {
                 onSuccess: (data) => {
                     const newGroup = data?.data ?? data;
                     const nextId = newGroup?.id;
-                    if (nextId) router.push(`/admin/component-groups/${nextId}`);
+                    if (nextId) router.push(`/admin/templates/${nextId}`);
                 },
             }
         );
@@ -84,7 +84,7 @@ function SharedByPanel({ group, token, expiresAt }) {
         >
             <div className="flex h-full min-w-0 flex-1 flex-col rounded-xl">
                 <div className="h-10 flex items-center justify-start px-4 text-sm tracking-wide border-b border-neutral-800">
-                    <span className="font-semibold text-neutral-200">Paylaşılan Grup</span>
+                    <span className="font-semibold text-neutral-200">Paylaşılan Şablon</span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto scrollbar">
@@ -102,7 +102,7 @@ function SharedByPanel({ group, token, expiresAt }) {
                     <div className="px-4 py-4 border-b border-white/5 space-y-2">
                         <p className="text-3xs uppercase tracking-[0.18em] text-neutral-500">Bağlantı</p>
                         <p className="text-2xs leading-relaxed text-neutral-400">
-                            Bu grubu sadece görüntüleyebilirsiniz. Düzenlemek için önce kendi gruplarınıza ekleyin.
+                            Bu şablonu sadece görüntüleyebilirsiniz. Düzenlemek için önce kendi şablonlarınıza ekleyin.
                         </p>
                         <div className="flex items-center justify-between gap-2 text-2xs text-neutral-500 pt-1">
                             <span>{remaining ?? "48 saat geçerli"}</span>
@@ -138,7 +138,7 @@ function PreviewCanvas({ schema, title }) {
         >
             <div className="max-w-3xl mx-auto px-4 h-10 flex items-center gap-2 border-b border-neutral-800">
                 <span className="w-full pr-5 bg-transparent text-sm font-semibold text-neutral-200 tracking-wide leading-none truncate">
-                    {title || "İsimsiz Grup"}
+                    {title || "İsimsiz Şablon"}
                 </span>
             </div>
             <div className="overflow-y-auto rounded-xl scrollbar-hidden h-full">

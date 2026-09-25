@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, FileText, MessageSquare, Component } from "lucide-react";
+import { TrendingUp, FileText, MessageSquare, LayoutTemplate } from "lucide-react";
 import { useShouldAnimate } from "../utils";
 
 const SERIES = [
@@ -14,7 +14,7 @@ const SERIES = [
 const STATS = [
   { k: "Form", v: 42, delta: "+12%", Icon: FileText },
   { k: "Yanıt", v: 1284, delta: "+24%", Icon: MessageSquare },
-  { k: "Grup", v: 18, delta: "+3", Icon: Component },
+  { k: "Şablon", v: 18, delta: "+3", Icon: LayoutTemplate },
 ];
 
 const DAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];

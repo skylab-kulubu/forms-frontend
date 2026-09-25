@@ -105,7 +105,7 @@ function GroupEditorContent({ isNewGroup }) {
                 if (!isNewGroup) return;
                 const group = data?.data ?? data;
                 const nextId = group?.id;
-                if (nextId) router.push(`/admin/component-groups/${nextId}`);
+                if (nextId) router.push(`/admin/templates/${nextId}`);
             },
         });
     };
@@ -154,7 +154,7 @@ function GroupEditorContent({ isNewGroup }) {
                                 {isLgUp ? <MousePointerClick size={32} strokeWidth={1.5} className="opacity-80" /> : <PackagePlus size={32} strokeWidth={1.5} className="opacity-80" />}
                             </div>
                             <div className="space-y-1.5 max-w-xs mx-auto">
-                                <h3 className="text-lg font-semibold text-neutral-200">Grubunuzu oluşturmaya başlayın</h3>
+                                <h3 className="text-lg font-semibold text-neutral-200">Şablonunuzu oluşturmaya başlayın</h3>
                                 <p className="text-xs leading-relaxed text-neutral-500">
                                     {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Bileşen panelini açın."}
                                 </p>
@@ -213,14 +213,14 @@ function GroupEditorContent({ isNewGroup }) {
                 </DragOverlay>
 
                 <ApprovalOverlay open={deleteOverlayOpen} preset="delete-group" context={{ isPending: isDeletePending }}
-                    onApprove={() => deleteGroup(state.id, { onSuccess: () => router.push("/admin/component-groups"), onError: () => setDeleteOverlayOpen(false) })}
+                    onApprove={() => deleteGroup(state.id, { onSuccess: () => router.push("/admin/templates"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
                 />
 
                 <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
                     resource="component-group" resourceId={state.id}
-                    title="Grubu Paylaş"
-                    description="Bu bağlantıyla paylaşılan kişi grubu görüntüleyip kendi gruplarına ekleyebilir. Bağlantı 48 saat geçerlidir."
+                    title="Şablonu Paylaş"
+                    description="Bu bağlantıyla paylaşılan kişi şablonu görüntüleyip kendi şablonlarına ekleyebilir. Bağlantı 48 saat geçerlidir."
                     shareMutation={shareMutation}
                 />
             </div>
@@ -232,7 +232,7 @@ export default function GroupEditor({ initialGroup = null }) {
     const normalizedInitialData = initialGroup ? {
         id: initialGroup.id,
         schema: initialGroup.schema || [],
-        title: initialGroup.title || "Yeni Grup",
+        title: initialGroup.title || "Yeni Şablon",
         description: initialGroup.description || "",
     } : null;
 

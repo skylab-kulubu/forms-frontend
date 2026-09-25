@@ -2,7 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, GripVertical, Layers, Plus, Rows3 } from "lucide-react";
+import { CheckCircle2, GripVertical, LayoutTemplate, Plus, Rows3 } from "lucide-react";
 import { COMPONENTS } from "@/app/components/form-registry";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import SearchPicker from "@/app/components/utils/SearchPicker";
@@ -41,14 +41,14 @@ function GroupPicker({ onGroupSelect }) {
 
     return (
         <div ref={ref} className="min-w-fit flex-1">
-            <PanelButton icon={Layers} chevron active={open} aria-expanded={open} onClick={() => setOpen((p) => !p)} className="w-full">
-                Hazır grup ekle
+            <PanelButton icon={LayoutTemplate} chevron active={open} aria-expanded={open} onClick={() => setOpen((p) => !p)} className="w-full">
+                Şablon ekle
             </PanelButton>
 
             <AnimatePresence>
                 {open && (
                     <SearchPicker searchValue={search} onSearchChange={setSearch} autoFocus items={groups} itemsPerPage={4}
-                        getItemId={(g) => g.id} onSelect={handleSelect} footerText="Gruptaki tüm bileşenler eklenir."
+                        getItemId={(g) => g.id} onSelect={handleSelect} footerText="Şablondaki tüm bileşenler eklenir."
                         renderItem={(group, { onSelect }) => {
                             const count = Array.isArray(group.schema) ? group.schema.length : 0;
                             const isJustAdded = justAdded === group.id;
@@ -56,7 +56,7 @@ function GroupPicker({ onGroupSelect }) {
                                 <button type="button" onClick={onSelect}
                                     className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${isJustAdded ? "bg-skylab-500/10" : ""}`}
                                 >
-                                    <Layers size={13} className={isJustAdded ? "text-skylab-300" : "text-neutral-500"} />
+                                    <LayoutTemplate size={13} className={isJustAdded ? "text-skylab-300" : "text-neutral-500"} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs font-medium text-neutral-200 truncate">{group.title}</p>
                                     </div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus, Check, Component, Layers, SlidersHorizontal, User, Mail, Phone,
+  Plus, Check, Component, LayoutTemplate, SlidersHorizontal, User, Mail, Phone,
   GraduationCap, BookOpen, Hash, Languages, Code2, Github, Linkedin, Globe,
 } from "lucide-react";
 import { useShouldAnimate } from "../utils";
@@ -82,7 +82,7 @@ export default function ComponentGroupsDemo() {
                 )}
                 <div className="flex items-center gap-2 pl-1">
                   <div className={`h-5 w-5 grid place-items-center rounded ${isActive ? "bg-skylab-700/15" : "bg-white/3"}`}>
-                    <Layers size={10} className={isActive ? "text-skylab-500" : "text-neutral-500"} strokeWidth={1.8} />
+                    <LayoutTemplate size={10} className={isActive ? "text-skylab-500" : "text-neutral-500"} strokeWidth={1.8} />
                   </div>
                   <span className={`text-[12px] flex-1 truncate ${isActive ? "text-neutral-100" : "text-neutral-300"}`}>{gg.name}</span>
                 </div>

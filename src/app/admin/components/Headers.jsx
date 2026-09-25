@@ -3,7 +3,7 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChartColumn, ChevronLeft, Download, Layers, List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { ChartColumn, ChevronLeft, Download, LayoutTemplate, List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import Tip from "./utils/Tip";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
@@ -191,7 +191,7 @@ export function DashboardHeader({ onRefresh }) {
     <HeaderSlotPortal>
       <div className="hidden items-center gap-1.5 lg:flex">
         <ActionButton icon={RefreshCw} onClick={onRefresh} size="sm" tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Layers} href="/admin/component-groups" size="sm" tone="header" title="Bileşen grupları" aria-label="Bileşen grupları" />
+        <ActionButton icon={LayoutTemplate} href="/admin/templates" size="sm" tone="header" title="Şablonlar" aria-label="Şablonlar" />
         <ActionButton icon={Plus} variant="primary" href="/admin/forms/new-form" size="sm" tone="header" title="Yeni form ekle" aria-label="Yeni form ekle" />
       </div>
     </HeaderSlotPortal>
@@ -203,10 +203,10 @@ function GroupsToolbar({ compact = false, searchValue = "", onSearchChange, onRe
 
   return (
     <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
-      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Grup ara" />
+      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Şablon ara" />
       <div className="flex items-center gap-1.5 shrink-0">
         <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni grup ekle" aria-label="Yeni grup ekle" />
+        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni şablon ekle" aria-label="Yeni şablon ekle" />
       </div>
     </div>
   );

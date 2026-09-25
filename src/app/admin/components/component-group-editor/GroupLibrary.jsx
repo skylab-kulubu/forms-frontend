@@ -40,8 +40,8 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect }) {
                                 <LibraryComponents layout={layout} onSelect={onLibrarySelect} />
                             ) : (
                                 <div className="flex flex-col gap-4 p-4 text-sm text-neutral-200">
-                                    <SectionHeader title="Grup açıklaması" description="Gruplar listesinde grup adının altında görünür." />
-                                    <PanelTextarea rows={6} value={state.description} aria-label="Grup açıklaması" placeholder="Bu grup hakkında kısa bir açıklama..."
+                                    <SectionHeader title="Şablon açıklaması" description="Şablonlar listesinde şablon adının altında görünür." />
+                                    <PanelTextarea rows={6} value={state.description} aria-label="Şablon açıklaması" placeholder="Bu şablon hakkında kısa bir açıklama..."
                                         onChange={(e) => dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })}
                                     />
                                 </div>

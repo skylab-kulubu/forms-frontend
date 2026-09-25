@@ -14,7 +14,7 @@
 
 <br/>
 
-> Create, manage, and analyze forms with advanced features like conditional logic, drag-and-drop editing, reusable component groups, and detailed response analytics.
+> Create, manage, and analyze forms with advanced features like conditional logic, drag-and-drop editing, reusable templates, and detailed response analytics.
 
 <div align="center">
   <br/>
@@ -37,17 +37,17 @@
 - **Undo system** - Debounced history tracking with one-click undo
 - **Session auto-fill** - Name and email fields are automatically populated from the user's session
 
-### Reusable Component Groups
+### Reusable Templates
 - Save commonly used field sets as **reusable templates**
-- Import component groups into any form
-- Manage and update groups from a dedicated panel
-- **Group editor history** - Debounced undo/redo stack mirroring the form editor
+- Import templates into any form
+- Manage and update templates from a dedicated panel
+- **Template editor history** - Debounced undo/redo stack mirroring the form editor
 
 ### Sharing & Collaboration
-- **Component group sharing** - Generate an expiring token link for any group; recipients land on a public preview page and can clone the group into their own library with one click
+- **Template sharing** - Generate an expiring token link for any template; recipients land on a public preview page and can clone the template into their own library with one click
 - **Response sharing** - Send a tokenized, read-only response preview to people outside the admin panel; revoke the active token at any time
 - **Form link copying** - Share the public form URL straight from the editor with a single action
-- **Bulk collaborator adding** - Add multiple collaborators to a form or group at once instead of one by one
+- **Bulk collaborator adding** - Add multiple collaborators to a form or template at once instead of one by one
 - All share links are gated by an auth landing page so unauthenticated visitors are prompted to sign in before viewing
 
 ### Response Drafts
@@ -63,7 +63,7 @@
 - **File preview** for uploaded attachments
 
 ### Admin Dashboard
-- At-a-glance statistics: total forms, responses, and component groups
+- At-a-glance statistics: total forms, responses, and templates
 - **Weekly trend charts** for form creation and response activity
 - Recent forms with quick-action shortcuts
 - Time-of-day greeting for a personal touch
@@ -78,7 +78,7 @@
 ### Landing Page
 - Rebuilt from scratch with a unified design language and an animated background layer
 - **Hero** - Side-by-side YAML schema preview and the rendered form it produces, with a magnetic background logo that tracks the cursor
-- **Features** - Six interactive feature rows, each paired with a live in-page demo (form builder, conditional logic, response management, component groups, dashboard, drafts)
+- **Features** - Six interactive feature rows, each paired with a live in-page demo (form builder, conditional logic, response management, templates, dashboard, drafts)
 - **Flow** - Scroll-driven five-step pipeline showing the admin / respondent journey
 - Subtle spotlight, scroll-reveal, and reduced-motion-aware Framer Motion animations throughout
 
@@ -114,7 +114,7 @@
 | ---------------------------------- | ------------------------------------------------- |
 | `/`                                | Landing page                                      |
 | `/[id]`                            | Fill out a published form                         |
-| `/component-groups/[groupId]`      | Tokenized component group preview (clone-to-library) |
+| `/templates/[groupId]`             | Tokenized template preview (clone-to-library)     |
 | `/responses/[responseId]`          | Tokenized read-only response preview              |
 
 ### Admin (Protected)
@@ -128,9 +128,9 @@
 | `/admin/forms/[formId]/edit`                 | Form editor               |
 | `/admin/forms/[formId]/responses`            | Response list             |
 | `/admin/forms/[formId]/responses/[responseId]` | Response detail        |
-| `/admin/component-groups`                    | Component groups list     |
-| `/admin/component-groups/new-group`          | Create component group    |
-| `/admin/component-groups/[groupId]`          | Group detail              |
+| `/admin/templates`                           | Templates list            |
+| `/admin/templates/new-template`              | Create template           |
+| `/admin/templates/[groupId]`                 | Template detail           |
 | `/admin/how-to-use`                          | Documentation             |
 
 ---

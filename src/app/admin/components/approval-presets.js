@@ -60,13 +60,13 @@ export const APPROVAL_PRESETS = {
         delaySeconds: 1,
         requiredPhrase: "Kabul ediyorum",
         icon: Shredder,
-        title: "Bu bileşen grubunu kalıcı olarak sil",
+        title: "Bu şablonu kalıcı olarak sil",
         highlights: () => [
-            "Bu gruba ait tüm bileşenler kalıcı olarak silinecek.",
-            "Bu grubu kullanan formlar etkilenebilir.",
+            "Bu şablona ait tüm bileşenler kalıcı olarak silinecek.",
+            "Bu şablonu kullanan formlar etkilenebilir.",
             "Bu işlem geri alınamaz.",
         ],
-        approveLabel: (ctx) => ctx.isPending ? "Siliniyor..." : "Grubu sil",
+        approveLabel: (ctx) => ctx.isPending ? "Siliniyor..." : "Şablonu sil",
         rejectLabel: () => "İptal",
     },
 

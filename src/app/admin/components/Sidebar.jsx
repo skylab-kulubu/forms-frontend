@@ -8,7 +8,7 @@ import { logout } from "@/lib/authActions";
 import { useFormContext, useWorkflowContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, Layers, Plus, Database, ChartColumn, Workflow } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ClubSwitcher from "./ClubSwitcher";
 
@@ -18,8 +18,8 @@ const breadcrumbLabels = {
   "/admin/forms/all": "Veritabanı",
   "/admin/forms/new-form": "Yeni Form",
   "/admin/how-to-use": "Nasıl Kullanılır",
-  "/admin/component-groups": "Bileşen Grupları",
-  "/admin/component-groups/new-group": "Yeni Grup",
+  "/admin/templates": "Şablonlar",
+  "/admin/templates/new-template": "Yeni Şablon",
   "/admin/workflows": "Akışlar",
   "/admin/workflows/new-workflow": "Yeni Akış",
 };
@@ -229,11 +229,11 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
             ...(activeWorkflowItem ? [activeWorkflowItem] : []),
           ]}
         />
-        <NavGroup icon={Layers} label="Gruplar"
+        <NavGroup icon={LayoutTemplate} label="Şablonlar"
           pathname={pathname} onItemClick={onItemClick}
           items={[
-            { href: "/admin/component-groups/new-group", icon: Plus, label: "Yeni Grup" },
-            { href: "/admin/component-groups", icon: List, label: "Grupları Görüntüle" },
+            { href: "/admin/templates/new-template", icon: Plus, label: "Yeni Şablon" },
+            { href: "/admin/templates", icon: List, label: "Şablonları Görüntüle" },
           ]}
         />
       </div>
