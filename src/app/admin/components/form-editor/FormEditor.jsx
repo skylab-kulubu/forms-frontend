@@ -405,11 +405,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const handleGroupSelect = (group) => {
         const groupSchema = Array.isArray(group?.schema) ? group.schema : [];
         if (groupSchema.length === 0) return;
-        const newFields = groupSchema.map((field) => ({
-            ...field,
-            id: genFieldId(),
-            props: structuredClone(field.props ?? REGISTRY[field.type]?.defaults ?? {}),
-        }));
+        const newFields = cloneSchema(
+            groupSchema.map((field) => ({ ...field, props: field.props ?? REGISTRY[field.type]?.defaults })),
+            genFieldId,
+        );
         dispatch({ type: "SET_SCHEMA", payload: [...state.schema, ...newFields] });
     };
 

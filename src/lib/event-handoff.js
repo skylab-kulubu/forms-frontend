@@ -13,11 +13,15 @@ export function nextFieldId() {
 
 export function cloneSchema(schema, nextId = nextFieldId) {
   if (!Array.isArray(schema)) return [];
-  return schema.map((field) => ({
-    ...field,
-    id: nextId(),
-    props: structuredClone(field.props ?? {}),
-  }));
+  const ids = new Map(schema.map((field) => [field.id, nextId()]));
+  return schema.map((field) => {
+    const clone = { ...field, id: ids.get(field.id), props: structuredClone(field.props ?? {}) };
+    const target = field.condition?.fieldId;
+    if (target && ids.has(target)) {
+      clone.condition = { ...field.condition, fieldId: ids.get(target) };
+    }
+    return clone;
+  });
 }
 
 function fold(value) {
