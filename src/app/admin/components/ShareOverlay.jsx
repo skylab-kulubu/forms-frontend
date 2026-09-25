@@ -2,10 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CircleAlert, Copy, Link2, Loader2, RotateCcw, Share2, Timer, Trash2, X } from "lucide-react";
-import { urlsApi } from "@/lib/core-urls";
-import { publicFormUrl } from "@/lib/return-to";
-import { existingShortFor, publicShortUrl, shortenFormUrl } from "@/lib/short-url";
+import { Check, CircleAlert, Copy, Loader2, RotateCcw, Share2, Timer, Trash2, X } from "lucide-react";
 
 const buildShareUrl = (resource, id, token) => {
   if (typeof window === "undefined") return "";
@@ -16,8 +13,6 @@ const buildShareUrl = (resource, id, token) => {
       return token ? `${origin}/templates/${id}?token=${encodeURIComponent(token)}` : "";
     case "response":
       return token ? `${origin}/responses/${id}?token=${encodeURIComponent(token)}` : "";
-    case "form":
-      return publicFormUrl(id);
     default:
       return "";
   }
@@ -45,12 +40,6 @@ const getRemainingLabel = (expiresAt) => {
     return remHours === 0 ? `${days} gün kaldı` : `${days}g ${remHours}s kaldı`;
   }
   return `${hours}s ${minutes}dk kaldı`;
-};
-
-const copyErrorMessage = (error) => {
-  if (error?.status === 401) return "Oturumun süresi doldu. Yeniden giriş yap.";
-  if (error?.status === 403) return "Kısa link için core url:create yetkisi gerekir.";
-  return error?.message || "Kısa link oluşturulamadı.";
 };
 
 function CopyField({ value, copyState, onCopy, label = "Bağlantıyı kopyala" }) {
@@ -88,45 +77,38 @@ export default function ShareOverlay({
   const revokeMutate = revokeMutation?.mutate;
   const isRevoking = revokeMutation?.isPending ?? false;
   const revokeReset = revokeMutation?.reset;
-  const canShorten = isDirect && resource === "form";
 
   const [copyState, setCopyState] = useState("idle");
-  const [shortCopyState, setShortCopyState] = useState("idle");
   const [revoked, setRevoked] = useState(false);
-  const [shortRow, setShortRow] = useState(null);
-  const [shortPending, setShortPending] = useState(false);
-  const [shortError, setShortError] = useState(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  const [, setTick] = useState(0);
   const copyTimerRef = useRef(null);
-  const shortCopyTimerRef = useRef(null);
   const hasTriggeredRef = useRef(false);
+
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (!open) {
+      setCopyState("idle");
+      setRevoked(false);
+    }
+  }
 
   const tokenData = data?.data ?? null;
   const token = revoked ? null : tokenData?.token ?? null;
   const expiresAt = revoked ? null : tokenData?.expiresAt ?? null;
 
   const shareUrl = useMemo(() => buildShareUrl(resource, resourceId, token), [resource, resourceId, token]);
-  const shortUrl = shortRow?.alias ? publicShortUrl(shortRow.alias) : "";
   const expiresLabel = formatExpiresAt(expiresAt);
-  const [remaining, setRemaining] = useState(() => getRemainingLabel(expiresAt));
+  const remaining = getRemainingLabel(expiresAt);
 
   useEffect(() => {
     if (!open) {
       hasTriggeredRef.current = false;
       reset?.();
       revokeReset?.();
-      setCopyState("idle");
-      setShortCopyState("idle");
-      setRevoked(false);
-      setShortRow(null);
-      setShortPending(false);
-      setShortError(null);
       if (copyTimerRef.current) {
         clearTimeout(copyTimerRef.current);
         copyTimerRef.current = null;
-      }
-      if (shortCopyTimerRef.current) {
-        clearTimeout(shortCopyTimerRef.current);
-        shortCopyTimerRef.current = null;
       }
       return;
     }
@@ -139,33 +121,13 @@ export default function ShareOverlay({
   }, [open, resourceId, mutate, reset, revokeReset, isDirect]);
 
   useEffect(() => {
-    if (!open || !canShorten || !shareUrl) return;
-    let cancelled = false;
-    urlsApi.listMine().then((rows) => {
-      if (cancelled) return;
-      const row = existingShortFor(shareUrl, "", rows);
-      if (row) setShortRow(row);
-    }).catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [open, canShorten, shareUrl]);
-
-  useEffect(() => {
-    if (!expiresAt) {
-      setRemaining(null);
-      return;
-    }
-    setRemaining(getRemainingLabel(expiresAt));
-    const interval = setInterval(() => {
-      setRemaining(getRemainingLabel(expiresAt));
-    }, 60_000);
+    if (!expiresAt) return;
+    const interval = setInterval(() => setTick((tick) => tick + 1), 60_000);
     return () => clearInterval(interval);
   }, [expiresAt]);
 
   useEffect(() => () => {
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    if (shortCopyTimerRef.current) clearTimeout(shortCopyTimerRef.current);
   }, []);
 
   const copyValue = async (value, setState, timerRef) => {
@@ -186,22 +148,6 @@ export default function ShareOverlay({
   };
 
   const handleCopy = () => copyValue(shareUrl, setCopyState, copyTimerRef);
-  const handleShortCopy = () => copyValue(shortUrl, setShortCopyState, shortCopyTimerRef);
-
-  const handleShorten = async () => {
-    if (!shareUrl || shortPending || shortRow) return;
-    setShortPending(true);
-    setShortError(null);
-    try {
-      const row = await shortenFormUrl(urlsApi, shareUrl);
-      setShortRow(row);
-      await copyValue(publicShortUrl(row.alias), setShortCopyState, shortCopyTimerRef);
-    } catch (err) {
-      setShortError(copyErrorMessage(err));
-    } finally {
-      setShortPending(false);
-    }
-  };
 
   const handleRetry = () => {
     if (!resourceId || isPending || isDirect) return;
@@ -279,24 +225,6 @@ export default function ShareOverlay({
                 ) : shareUrl ? (
                   <motion.div key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
                     <CopyField value={shareUrl} copyState={copyState} onCopy={handleCopy} />
-
-                    {canShorten && (
-                      <div className="space-y-2">
-                        {shortUrl ? (
-                          <CopyField value={shortUrl} copyState={shortCopyState} onCopy={handleShortCopy} label="Kısa bağlantıyı kopyala" />
-                        ) : (
-                          <button type="button" onClick={handleShorten} disabled={shortPending}
-                            className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-neutral-200 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {shortPending ? <Loader2 size={13} className="animate-spin" /> : <Link2 size={13} />}
-                            <span>{shortPending ? "Kısaltılıyor..." : "Bu linki kısalt"}</span>
-                          </button>
-                        )}
-                        {shortError && (
-                          <p className="text-2xs text-red-300">{shortError}</p>
-                        )}
-                      </div>
-                    )}
 
                     {(expiresAt || remaining) && (
                       <div className="flex items-center justify-between gap-2 text-2xs text-neutral-500">
