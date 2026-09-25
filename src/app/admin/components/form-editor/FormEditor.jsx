@@ -30,7 +30,7 @@ import {
     identityKeyOf,
 } from "@/lib/event-handoff";
 import ApprovalOverlay from "../ApprovalOverlay";
-import ShareOverlay from "../ShareOverlay";
+import FormShareDialog from "../share/FormShareDialog";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 import { FormPreview } from "./components/FormPreview";
 import {
@@ -538,10 +538,9 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
 
                 <FormPreview open={previewOpen} onClose={() => setPreviewOpen(false)} />
 
-                <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
-                    resource="form" resourceId={state.id}
-                    title="Formu Paylaş"
-                    description="Bu bağlantıyla form herkese açık olarak doldurulabilir."
+                <FormShareDialog open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
+                    formId={state.id} formTitle={state.title} formStatus={state.status}
+                    allowAnonymous={state.allowAnonymousResponses} canEdit={Number(state.userRole) >= 2}
                 />
             </div>
         </DndContext>
