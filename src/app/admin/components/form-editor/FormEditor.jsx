@@ -8,7 +8,7 @@ import { MousePointerClick, PackagePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import { useFormContext } from "../../providers";
-import { FormEditorProvider, useFormEditor } from "./FormEditorContext";
+import { FormEditorProvider, hasDraftChanges, useFormEditor } from "./FormEditorContext";
 import { useFormDnD } from "./hooks/useFormDnD";
 import { GhostComponent, Canvas, CanvasItem, DropSlot, InsertSlot } from "./components/FormEditorComponents";
 import { genFieldId } from "./fieldId";
@@ -17,7 +17,6 @@ import { LibraryTrigger } from "./components/LibraryTrigger";
 import { EditorHeaderActions, EventReturnBar, HeaderStatusPill } from "./components/EditorHeaderActions";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
-import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
 import { request } from "@/lib/apiClient";
 import {
     FORM_STATUS_OPEN,
@@ -100,12 +99,12 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const { mutate: saveForm, isPending, isSuccess, isError, error, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
 
-    const { cancel: cancelDraftAutoSave, syncStatus: draftSyncStatus, draftSavedAt } = useDraftAutoSave(isNewForm ? null : state.id, state);
+    const { hasServerDraft, syncStatus: draftSyncStatus, draftSavedAt } = useDraftAutoSave(isNewForm ? null : state.id, state, Boolean(draft));
     const [publishedFlash, setPublishedFlash] = useState(false);
-    const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
+    const [isDiscardingDraft, setIsDiscardingDraft] = useState(false);
     const [initialDraft] = useState(draft);
-    const [hasDraft, setHasDraft] = useState(!!draft);
     const [draftNotice, setDraftNotice] = useState(!!draft);
+    const hasUnsavedDraft = hasDraftChanges(state);
 
     const rawReturnTo = useSyncExternalStore(
         emptySubscribe,
@@ -143,10 +142,9 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
 
     useEffect(() => {
         if (!initialDraft) return;
-        dispatch({ type: "LOAD_DRAFT", payload: initialDraft });
         const timer = setTimeout(() => setDraftNotice(false), 4000);
         return () => clearTimeout(timer);
-    }, [initialDraft, dispatch]);
+    }, [initialDraft]);
 
     useEffect(() => {
         if (!isNewForm) return;
@@ -293,6 +291,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const isLockedDrag = dragSource === "canvas" && lockedById.has(activeDragItem?.data?.current?.id);
 
     const handleSave = () => {
+        const savedState = state;
         const payload = {
             Id: state.id || null,
             Title: state.title,
@@ -315,10 +314,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             isUpdate: !isNewForm
         }, {
             onSuccess: (data) => {
-                cancelDraftAutoSave();
-                dispatch({ type: "MARK_SAVED" });
+                dispatch({ type: "MARK_SAVED", payload: savedState });
                 setLastSavedAt(new Date());
                 setPublishedFlash(true);
+                setDraftNotice(false);
                 const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
                 const raw =
                     typeof window === "undefined"
@@ -332,13 +331,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                     if (nextId) {
                         router.push(editPathWithReturnTo(nextId, stored));
                     }
-                    return;
-                }
-
-                if (state.id) {
-                    deleteDraft(state.id, {
-                        onSuccess: () => { setHasDraft(false); setDraftNotice(false); },
-                    });
                 }
             },
         });
@@ -347,20 +339,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const handleUndo = () => dispatch({ type: "UNDO" });
     const canUndo = state._history.length > 0;
 
-    const handleDiscardDraft = () => {
-        if (!state.id) return;
-        deleteDraft(state.id, {
-            onSuccess: async () => {
-                setHasDraft(false);
-                setDraftNotice(false);
-                if (!onRefresh) return;
-                try {
-                    const result = await onRefresh();
-                    const refreshedForm = result?.data?.data ?? result?.data;
-                    if (refreshedForm) dispatch({ type: "LOAD_FORM", payload: refreshedForm });
-                } catch (e) { console.error(e); }
-            },
-        });
+    const handleDiscardDraft = async () => {
+        if (!state.id || !onRefresh) return;
+        setIsDiscardingDraft(true);
+        setDraftNotice(false);
+        try {
+            const result = await onRefresh();
+            const refreshedForm = result?.data?.data ?? result?.data;
+            if (refreshedForm) dispatch({ type: "LOAD_FORM", payload: refreshedForm });
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsDiscardingDraft(false);
+        }
     };
 
     const updateField = (id, updates) => {
@@ -523,7 +514,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 onPreview={() => setPreviewOpen(true)}
                 onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
                 isShareDisabled={isNewForm}
-                hasDraft={hasDraft}
+                hasDraft={hasServerDraft && hasUnsavedDraft}
                 onDiscardDraft={handleDiscardDraft}
                 isDiscardingDraft={isDiscardingDraft}
                 onUndo={handleUndo}
@@ -535,7 +526,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 isPending={isPending}
                 isError={isError}
                 error={error}
-                draftNotice={draftNotice}
+                draftNotice={draftNotice && hasUnsavedDraft}
                 onDraftNoticeClose={() => setDraftNotice(false)}
             />
             <div ref={editorRef} className="relative">
@@ -594,7 +585,7 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
     } : null;
 
     return (
-        <FormEditorProvider initialData={normalizedInitialData}>
+        <FormEditorProvider initialData={normalizedInitialData} initialDraft={draft}>
             <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} handoff={handoff} formEvent={initialForm?.event ?? null} />
         </FormEditorProvider>
     );

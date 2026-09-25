@@ -166,7 +166,7 @@ function stampIdentity(field, key) {
   props.inputType = spec.inputType;
   if (!props.question) props.question = spec.question;
   const next = { ...field, props };
-  if (next.condition) {
+  if (next.condition && Object.keys(next.condition).length > 0) {
     const { condition, ...rest } = next;
     return rest;
   }

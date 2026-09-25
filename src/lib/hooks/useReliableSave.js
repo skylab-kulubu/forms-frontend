@@ -24,7 +24,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     const job = pendingRef.current;
     if (!job) return;
     runningRef.current = true;
-    onStatusChangeRef.current?.("saving");
+    onStatusChangeRef.current?.("saving", job.data);
 
     const release = (rerun) => {
       runningRef.current = false;
@@ -35,7 +35,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
       .then(() => {
         retriesRef.current = 0;
         job.onSaved?.();
-        onStatusChangeRef.current?.("saved");
+        onStatusChangeRef.current?.("saved", job.data);
         const superseded = pendingRef.current !== job;
         if (!superseded) pendingRef.current = null;
         release(superseded);
@@ -49,7 +49,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
           return;
         }
         retriesRef.current = 0;
-        onStatusChangeRef.current?.("failed");
+        onStatusChangeRef.current?.("failed", job.data);
         const superseded = pendingRef.current !== job;
         if (!superseded) pendingRef.current = null;
         release(superseded);
