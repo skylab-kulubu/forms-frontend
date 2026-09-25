@@ -36,7 +36,7 @@ function formatSavedAt(date) {
   return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function DraftPrompt({ savedAt, onDiscard, isDiscarding }) {
+function DraftPrompt({ savedAt, onDiscard }) {
   const formattedTime = savedAt ? new Date(savedAt).toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" }) : null;
 
   return (
@@ -50,10 +50,10 @@ function DraftPrompt({ savedAt, onDiscard, isDiscarding }) {
             <span className="text-neutral-600">&middot; {formattedTime}</span>
           )}
         </div>
-        <button type="button" onClick={onDiscard} disabled={isDiscarding}
-          className="shrink-0 rounded-lg border border-white/10 px-3 py-1 text-2xs font-medium text-neutral-500 transition-colors hover:text-neutral-200 hover:border-white/20 disabled:opacity-50"
+        <button type="button" onClick={onDiscard}
+          className="shrink-0 rounded-lg border border-white/10 px-3 py-1 text-2xs font-medium text-neutral-500 transition-colors hover:text-neutral-200 hover:border-white/20"
         >
-          {isDiscarding ? <Loader2 size={12} className="animate-spin" /> : "Sıfırla"}
+          Sıfırla
         </button>
       </div>
     </motion.div>
@@ -63,7 +63,7 @@ function DraftPrompt({ savedAt, onDiscard, isDiscarding }) {
 export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null }) {
   const {
     state, schema, visibleFields,
-    isAuthed, isDiscarding, isAnyFileUploading, isSubmitting, lastSavedAt,
+    isAuthed, isAnyFileUploading, isSubmitting, lastSavedAt,
     handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields,
   } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId });
 
@@ -168,7 +168,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
                 <AnimatePresence>
                   {draftPromptVisible && (
-                    <DraftPrompt savedAt={draft?.savedAt} onDiscard={handleDiscardDraft} isDiscarding={isDiscarding}/>
+                    <DraftPrompt savedAt={draft?.savedAt} onDiscard={handleDiscardDraft} />
                   )}
                 </AnimatePresence>
 
@@ -212,7 +212,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                               className={`relative ${isLast || isSeparator ? "" : "border-b border-white/5 pb-6"}`}
                             >
                               <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionCounter} value={formValues[field.id]}
-                                onChange={(e) => handleValueChange(field.id, e.target.value)} missing={isMissing}
+                                onChange={(e) => handleValueChange(field.id, e.target.value, e.isDefault)} missing={isMissing}
                                 disableAutoFill={Boolean(field.props?.identity || activeForm?.eventId)}
                                 onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
                               />

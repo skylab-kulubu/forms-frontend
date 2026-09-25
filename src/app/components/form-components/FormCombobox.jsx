@@ -220,7 +220,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
 
   useEffect(() => {
     if (autoValue != null && onChange && value !== autoValue) {
-      onChange({ target: { value: autoValue } });
+      onChange({ target: { value: autoValue }, isDefault: true });
     }
   }, [autoValue]);
 

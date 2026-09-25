@@ -34,8 +34,8 @@ const fetchResponseDraft = (formId) =>
 export const saveResponseDraft = (payload, { token, keepalive } = {}) =>
   request("/api/forms/responses/draft", { method: "POST", body: payload, token, keepalive });
 
-const deleteResponseDraft = (formId) =>
-  request(`/api/forms/responses/draft/${formId}`, { method: "DELETE" });
+export const deleteResponseDraft = (formId, { token, keepalive } = {}) =>
+  request(`/api/forms/responses/draft/${formId}`, { method: "DELETE", token, keepalive });
 
 export const useResponseDraftQuery = (formId, enabled = true) =>
   useQuery({
@@ -44,14 +44,5 @@ export const useResponseDraftQuery = (formId, enabled = true) =>
     enabled: !!formId && enabled,
     retry: false,
     staleTime: Infinity,
+    gcTime: 0,
   });
-
-export const useDeleteResponseDraftMutation = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteResponseDraft,
-    onSuccess: (_data, formId) => {
-      queryClient.removeQueries({ queryKey: ["response-draft", formId] });
-    },
-  });
-};

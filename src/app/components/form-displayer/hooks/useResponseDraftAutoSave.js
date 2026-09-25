@@ -1,59 +1,49 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { saveResponseDraft } from "@/lib/hooks/useDraft";
+import { deleteResponseDraft, saveResponseDraft } from "@/lib/hooks/useDraft";
 import { useReliableSave } from "@/lib/hooks/useReliableSave";
 
 const DEBOUNCE_MS = 1000;
 
-export function useResponseDraftAutoSave(formId, formValues, schema, startTimeRef, enabled) {
+export function useResponseDraftAutoSave(formId, answers, savedDraft, startTimeRef, enabled, onSynced) {
   const [lastSavedAt, setLastSavedAt] = useState(null);
 
   const { data: session } = useSession();
   const tokenRef = useRef(session?.accessToken);
-  tokenRef.current = session?.accessToken;
+  useEffect(() => {
+    tokenRef.current = session?.accessToken;
+  }, [session?.accessToken]);
+
+  const onSyncedRef = useRef(onSynced);
+  useEffect(() => {
+    onSyncedRef.current = onSynced;
+  }, [onSynced]);
 
   const { schedule, cancel } = useReliableSave({
     debounceMs: DEBOUNCE_MS,
-    save: (payload, opts) => saveResponseDraft(payload, { ...opts, token: tokenRef.current }),
+    save: (draft, opts) => {
+      const options = { ...opts, token: tokenRef.current };
+      return draft.responses.length
+        ? saveResponseDraft(draft, options)
+        : deleteResponseDraft(draft.formId, options);
+    },
   });
 
-  const baselineRef = useRef(JSON.stringify(formValues));
-  const formIdRef = useRef(formId);
+  const serialized = useMemo(() => JSON.stringify(answers), [answers]);
 
   useEffect(() => {
-    const serialized = JSON.stringify(formValues);
-
-    if (formIdRef.current !== formId) {
-      formIdRef.current = formId;
-      baselineRef.current = serialized;
+    if (!enabled || !formId || serialized === savedDraft) {
       cancel();
       return;
     }
 
-    if (!enabled || !formId) {
-      baselineRef.current = serialized;
-      cancel();
-      return;
-    }
-
-    if (serialized === baselineRef.current) return;
-
-    const responses = Object.entries(formValues).map(([id, value]) => {
-      const field = schema.find((f) => f.id === id);
-      return {
-        id,
-        type: field?.type || "",
-        question: field?.props?.question || "",
-        answer: value !== undefined && value !== null ? JSON.stringify(value) : "",
-      };
-    });
     const timeSpent = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
 
-    schedule({ formId, responses, timeSpent }, () => {
-      baselineRef.current = serialized;
-      setLastSavedAt(new Date());
+    schedule({ formId, responses: answers, timeSpent }, () => {
+      onSyncedRef.current?.(serialized);
+      setLastSavedAt(answers.length ? new Date() : null);
     });
-  }, [enabled, formId, formValues, schema, schedule, cancel]);
+  }, [enabled, formId, answers, serialized, savedDraft, startTimeRef, schedule, cancel]);
 
-  return { lastSavedAt };
+  return { lastSavedAt, cancel };
 }

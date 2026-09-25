@@ -99,7 +99,7 @@ export function DisplayFormShortText({ question, questionNumber, description, re
   useEffect(() => {
     const initial = autoFilled || autoDefault;
     if (initial && onChange && value !== initial) {
-      onChange({ target: { value: initial } });
+      onChange({ target: { value: initial }, isDefault: true });
       if (autoDefault) setWasAutoFilled(true);
     }
   }, [autoFilled, autoDefault]);

@@ -1,7 +1,6 @@
 import { useReducer, useRef, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useSubmitFormMutation, useDisplayFormQuery } from "@/lib/hooks/useForm";
-import { useDeleteResponseDraftMutation } from "@/lib/hooks/useDraft";
 import { useResponseDraftAutoSave } from "./useResponseDraftAutoSave";
 import { FORM_ACCESS_STATUS, WORKFLOW_STATE, getSubmitErrorState } from "../../FormStatusHandler";
 import { getVisibleFields } from "../components/conditionChecker";
@@ -18,6 +17,28 @@ function getSubmissionState(status) {
   }
 }
 
+function isBlankAnswer(value) {
+  if (value == null || value === false) return true;
+  if (typeof value === "string") return value.trim() === "";
+  if (Array.isArray(value)) return value.every(isBlankAnswer);
+  if (typeof value === "object") return Object.values(value).every(isBlankAnswer);
+  return false;
+}
+
+function draftAnswers(values, defaults, schema) {
+  return schema
+    .filter((field) => {
+      const value = values[field.id];
+      return !isBlankAnswer(value) && JSON.stringify(value) !== JSON.stringify(defaults[field.id]);
+    })
+    .map((field) => ({
+      id: field.id,
+      type: field.type,
+      question: field.props?.question || "",
+      answer: JSON.stringify(values[field.id]),
+    }));
+}
+
 const initialState = {
   form: null,
   stage: 0,
@@ -26,6 +47,8 @@ const initialState = {
   nextFormId: null,
   nextStage: null,
   values: {},
+  defaults: {},
+  savedDraft: "[]",
   submissionState: null,
   submissionStatus: null,
   submissionMessage: null,
@@ -39,6 +62,13 @@ function reducer(state, action) {
   switch (action.type) {
     case "SET_VALUE":
       return { ...state, values: { ...state.values, [action.fieldId]: action.value }, errorMessage: null, draftPromptVisible: false };
+
+    case "SET_DEFAULT":
+      return {
+        ...state,
+        values: { ...state.values, [action.fieldId]: action.value },
+        defaults: { ...state.defaults, [action.fieldId]: action.value },
+      };
 
     case "SET_UPLOAD_STATE":
       return { ...state, uploadingFields: { ...state.uploadingFields, [action.fieldId]: action.isUploading } };
@@ -80,13 +110,21 @@ function reducer(state, action) {
       return { ...initialState, form: action.form, stage: action.stage ?? state.nextStage ?? state.stage + 1, isWorkflow: true, startFormId: state.startFormId };
 
     case "DISCARD_DRAFT":
-      return { ...state, values: {}, draftPromptVisible: false };
+      return { ...state, values: { ...state.defaults }, draftPromptVisible: false };
 
-    case "APPLY_DRAFT":
-      return { ...state, values: action.values, draftPromptVisible: true };
+    case "APPLY_DRAFT": {
+      const values = { ...state.values, ...action.values };
+      const answers = draftAnswers(values, state.defaults, migrateSchema(state.form?.schema));
+      return {
+        ...state,
+        values,
+        savedDraft: answers.length ? JSON.stringify(answers) : null,
+        draftPromptVisible: answers.length > 0,
+      };
+    }
 
-    case "HIDE_DRAFT_PROMPT":
-      return { ...state, draftPromptVisible: false };
+    case "DRAFT_SYNCED":
+      return { ...state, savedDraft: action.draft };
 
     default:
       return state;
@@ -120,7 +158,6 @@ export function useFormDisplayer(form, draft, workflow = {}) {
   const isAuthed = status === "authenticated";
 
   const submitMutation = useSubmitFormMutation();
-  const { mutate: deleteDraft, isPending: isDiscarding } = useDeleteResponseDraftMutation();
   const { data: nextFormData, error: nextFormError } = useDisplayFormQuery(state.nextFormId);
 
   const draftAppliedRef = useRef(false);
@@ -161,18 +198,21 @@ export function useFormDisplayer(form, draft, workflow = {}) {
   }, [draft]);
 
   const schema = useMemo(() => migrateSchema(state.form?.schema), [state.form?.schema]);
+  const answers = useMemo(() => draftAnswers(state.values, state.defaults, schema), [state.values, state.defaults, schema]);
+  const handleDraftSynced = useCallback((savedDraft) => dispatch({ type: "DRAFT_SYNCED", draft: savedDraft }), []);
 
-  const { lastSavedAt } = useResponseDraftAutoSave(
-    state.form?.id, state.values, schema, startTimeRef,
-    isAuthed && !state.draftPromptVisible && !state.submissionState && !state.nextFormId
+  const { lastSavedAt, cancel: cancelDraftSave } = useResponseDraftAutoSave(
+    state.form?.id, answers, state.savedDraft, startTimeRef,
+    isAuthed && !state.submissionState && !state.nextFormId && !submitMutation.isPending,
+    handleDraftSynced
   );
 
   const visibleFields = useMemo(() => getVisibleFields(schema, state.values), [schema, state.values]);
 
   const isAnyFileUploading = Object.values(state.uploadingFields).some(Boolean);
 
-  const handleValueChange = (fieldId, value) => {
-    dispatch({ type: "SET_VALUE", fieldId, value });
+  const handleValueChange = (fieldId, value, isDefault = false) => {
+    dispatch({ type: isDefault ? "SET_DEFAULT" : "SET_VALUE", fieldId, value });
   };
 
   const handleUploadStateChange = (fieldId, isUploading) => {
@@ -182,13 +222,10 @@ export function useFormDisplayer(form, draft, workflow = {}) {
   const handleDiscardDraft = useCallback(() => {
     dispatch({ type: "DISCARD_DRAFT" });
     startTimeRef.current = Date.now();
-    deleteDraft(state.form?.id, {
-      onSuccess: () => dispatch({ type: "HIDE_DRAFT_PROMPT" }),
-      onError: () => dispatch({ type: "HIDE_DRAFT_PROMPT" }),
-    });
-  }, [state.form?.id, deleteDraft]);
+  }, []);
 
   const handleSubmit = (formattedResponses) => {
+    cancelDraftSave();
     const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
     const payload = { formId: state.form?.id, responses: formattedResponses, timeSpent: timeSpentInSeconds };
 
@@ -222,7 +259,7 @@ export function useFormDisplayer(form, draft, workflow = {}) {
     setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 2000);
   };
 
-  return { state, dispatch, schema, visibleFields, isAuthed, isDiscarding, isAnyFileUploading, isSubmitting: submitMutation.isPending || Boolean(state.nextFormId),
+  return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || Boolean(state.nextFormId),
     lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields
   };
 }

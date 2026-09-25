@@ -65,7 +65,7 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
 
     useEffect(() => {
         if (value === undefined && onChange) {
-            onChange({ target: { value: false } });
+            onChange({ target: { value: false }, isDefault: true });
         }
     }, []);
 
