@@ -120,14 +120,16 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
     setInternalFile(file);
 
     try {
-      const response = await uploadWithProgress("/api/media", file, (percent) => {
+      const response = await uploadWithProgress("/v1/media", file, (percent) => {
         setUploadProgress(percent);
       });
 
-      const uploadedId = response?.data?.id;
+      // Core returns the created media object itself, not wrapped in `data`.
+      const uploadedId = response?.id;
+      if (!uploadedId) throw new Error("Yükleme yanıtında medya kimliği yok");
 
       if (onChange) {
-        onChange({ target: { value: uploadedId.toString() } });
+        onChange({ target: { value: String(uploadedId) } });
       }
     } catch (err) {
       setError("Dosya yüklenirken hata oluştu.");
