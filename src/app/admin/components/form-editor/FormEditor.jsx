@@ -15,7 +15,6 @@ import { genFieldId } from "./fieldId";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
 import { EditorHeaderActions, EventReturnBar, HeaderStatusPill } from "./components/EditorHeaderActions";
-import { WorkflowMembershipChip } from "./components/WorkflowMembership";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
 import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
@@ -469,7 +468,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             <Canvas dragSource={dragSource} schemaTitle={state.title}
                 setSchemaTitle={(val) => dispatch({ type: "SET_TITLE", payload: val })}
                 span={isLgUp ? 8 : 11}
-                toolbar={workflow ? <WorkflowMembershipChip workflow={workflow} /> : null}
             >
                 {state.schema.length === 0 ? (
                     <div className="grid h-full place-items-center">

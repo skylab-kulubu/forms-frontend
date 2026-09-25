@@ -28,7 +28,9 @@ const saveFormDraft = (formId, data, { token, keepalive } = {}) =>
 export function useDraftAutoSave(formId, state) {
   const { data: session } = useSession();
   const tokenRef = useRef(session?.accessToken);
-  tokenRef.current = session?.accessToken;
+  useEffect(() => {
+    tokenRef.current = session?.accessToken;
+  }, [session?.accessToken]);
 
   const [syncStatus, setSyncStatus] = useState("idle");
   const [draftSavedAt, setDraftSavedAt] = useState(null);

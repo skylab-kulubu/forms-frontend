@@ -50,7 +50,7 @@ export function LibrarySettingsEditors() {
     const currentUserRole = Number(userRole || 3);
     const canManageRoles = currentUserRole === 3;
     const canRemoveReadersOnly = currentUserRole === 2;
-    const editorsList = Array.isArray(editors) ? editors : [];
+    const editorsList = useMemo(() => (Array.isArray(editors) ? editors : []), [editors]);
 
     useEffect(() => {
         const timer = setTimeout(() => { setDebouncedSearch(userSearch); }, 300);

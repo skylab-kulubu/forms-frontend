@@ -35,7 +35,7 @@ export function GhostComponent({ active, schema }) {
 }
 
 
-export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span = 8, toolbar }) {
+export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span = 8 }) {
     const { setNodeRef, isOver } = useDroppable({ id: "canvas" });
     const showDrop = isOver && dragSource === "library";
     const spanClass = span === 12 ? "col-span-12" : span === 11 ? "col-span-11" : "col-span-8";
@@ -56,7 +56,6 @@ export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span
                         <PencilLine size={12} className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-neutral-500" />
                     )}
                 </div>
-                {toolbar ? <div className="flex items-center gap-2">{toolbar}</div> : null}
             </div>
             <motion.div ref={setNodeRef} className={`overflow-y-auto rounded-xl transition border-2 scrollbar-hidden min-h-0 flex-1
                 bg-[radial-gradient(rgba(255,255,255,0.06)_1px,transparent_1px)] bg-size-[22px_22px] bg-local

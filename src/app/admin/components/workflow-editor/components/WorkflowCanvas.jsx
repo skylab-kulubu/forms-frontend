@@ -11,13 +11,15 @@ const ROW_HEIGHT = 30;
 const BORDER = 1;
 const PORT_GAP = 6;
 const TERMINAL_GAP = 30;
+const FORK_RUN = 56;
+const FORK_CLEARANCE = 24;
 const LABEL_T = 0.42;
 const TOAST_MS = 2000;
 
 const TRIGGER_ROW = {
-  [TRIGGER.SUBMITTED]: { label: "Gönderilince", Icon: ArrowRight, icon: "text-neutral-500", port: "border-neutral-500", stroke: "#595959", edgeLabel: "text-neutral-400 border-white/10" },
-  [TRIGGER.APPROVED]: { label: "Onaylanınca", Icon: Check, icon: "text-emerald-400", port: "border-emerald-400/80", stroke: "rgba(52,211,153,0.7)", edgeLabel: "text-emerald-300 border-emerald-400/30" },
-  [TRIGGER.DECLINED]: { label: "Reddedilince", Icon: X, icon: "text-red-400", port: "border-red-400/80", stroke: "rgba(248,113,113,0.7)", edgeLabel: "text-red-300 border-red-400/30" },
+  [TRIGGER.SUBMITTED]: { label: "Gönderilince", Icon: ArrowRight, icon: "text-neutral-500", port: "border-neutral-500", portFill: "bg-neutral-500 ring-2 ring-neutral-500/15", stroke: "#595959", edgeLabel: "text-neutral-400 border-white/10" },
+  [TRIGGER.APPROVED]: { label: "Onaylanınca", Icon: Check, icon: "text-emerald-400", port: "border-emerald-400/80", portFill: "bg-emerald-400 ring-2 ring-emerald-400/15", stroke: "rgba(52,211,153,0.7)", edgeLabel: "text-emerald-300 border-emerald-400/30" },
+  [TRIGGER.DECLINED]: { label: "Reddedilince", Icon: X, icon: "text-red-400", port: "border-red-400/80", portFill: "bg-red-400 ring-2 ring-red-400/15", stroke: "rgba(248,113,113,0.7)", edgeLabel: "text-red-300 border-red-400/30" },
 };
 
 function cubicPoint({ p0, p1, p2, p3 }, t) {
@@ -35,6 +37,18 @@ function curve(p0, p3) {
 
 function pathOf({ p0, p1, p2, p3 }) {
   return `M ${p0.x} ${p0.y} C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${p3.x} ${p3.y}`;
+}
+
+function forkedEdge(p0, p3) {
+  const dy = p3.y - p0.y;
+  const riseY = Math.abs(dy) >= FORK_CLEARANCE ? p3.y : p0.y + (dy > 0 ? 1 : -1) * FORK_CLEARANCE;
+  const q = { x: p0.x + FORK_RUN, y: riseY };
+  const midX = p0.x + FORK_RUN / 2;
+  const rest = curve(q, p3);
+  return {
+    d: `M ${p0.x} ${p0.y} C ${midX} ${p0.y}, ${midX} ${riseY}, ${q.x} ${q.y} C ${rest.p1.x} ${rest.p1.y}, ${rest.p2.x} ${rest.p2.y}, ${p3.x} ${p3.y}`,
+    labelAt: cubicPoint(rest, LABEL_T),
+  };
 }
 
 function positionOf(node) {
@@ -190,6 +204,7 @@ export default function WorkflowCanvas({
   const edges = [];
   const labels = [];
   const terminals = [];
+  const routedPorts = new Set();
 
   liveNodes.forEach((node) => {
     triggersForNode(node).forEach((trigger) => {
@@ -198,21 +213,27 @@ export default function WorkflowCanvas({
       const hasConditional = group.some((transition) => transition.condition);
       const port = portPosition(node, trigger);
       const ending = group.filter((transition) => !transition.targetNodeKey);
+      const isForked = ending.length > 0 && ending.length < group.length;
+
+      if (group.length > 0) routedPorts.add(`${node.nodeKey}:${trigger}`);
 
       if (group.length === 0 || ending.length > 0) {
         const route = ending[0] ?? null;
         const focusId = route ? route.localId : node.nodeKey === selectedKey ? `implicit-${trigger}` : null;
+        const isFallback = ending.length === 1 && !route.condition && hasConditional;
         terminals.push({
           key: `${node.nodeKey}:${trigger}`,
           nodeKey: node.nodeKey,
           trigger,
           route,
           implicit: group.length === 0,
-          x: port.x + TERMINAL_GAP,
+          x: port.x + (isForked ? PORT_GAP + FORK_RUN : TERMINAL_GAP),
           y: port.y,
           fromX: port.x + PORT_GAP,
           stroke: style.stroke,
+          dash: group.length === 0 ? "2 3" : isFallback ? "4 4" : undefined,
           label: route ? terminalLabel(group, ending, labelForTransition) : "",
+          italic: isFallback,
           isHighlighted: Boolean(highlightedRouteId) && focusId === highlightedRouteId,
         });
       }
@@ -222,13 +243,15 @@ export default function WorkflowCanvas({
         const target = nodeByKey(transition.targetNodeKey);
         if (!target) return;
 
-        const shape = curve({ x: port.x + PORT_GAP, y: port.y }, inputPosition(target));
+        const from = { x: port.x + PORT_GAP, y: port.y };
+        const shape = curve(from, inputPosition(target));
+        const fork = isForked ? forkedEdge(from, inputPosition(target)) : null;
         const kind = transition.condition ? "cond" : hasConditional ? "fallback" : "always";
         const isHighlighted = highlightedRouteId === transition.localId;
-        edges.push({ id: transition.localId, d: pathOf(shape), stroke: style.stroke, dashed: kind === "fallback", isHighlighted });
+        edges.push({ id: transition.localId, d: fork ? fork.d : pathOf(shape), stroke: style.stroke, dashed: kind === "fallback", isHighlighted });
 
         if (kind !== "always") {
-          const point = cubicPoint(shape, LABEL_T);
+          const point = fork ? fork.labelAt : cubicPoint(shape, LABEL_T);
           labels.push({
             id: transition.localId,
             x: point.x,
@@ -266,7 +289,7 @@ export default function WorkflowCanvas({
           <svg className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
             {terminals.map((terminal) => (
               <path key={`line-${terminal.key}`} d={`M ${terminal.fromX} ${terminal.y} L ${terminal.x} ${terminal.y}`} fill="none"
-                stroke={terminal.stroke} strokeWidth={1.4} strokeDasharray={terminal.implicit ? "3 3" : undefined} opacity={terminal.implicit ? 0.5 : 1}
+                stroke={terminal.stroke} strokeWidth={1.4} strokeDasharray={terminal.dash} opacity={terminal.implicit ? 0.45 : 1}
               />
             ))}
 
@@ -308,8 +331,13 @@ export default function WorkflowCanvas({
               style={{ left: terminal.x, top: terminal.y }}
             >
               <span className="size-1.5 rounded-xs bg-neutral-600" />
-              {terminal.implicit ? "biter" : "Akış biter"}
-              {terminal.label ? <span className="max-w-32 truncate text-neutral-600">· {terminal.label}</span> : null}
+              {terminal.label ? (
+                <>
+                  <span className={`max-w-32 truncate ${terminal.italic ? "italic" : ""} ${terminal.isHighlighted ? "" : "text-neutral-400"}`}>{terminal.label}</span>
+                  <span className="text-neutral-600">·</span>
+                </>
+              ) : null}
+              biter
             </button>
           ))}
 
@@ -356,12 +384,15 @@ export default function WorkflowCanvas({
                 {triggersForNode(node).map((trigger, index) => {
                   const style = TRIGGER_ROW[trigger] ?? TRIGGER_ROW[TRIGGER.SUBMITTED];
                   const Icon = style.Icon;
+                  const isRouted = routedPorts.has(`${node.nodeKey}:${trigger}`);
                   return (
                     <div key={trigger} className={`relative flex h-7.5 items-center gap-1.5 px-3 text-2xs text-neutral-400 ${index > 0 ? "border-t border-dashed border-white/5" : ""}`}>
                       <Icon size={11} className={`shrink-0 ${style.icon}`} />
                       {style.label}
                       <span data-port data-trigger={trigger} title="Sürükleyip bir adıma bağla"
-                        className={`absolute -right-1.5 top-1/2 size-2.75 -translate-y-1/2 cursor-crosshair rounded-full border-[1.5px] bg-neutral-900 transition-transform hover:scale-125 ${style.port}`}
+                        className={`absolute -right-1.5 top-1/2 size-2.75 -translate-y-1/2 cursor-crosshair rounded-full border-[1.5px] transition-[transform,opacity] hover:scale-125 ${style.port} ${
+                          isRouted ? style.portFill : "bg-neutral-900 opacity-45 hover:opacity-100"
+                        }`}
                       />
                     </div>
                   );

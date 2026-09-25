@@ -31,21 +31,6 @@ export function WorkflowManagedRow({ title, description, href }) {
     );
 }
 
-export function WorkflowMembershipChip({ workflow }) {
-    const name = workflow.name || "Adsız akış";
-    const stateLabel = workflow.isPublished ? "yayında" : "taslak";
-
-    return (
-        <Link href={`/admin/workflows/${workflow.id}`} title={`Akışı aç: ${name} (${stateLabel})`}
-            className="inline-flex h-6 max-w-44 items-center gap-1.5 rounded-md border border-white/10 bg-white/3 px-2 text-3xs text-neutral-300 transition-colors hover:border-white/20 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-        >
-            <Workflow size={11} className="shrink-0 text-neutral-500" />
-            <span className="truncate">{name}</span>
-            <span className={`size-1.5 shrink-0 rounded-full ${workflow.isPublished ? "bg-emerald-400" : "bg-amber-400"}`} />
-        </Link>
-    );
-}
-
 export function WorkflowMembershipSection({ workflow }) {
     const lockedCount = workflow.isPublished ? (workflow.lockedQuestions ?? []).length : 0;
 

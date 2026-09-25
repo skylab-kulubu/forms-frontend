@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useReducer, useMemo, useCallback, useRef } from "react";
+import { createContext, useContext, useReducer, useMemo, useCallback, useRef, useEffect } from "react";
 import { migrateSchema } from "@/app/components/form-migrate";
 
 const MAX_HISTORY = 20;
@@ -114,7 +114,9 @@ export function FormEditorProvider({ children, initialData }) {
     const [state, rawDispatch] = useReducer(formReducer, initializer);
 
     const stateRef = useRef(state);
-    stateRef.current = state;
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
 
     const pendingSnapshotRef = useRef(null);
     const timerRef = useRef(null);

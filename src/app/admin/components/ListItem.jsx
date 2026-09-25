@@ -76,7 +76,7 @@ function EventChip({ event }) {
   if (!event?.href) return null;
   return (
     <a href={event.href} target="_blank" rel="noreferrer" title={`Etkinliği aç: ${event.name || event.id}`}
-      className="relative z-10 inline-flex max-w-[12rem] items-center truncate rounded-md border border-skylab-400/30 bg-skylab-500/10 px-1.5 py-0.5 text-3xs font-medium text-skylab-200 hover:border-skylab-300/50"
+      className="relative z-10 inline-flex max-w-48 items-center truncate rounded-md border border-skylab-400/30 bg-skylab-500/10 px-1.5 py-0.5 text-3xs font-medium text-skylab-200 hover:border-skylab-300/50"
       onClick={(e) => e.stopPropagation()}
     >
       {event.name || "Etkinlik"}
