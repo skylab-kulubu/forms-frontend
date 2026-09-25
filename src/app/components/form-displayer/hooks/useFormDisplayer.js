@@ -5,6 +5,7 @@ import { useResponseDraftAutoSave } from "./useResponseDraftAutoSave";
 import { FORM_ACCESS_STATUS, WORKFLOW_STATE, getSubmitErrorState } from "../../FormStatusHandler";
 import { getVisibleFields } from "../components/conditionChecker";
 import { migrateSchema } from "@/app/components/form-migrate";
+import { readAttribution } from "@/lib/attribution";
 
 function getSubmissionState(status) {
   switch (status) {
@@ -227,7 +228,12 @@ export function useFormDisplayer(form, draft, workflow = {}) {
   const handleSubmit = (formattedResponses) => {
     cancelDraftSave();
     const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    const payload = { formId: state.form?.id, responses: formattedResponses, timeSpent: timeSpentInSeconds };
+    const payload = {
+      formId: state.form?.id,
+      responses: formattedResponses,
+      timeSpent: timeSpentInSeconds,
+      attribution: readAttribution(state.form?.id, state.startFormId),
+    };
 
     submitMutation.mutate(payload, {
       onSuccess: (response) => {

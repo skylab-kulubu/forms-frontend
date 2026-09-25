@@ -8,6 +8,8 @@ import { useResponseStatusMutation, useResponseArchiveMutation } from "@/lib/hoo
 import { useCreateResponseShareMutation, useRevokeResponseTokenMutation } from "@/lib/hooks/useResponseShare";
 import Popover from "@/app/components/utils/Popover";
 import ShareOverlay from "@/app/admin/components/ShareOverlay";
+import ChannelIcon from "@/app/admin/components/share/ChannelIcon";
+import { sourceLabel } from "@/lib/share-channels";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -266,7 +268,20 @@ export function ResponseActions({ response, readOnly = false }) {
                 )}
                 <StatBlock label="Süre" value={formatDuration(timeSpent)} icon={Timer} color="text-skylab-300" />
                 <StatBlock label="Gönderim" value={response?.submittedAt ? new Date(response.submittedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "--"} icon={CalendarCheck} color="text-neutral-300" />
+                <div className="flex flex-col items-center gap-1.5 text-center">
+                  <ChannelIcon source={response?.attribution?.source} size={14} className="text-neutral-300 opacity-60" />
+                  <p className="text-sm font-semibold text-neutral-300">{sourceLabel(response?.attribution?.source)}</p>
+                  <p className="text-3xs text-neutral-500">Kaynak</p>
+                </div>
               </div>
+              {(response?.attribution?.campaign || response?.attribution?.content) && (
+                <p className="mt-3 text-center font-mono text-3xs text-neutral-600">
+                  {[
+                    response.attribution.campaign && `kampanya: ${response.attribution.campaign}`,
+                    response.attribution.content && `içerik: ${response.attribution.content}`,
+                  ].filter(Boolean).join(" · ")}
+                </p>
+              )}
             </motion.div>
 
             <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.06 }} className="px-1 py-4 first:pt-0">
