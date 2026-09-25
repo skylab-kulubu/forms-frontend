@@ -3,11 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Timer, User2, ToggleLeft, ToggleRight, Workflow, Hash, Shield, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
+import { Timer, User2, ToggleLeft, ToggleRight, Workflow, Hash, Shield, TrendingUp, TrendingDown, Minus, Users, Megaphone, Link2, Copy, Check } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { ROLE_BADGE } from "../../ListItem";
+import ChannelIcon from "../../share/ChannelIcon";
 import Avatar from "@/app/components/utils/Avatar";
 import { effectiveFormSettings } from "@/lib/form-settings";
+import { sourceLabel } from "@/lib/share-channels";
+import { publicShortUrl } from "@/lib/short-url";
+import { useShortLinkQuery } from "@/lib/hooks/useShortLink";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -166,6 +170,111 @@ function SourceBreakdownBar({ registered, anonymous }) {
   );
 }
 
+const CHANNEL_GRID = "grid grid-cols-[minmax(0,1fr)_3.25rem_2.75rem_3.5rem] items-center gap-x-2";
+
+function ChannelsSection({ channels }) {
+  const clicksKnown = channels.some((channel) => channel.clicks != null);
+  const max = Math.max(1, ...channels.map((channel) => Math.max(channel.clicks ?? 0, channel.responses)));
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5">
+          <Megaphone size={12} className="shrink-0 text-neutral-500" />
+          <h3 className="text-2xs font-medium text-neutral-500">Kanallar</h3>
+        </div>
+        <span className="text-3xs text-neutral-600">Son 90 gün</span>
+      </div>
+
+      {channels.length === 0 ? (
+        <p className="text-3xs leading-relaxed text-neutral-600">Kanal seçilerek paylaşılan linklerle gelenler burada görünür.</p>
+      ) : (
+        <>
+          <div className="mb-2 flex gap-3 text-3xs text-neutral-500">
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-2.5 rounded-r-sm bg-skylab-800" />Tıklama</span>
+            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-2.5 rounded-r-sm bg-skylab-500" />Yanıt</span>
+          </div>
+          <div className={`${CHANNEL_GRID} pb-1 text-3xs text-neutral-600`}>
+            <span>Kanal</span>
+            <span className="text-right">Tıklama</span>
+            <span className="text-right">Yanıt</span>
+            <span className="text-right">Dönüşüm</span>
+          </div>
+          {channels.map((channel) => {
+            const untagged = !channel.source;
+            const label = sourceLabel(channel.source);
+            const rate = !untagged && channel.clicks > 0 ? Math.round((channel.responses / channel.clicks) * 100) : null;
+            const summary = `${label}: ${channel.responses} yanıt${channel.clicks != null ? `, ${channel.clicks} tıklama` : ""}${rate != null ? `, %${rate} dönüşüm` : ""}`;
+            return (
+              <div key={channel.source ?? "untagged"} title={summary} className={`${CHANNEL_GRID} group/channel py-1.5`}>
+                <span className="flex min-w-0 items-center gap-2 text-2xs text-neutral-300 transition-colors group-hover/channel:text-neutral-100">
+                  <span className="grid size-5 shrink-0 place-items-center rounded-md border border-white/10 bg-white/3 text-neutral-400">
+                    <ChannelIcon source={channel.source} size={11} />
+                  </span>
+                  <span className="truncate">{label}</span>
+                </span>
+                <span className="text-right text-2xs tabular-nums text-neutral-200">{channel.clicks ?? "—"}</span>
+                <span className="text-right text-2xs tabular-nums text-neutral-200">{channel.responses}</span>
+                <span className="text-right text-2xs tabular-nums text-neutral-500">{rate == null ? "—" : `%${rate}`}</span>
+                <span aria-hidden="true" className="relative col-span-4 mt-1.5 h-1.5 transition-[filter] group-hover/channel:brightness-110">
+                  {channel.clicks > 0 && (
+                    <span className={`absolute inset-y-0 left-0 rounded-r-[3px] ${untagged ? "bg-neutral-700" : "bg-skylab-800"}`}
+                      style={{ width: `${(channel.clicks / max) * 100}%` }}
+                    />
+                  )}
+                  {channel.responses > 0 && (
+                    <span className={`absolute inset-y-0 left-0 rounded-r-[3px] shadow-[2px_0_0_0_var(--color-neutral-900)] ${untagged ? "bg-neutral-500" : "bg-skylab-500"}`}
+                      style={{ width: `${(channel.responses / max) * 100}%` }}
+                    />
+                  )}
+                </span>
+              </div>
+            );
+          })}
+          <p className="mt-2 text-3xs leading-relaxed text-neutral-600">
+            {clicksKnown
+              ? "Tıklamalar kısa linkten, yanıtlar formdan; ikisi de son 90 gün. Etiketsiz: kanal seçilmeden paylaşılan link ve form adresi."
+              : "Tıklamalara şu an ulaşılamadı; yanıtlar formdan sayılıyor."}
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function ShortLinkRow({ formId }) {
+  const { data: link } = useShortLinkQuery(formId);
+  const [copied, setCopied] = useState(false);
+  const url = link?.alias ? publicShortUrl(link.alias) : "";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="flex min-w-0 items-center gap-1.5 text-2xs text-neutral-500">
+        <Link2 size={12} className="shrink-0 text-neutral-600" />
+        Kısa link
+      </span>
+      {url ? (
+        <button type="button" onClick={copy} title="Kopyala"
+          className={`inline-flex max-w-[60%] items-center gap-1.5 font-mono text-2xs transition-colors ${copied ? "text-emerald-300" : "text-skylab-300 hover:text-neutral-50"}`}
+        >
+          <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
+          {copied ? <Check size={11} className="shrink-0" /> : <Copy size={11} className="shrink-0" />}
+        </button>
+      ) : (
+        <span className="text-2xs font-medium text-neutral-500">Henüz yok</span>
+      )}
+    </div>
+  );
+}
+
 function CollaboratorsSection({ formData }) {
   const collaborators = [...(formData?.data?.collaborators ?? formData?.collaborators ?? [])].sort((a, b) => b.role - a.role);
 
@@ -200,6 +309,7 @@ function CollaboratorsSection({ formData }) {
 }
 
 function FormInfoList({ formData }) {
+  const formId = formData?.data?.id ?? formData?.id;
   const formSchema = formData?.data?.schema ?? formData?.schema ?? [];
   const settings = effectiveFormSettings(formData?.data ?? formData);
   const workflow = formData?.data?.workflow ?? formData?.workflow ?? null;
@@ -236,6 +346,7 @@ function FormInfoList({ formData }) {
             )}
           </div>
         ))}
+        {formId && <ShortLinkRow formId={formId} />}
       </div>
     </div>
   );
@@ -279,6 +390,12 @@ export default function FormMetrics({ formData, metrics }) {
               />
             </div>
           </Section>
+
+          {Array.isArray(metrics?.channels) && (
+            <Section delay={0.12}>
+              <ChannelsSection channels={metrics.channels} />
+            </Section>
+          )}
 
           <Section delay={0.15}>
             <CollaboratorsSection formData={formData} />
