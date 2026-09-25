@@ -31,7 +31,7 @@ function FileTypeIcon({ fileType, size = 18 }) {
 
 export function FilePreview({ mediaId }) {
   const { data, isLoading, error } = useMediaQuery(mediaId);
-  const media = data?.data ?? null;
+  const media = data ?? null;
 
   const [imageError, setImageError] = useState(false);
   const [expanded, setExpanded] = useState(false);
