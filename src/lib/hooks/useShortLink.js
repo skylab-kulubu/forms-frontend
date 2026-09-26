@@ -56,6 +56,18 @@ export const useAliasAvailabilityQuery = (formId, alias, enabled) =>
     staleTime: 30_000,
   });
 
+export const useShortLinkQrPreviewQuery = (formId, alias) =>
+  useQuery({
+    queryKey: ["form-short-link-qr", formId, alias],
+    queryFn: async () => {
+      const svg = await (await fetchShortLinkQr(formId, "svg")).text();
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    },
+    enabled: Boolean(formId && alias),
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+
 export async function fetchShortLinkQr(formId, format = "png") {
   const session = await getSession();
   const token = session?.accessToken;

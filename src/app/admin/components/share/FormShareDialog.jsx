@@ -3,13 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, ArrowUpRight, Check, ChevronDown, CircleAlert, Copy, CornerDownRight, Download, Loader2, Lock, PencilLine, RotateCcw, Share, Share2, Users, WandSparkles, X } from "lucide-react";
-import { coreApiUrl } from "@/lib/short-url";
 import { publicFormUrl } from "@/lib/return-to";
 import {
   MAX_ALIAS_LENGTH, RESERVED_ALIASES, SHARE_CHANNELS, SHARE_FORMAT_KEY,
   channelByKey, channelTag, defaultAliasFromTitle, slugifyAlias, suggestAliases, taggedShortUrl,
 } from "@/lib/share-channels";
-import { fetchShortLinkQr, useAliasAvailabilityQuery, useEnsureShortLinkQuery, useRenameShortLinkMutation } from "@/lib/hooks/useShortLink";
+import { fetchShortLinkQr, useAliasAvailabilityQuery, useEnsureShortLinkQuery, useRenameShortLinkMutation, useShortLinkQrPreviewQuery } from "@/lib/hooks/useShortLink";
 import { StatePill } from "../utils/SidePanel";
 import ChannelIcon from "./ChannelIcon";
 
@@ -250,7 +249,8 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
   const longUrl = publicFormUrl(formId);
   const managedByEvent = Boolean(link?.managedByEvent);
   const canRename = canEdit && !managedByEvent;
-  const qrSrc = alias ? `${coreApiUrl()}/v1/go/${encodeURIComponent(alias)}/qr?size=512&logo=1&utm_source=qr` : null;
+  const qrPreview = useShortLinkQrPreviewQuery(formId, alias);
+  const qrSrc = qrPreview.data ?? null;
   const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const copy = async (id, value) => {
@@ -488,13 +488,19 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
           )}
         </div>
 
-        <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-3 sm:flex sm:flex-col sm:gap-2.5">
-          <div className={`aspect-square overflow-hidden rounded-lg p-2 ${qrSrc ? "bg-white" : "animate-pulse bg-white/5"}`}>
-            {qrSrc && (
+        <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-3 sm:flex sm:flex-col sm:items-stretch sm:gap-2.5">
+          <div className={`grid aspect-square w-full place-items-center overflow-hidden rounded-lg p-2 ${qrSrc ? "bg-white" : qrPreview.isError ? "bg-white/5 text-neutral-500" : "animate-pulse bg-white/5"}`}>
+            {qrSrc ? (
               <div role="img" aria-label={`skyl.app/${alias} QR kodu`}
                 className="size-full bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url("${qrSrc}")` }}
               />
-            )}
+            ) : qrPreview.isError ? (
+              <button type="button" onClick={() => qrPreview.refetch()} aria-label="QR önizlemesini yeniden dene" title="QR önizlemesi alınamadı, yeniden dene"
+                className="grid size-8 place-items-center rounded-md transition-colors hover:bg-white/10 hover:text-neutral-200"
+              >
+                <RotateCcw size={14} />
+              </button>
+            ) : null}
           </div>
           <div className="flex min-w-0 flex-col gap-2.5">
             <p className="truncate font-mono text-3xs text-neutral-500 sm:text-center">{alias ? `skyl.app/${alias}` : "QR hazırlanıyor…"}</p>
