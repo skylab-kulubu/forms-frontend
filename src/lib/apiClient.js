@@ -17,9 +17,11 @@ function getSharedSession() {
 
 // We had a token but it no longer authenticates and a refresh couldn't produce a new one:
 // tell the UI (SessionExpiredHandler) so it can offer a re-login instead of failing silently.
-function announceSessionExpired() {
+// The rejected token rides along so the handler can tell "still the same dead token" apart
+// from "a fresh one arrived in the meantime".
+function announceSessionExpired(rejectedToken) {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: { token: rejectedToken } }));
   }
 }
 
@@ -74,7 +76,7 @@ export async function request(path, options = {}) {
     } catch { }
     // No new token means the refresh token is dead too; only announce when a token existed,
     // so a never-logged-in visitor hitting a 401 doesn't get a "session expired" prompt.
-    if (!refreshed && resolvedToken) announceSessionExpired();
+    if (!refreshed && resolvedToken) announceSessionExpired(resolvedToken);
   }
 
   if (!response.ok) {
@@ -147,7 +149,7 @@ export async function uploadWithProgress(path, file, onProgress) {
       if (freshToken && freshToken !== resolvedToken) {
         return attempt(freshToken);
       }
-      if (resolvedToken) announceSessionExpired();
+      if (resolvedToken) announceSessionExpired(resolvedToken);
     }
     throw error;
   }
