@@ -6,14 +6,18 @@ import { AlertTriangle, ArrowUpRight, Check, ChevronDown, CircleAlert, Copy, Cor
 import { publicFormUrl } from "@/lib/return-to";
 import {
   MAX_ALIAS_LENGTH, RESERVED_ALIASES, SHARE_CHANNELS, SHARE_FORMAT_KEY,
-  channelByKey, channelTag, defaultAliasFromTitle, slugifyAlias, suggestAliases, taggedShortUrl,
+  channelByKey, channelTag, defaultAliasFromTitle, qrFileName, qrTags, slugifyAlias, sourceLabel, suggestAliases, taggedShortUrl,
 } from "@/lib/share-channels";
-import { fetchShortLinkQr, useAliasAvailabilityQuery, useEnsureShortLinkQuery, useRenameShortLinkMutation, useShortLinkQrPreviewQuery } from "@/lib/hooks/useShortLink";
+import {
+  fetchShortLinkQr, useAliasAvailabilityQuery, useEnsureShortLinkQuery, useRenameShortLinkMutation,
+  useShortLinkQrPngQuery, useShortLinkQrPreviewQuery,
+} from "@/lib/hooks/useShortLink";
 import { StatePill } from "../utils/SidePanel";
 import ChannelIcon from "./ChannelIcon";
 
 const EASE = [0.22, 1, 0.36, 1];
 const CHIP = "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
+const CHIP_ICON = "inline-grid h-7 w-8.5 shrink-0 place-items-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
 const CHIP_ON = "border-skylab-400/30 bg-skylab-500/10 text-skylab-300";
 const CHIP_OFF = "border-white/10 bg-white/5 text-neutral-300 hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300";
 const ICON_BUTTON = "grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
@@ -55,6 +59,19 @@ function readFormat() {
 
 function looksRandom(alias) {
   return /^[A-Za-z0-9]{8}$/.test(alias || "") && /[A-Z]/.test(alias);
+}
+
+function useDebounced(value, ms) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), ms);
+    return () => clearTimeout(timer);
+  }, [value, ms]);
+  return debounced;
+}
+
+function isTouchScreen() {
+  return typeof window !== "undefined" && Boolean(window.matchMedia?.("(pointer: coarse)").matches);
 }
 
 function formatDay(value) {
@@ -249,9 +266,14 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
   const longUrl = publicFormUrl(formId);
   const managedByEvent = Boolean(link?.managedByEvent);
   const canRename = canEdit && !managedByEvent;
-  const qrPreview = useShortLinkQrPreviewQuery(formId, alias);
+  const typed = useDebounced([slugifyAlias(customSource), slugifyAlias(campaign), slugifyAlias(content)].join("|"), 400);
+  const [typedSource, typedCampaign, typedContent] = typed.split("|");
+  const tags = qrTags(channel, { customSource: typedSource, campaign: typedCampaign, content: typedContent });
+  const qrPreview = useShortLinkQrPreviewQuery(formId, alias, tags);
   const qrSrc = qrPreview.data ?? null;
   const canNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  const touch = isTouchScreen();
+  const qrPng = useShortLinkQrPngQuery(formId, alias, tags, touch && canNativeShare);
 
   const copy = async (id, value) => {
     if (!value) return;
@@ -272,15 +294,23 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
     later("flash", () => setFlash(false), 2400);
   };
 
+  const shareQrImage = () => {
+    const file = new File([qrPng.data], qrFileName(alias, tags, "png"), { type: "image/png" });
+    if (!navigator.canShare?.({ files: [file] })) return false;
+    navigator.share({ files: [file], title: formTitle }).catch(() => {});
+    return true;
+  };
+
   const downloadQr = async (kind) => {
     if (qrBusy) return;
+    if (kind === "png" && touch && qrPng.data && shareQrImage()) return;
     setQrBusy(kind);
     try {
-      const blob = await fetchShortLinkQr(formId, kind);
+      const blob = await fetchShortLinkQr(formId, kind, tags);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${alias}-qr.${kind}`;
+      anchor.download = qrFileName(alias, tags, kind);
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -294,7 +324,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
 
   const copyQr = async () => {
     try {
-      const blob = await fetchShortLinkQr(formId, "png");
+      const blob = await fetchShortLinkQr(formId, "png", tags);
       await navigator.clipboard.write([new ClipboardItem({ [blob.type || "image/png"]: blob })]);
       flag("qr", "ok");
     } catch {
@@ -309,13 +339,13 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
   };
 
   let hint;
-  if (selected.key === "general") hint = <>Etiketsiz link. Bununla gelenler genel bakışta <b className="font-medium text-neutral-300">Etiketsiz</b> satırına düşer.</>;
+  if (selected.key === "general") hint = <>Etiketsiz link. Instagram, LinkedIn ya da YouTube&apos;dan açılırsa kaynak kendiliğinden tanınır; öbürleri <b className="font-medium text-neutral-300">Etiketsiz</b> satırına düşer.</>;
   else if (selected.key === "other") {
     const source = slugifyAlias(customSource);
     hint = source
       ? <>Gelenler genel bakışta <b className="font-medium text-neutral-300">{source}</b> adıyla kendi satırında görünür.</>
       : "Kaynak adını yaz; boşken link etiketsiz kalır.";
-  } else hint = <>Bununla gelenler genel bakışta <b className="font-medium text-neutral-300">{selected.label}</b> satırına yazılır.</>;
+  } else hint = <><b className="font-medium text-neutral-300">{selected.label}</b> · Bununla gelenler genel bakışta <b className="font-medium text-neutral-300">{selected.label}</b> satırına yazılır.</>;
 
   const metaParts = [];
   if (flash) metaParts.push(<span key="saved" className="text-emerald-300">Kısa ad güncellendi</span>);
@@ -435,19 +465,19 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
             </div>
           )}
 
-          <SectionLabel aside={managedByEvent ? <StatePill>Etkinlik linki</StatePill> : null}>Kısa link</SectionLabel>
+          <SectionLabel aside={<>{managedByEvent && <StatePill>Etkinlik linki</StatePill>}{!editing && formatToggle}</>}>Kısa link</SectionLabel>
           {linkField}
 
           <div className="h-5 shrink-0" />
 
-          <SectionLabel aside={formatToggle}>Kanal</SectionLabel>
+          <SectionLabel>Kanal</SectionLabel>
           <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 scrollbar-hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {SHARE_CHANNELS.map((item) => (
               <button key={item.key} type="button" disabled={!link} onClick={() => setChannel(item.key)}
-                className={`${CHIP} disabled:pointer-events-none disabled:opacity-40 ${channel === item.key ? CHIP_ON : CHIP_OFF}`}
+                aria-label={item.label} title={item.label} aria-pressed={channel === item.key}
+                className={`${CHIP_ICON} disabled:pointer-events-none disabled:opacity-40 ${channel === item.key ? CHIP_ON : CHIP_OFF}`}
               >
-                <ChannelIcon source={item.key} size={13} className={channel === item.key ? "" : "opacity-70"} />
-                {item.label}
+                <ChannelIcon source={item.key} size={14} className={channel === item.key ? "" : "opacity-70"} />
               </button>
             ))}
           </div>
@@ -489,7 +519,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
         </div>
 
         <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-3 sm:flex sm:flex-col sm:items-stretch sm:gap-2.5">
-          <div className={`grid aspect-square w-full place-items-center overflow-hidden rounded-lg p-2 ${qrSrc ? "bg-white" : qrPreview.isError ? "bg-white/5 text-neutral-500" : "animate-pulse bg-white/5"}`}>
+          <div className={`grid aspect-square w-full place-items-center overflow-hidden rounded-lg ${qrSrc ? "bg-white" : qrPreview.isError ? "bg-white/5 text-neutral-500" : "animate-pulse bg-white/5"}`}>
             {qrSrc ? (
               <div role="img" aria-label={`skyl.app/${alias} QR kodu`}
                 className="size-full bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url("${qrSrc}")` }}
@@ -503,7 +533,16 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
             ) : null}
           </div>
           <div className="flex min-w-0 flex-col gap-2.5">
-            <p className="truncate font-mono text-3xs text-neutral-500 sm:text-center">{alias ? `skyl.app/${alias}` : "QR hazırlanıyor…"}</p>
+            <p className="flex min-w-0 items-center gap-1 font-mono text-3xs text-neutral-500 sm:justify-center">
+              {alias ? (
+                <>
+                  <span className="truncate">skyl.app/{alias}</span>
+                  <span className="shrink-0 text-neutral-700">·</span>
+                  {tags.source && <ChannelIcon source={tags.source} size={11} className="shrink-0" />}
+                  <span className="shrink-0">{tags.source ? sourceLabel(tags.source) : "QR"}</span>
+                </>
+              ) : "QR hazırlanıyor…"}
+            </p>
             <div className="grid grid-cols-[1fr_1fr_1.75rem] gap-1.5">
               {["png", "svg"].map((kind) => (
                 <button key={kind} type="button" disabled={!alias || Boolean(qrBusy)} onClick={() => downloadQr(kind)}

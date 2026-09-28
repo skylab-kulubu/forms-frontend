@@ -56,23 +56,38 @@ export const useAliasAvailabilityQuery = (formId, alias, enabled) =>
     staleTime: 30_000,
   });
 
-export const useShortLinkQrPreviewQuery = (formId, alias) =>
+export const useShortLinkQrPreviewQuery = (formId, alias, tags = {}) =>
   useQuery({
-    queryKey: ["form-short-link-qr", formId, alias],
+    queryKey: ["form-short-link-qr", formId, alias, tags.source ?? "", tags.campaign ?? "", tags.content ?? ""],
     queryFn: async () => {
-      const svg = await (await fetchShortLinkQr(formId, "svg")).text();
+      const svg = await (await fetchShortLinkQr(formId, "svg", tags)).text();
       return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     },
     enabled: Boolean(formId && alias),
     retry: false,
     staleTime: 5 * 60_000,
+    placeholderData: (previous) => previous,
   });
 
-export async function fetchShortLinkQr(formId, format = "png") {
+export const useShortLinkQrPngQuery = (formId, alias, tags = {}, enabled = true) =>
+  useQuery({
+    queryKey: ["form-short-link-qr-png", formId, alias, tags.source ?? "", tags.campaign ?? "", tags.content ?? ""],
+    queryFn: () => fetchShortLinkQr(formId, "png", tags),
+    enabled: Boolean(enabled && formId && alias),
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+
+export async function fetchShortLinkQr(formId, format = "png", tags = {}) {
   const session = await getSession();
   const token = session?.accessToken;
-  const query = format === "svg" ? "?format=svg" : "";
-  const response = await fetch(`${BASE_URL}/api/admin/forms/${formId}/short-link/qr${query}`, {
+  const params = new URLSearchParams();
+  if (format === "svg") params.set("format", "svg");
+  for (const key of ["source", "campaign", "content"]) {
+    if (tags[key]) params.set(key, tags[key]);
+  }
+  const query = params.toString();
+  const response = await fetch(`${BASE_URL}/api/admin/forms/${formId}/short-link/qr${query ? `?${query}` : ""}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!response.ok) {

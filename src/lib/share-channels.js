@@ -12,14 +12,14 @@ export const SHARE_CHANNELS = [
     openUrl: (url) => `https://wa.me/?text=${encodeURIComponent(url)}`,
   },
   {
-    key: "linkedin", label: "LinkedIn", source: "linkedin", code: "li", openLabel: "LinkedIn'de aç",
+    key: "linkedin", label: "LinkedIn", source: "linkedin", code: "in", openLabel: "LinkedIn'de aç",
     openUrl: (url) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
   },
+  { key: "youtube", label: "YouTube", source: "youtube", code: "yt" },
   {
-    key: "email", label: "E-posta", source: "email", code: "mail", openLabel: "E-postada aç",
+    key: "email", label: "E-posta", source: "email", code: "ma", openLabel: "E-postada aç",
     openUrl: (url, title) => `mailto:?subject=${encodeURIComponent(title || "")}&body=${encodeURIComponent(url)}`,
   },
-  { key: "website", label: "Web sitesi", source: "website", code: "web" },
   { key: "other", label: "Diğer" },
 ];
 
@@ -27,9 +27,10 @@ const SOURCE_LABELS = {
   instagram: "Instagram",
   whatsapp: "WhatsApp",
   linkedin: "LinkedIn",
+  youtube: "YouTube",
   email: "E-posta",
   website: "Web sitesi",
-  qr: "QR · afiş",
+  qr: "QR",
   x: "X",
 };
 
@@ -80,10 +81,25 @@ export function suggestAliases(base, current) {
     .slice(0, 3);
 }
 
-export function channelTag(channelKey, { format = "suffix", customSource = "", campaign = "", content = "" } = {}) {
+export function channelSource(channelKey, customSource = "") {
   const channel = channelByKey(channelKey);
   if (channel.key === "general") return "";
-  const source = channel.key === "other" ? slugifyAlias(customSource) : channel.source;
+  return channel.key === "other" ? slugifyAlias(customSource) : channel.source;
+}
+
+export function qrTags(channelKey, { customSource = "", campaign = "", content = "" } = {}) {
+  const source = channelSource(channelKey, customSource);
+  if (!source) return {};
+  return { source, campaign: slugifyAlias(campaign), content: slugifyAlias(content) };
+}
+
+export function qrFileName(alias, tags, ext) {
+  return `${[alias, tags.source, "qr", tags.content].filter(Boolean).join("-")}.${ext}`;
+}
+
+export function channelTag(channelKey, { format = "suffix", customSource = "", campaign = "", content = "" } = {}) {
+  const channel = channelByKey(channelKey);
+  const source = channelSource(channelKey, customSource);
   if (!source) return "";
   const extra = [];
   const campaignTag = slugifyAlias(campaign);
