@@ -171,9 +171,12 @@ function SourceBreakdownBar({ registered, anonymous }) {
 }
 
 const CHANNEL_GRID = "grid grid-cols-[minmax(0,1fr)_3.25rem_2.75rem_3.5rem] items-center gap-x-2";
+const CHANNEL_GRID_SCANS = "grid grid-cols-[minmax(0,1fr)_3rem_2.75rem_2.75rem_3.25rem] items-center gap-x-2";
 
 function ChannelsSection({ channels }) {
   const clicksKnown = channels.some((channel) => channel.clicks != null);
+  const scansKnown = channels.some((channel) => channel.scans != null);
+  const grid = scansKnown ? CHANNEL_GRID_SCANS : CHANNEL_GRID;
   const max = Math.max(1, ...channels.map((channel) => Math.max(channel.clicks ?? 0, channel.responses)));
 
   return (
@@ -194,9 +197,10 @@ function ChannelsSection({ channels }) {
             <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-2.5 rounded-r-sm bg-skylab-800" />Tıklama</span>
             <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-2.5 rounded-r-sm bg-skylab-500" />Yanıt</span>
           </div>
-          <div className={`${CHANNEL_GRID} pb-1 text-3xs text-neutral-600`}>
+          <div className={`${grid} pb-1 text-3xs text-neutral-600`}>
             <span>Kanal</span>
             <span className="text-right">Tıklama</span>
+            {scansKnown && <span className="text-right">QR&apos;dan</span>}
             <span className="text-right">Yanıt</span>
             <span className="text-right">Dönüşüm</span>
           </div>
@@ -204,9 +208,9 @@ function ChannelsSection({ channels }) {
             const untagged = !channel.source;
             const label = sourceLabel(channel.source);
             const rate = !untagged && channel.clicks > 0 ? Math.round((channel.responses / channel.clicks) * 100) : null;
-            const summary = `${label}: ${channel.responses} yanıt${channel.clicks != null ? `, ${channel.clicks} tıklama` : ""}${rate != null ? `, %${rate} dönüşüm` : ""}`;
+            const summary = `${label}: ${channel.responses} yanıt${channel.clicks != null ? `, ${channel.clicks} tıklama` : ""}${channel.scans > 0 ? `, ${channel.scans} QR okutması` : ""}${rate != null ? `, %${rate} dönüşüm` : ""}`;
             return (
-              <div key={channel.source ?? "untagged"} title={summary} className={`${CHANNEL_GRID} group/channel py-1.5`}>
+              <div key={channel.source ?? "untagged"} title={summary} className={`${grid} group/channel py-1.5`}>
                 <span className="flex min-w-0 items-center gap-2 text-2xs text-neutral-300 transition-colors group-hover/channel:text-neutral-100">
                   <span className="grid size-5 shrink-0 place-items-center rounded-md border border-white/10 bg-white/3 text-neutral-400">
                     <ChannelIcon source={channel.source} size={11} />
@@ -214,9 +218,10 @@ function ChannelsSection({ channels }) {
                   <span className="truncate">{label}</span>
                 </span>
                 <span className="text-right text-2xs tabular-nums text-neutral-200">{channel.clicks ?? "—"}</span>
+                {scansKnown && <span className="text-right text-2xs tabular-nums text-neutral-500">{channel.scans ? channel.scans : "·"}</span>}
                 <span className="text-right text-2xs tabular-nums text-neutral-200">{channel.responses}</span>
                 <span className="text-right text-2xs tabular-nums text-neutral-500">{rate == null ? "—" : `%${rate}`}</span>
-                <span aria-hidden="true" className="relative col-span-4 mt-1.5 h-1.5 transition-[filter] group-hover/channel:brightness-110">
+                <span aria-hidden="true" className={`relative mt-1.5 h-1.5 transition-[filter] group-hover/channel:brightness-110 ${scansKnown ? "col-span-5" : "col-span-4"}`}>
                   {channel.clicks > 0 && (
                     <span className={`absolute inset-y-0 left-0 rounded-r-[3px] ${untagged ? "bg-neutral-700" : "bg-skylab-800"}`}
                       style={{ width: `${(channel.clicks / max) * 100}%` }}
@@ -233,7 +238,7 @@ function ChannelsSection({ channels }) {
           })}
           <p className="mt-2 text-3xs leading-relaxed text-neutral-600">
             {clicksKnown
-              ? "Tıklamalar kısa linkten, yanıtlar formdan; ikisi de son 90 gün. Etiketsiz: kanal seçilmeden paylaşılan link ve form adresi."
+              ? "Tıklamalar kısa linkten, yanıtlar formdan; ikisi de son 90 gün. QR'dan: tıklamaların QR okutmasıyla gelen kısmı. Etiketsiz: kaynağı tanınamayan açılışlar ve form adresi."
               : "Tıklamalara şu an ulaşılamadı; yanıtlar formdan sayılıyor."}
           </p>
         </>

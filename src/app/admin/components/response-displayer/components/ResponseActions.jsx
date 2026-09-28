@@ -103,6 +103,7 @@ export function ResponseActions({ response, readOnly = false }) {
   const approveOutcome = describeRoute(workflow?.onApprove, 2);
   const declineOutcome = describeRoute(workflow?.onDecline, 3);
   const timeSpent = response?.timeSpent ?? null;
+  const scannedFromQr = response?.attribution?.medium === "qr" && response?.attribution?.source !== "qr";
 
   const [note, setNote] = useState(reviewDescription);
   const [isEditing, setIsEditing] = useState(canEditReview && !reviewedAt);
@@ -270,13 +271,17 @@ export function ResponseActions({ response, readOnly = false }) {
                 <StatBlock label="Gönderim" value={response?.submittedAt ? new Date(response.submittedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "--"} icon={CalendarCheck} color="text-neutral-300" />
                 <div className="flex flex-col items-center gap-1.5 text-center">
                   <ChannelIcon source={response?.attribution?.source} size={14} className="text-neutral-300 opacity-60" />
-                  <p className="text-sm font-semibold text-neutral-300">{sourceLabel(response?.attribution?.source)}</p>
+                  <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-neutral-300">
+                    {sourceLabel(response?.attribution?.source)}
+                    {scannedFromQr && <span className="rounded-full border border-white/10 px-1.5 text-3xs font-medium leading-4 text-neutral-400">QR</span>}
+                  </p>
                   <p className="text-3xs text-neutral-500">Kaynak</p>
                 </div>
               </div>
-              {(response?.attribution?.campaign || response?.attribution?.content) && (
+              {(scannedFromQr || response?.attribution?.campaign || response?.attribution?.content) && (
                 <p className="mt-3 text-center font-mono text-3xs text-neutral-600">
                   {[
+                    scannedFromQr && "QR okutmasıyla geldi",
                     response.attribution.campaign && `kampanya: ${response.attribution.campaign}`,
                     response.attribution.content && `içerik: ${response.attribution.content}`,
                   ].filter(Boolean).join(" · ")}
