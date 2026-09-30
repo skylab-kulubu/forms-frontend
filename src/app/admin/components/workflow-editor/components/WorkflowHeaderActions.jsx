@@ -63,6 +63,7 @@ export default function WorkflowHeaderActions({
 
       <Popover open={isError} error={error} variant="error" align="bottom-right">
         <button type="button" onClick={onPublish} disabled={isPublishing || !canPublish} aria-label="Akışı yayınla"
+          title={canPublish ? undefined : "Yayınlanacak değişiklik yok"}
           className="ml-1 flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-50"
         >
           {isPublishing ? <CircleGauge size={14} className="animate-spin" /> : isError ? <CircleAlert size={14} className="text-red-400" /> : null}

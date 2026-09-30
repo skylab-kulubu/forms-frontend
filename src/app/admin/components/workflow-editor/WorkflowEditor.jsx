@@ -91,6 +91,10 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   const definitionTimer = useRef(null);
   const metaTimer = useRef(null);
 
+  const [loadedDefinition] = useState(() => JSON.stringify(toDefinitionPayload(state.nodes, state.transitions)));
+  const savedDefinitionRef = useRef(loadedDefinition);
+  const [hasDraft, setHasDraft] = useState(Boolean(workflow?.draft) || !workflow?.published);
+
   const stateRef = useRef(state);
   useEffect(() => {
     stateRef.current = state;
@@ -179,10 +183,20 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
     if (!state.id || state.isSaved) return undefined;
 
     definitionTimer.current = setTimeout(() => {
+      const definition = toDefinitionPayload(state.nodes, state.transitions);
+      const serialized = JSON.stringify(definition);
+
+      if (serialized === savedDefinitionRef.current) {
+        dispatch({ type: "MARK_SAVED" });
+        return;
+      }
+
       saveDefinitionMutation.mutate(
-        { workflowId: state.id, definition: toDefinitionPayload(state.nodes, state.transitions) },
+        { workflowId: state.id, definition },
         {
           onSuccess: (response) => {
+            savedDefinitionRef.current = serialized;
+            setHasDraft(response?.data ? Boolean(response.data.draft) : true);
             dispatch({ type: "MARK_SAVED" });
             setSavedAt(new Date());
             const next = response?.data?.validation ?? response?.data;
@@ -315,6 +329,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
       onSuccess: (response) => {
         const next = response?.data?.validation ?? response?.data;
         if (next?.errors) setValidation(next);
+        setHasDraft(false);
         setPublishOpen(false);
         setPublishedFlash(true);
         onRefresh?.();
@@ -497,7 +512,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
         isPublishing={publishMutation.isPending}
         isError={publishMutation.isError}
         error={publishMutation.error}
-        canPublish={Boolean(state.id) && state.nodes.length > 0}
+        canPublish={Boolean(state.id) && state.nodes.length > 0 && hasDraft}
       />
 
       <div className="relative">

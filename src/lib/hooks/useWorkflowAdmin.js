@@ -90,7 +90,16 @@ export const useUpdateWorkflowMutation = () => {
   });
 };
 
-export const useSaveDefinitionMutation = () => useMutation({ mutationFn: saveDefinition });
+export const useSaveDefinitionMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: saveDefinition,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      if (variables?.workflowId) queryClient.invalidateQueries({ queryKey: ["workflow-versions", variables.workflowId] });
+    },
+  });
+};
 
 export const useValidateWorkflowMutation = () => useMutation({ mutationFn: validateWorkflow });
 
