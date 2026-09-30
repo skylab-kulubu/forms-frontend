@@ -8,6 +8,8 @@ import { useResponseDraftQuery } from "@/lib/hooks/useDraft";
 import { captureAttribution } from "@/lib/attribution";
 import { FormStatusHandler } from "@/app/components/FormStatusHandler";
 import FormDisplayer from "@/app/components/form-displayer/FormDisplayer";
+import StatusScreen from "@/app/components/form-displayer/components/StatusScreen";
+import FormSkeleton from "@/app/components/form-displayer/components/FormSkeleton";
 
 export default function FormClient() {
   const { id } = useParams();
@@ -31,6 +33,16 @@ export default function FormClient() {
         <FormDisplayer form={responseData.data.form} stage={responseData.data.stage ?? 0} isWorkflow={responseData.data.state != null}
           startFormId={responseData.data.startFormId ?? null} draft={isAuthed ? (draftData?.data ?? null) : null}
         />
+      )}
+      renderState={({ state, message, stage, startFormId, isWorkflow, reviewNote, reviewedAt, payload }) => (
+        <div className="relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
+          {state === "loading" ? <FormSkeleton /> : (
+            <StatusScreen state={state} message={message} stage={stage} startFormId={startFormId} isWorkflow={isWorkflow}
+              workflow={payload?.workflow ?? null} formTitle={payload?.formTitle ?? null} submittedAt={payload?.submittedAt ?? null}
+              reviewNote={reviewNote} reviewedAt={reviewedAt} isAuthed={isAuthed}
+            />
+          )}
+        </div>
       )}
     />
   );

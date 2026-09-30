@@ -57,6 +57,7 @@ const initialState = {
   stage: 0,
   isWorkflow: false,
   startFormId: null,
+  workflow: null,
   nextFormId: null,
   nextStage: null,
   values: {},
@@ -65,6 +66,7 @@ const initialState = {
   submissionState: null,
   submissionStatus: null,
   submissionMessage: null,
+  submittedAt: null,
   errorMessage: null,
   missingFieldIds: [],
   uploadingFields: {},
@@ -111,10 +113,14 @@ function reducer(state, action) {
       const stage = data?.stage ?? state.stage;
       const startFormId = data?.startFormId ?? state.startFormId;
       const isWorkflow = state.isWorkflow || data?.state != null;
+      const workflow = data?.workflow ?? state.workflow;
       if (data?.state === WORKFLOW_STATE.SHOW_FORM && data?.nextFormId) {
-        return { ...state, startFormId, isWorkflow, nextFormId: data.nextFormId, nextStage: data.stage ?? null };
+        return { ...state, startFormId, isWorkflow, workflow, nextFormId: data.nextFormId, nextStage: data.stage ?? null };
       }
-      return { ...state, stage, startFormId, isWorkflow, submissionState: getSubmissionState(status), submissionStatus: status ?? null };
+      return {
+        ...state, stage, startFormId, isWorkflow, workflow,
+        submittedAt: new Date().toISOString(), submissionState: getSubmissionState(status), submissionStatus: status ?? null,
+      };
     }
 
     case "SUBMIT_FAILURE":
@@ -122,6 +128,7 @@ function reducer(state, action) {
         ...state,
         stage: action.stage ?? state.stage,
         startFormId: action.startFormId ?? state.startFormId,
+        workflow: action.workflow ?? state.workflow,
         submissionState: action.submissionState,
         submissionStatus: action.status ?? null,
         submissionMessage: action.message ?? null,
@@ -163,6 +170,7 @@ function submitFailureAction(error) {
     message: submissionState === "rejected" ? (error?.body?.message ?? null) : null,
     startFormId: error?.body?.data?.startFormId ?? null,
     stage: error?.body?.data?.stage || null,
+    workflow: error?.body?.data?.workflow ?? null,
   };
 }
 

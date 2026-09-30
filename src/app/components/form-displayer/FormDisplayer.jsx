@@ -7,7 +7,7 @@ import { serializeRepeater } from "@/app/components/form-components/FormRepeater
 import { FormDisplayerHeader, FormRespondentBadge, MissingNotice } from "./components/FormDisplayerComponents";
 import WorkflowProgress from "./components/WorkflowProgress";
 import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
-import { FormStatusDisplayer } from "../FormStatusHandler";
+import StatusScreen from "./components/StatusScreen";
 import Background from "../Background";
 import { Loader2, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -68,8 +68,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields,
   } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId });
 
-  const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, values: formValues,
-    submissionState, submissionMessage, errorMessage, missingFieldIds, draftPromptVisible } = state;
+  const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, workflow: activeJourney, values: formValues,
+    submissionState, submissionMessage, submittedAt, errorMessage, missingFieldIds, draftPromptVisible } = state;
 
   const title = activeForm?.title ?? "";
   const description = activeForm?.description ?? "";
@@ -252,8 +252,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
             <motion.div key="success-screen" className="w-full flex-1 flex flex-col"
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <FormStatusDisplayer state={submissionState} message={submissionMessage} stage={activeStage}
-                startFormId={activeStartFormId} isWorkflow={activeIsWorkflow}
+              <StatusScreen state={submissionState} message={submissionMessage} stage={activeStage} startFormId={activeStartFormId}
+                workflow={activeJourney} formTitle={title} submittedAt={submittedAt} isWorkflow={activeIsWorkflow} isAuthed={isAuthed}
               />
             </motion.div>
           )}
