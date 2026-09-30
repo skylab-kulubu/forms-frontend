@@ -6,7 +6,7 @@ import { useReliableSave } from "@/lib/hooks/useReliableSave";
 const DEBOUNCE_MS = 1000;
 
 export function useResponseDraftAutoSave(formId, answers, savedDraft, startTimeRef, enabled, onSynced) {
-  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [lastSave, setLastSave] = useState(null);
 
   const { data: session } = useSession();
   const tokenRef = useRef(session?.accessToken);
@@ -41,9 +41,11 @@ export function useResponseDraftAutoSave(formId, answers, savedDraft, startTimeR
 
     schedule({ formId, responses: answers, timeSpent }, () => {
       onSyncedRef.current?.(serialized);
-      setLastSavedAt(answers.length ? new Date() : null);
+      setLastSave(answers.length ? { formId, at: new Date() } : null);
     });
   }, [enabled, formId, answers, serialized, savedDraft, startTimeRef, schedule, cancel]);
+
+  const lastSavedAt = lastSave?.formId === formId ? lastSave.at : null;
 
   return { lastSavedAt, cancel };
 }
