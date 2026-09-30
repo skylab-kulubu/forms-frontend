@@ -1,8 +1,11 @@
 "use client";
 
+import { Fragment } from "react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import { useSession } from "next-auth/react";
-import { UserRoundX, UserRound } from "lucide-react";
+import { CircleAlert, UserRoundX, UserRound } from "lucide-react";
+
+const LINK_BUTTON = "underline underline-offset-3 transition-colors";
 
 export function FormRespondentBadge() {
   const { data: session, status } = useSession();
@@ -59,6 +62,29 @@ export function FormDisplayerHeader({ title, description }) {
           dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
         />
       )}
+    </div>
+  );
+}
+
+export function MissingNotice({ fields, onJump }) {
+  if (!fields.length) return null;
+
+  return (
+    <div className="mb-4 flex items-start gap-2 text-xs leading-5 text-red-200" role="alert">
+      <CircleAlert size={14} className="mt-0.5 shrink-0 text-red-300" />
+      <span>
+        {fields.length} zorunlu soru boş:{" "}
+        {fields.map((field, index) => (
+          <Fragment key={field.id}>
+            {index > 0 && ", "}
+            <button type="button" onClick={() => onJump(field.id)}
+              className={`${LINK_BUTTON} decoration-red-200/35 hover:decoration-red-200/80`}
+            >
+              {field.number}. soru
+            </button>
+          </Fragment>
+        ))}
+      </span>
     </div>
   );
 }

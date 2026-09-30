@@ -5,6 +5,7 @@ import { useResponseDraftAutoSave } from "./useResponseDraftAutoSave";
 import { FORM_ACCESS_STATUS, WORKFLOW_STATE, getSubmitErrorState } from "../../FormStatusHandler";
 import { getVisibleFields } from "../components/conditionChecker";
 import { migrateSchema } from "@/app/components/form-migrate";
+import { isRepeaterComplete } from "@/app/components/form-components/FormRepeater";
 import { readAttribution } from "@/lib/attribution";
 
 function getSubmissionState(status) {
@@ -40,6 +41,17 @@ function draftAnswers(values, defaults, schema) {
     }));
 }
 
+export function isFieldMissing(field, value) {
+  if (field.type === "separator" || !field.props?.required) return false;
+  if (value === undefined || value === null) return true;
+  if (field.type === "toggle") return value !== true;
+  if (field.type === "repeater") return !isRepeaterComplete(field.props?.fields, value);
+  if (typeof value === "string") return value.trim() === "";
+  if (Array.isArray(value)) return value.length === 0;
+  if (field.type === "matrix" && typeof value === "object") return Object.keys(value).length < (field.props.rows?.length || 0);
+  return false;
+}
+
 const initialState = {
   form: null,
   stage: 0,
@@ -59,16 +71,27 @@ const initialState = {
   draftPromptVisible: false,
 };
 
+function withoutResolved(state, action) {
+  return action.resolved ? state.missingFieldIds.filter((id) => id !== action.fieldId) : state.missingFieldIds;
+}
+
 function reducer(state, action) {
   switch (action.type) {
     case "SET_VALUE":
-      return { ...state, values: { ...state.values, [action.fieldId]: action.value }, errorMessage: null, draftPromptVisible: false };
+      return {
+        ...state,
+        values: { ...state.values, [action.fieldId]: action.value },
+        errorMessage: null,
+        draftPromptVisible: false,
+        missingFieldIds: withoutResolved(state, action),
+      };
 
     case "SET_DEFAULT":
       return {
         ...state,
         values: { ...state.values, [action.fieldId]: action.value },
         defaults: { ...state.defaults, [action.fieldId]: action.value },
+        missingFieldIds: withoutResolved(state, action),
       };
 
     case "SET_UPLOAD_STATE":
@@ -82,9 +105,6 @@ function reducer(state, action) {
 
     case "SET_MISSING_FIELDS":
       return { ...state, missingFieldIds: action.fieldIds };
-
-    case "CLEAR_MISSING_FIELDS":
-      return { ...state, missingFieldIds: [] };
 
     case "SUBMIT_SUCCESS": {
       const { status, data } = action;
@@ -111,7 +131,7 @@ function reducer(state, action) {
       return { ...initialState, form: action.form, stage: action.stage ?? state.nextStage ?? state.stage + 1, isWorkflow: true, startFormId: state.startFormId };
 
     case "DISCARD_DRAFT":
-      return { ...state, values: { ...state.defaults }, draftPromptVisible: false };
+      return { ...state, values: { ...state.defaults }, draftPromptVisible: false, missingFieldIds: [] };
 
     case "APPLY_DRAFT": {
       const values = { ...state.values, ...action.values };
@@ -162,7 +182,6 @@ export function useFormDisplayer(form, draft, workflow = {}) {
   const { data: nextFormData, error: nextFormError } = useDisplayFormQuery(state.nextFormId);
 
   const draftAppliedRef = useRef(false);
-  const missingTimeoutRef = useRef(null);
   const startTimeRef = useRef(null);
 
   useEffect(() => { startTimeRef.current = Date.now(); }, []);
@@ -213,7 +232,9 @@ export function useFormDisplayer(form, draft, workflow = {}) {
   const isAnyFileUploading = Object.values(state.uploadingFields).some(Boolean);
 
   const handleValueChange = (fieldId, value, isDefault = false) => {
-    dispatch({ type: isDefault ? "SET_DEFAULT" : "SET_VALUE", fieldId, value });
+    const field = state.missingFieldIds.includes(fieldId) ? schema.find((item) => item.id === fieldId) : null;
+    const resolved = Boolean(field) && !isFieldMissing(field, value);
+    dispatch({ type: isDefault ? "SET_DEFAULT" : "SET_VALUE", fieldId, value, resolved });
   };
 
   const handleUploadStateChange = (fieldId, isUploading) => {
@@ -255,14 +276,7 @@ export function useFormDisplayer(form, draft, workflow = {}) {
   };
 
   const showMissingFields = (fieldIds) => {
-    if (missingTimeoutRef.current) clearTimeout(missingTimeoutRef.current);
     dispatch({ type: "SET_MISSING_FIELDS", fieldIds });
-    dispatch({ type: "SET_ERROR", message: "Eksik alanları doldurunuz!" });
-    missingTimeoutRef.current = setTimeout(() => {
-      dispatch({ type: "CLEAR_MISSING_FIELDS" });
-      missingTimeoutRef.current = null;
-    }, 2000);
-    setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 2000);
   };
 
   return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || Boolean(state.nextFormId),

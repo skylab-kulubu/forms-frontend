@@ -12,6 +12,7 @@ import SearchPicker from "@/app/components/utils/SearchPicker";
 import { useSession } from "next-auth/react";
 import { UNIVERSITIES } from "../../../data/presets/universities";
 import { DEPARTMENTS } from "../../../data/presets/departments";
+import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
 const CHOICE_PRESETS = [
   { id: "universities", label: "Üniversite", icon: GraduationCap, data: UNIVERSITIES },
@@ -347,11 +348,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex gap-3">
-          {questionNumber != null && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300 shrink-0">
-              {questionNumber}
-            </div>
-          )}
+          <QuestionNumber number={questionNumber} missing={missing} />
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
               {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
@@ -362,7 +359,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
 
         <div className="mt-3">{control}</div>
 
-        {isAutoFilled ? <span className="px-0.5 text-2xs text-neutral-500 mt-1">Oturumunuzdan otomatik dolduruldu</span> : required && <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>}
+        {isAutoFilled ? <span className="px-0.5 text-2xs text-neutral-500 mt-1">Oturumunuzdan otomatik dolduruldu</span> : <QuestionHint required={required} missing={missing} />}
       </div>
     </div>
   );

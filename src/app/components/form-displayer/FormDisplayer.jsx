@@ -1,11 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
-import { serializeRepeater, isRepeaterComplete } from "@/app/components/form-components/FormRepeater";
-import { FormDisplayerHeader, FormRespondentBadge } from "./components/FormDisplayerComponents";
+import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
+import { FormDisplayerHeader, FormRespondentBadge, MissingNotice } from "./components/FormDisplayerComponents";
 import WorkflowProgress from "./components/WorkflowProgress";
-import { useFormDisplayer } from "./hooks/useFormDisplayer";
+import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
 import { FormStatusDisplayer } from "../FormStatusHandler";
 import Background from "../Background";
 import { Loader2, Clock } from "lucide-react";
@@ -77,36 +78,32 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const questionFields = visibleFields.filter((field) => field.type !== "separator");
   const answeredCount = questionFields.filter((field) => hasAnswer(formValues[field.id])).length;
 
+  const questionNumbers = useMemo(() => {
+    const numbers = new Map();
+    let counter = 0;
+    visibleFields.forEach((field) => {
+      if (field.type !== "separator") numbers.set(field.id, ++counter);
+    });
+    return numbers;
+  }, [visibleFields]);
+
+  const missingFields = missingFieldIds
+    .filter((id) => questionNumbers.has(id))
+    .map((id) => ({ id, number: questionNumbers.get(id) }))
+    .sort((a, b) => a.number - b.number);
+
+  const jumpToField = (fieldId) => {
+    const element = document.getElementById(fieldId);
+    if (element) element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+  };
+
   const onSubmit = () => {
     setTimeout(() => {
-      const missingFields = [];
+      const missing = visibleFields.filter((field) => isFieldMissing(field, formValues[field.id])).map((field) => field.id);
 
-      visibleFields.forEach((field) => {
-        if (field.type === "separator") return;
-        if (field.props?.required) {
-          const val = formValues[field.id];
-          let isEmpty = val === undefined || val === null;
-          if (!isEmpty) {
-            if (field.type === "toggle") isEmpty = val !== true;
-            else if (field.type === "repeater") isEmpty = !isRepeaterComplete(field.props?.fields, val);
-            else if (typeof val === "string") isEmpty = val.trim() === "";
-            else if (Array.isArray(val)) isEmpty = val.length === 0;
-            else if (field.type === "matrix" && typeof val === "object") {
-              const requiredRowsCount = field.props.rows?.length || 0;
-              const answeredRowsCount = Object.keys(val).length;
-              isEmpty = answeredRowsCount < requiredRowsCount;
-            }
-          }
-          if (isEmpty) missingFields.push(field.id);
-        }
-      });
-
-      if (missingFields.length > 0) {
-        showMissingFields(missingFields);
-        setTimeout(() => {
-          const element = document.getElementById(missingFields[0]);
-          if (element) element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-        }, 150);
+      if (missing.length > 0) {
+        showMissingFields(missing);
+        setTimeout(() => jumpToField(missing[0]), 150);
         return;
       }
 
@@ -224,6 +221,11 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     </div>
 
                     <motion.div variants={itemVariants} className="mt-auto flex flex-col items-end gap-2">
+                      {missingFields.length > 0 && (
+                        <div className="w-full px-4">
+                          <MissingNotice fields={missingFields} onJump={jumpToField} />
+                        </div>
+                      )}
                       <motion.button onClick={onSubmit} disabled={isSubmitting || errorMessage || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none
                         ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}

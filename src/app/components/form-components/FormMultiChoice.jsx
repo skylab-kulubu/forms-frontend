@@ -8,6 +8,7 @@ import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
+import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
 export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, readOnly, compact = false, workflowLock = null, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
@@ -184,11 +185,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex gap-3">
-          {questionNumber != null && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300 shrink-0">
-              {questionNumber}
-            </div>
-          )}
+          <QuestionNumber number={questionNumber} missing={missing} />
 
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
@@ -202,7 +199,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
           {choiceItems}
         </div>
 
-        {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1">Zorunlu alan</span>}
+        <QuestionHint required={required} missing={missing} />
       </div>
     </div>
   );

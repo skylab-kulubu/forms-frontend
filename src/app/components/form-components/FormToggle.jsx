@@ -7,6 +7,7 @@ import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
+import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
 export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnly, compact = false, workflowLock = null, ...rest }) {
     const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
@@ -103,11 +104,7 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
             <div className="flex flex-col p-2 md:p-4">
 
                 <div className="flex gap-3">
-                    {questionNumber != null && (
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
-                            {questionNumber}
-                        </div>
-                    )}
+                    <QuestionNumber number={questionNumber} missing={missing} />
                     <div className="flex flex-col w-full">
                         <p className="text-sm font-medium text-neutral-100">
                             {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-200/70">*</span>}
@@ -120,7 +117,7 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
                     {control}
                 </div>
 
-                {required && <span className="px-0.5 text-2xs text-neutral-500 mt-1.5">Devam etmek için onaylamalısınız</span>}
+                <QuestionHint required={required} missing={missing} text="Devam etmek için onaylamalısınız" missingText="Devam etmek için onaylamalısınız" className="mt-1.5" />
             </div>
         </div>
     );
