@@ -16,6 +16,53 @@ export function hasJourney(workflow) {
   return journeyRoute(workflow).length > 0;
 }
 
+export function stepBarModel(workflow, stage) {
+  const route = journeyRoute(workflow);
+  const current = Math.max(1, Number(stage) || 1);
+
+  if (!route.length) {
+    return { segments: [...Array(current - 1).fill("done"), "current"], tail: true, stage: current, total: null, uncertain: false };
+  }
+
+  const segments = route.map((item) => {
+    if (item.status === JOURNEY_STATUS.CURRENT || item.status === JOURNEY_STATUS.IN_REVIEW) return "current";
+    if (item.status === JOURNEY_STATUS.UPCOMING) return item.certain ? "next" : "maybe";
+    return "done";
+  });
+
+  const total = Math.max(route.length, Number(workflow.maxSteps) || 0);
+  while (segments.length < total) segments.push("maybe");
+
+  const currentItem = route.find((item) => item.status === JOURNEY_STATUS.CURRENT);
+
+  return { segments, tail: false, stage: currentItem?.stage ?? current, total, uncertain: segments.includes("maybe") };
+}
+
+export function nextStepCopy({ workflow, isWorkflow, requiresManualReview, isAuthed }) {
+  if (!isWorkflow) {
+    if (!requiresManualReview) return null;
+    return isAuthed ? "Cevabınızı ekip inceleyecek. Sonucu e-postayla bildireceğiz." : "Cevabınızı ekip inceleyecek.";
+  }
+
+  const route = journeyRoute(workflow);
+  const index = route.findIndex((item) => item.status === JOURNEY_STATUS.CURRENT);
+  if (index < 0) return null;
+
+  const current = route[index];
+  const next = route[index + 1] ?? null;
+  const mayContinue = Boolean(next) || (Number(workflow.maxSteps) || 0) > index + 1;
+
+  if (current.requiresManualReview) {
+    if (!mayContinue) return "Ekip cevaplarınızı inceleyecek. Bu, başvurunun son adımı; sonucu e-postayla bildireceğiz.";
+    if (!next?.certain) return "Ekip cevaplarınızı inceleyecek; sonucu e-postayla bildireceğiz.";
+    return "Ekip cevaplarınızı inceleyecek. Onaylanırsa sıradaki adımın bağlantısı e-postanıza gelir.";
+  }
+
+  if (!mayContinue) return "Bu, başvurunun son adımı.";
+  if (!next?.certain) return "Cevaplarınıza göre sıradaki adım bu sayfada açılabilir.";
+  return "Gönderince sıradaki adım bu sayfada açılır.";
+}
+
 export function formatJourneyDate(value, { withTime = false } = {}) {
   if (!value) return null;
 
@@ -95,4 +142,24 @@ export function singleResponseTimeline({ state, submittedAt, reviewedAt, reviewN
     default:
       return null;
   }
+}
+
+const INTRO_KEY = "skyforms:intro";
+
+export function introStorageKey(formId, instanceId) {
+  return `${INTRO_KEY}:${instanceId ?? "new"}:${formId}`;
+}
+
+export function hasSeenIntro(formId, instanceId) {
+  try {
+    return localStorage.getItem(introStorageKey(formId, instanceId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markIntroSeen(formId, instanceId) {
+  try {
+    localStorage.setItem(introStorageKey(formId, instanceId), "1");
+  } catch { }
 }

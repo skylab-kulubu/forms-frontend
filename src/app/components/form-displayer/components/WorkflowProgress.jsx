@@ -1,53 +1,89 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { stepBarModel } from "@/lib/workflow-journey";
 
-const TONE = {
-  active: { fill: "bg-skylab-500", label: "Başvurunuz devam ediyor" },
-  pending: { fill: "bg-amber-400", label: "İncelemede" },
-  paused: { fill: "bg-neutral-400", label: "Durduruldu" },
-  declined: { fill: "bg-red-400", label: "Sonuçlandı" },
-  done: { fill: "bg-emerald-400", label: "Tamamlandı" },
-};
+const STICKY_TOP = 10;
+const EASE = [0.22, 1, 0.36, 1];
 
-export function workflowProgressStatus(submissionState) {
-  switch (submissionState) {
-    case "pending": return "pending";
-    case "workflowPaused": return "paused";
-    case "declined": return "declined";
-    case "completed":
-    case "approved":
-    case "fullyCompleted": return "done";
-    default: return null;
+function Segment({ kind, fill }) {
+  if (kind === "done") {
+    return (
+      <span className="relative h-1 flex-1 overflow-hidden rounded-full bg-skylab-500/25">
+        <motion.span className="absolute inset-0 origin-left rounded-full bg-skylab-600"
+          initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.55, ease: EASE, delay: 0.1 }}
+        />
+      </span>
+    );
   }
+
+  if (kind === "current") {
+    return (
+      <span className="relative h-1 flex-1 overflow-hidden rounded-full bg-skylab-500/25">
+        <motion.span className="absolute inset-y-0 left-0 rounded-full bg-skylab-500"
+          initial={{ width: 0 }} animate={{ width: `${fill}%` }} transition={{ duration: 0.5, ease: EASE, delay: 0.25 }}
+        />
+      </span>
+    );
+  }
+
+  if (kind === "maybe") {
+    return <span className="h-1 flex-1 rounded-full bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.16)_0_6px,transparent_6px_11px)]" />;
+  }
+
+  return <span className="h-1 flex-1 rounded-full bg-white/8" />;
 }
 
-export default function WorkflowProgress({ stage, status = "active", answered = 0, total = 0, className = "" }) {
-  const tone = TONE[status] ?? TONE.active;
-  const current = Math.max(1, Number(stage) || 1);
-  const isActive = status === "active";
-  const continues = isActive || status === "pending" || status === "paused";
-  const fill = isActive ? (total > 0 ? Math.max(0.06, answered / total) : 0.06) : 1;
-  const label = isActive && total > 0 ? `${answered}/${total} soru` : tone.label;
+export default function WorkflowProgress({ workflow, stage, formTitle, fill = 0, zIndex = 30 }) {
+  const model = stepBarModel(workflow, stage);
+  const sentinelRef = useRef(null);
+  const [stuck, setStuck] = useState(false);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setStuck(!entry.isIntersecting && entry.boundingClientRect.top < (entry.rootBounds?.top ?? 0));
+    }, { rootMargin: `-${STICKY_TOP + 9}px 0px 0px 0px`, threshold: [0, 1] });
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
+  const total = model.total == null ? null : model.uncertain ? `en fazla ${model.total}` : model.total;
+  const label = total == null ? `Başvurunun ${model.stage}. adımı` : `Başvurunun ${model.stage}. adımı, ${total} adımdan`;
 
   return (
-    <div className={`w-full ${className}`} role="group" aria-label={`Başvurunun ${current}. adımı: ${tone.label}`}>
-      <div className="mb-2 flex items-baseline justify-between gap-3 text-3xs text-neutral-500">
-        <span className="font-semibold uppercase tracking-[0.14em] text-neutral-300">Adım {current}</span>
-        <span className="truncate tabular-nums">{label}</span>
-      </div>
+    <>
+      <div ref={sentinelRef} aria-hidden className="-mb-6 h-px" />
+      <div className="sticky top-2.5 -mx-3.5 -my-2.5" style={{ zIndex }}>
+        <div role="group" aria-label={label}
+          className={`rounded-2xl border px-3.5 py-2.5 transition-[background-color,border-color,box-shadow] duration-200
+            ${stuck ? "border-white/10 bg-neutral-900/95 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl" : "border-transparent"}`}
+        >
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="relative h-4 min-w-0 flex-1">
+              <span className={`absolute inset-0 truncate text-xs font-medium text-neutral-300 transition duration-200 ${stuck ? "-translate-y-1.5 opacity-0" : ""}`}>
+                {workflow?.title}
+              </span>
+              <span className={`absolute inset-0 truncate text-xs font-medium text-neutral-100 transition duration-200 ${stuck ? "" : "translate-y-1.5 opacity-0"}`}>
+                {formTitle}
+              </span>
+            </span>
+            <span className="shrink-0 whitespace-nowrap text-3xs font-semibold uppercase tracking-[0.14em] tabular-nums text-neutral-300">
+              Adım {model.stage}
+              {total != null && <span className="text-neutral-500"> / {total}</span>}
+            </span>
+          </div>
 
-      <div className="flex items-center gap-1">
-        {Array.from({ length: current - 1 }, (_, index) => (
-          <span key={index} className="h-1 flex-1 rounded-full bg-skylab-600" />
-        ))}
-        <span key={`stage-${current}`} className="relative h-1 flex-1 overflow-hidden rounded-full bg-skylab-500/25">
-          <motion.span className={`absolute inset-y-0 left-0 rounded-full ${tone.fill}`}
-            initial={{ width: 0 }} animate={{ width: `${fill * 100}%` }} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          />
-        </span>
-        {continues && <span className="ml-1 h-0 w-10 shrink-0 border-t border-dashed border-neutral-700" />}
+          <div className="flex items-center gap-1">
+            {model.segments.map((kind, index) => <Segment key={index} kind={kind} fill={fill} />)}
+            {model.tail && <span className="ml-1 h-0 w-10 shrink-0 border-t border-dashed border-neutral-700" />}
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

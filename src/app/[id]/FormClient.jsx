@@ -32,6 +32,7 @@ export default function FormClient() {
       renderForm={(responseData) => (
         <FormDisplayer form={responseData.data.form} stage={responseData.data.stage ?? 0} isWorkflow={responseData.data.state != null}
           startFormId={responseData.data.startFormId ?? null} draft={isAuthed ? (draftData?.data ?? null) : null}
+          journey={responseData.data.workflow ?? null} instanceId={responseData.data.instanceId ?? null}
         />
       )}
       renderState={({ state, message, stage, startFormId, isWorkflow, reviewNote, reviewedAt, payload }) => (

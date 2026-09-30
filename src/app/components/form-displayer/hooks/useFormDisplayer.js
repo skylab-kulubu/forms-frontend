@@ -7,6 +7,7 @@ import { getVisibleFields } from "../components/conditionChecker";
 import { migrateSchema } from "@/app/components/form-migrate";
 import { isRepeaterComplete } from "@/app/components/form-components/FormRepeater";
 import { readAttribution } from "@/lib/attribution";
+import { hasJourney, hasSeenIntro } from "@/lib/workflow-journey";
 
 function getSubmissionState(status) {
   switch (status) {
@@ -58,8 +59,11 @@ const initialState = {
   isWorkflow: false,
   startFormId: null,
   workflow: null,
+  instanceId: null,
+  intro: null,
   nextFormId: null,
   nextStage: null,
+  arrivedFrom: null,
   values: {},
   defaults: {},
   savedDraft: "[]",
@@ -84,7 +88,6 @@ function reducer(state, action) {
         ...state,
         values: { ...state.values, [action.fieldId]: action.value },
         errorMessage: null,
-        draftPromptVisible: false,
         missingFieldIds: withoutResolved(state, action),
       };
 
@@ -114,11 +117,15 @@ function reducer(state, action) {
       const startFormId = data?.startFormId ?? state.startFormId;
       const isWorkflow = state.isWorkflow || data?.state != null;
       const workflow = data?.workflow ?? state.workflow;
+      const instanceId = data?.instanceId ?? state.instanceId;
       if (data?.state === WORKFLOW_STATE.SHOW_FORM && data?.nextFormId) {
-        return { ...state, startFormId, isWorkflow, workflow, nextFormId: data.nextFormId, nextStage: data.stage ?? null };
+        return {
+          ...state, startFormId, isWorkflow, workflow, instanceId,
+          nextFormId: data.nextFormId, nextStage: data.stage ?? null, arrivedFrom: state.form?.title ?? null,
+        };
       }
       return {
-        ...state, stage, startFormId, isWorkflow, workflow,
+        ...state, stage, startFormId, isWorkflow, workflow, instanceId,
         submittedAt: new Date().toISOString(), submissionState: getSubmissionState(status), submissionStatus: status ?? null,
       };
     }
@@ -135,7 +142,19 @@ function reducer(state, action) {
       };
 
     case "LOAD_NEXT_FORM":
-      return { ...initialState, form: action.form, stage: action.stage ?? state.nextStage ?? state.stage + 1, isWorkflow: true, startFormId: state.startFormId };
+      return {
+        ...initialState,
+        form: action.form,
+        stage: action.stage ?? state.nextStage ?? state.stage + 1,
+        isWorkflow: true,
+        startFormId: state.startFormId,
+        workflow: action.workflow ?? null,
+        instanceId: action.instanceId ?? state.instanceId,
+        intro: hasJourney(action.workflow) ? { arrivedTitle: state.arrivedFrom } : null,
+      };
+
+    case "END_INTRO":
+      return { ...state, intro: null };
 
     case "DISCARD_DRAFT":
       return { ...state, values: { ...state.defaults }, draftPromptVisible: false, missingFieldIds: [] };
@@ -174,14 +193,25 @@ function submitFailureAction(error) {
   };
 }
 
-export function useFormDisplayer(form, draft, workflow = {}) {
-  const [state, dispatch] = useReducer(reducer, {
+function initState({ form, options }) {
+  const journey = options.journey ?? null;
+  const instanceId = options.instanceId ?? null;
+  const showIntro = Boolean(options.isWorkflow) && hasJourney(journey) && Boolean(form?.id) && !hasSeenIntro(form.id, instanceId);
+
+  return {
     ...initialState,
     form,
-    stage: workflow.stage ?? 0,
-    isWorkflow: Boolean(workflow.isWorkflow),
-    startFormId: workflow.startFormId ?? null,
-  });
+    stage: options.stage ?? 0,
+    isWorkflow: Boolean(options.isWorkflow),
+    startFormId: options.startFormId ?? null,
+    workflow: journey,
+    instanceId,
+    intro: showIntro ? { arrivedTitle: null } : null,
+  };
+}
+
+export function useFormDisplayer(form, draft, options = {}) {
+  const [state, dispatch] = useReducer(reducer, { form, options }, initState);
 
   const { status } = useSession();
   const isAuthed = status === "authenticated";
@@ -198,7 +228,7 @@ export function useFormDisplayer(form, draft, workflow = {}) {
     if (!nextFormData) return;
     const payload = nextFormData.data;
     if (nextFormData.status === FORM_ACCESS_STATUS.AVAILABLE && payload?.form) {
-      dispatch({ type: "LOAD_NEXT_FORM", form: payload.form, stage: payload.stage });
+      dispatch({ type: "LOAD_NEXT_FORM", form: payload.form, stage: payload.stage, workflow: payload.workflow ?? null, instanceId: payload.instanceId ?? null });
       draftAppliedRef.current = false;
       startTimeRef.current = Date.now();
       return;
@@ -254,6 +284,8 @@ export function useFormDisplayer(form, draft, workflow = {}) {
     startTimeRef.current = Date.now();
   }, []);
 
+  const endIntro = useCallback(() => dispatch({ type: "END_INTRO" }), []);
+
   const handleSubmit = (formattedResponses) => {
     cancelDraftSave();
     const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
@@ -288,6 +320,6 @@ export function useFormDisplayer(form, draft, workflow = {}) {
   };
 
   return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || Boolean(state.nextFormId),
-    lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields
+    lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro
   };
 }
