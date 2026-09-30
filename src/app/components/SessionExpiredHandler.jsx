@@ -38,7 +38,13 @@ export default function SessionExpiredHandler() {
   const { data: session, update } = useSession();
   const pathname = usePathname();
 
-  const [eventExpired, setEventExpired] = useState(false);
+  // The access token the API refused (from the apiClient event). "Recovered" means a
+  // different token showed up, not merely a session object without an error flag: the
+  // session keeps handing out the same token until it expires, and that token is dead.
+  const [rejectedToken, setRejectedToken] = useState(null);
+  // The rejected token we already re-synced the SessionProvider for, so one dead token
+  // triggers one update() and not one per rejected request.
+  const resyncedTokenRef = useRef(null);
   // Loop guard: if this page load itself came from an auto re-login that still yielded a
   // broken session, don't bounce again; fall through to the banner.
   const [autoBlocked, setAutoBlocked] = useState(() => {
@@ -51,33 +57,42 @@ export default function SessionExpiredHandler() {
   const redirectingRef = useRef(false);
 
   // update's identity changes with the session; keep it in a ref so the re-sync effect
-  // below runs once per expiry event instead of once per session change.
+  // below runs once per rejected token instead of once per session change.
   const updateRef = useRef(update);
   useEffect(() => { updateRef.current = update; });
 
+  const sessionToken = session?.accessToken ?? null;
+  const sessionTokenRef = useRef(sessionToken);
+  useEffect(() => { sessionTokenRef.current = sessionToken; });
+
   const sessionError = session?.error === "RefreshAccessTokenError";
+  // Stand down only when a token other than the rejected one is in the session (a refresh
+  // rotated it, or the user signed in again). The same token coming back means nothing
+  // changed, so the banner stays and no request is retried on its account.
+  const recovered = rejectedToken !== null && sessionToken !== null && sessionToken !== rejectedToken;
+  const eventExpired = rejectedToken !== null && !recovered;
   const expired = sessionError || eventExpired;
   const onAuthPage = pathname?.startsWith("/auth") ?? false;
 
   useEffect(() => {
-    const onExpired = () => setEventExpired(true);
+    const onExpired = (event) => {
+      // Fall back to the token the context holds right now: that is the one the API saw.
+      setRejectedToken(event?.detail?.token ?? sessionTokenRef.current ?? "unknown");
+    };
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
   }, []);
 
   // The event comes from apiClient's standalone getSession(), which does not update the
-  // SessionProvider context. Re-sync it so session.error becomes authoritative; if the
-  // refresh recovered in the meantime, stand down.
+  // SessionProvider context. Re-sync it once per rejected token so session.error becomes
+  // authoritative. update() flips useSession() through "loading", which re-enables
+  // session-gated queries and gets them rejected again; doing it once per token keeps
+  // that from turning into a request loop.
   useEffect(() => {
-    if (!eventExpired) return;
-    let cancelled = false;
-    updateRef.current?.()
-      .then((fresh) => {
-        if (!cancelled && fresh && !fresh.error) setEventExpired(false);
-      })
-      .catch(() => { });
-    return () => { cancelled = true; };
-  }, [eventExpired]);
+    if (rejectedToken === null || resyncedTokenRef.current === rejectedToken) return;
+    resyncedTokenRef.current = rejectedToken;
+    updateRef.current?.()?.catch?.(() => { });
+  }, [rejectedToken]);
 
   // The signin page already redirects to Keycloak on its own, so stand down there.
   const showBanner = expired && !onAuthPage && (hasUnsavedInputRisk(pathname) || autoBlocked);
