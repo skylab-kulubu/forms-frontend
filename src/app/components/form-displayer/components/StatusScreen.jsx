@@ -34,7 +34,7 @@ function StageContext({ workflow, stage }) {
   return null;
 }
 
-function buildScreen({ state, message, stage, startFormId, workflow, formTitle, submittedAt, reviewNote, reviewedAt, isWorkflow, isAuthed }) {
+function buildScreen({ state, message, stage, startFormId, workflow, formTitle, submittedAt, reviewNote, reviewedAt, isWorkflow, isAuthed, isLastRun }) {
   const journey = hasJourney(workflow);
   const workflowContext = <StageContext workflow={workflow} stage={0} />;
   const reviewDate = formatJourneyDate(reviewedAt, { withTime: true });
@@ -60,13 +60,13 @@ function buildScreen({ state, message, stage, startFormId, workflow, formTitle, 
       if (isWorkflow) {
         return {
           Icon: FileX, tone: "neutral", context: journey ? workflowContext : <StageContext workflow={workflow} stage={stage} />,
-          title: "Başvurunuz kabul edilmedi", timeline: journey ? journeyTimeline(workflow) : null, note: fallbackNote,
+          title: isLastRun ? "Son başvurunuz kabul edilmedi" : "Başvurunuz kabul edilmedi", timeline: journey ? journeyTimeline(workflow) : null, note: fallbackNote,
         };
       }
       return { Icon: FileX, tone: "neutral", context: formTitle, title: "Cevabınız kabul edilmedi", timeline: singleResponseTimeline(single) };
     case "fullyCompleted":
       return {
-        Icon: FileCheck, tone: "ok", context: workflowContext, title: "Başvurunuz tamamlandı",
+        Icon: FileCheck, tone: "ok", context: workflowContext, title: isLastRun ? "Son başvurunuz tamamlandı" : "Başvurunuz tamamlandı",
         timeline: journey ? journeyTimeline(workflow) : null,
         description: journey ? null : "Başvurunun bütün adımları tamamlandı.",
         note: fallbackNote,
@@ -119,8 +119,9 @@ function buildScreen({ state, message, stage, startFormId, workflow, formTitle, 
   }
 }
 
-export default function StatusScreen(props) {
-  const screen = buildScreen(props);
+export default function StatusScreen({ onRerun = null, ...props }) {
+  const base = buildScreen({ ...props, isLastRun: Boolean(onRerun) });
+  const screen = onRerun ? { ...base, action: { label: "Yeniden başvur", onClick: onRerun }, hint: "Yeni başvuru ilk adımdan başlar." } : base;
   const { Icon } = screen;
 
   return (
@@ -146,6 +147,7 @@ export default function StatusScreen(props) {
               )}
             </div>
           )}
+          {screen.hint && <p className="mt-2.5 text-xs text-neutral-500">{screen.hint}</p>}
         </div>
       </div>
       <FooterMark />
