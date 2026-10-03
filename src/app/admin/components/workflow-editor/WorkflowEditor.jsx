@@ -7,9 +7,10 @@ import { X } from "lucide-react";
 import { fetchFormById } from "@/lib/hooks/useFormAdmin";
 import {
   useArchiveWorkflowMutation, useCreateWorkflowMutation, usePublishWorkflowMutation, useSaveDefinitionMutation,
-  useUpdateWorkflowIntakeMutation, useUpdateWorkflowMutation, useWorkflowVersionsQuery, useAvailableFormsQuery,
+  useUpdateWorkflowIntakeMutation, useUpdateWorkflowIntakeScheduleMutation, useUpdateWorkflowMutation, useWorkflowVersionsQuery, useAvailableFormsQuery,
 } from "@/lib/hooks/useWorkflowAdmin";
 import { WORKFLOW_INTAKE } from "@/lib/form-settings";
+import { isPastDate } from "@/lib/form-timing";
 import { useWorkflowContext } from "../../providers";
 import ApprovalOverlay from "../ApprovalOverlay";
 import { Drawer, DrawerContent } from "../utils/Drawer";
@@ -29,6 +30,7 @@ const TRIGGER_LABEL = {
   [TRIGGER.SUBMITTED]: "gönderilince",
   [TRIGGER.APPROVED]: "onaylanırsa",
   [TRIGGER.DECLINED]: "reddedilirse",
+  [TRIGGER.TIMED_OUT]: "süre dolunca",
 };
 
 function useMediaQuery(query) {
@@ -72,6 +74,15 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
     if (propIntake !== undefined && propIntake !== null) setIntake(Number(propIntake));
   }
 
+  const propClosesAt = workflow?.intakeClosesAt ?? null;
+  const [intakeClosesAt, setIntakeClosesAt] = useState(propClosesAt);
+  const [trackedPropClosesAt, setTrackedPropClosesAt] = useState(propClosesAt);
+  if (trackedPropClosesAt !== propClosesAt) {
+    setTrackedPropClosesAt(propClosesAt);
+    setIntakeClosesAt(propClosesAt);
+  }
+  const effectiveIntake = intake === WORKFLOW_INTAKE.OPEN && intakeClosesAt && isPastDate(intakeClosesAt) ? WORKFLOW_INTAKE.NEW_RUNS_CLOSED : intake;
+
   const focusNonce = state.focus?.nonce ?? 0;
   const [seenFocusNonce, setSeenFocusNonce] = useState(focusNonce);
   if (seenFocusNonce !== focusNonce) {
@@ -106,6 +117,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   const publishMutation = usePublishWorkflowMutation();
   const archiveMutation = useArchiveWorkflowMutation();
   const intakeMutation = useUpdateWorkflowIntakeMutation();
+  const scheduleMutation = useUpdateWorkflowIntakeScheduleMutation();
 
   const creatingRef = useRef(null);
   const ensureWorkflow = useCallback(() => {
@@ -162,6 +174,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
       map[node.formId] = {
         title: form.title ?? node.formTitle,
         schema: Array.isArray(form.schema) ? form.schema : [],
+        timeLimitMinutes: Number(form.timeLimitMinutes) > 0 ? form.timeLimitMinutes : null,
       };
     });
     return map;
@@ -376,6 +389,21 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
     });
   };
 
+  const changeClosesAt = (next) => {
+    if (!state.id) return;
+    const previous = intakeClosesAt;
+    setIntakeClosesAt(next);
+    scheduleMutation.mutate({ workflowId: state.id, closesAt: next }, {
+      onSuccess: (response) => setIntakeClosesAt(response?.data ? response.data.intakeClosesAt ?? null : next),
+      onError: () => setIntakeClosesAt(previous),
+    });
+  };
+
+  const reopenNewRuns = () => {
+    if (intakeClosesAt && isPastDate(intakeClosesAt)) changeClosesAt(null);
+    if (intake !== WORKFLOW_INTAKE.OPEN) changeIntake(WORKFLOW_INTAKE.OPEN);
+  };
+
   const showIntake = () => {
     dispatch({ type: "SET_PANEL_TAB", tab: "flow" });
     if (!isLgUp) setDrawerOpen(true);
@@ -427,6 +455,15 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
 
     const group = groupTransitions(state.transitions, sourceKey, trigger);
 
+    if (trigger === TRIGGER.TIMED_OUT && group.length > 0) {
+      const [route] = group;
+      if ((route.targetNodeKey ?? null) !== (targetKey ?? null)) {
+        dispatch({ type: "UPDATE_TRANSITION", localId: route.localId, patch: { targetNodeKey: targetKey ?? null } });
+      }
+      dispatch({ type: "FOCUS_ROUTE", localId: route.localId });
+      return { ok: true };
+    }
+
     if (group.length === 0) {
       if (targetKey) dispatch({ type: "ADD_TRANSITION", sourceNodeKey: sourceKey, trigger, targetNodeKey: targetKey, condition: null, focus: true });
       else dispatch({ type: "FOCUS_PORT", nodeKey: sourceKey, trigger });
@@ -464,11 +501,19 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
       }}
       onRelayout={() => dispatch({ type: "RELAYOUT" })}
       intakeControl={isLive ? {
-        intake,
-        isPending: intakeMutation.isPending,
+        intake: effectiveIntake,
+        isPending: intakeMutation.isPending || scheduleMutation.isPending,
         isError: intakeMutation.isError,
+        closedBySchedule: effectiveIntake !== intake,
         onChange: (next) => changeIntake(next),
+        onReopenNewRuns: reopenNewRuns,
         onRequestClose: () => setCloseOpen(true),
+      } : null}
+      scheduleControl={state.id ? {
+        closesAt: intakeClosesAt,
+        isPending: scheduleMutation.isPending,
+        isError: scheduleMutation.isError,
+        onChange: changeClosesAt,
       } : null}
     />
   );
@@ -500,7 +545,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
       <WorkflowHeaderActions
         saveStatus={<HeaderStatusPill dirty={!state.isSaved} isSaving={saveDefinitionMutation.isPending || createMutation.isPending}
           isFailed={saveDefinitionMutation.isError || createMutation.isError} lastSavedAt={savedAt} publishedFlash={publishedFlash} />}
-        intake={isLive ? intake : WORKFLOW_INTAKE.OPEN}
+        intake={isLive ? effectiveIntake : WORKFLOW_INTAKE.OPEN}
         onShowIntake={showIntake}
         issueCount={issues.length}
         onShowIssues={() => setIssuesOpen((open) => !open)}

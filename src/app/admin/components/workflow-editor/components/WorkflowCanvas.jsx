@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, PencilLine, Plus, X } from "lucide-react";
-import { TRIGGER, connectionError, depthMap, groupTransitions, triggersForNode } from "../workflow-graph";
+import { ArrowRight, Check, PencilLine, Plus, Timer, TimerOff, X } from "lucide-react";
+import { shortDuration } from "@/lib/form-timing";
+import { TRIGGER, connectionError, depthMap, groupTransitions, isTimedNode, triggersForNode } from "../workflow-graph";
 
 const NODE_WIDTH = 212;
 const HEAD_HEIGHT = 42;
@@ -20,6 +21,7 @@ const TRIGGER_ROW = {
   [TRIGGER.SUBMITTED]: { label: "Gönderilince", Icon: ArrowRight, icon: "text-neutral-500", port: "border-neutral-500", portFill: "bg-neutral-500 ring-2 ring-neutral-500/15", stroke: "#595959", edgeLabel: "text-neutral-400 border-white/10" },
   [TRIGGER.APPROVED]: { label: "Onaylanınca", Icon: Check, icon: "text-emerald-400", port: "border-emerald-400/80", portFill: "bg-emerald-400 ring-2 ring-emerald-400/15", stroke: "rgba(52,211,153,0.7)", edgeLabel: "text-emerald-300 border-emerald-400/30" },
   [TRIGGER.DECLINED]: { label: "Reddedilince", Icon: X, icon: "text-red-400", port: "border-red-400/80", portFill: "bg-red-400 ring-2 ring-red-400/15", stroke: "rgba(248,113,113,0.7)", edgeLabel: "text-red-300 border-red-400/30" },
+  [TRIGGER.TIMED_OUT]: { label: "Süre dolunca", Icon: TimerOff, icon: "text-amber-400", text: "text-amber-100/80", port: "border-amber-400/80", portFill: "bg-amber-400 ring-2 ring-amber-400/15", stroke: "rgba(251,191,36,0.75)", edgeLabel: "text-amber-300 border-amber-400/30" },
 };
 
 function cubicPoint({ p0, p1, p2, p3 }, t) {
@@ -55,8 +57,8 @@ function positionOf(node) {
   return node?.position ?? { x: 0, y: 0 };
 }
 
-function portPosition(node, trigger) {
-  const index = Math.max(0, triggersForNode(node).indexOf(trigger));
+function portPosition(node, trigger, transitions) {
+  const index = Math.max(0, triggersForNode(node, transitions).indexOf(trigger));
   const position = positionOf(node);
   return { x: position.x + NODE_WIDTH, y: position.y + BORDER + HEAD_HEIGHT + ROW_HEIGHT * index + ROW_HEIGHT / 2 };
 }
@@ -66,8 +68,8 @@ function inputPosition(node) {
   return { x: position.x, y: position.y + BORDER + HEAD_HEIGHT / 2 };
 }
 
-function nodeHeight(node) {
-  return HEAD_HEIGHT + ROW_HEIGHT * triggersForNode(node).length + BORDER * 2;
+function nodeHeight(node, transitions) {
+  return HEAD_HEIGHT + ROW_HEIGHT * triggersForNode(node, transitions).length + BORDER * 2;
 }
 
 function terminalLabel(group, ending, labelForTransition) {
@@ -119,7 +121,7 @@ export default function WorkflowCanvas({
   const depths = depthMap(liveNodes, transitions);
 
   const contentWidth = liveNodes.reduce((max, node) => Math.max(max, positionOf(node).x + NODE_WIDTH), 0) + 200;
-  const contentHeight = liveNodes.reduce((max, node) => Math.max(max, positionOf(node).y + nodeHeight(node)), 0) + 80;
+  const contentHeight = liveNodes.reduce((max, node) => Math.max(max, positionOf(node).y + nodeHeight(node, transitions)), 0) + 80;
 
   const handlePointerDown = (event, nodeKey) => {
     const element = event.currentTarget;
@@ -127,7 +129,7 @@ export default function WorkflowCanvas({
 
     if (port) {
       const trigger = Number(port.dataset.trigger);
-      const start = portPosition(nodeByKey(nodeKey), trigger);
+      const start = portPosition(nodeByKey(nodeKey), trigger, transitions);
       dragRef.current = { type: "connect", nodeKey, trigger };
       setGhost({ from: start, to: { x: start.x + PORT_GAP, y: start.y } });
       element.setPointerCapture(event.pointerId);
@@ -207,11 +209,11 @@ export default function WorkflowCanvas({
   const routedPorts = new Set();
 
   liveNodes.forEach((node) => {
-    triggersForNode(node).forEach((trigger) => {
+    triggersForNode(node, transitions).forEach((trigger) => {
       const style = TRIGGER_ROW[trigger] ?? TRIGGER_ROW[TRIGGER.SUBMITTED];
       const group = groupTransitions(transitions, node.nodeKey, trigger);
       const hasConditional = group.some((transition) => transition.condition);
-      const port = portPosition(node, trigger);
+      const port = portPosition(node, trigger, transitions);
       const ending = group.filter((transition) => !transition.targetNodeKey);
       const isForked = ending.length > 0 && ending.length < group.length;
 
@@ -378,15 +380,22 @@ export default function WorkflowCanvas({
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-neutral-200">{node.formTitle}</span>
                   {loadingFormIds?.has(node.formId)
                     ? <span aria-hidden="true" className="shimmer h-2.5 w-9 shrink-0 rounded" />
-                    : <span className="shrink-0 text-3xs text-neutral-500">{questionCounts[node.formId] ?? "?"} soru</span>}
+                    : isTimedNode(node)
+                      ? (
+                        <span title="Kişisel süre" className="inline-flex shrink-0 items-center gap-0.5 text-3xs text-amber-300/90">
+                          <Timer size={10} />
+                          {shortDuration(node.timeLimitMinutes * 60_000)}
+                        </span>
+                      )
+                      : <span className="shrink-0 text-3xs text-neutral-500">{questionCounts[node.formId] ?? "?"} soru</span>}
                 </div>
 
-                {triggersForNode(node).map((trigger, index) => {
+                {triggersForNode(node, transitions).map((trigger, index) => {
                   const style = TRIGGER_ROW[trigger] ?? TRIGGER_ROW[TRIGGER.SUBMITTED];
                   const Icon = style.Icon;
                   const isRouted = routedPorts.has(`${node.nodeKey}:${trigger}`);
                   return (
-                    <div key={trigger} className={`relative flex h-7.5 items-center gap-1.5 px-3 text-2xs text-neutral-400 ${index > 0 ? "border-t border-dashed border-white/5" : ""}`}>
+                    <div key={trigger} className={`relative flex h-7.5 items-center gap-1.5 px-3 text-2xs ${style.text ?? "text-neutral-400"} ${index > 0 ? "border-t border-dashed border-white/5" : ""}`}>
                       <Icon size={11} className={`shrink-0 ${style.icon}`} />
                       {style.label}
                       <span data-port data-trigger={trigger} title="Sürükleyip bir adıma bağla"

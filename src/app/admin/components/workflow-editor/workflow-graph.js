@@ -1,4 +1,4 @@
-export const TRIGGER = { SUBMITTED: 0, APPROVED: 1, DECLINED: 2 };
+export const TRIGGER = { SUBMITTED: 0, APPROVED: 1, DECLINED: 2, TIMED_OUT: 3 };
 
 export const MAX_ROUTE_LENGTH = 3;
 
@@ -24,8 +24,14 @@ export function slugifyNodeKey(title, takenKeys = []) {
   return `${base}-${index}`;
 }
 
-export function triggersForNode(node) {
-  return node?.requiresManualReview ? [TRIGGER.APPROVED, TRIGGER.DECLINED] : [TRIGGER.SUBMITTED];
+export function isTimedNode(node) {
+  return Number(node?.timeLimitMinutes) > 0;
+}
+
+export function triggersForNode(node, transitions = []) {
+  const triggers = node?.requiresManualReview ? [TRIGGER.APPROVED, TRIGGER.DECLINED] : [TRIGGER.SUBMITTED];
+  const hasTimeoutRoute = transitions.some((transition) => transition.sourceNodeKey === node?.nodeKey && Number(transition.trigger) === TRIGGER.TIMED_OUT);
+  return isTimedNode(node) || hasTimeoutRoute ? [...triggers, TRIGGER.TIMED_OUT] : triggers;
 }
 
 function outgoing(transitions, nodeKey) {

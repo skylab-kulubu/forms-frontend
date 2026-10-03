@@ -46,6 +46,7 @@ function normalizeNodes(apiNodes) {
     requiresManualReview: Boolean(node.requiresManualReview),
     isStart: Boolean(node.isStart),
     position: node.position && typeof node.position.x === "number" ? { x: node.position.x, y: node.position.y } : null,
+    timeLimitMinutes: node.timeLimitMinutes ?? null,
   }));
 }
 
@@ -157,6 +158,7 @@ function reducer(state, action) {
         requiresManualReview: Boolean(form.requiresManualReview),
         isStart: state.nodes.length === 0,
         position: nextNodePosition(state.nodes),
+        timeLimitMinutes: form.timeLimitMinutes ?? null,
       };
 
       return touched(state, { nodes: [...state.nodes, node], selectedKey: nodeKey, panelTab: "step" });
@@ -281,9 +283,10 @@ function reducer(state, action) {
       const nodes = state.nodes.map((node) => {
         const form = action.forms[node.formId];
         if (!form) return node;
-        if (node.formTitle === form.title) return node;
+        const timeLimitMinutes = form.timeLimitMinutes ?? null;
+        if (node.formTitle === form.title && node.timeLimitMinutes === timeLimitMinutes) return node;
         changed = true;
-        return { ...node, formTitle: form.title };
+        return { ...node, formTitle: form.title, timeLimitMinutes };
       });
 
       return changed ? { ...state, nodes } : state;

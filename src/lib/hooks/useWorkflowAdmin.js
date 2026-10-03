@@ -23,6 +23,9 @@ const createWorkflow = async (payload) => request("/api/admin/workflows", { meth
 const updateWorkflowIntake = async ({ workflowId, intake }) =>
   request(`/api/admin/workflows/${workflowId}/intake`, { method: "PUT", body: { intake } });
 
+const updateWorkflowIntakeSchedule = async ({ workflowId, closesAt }) =>
+  request(`/api/admin/workflows/${workflowId}/intake-schedule`, { method: "PUT", body: { closesAt } });
+
 const updateWorkflow = async ({ workflowId, payload }) => request(`/api/admin/workflows/${workflowId}`, { method: "PUT", body: payload });
 
 const saveDefinition = async ({ workflowId, definition, token, keepalive }) =>
@@ -127,6 +130,17 @@ export const useUpdateWorkflowIntakeMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateWorkflowIntake,
+    onSuccess: (_data, { workflowId }) => {
+      queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
+      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+    },
+  });
+};
+
+export const useUpdateWorkflowIntakeScheduleMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateWorkflowIntakeSchedule,
     onSuccess: (_data, { workflowId }) => {
       queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
       queryClient.invalidateQueries({ queryKey: ["workflows"] });

@@ -12,9 +12,12 @@ import {
   ROW, ROW_HOVER, SectionHeader, TILE, ToggleRow, actionClass, panelShellClass,
 } from "@/app/admin/components/utils/SidePanel";
 import AddStepPicker from "./AddStepPicker";
+import { WorkflowManagedRow } from "../../form-editor/components/WorkflowMembership";
+import { InlineDateTime, TimingRow } from "../../form-editor/components/TimingSection";
 import { WORKFLOW_INTAKE } from "@/lib/form-settings";
+import { defaultClosesAt, durationText } from "@/lib/form-timing";
 import { EMPTY_RULE } from "../WorkflowEditorContext";
-import { TRIGGER, connectionError, depthMap, flowOrder, groupTransitions, guaranteedAncestors, triggersForNode } from "../workflow-graph";
+import { TRIGGER, connectionError, depthMap, flowOrder, groupTransitions, guaranteedAncestors, isTimedNode, triggersForNode } from "../workflow-graph";
 import {
   COMPARISON_LABEL, CONDITIONABLE_TYPES, CONNECTION_COPY, MULTI_VALUE_COMPARISONS, VALUELESS_COMPARISONS,
   comparisonsForField, fieldQuestionLabel, optionsForField, validationAction, validationMessage,
@@ -30,6 +33,11 @@ const TRIGGER_SECTION = {
   [TRIGGER.SUBMITTED]: { label: "Gönderildiğinde", description: "Cevap gönderilince başvuru nereye gider?", dot: "bg-neutral-500" },
   [TRIGGER.APPROVED]: { label: "Onaylandığında", description: "Cevap onaylanınca başvuru nereye gider?", dot: "bg-emerald-400" },
   [TRIGGER.DECLINED]: { label: "Reddedildiğinde", description: "Cevap reddedilince başvuru nereye gider?", dot: "bg-red-400" },
+  [TRIGGER.TIMED_OUT]: {
+    label: "Süre dolduğunda",
+    description: "Geçici cevap teslim yok diye kapatılınca ya da taslak hiç yokken başvuru nereye gider? Teslim olarak kabul edilen geçici cevap normal yoldan devam eder.",
+    dot: "bg-amber-400",
+  },
 };
 
 const INTAKE_STATE = {
@@ -70,11 +78,13 @@ function useScrollIntoView(active) {
   return ref;
 }
 
-function IntakeSection({ intakeControl, allowMultipleRuns, onToggleMultipleRuns }) {
+function IntakeSection({ intakeControl, scheduleControl, allowMultipleRuns, hasTimedStep, onToggleMultipleRuns }) {
   const intake = intakeControl?.intake ?? WORKFLOW_INTAKE.OPEN;
   const info = intakeControl ? INTAKE_STATE[intake] ?? INTAKE_STATE[WORKFLOW_INTAKE.OPEN] : { pill: "Taslak", tone: "neutral" };
   const isOpen = intake !== WORKFLOW_INTAKE.CLOSED;
   const acceptsNewRuns = intake === WORKFLOW_INTAKE.OPEN;
+  const closesAt = scheduleControl?.closesAt ?? null;
+  const multipleRunsLocked = hasTimedStep && !allowMultipleRuns;
 
   return (
     <section className={PANEL_SECTION}>
@@ -93,12 +103,24 @@ function IntakeSection({ intakeControl, allowMultipleRuns, onToggleMultipleRuns 
             />
             <ToggleRow title="Yeni başvurular" checked={acceptsNewRuns} disabled={intakeControl.isPending || !isOpen} dimmed={!isOpen}
               description="Kapatınca kimse yeni başvuru başlatamaz; devam edenler sürer."
-              onChange={() => intakeControl.onChange(acceptsNewRuns ? WORKFLOW_INTAKE.NEW_RUNS_CLOSED : WORKFLOW_INTAKE.OPEN)}
+              onChange={() => (acceptsNewRuns ? intakeControl.onChange(WORKFLOW_INTAKE.NEW_RUNS_CLOSED) : intakeControl.onReopenNewRuns())}
             />
           </>
         )}
-        <ToggleRow title="Tekrar başlatma" checked={allowMultipleRuns}
-          description="Aynı kişi akışı birden fazla kez başlatabilsin."
+        {scheduleControl && (
+          <TimingRow title="Otomatik kapanış" checked={Boolean(closesAt)} disabled={scheduleControl.isPending}
+            description="Saat gelince yeni başvurular kapanır; devam edenler sürer."
+            onChange={() => scheduleControl.onChange(closesAt ? null : defaultClosesAt())}
+          >
+            <InlineDateTime value={closesAt} onChange={scheduleControl.onChange} label="Otomatik kapanış" />
+          </TimingRow>
+        )}
+        <ToggleRow title="Tekrar başlatma" checked={allowMultipleRuns} disabled={multipleRunsLocked} dimmed={multipleRunsLocked}
+          description={multipleRunsLocked
+            ? "Kişisel süreli adım varken kullanılamaz."
+            : allowMultipleRuns
+              ? "Aynı kişi akışı tekrar başlatabilir; adımlarda kişisel süre kullanılamaz."
+              : "Aynı kişi akışı birden fazla kez başlatabilsin."}
           onChange={onToggleMultipleRuns}
         />
       </div>
@@ -107,11 +129,14 @@ function IntakeSection({ intakeControl, allowMultipleRuns, onToggleMultipleRuns 
         <PanelNotice>
           {intake === WORKFLOW_INTAKE.CLOSED
             ? "Akış kapalı. Başvuranlar kapalı ekranını görür; devam eden başvurular akış açılınca kaldığı yerden sürer."
-            : "Yeni başvuru alınmıyor. Başlamış başvurular normal şekilde devam ediyor."}
+            : intakeControl.closedBySchedule
+              ? "Otomatik kapanış saati geldi; yeni başvuru alınmıyor. Başlamış başvurular normal şekilde devam ediyor."
+              : "Yeni başvuru alınmıyor. Başlamış başvurular normal şekilde devam ediyor."}
         </PanelNotice>
       )}
 
       {intakeControl?.isError && <p className="text-2xs text-red-300">Başvuru durumu değiştirilemedi. Lütfen tekrar deneyin.</p>}
+      {scheduleControl?.isError && <p className="text-2xs text-red-300">Kapanış saati kaydedilemedi. Lütfen tekrar deneyin.</p>}
     </section>
   );
 }
@@ -235,6 +260,10 @@ function ConditionTitle({ condition, sourceNode, nodes, schemasByFormId }) {
 function RouteEditor({ transition, kind, order, conditionalCount, group, sourceNode, nodes, transitions, schemasByFormId, dispatch, onClose }) {
   const update = (patch) => dispatch({ type: "UPDATE_TRANSITION", localId: transition.localId, patch });
 
+  if (Number(transition.trigger) === TRIGGER.TIMED_OUT && kind === "always") {
+    return <p className="text-2xs leading-relaxed text-neutral-400">Süre dolduğunda başvuru her zaman bu yola gider.</p>;
+  }
+
   if (kind === "fallback") {
     return (
       <p className="text-2xs leading-relaxed text-neutral-400">
@@ -324,7 +353,8 @@ function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode
 
   const subtitle = kind === "cond"
     ? (conditionalCount > 1 ? `${order}. sırada kontrol edilir` : "Koşul uyarsa bu yola gider")
-    : kind === "fallback" ? "Koşullardan hiçbiri uymazsa" : "Her cevapta bu yola gider";
+    : kind === "fallback" ? "Koşullardan hiçbiri uymazsa"
+      : Number(transition.trigger) === TRIGGER.TIMED_OUT ? "Süre dolunca bu yola gider" : "Her cevapta bu yola gider";
 
   return (
     <div ref={rowRef} data-route-row={transition.localId}
@@ -402,6 +432,7 @@ function TriggerSection({ trigger, sourceNode, nodes, transitions, schemasByForm
   const section = TRIGGER_SECTION[trigger];
   const group = groupTransitions(transitions, sourceNode.nodeKey, trigger);
   const conditionals = group.filter((transition) => transition.condition);
+  const singleRoute = trigger === TRIGGER.TIMED_OUT;
 
   const addRoute = () => {
     if (group.length === 0) {
@@ -436,7 +467,9 @@ function TriggerSection({ trigger, sourceNode, nodes, transitions, schemasByForm
         })}
       </div>
 
-      <PanelButton icon={Plus} onClick={addRoute} className="w-full">Yönlendirme ekle</PanelButton>
+      {!(singleRoute && group.length > 0) && (
+        <PanelButton icon={Plus} onClick={addRoute} className="w-full">Yönlendirme ekle</PanelButton>
+      )}
     </section>
   );
 }
@@ -471,6 +504,10 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
           onChange={() => dispatch({ type: "SET_NODE_REVIEW", nodeKey: selectedNode.nodeKey, value: !selectedNode.requiresManualReview })}
         />
 
+        <WorkflowManagedRow title="Kişisel süre" linkLabel="Formda" newTab href={`${formHref}?panel=timing`}
+          description={isTimedNode(selectedNode) ? `Form yönetiyor · başlatınca ${durationText(selectedNode.timeLimitMinutes)}` : "Form yönetiyor · kapalı"}
+        />
+
         <div className="flex flex-wrap gap-2">
           <Link href={formHref} target="_blank" className={`${actionClass()} min-w-fit flex-1`}>
             <ExternalLink size={13} className={ACTION_ICON} />
@@ -487,7 +524,7 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
         </div>
       </section>
 
-      {triggersForNode(selectedNode).map((trigger) => (
+      {triggersForNode(selectedNode, transitions).map((trigger) => (
         <TriggerSection key={`${selectedNode.nodeKey}-${trigger}`} trigger={trigger} sourceNode={selectedNode} nodes={nodes} transitions={transitions}
           schemasByFormId={schemasByFormId} dispatch={dispatch} openKey={openKey} setOpenKey={setOpenKey} flashKey={flashKey}
         />
@@ -496,13 +533,14 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
   );
 }
 
-function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versions, intakeControl }) {
+function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versions, intakeControl, scheduleControl }) {
   const depths = depthMap(state.nodes, state.transitions);
   const orderedNodes = flowOrder(state.nodes, state.transitions);
 
   return (
     <div className={PANEL_STACK}>
-      <IntakeSection intakeControl={intakeControl} allowMultipleRuns={state.allowMultipleRuns}
+      <IntakeSection intakeControl={intakeControl} scheduleControl={scheduleControl} allowMultipleRuns={state.allowMultipleRuns}
+        hasTimedStep={state.nodes.some(isTimedNode)}
         onToggleMultipleRuns={() => dispatch({ type: "SET_META", key: "allowMultipleRuns", value: !state.allowMultipleRuns })}
       />
 
@@ -519,6 +557,7 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
               const meta = [
                 node.isStart ? "Başlangıç" : depth ? null : "Başlangıçtan ulaşılamıyor",
                 node.requiresManualReview ? "Manuel onay" : null,
+                isTimedNode(node) ? `Kişisel süre · ${durationText(node.timeLimitMinutes)}` : null,
                 schema ? `${schema.filter((field) => field?.type !== "separator").length} soru` : null,
               ].filter(Boolean).join(" · ");
 
@@ -590,7 +629,7 @@ function DescriptionPanel({ description, dispatch }) {
   );
 }
 
-export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, layout = "grid" }) {
+export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, scheduleControl = null, layout = "grid" }) {
   const { nodes, transitions, selectedKey, focus, panelTab } = state;
   const selectedNode = nodes.find((node) => node.nodeKey === selectedKey) ?? null;
   const view = selectedNode && panelTab === "step" ? "step" : panelTab === "description" ? "description" : "flow";
@@ -653,7 +692,7 @@ export default function WorkflowInspector({ state, dispatch, schemasByFormId, is
                 <DescriptionPanel description={state.description} dispatch={dispatch} />
               ) : (
                 <FlowPanel state={state} dispatch={dispatch} schemasByFormId={schemasByFormId} picker={picker} onRelayout={onRelayout}
-                  versions={versions} intakeControl={intakeControl}
+                  versions={versions} intakeControl={intakeControl} scheduleControl={scheduleControl}
                 />
               )}
             </motion.div>

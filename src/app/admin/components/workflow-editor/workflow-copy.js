@@ -96,6 +96,8 @@ export const VALIDATION_COPY = {
   nodeUnreachable: { message: "Bu adıma başlangıçtan ulaşan bir yol yok." },
   depthExceeded: { message: "Bu adımdan geçen rota üç formdan uzun." },
   triggerNotAllowed: { message: "Yönlendirme, adımın manuel onay ayarıyla uyuşmuyor." },
+  timeoutNotAllowed: { message: "Bu adımın formunda kişisel süre yok; \"Süre dolunca\" yolu kullanılamaz.", action: "openForm" },
+  formTimedRepeatable: { message: "Bu adımın formunda kişisel süre var; tekrar başlatılabilen akışta kullanılamaz.", action: "openForm" },
   defaultRouteMissing: { message: "Koşullu yönlendirmelerin bir \"aksi halde\" yolu yok.", action: "addDefaultRoute" },
   defaultRouteDuplicated: { message: "Aynı tetikleyicide iki koşulsuz yönlendirme var." },
   priorityDuplicated: { message: "İki yönlendirme aynı sırada." },
@@ -131,6 +133,7 @@ export const ELIGIBILITY_COPY = {
   formInAnotherWorkflow: "Başka bir akışta",
   formIsLegacyLinked: "Eski bağlı form eşleşmesinde",
   formMissing: "Form bulunamadı",
+  formTimedRepeatable: "Kişisel süreli; akış tekrar başlatılabiliyor",
 };
 
 export function eligibilityReason(reason) {
