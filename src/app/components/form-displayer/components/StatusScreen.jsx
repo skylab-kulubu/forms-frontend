@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { FileCheck, FileClock, FileLock2, FilePenLine, FileSearchCorner, FileX, FileXCorner } from "lucide-react";
 import { loginWithKeycloak } from "@/lib/authActions";
 import { formatJourneyDate, hasJourney, journeyTimeline, singleResponseTimeline } from "@/lib/workflow-journey";
+import { formatLongDate } from "@/lib/form-timing";
 import LoginButton from "../../utils/LoginButton";
 import JourneyTimeline, { ReviewNote } from "./JourneyTimeline";
 
@@ -34,14 +35,57 @@ function StageContext({ workflow, stage }) {
   return null;
 }
 
-function buildScreen({ state, message, stage, startFormId, workflow, formTitle, submittedAt, reviewNote, reviewedAt, isWorkflow, isAuthed, isLastRun }) {
+function attemptTimeline(attempt, last) {
+  const started = attempt?.startedAt
+    ? { key: "started", tone: "done", title: "Görevi başlattınız", date: formatJourneyDate(attempt.startedAt, { withTime: true }) }
+    : null;
+
+  return [started, { key: "ended", title: "Süre doldu", date: formatJourneyDate(attempt?.deadlineAt, { withTime: true }), ...last }].filter(Boolean);
+}
+
+function buildScreen({ state, message, stage, startFormId, workflow, formTitle, submittedAt, reviewNote, reviewedAt, isWorkflow, isAuthed, isLastRun, attempt, closesAt }) {
   const journey = hasJourney(workflow);
   const workflowContext = <StageContext workflow={workflow} stage={0} />;
   const reviewDate = formatJourneyDate(reviewedAt, { withTime: true });
   const fallbackNote = !journey && reviewNote ? { note: reviewNote, date: reviewDate } : null;
   const single = { state, submittedAt, reviewedAt, reviewNote, isAuthed };
+  const timedContext = journey ? <StageContext workflow={workflow} stage={stage} /> : formTitle;
 
   switch (state) {
+    case "timeUp":
+      return {
+        Icon: FileClock, tone: "wait", context: timedContext, title: "Süreniz doldu",
+        description: "O ana kadarki cevaplarınız ekibe iletildi. Ekip inceleyip sonucu e-postayla bildirecek.",
+        timeline: journey
+          ? journeyTimeline(workflow, { current: { tone: "review", detail: "Süre doldu · ekip inceliyor" } })
+          : attemptTimeline(attempt, { tone: "review", detail: "Cevaplarınız ekibe iletildi · inceleniyor" }),
+      };
+    case "timeUpEmpty":
+      return {
+        Icon: FileClock, tone: "neutral", context: timedContext, title: "Süreniz doldu",
+        description: journey
+          ? "Süre dolduğunda cevap girilmemişti, teslim kaydedilmedi."
+          : "Süre dolduğunda cevap girilmemişti, teslim kaydedilmedi. Ekip gerekirse sürenizi uzatabilir.",
+        timeline: journey ? journeyTimeline(workflow) : attemptTimeline(attempt, { tone: "paused", detail: "Teslim yok" }),
+      };
+    case "timeUpClosed":
+      return {
+        Icon: FileX, tone: "bad", context: timedContext, title: "Teslim kaydedilmedi",
+        description: "Süre dolduğunda teslim tamamlanmamıştı; ekip bu adımı teslim yok olarak kapattı.",
+        timeline: journey ? journeyTimeline(workflow) : attemptTimeline(attempt, { tone: "declined", detail: "Teslim yok" }),
+      };
+    case "startClosed":
+      return {
+        Icon: FileLock2, tone: "neutral", context: formTitle, title: "Görev artık başlatılamıyor",
+        description: closesAt ? `Son başlama saati ${formatLongDate(closesAt)} idi.` : "Son başlama saati geçti.",
+      };
+    case "formClosed":
+      return {
+        Icon: FileLock2, tone: "neutral", context: formTitle, title: "Form kapandı",
+        description: closesAt
+          ? `Bu form ${formatLongDate(closesAt)} itibarıyla kendiliğinden kapandı. Yeni cevap alınmıyor.`
+          : "Bu form kapanış saatinde kendiliğinden kapandı. Yeni cevap alınmıyor.",
+      };
     case "completed":
       return {
         Icon: FileCheck, tone: "ok", context: formTitle, title: "Cevabınız kaydedildi",

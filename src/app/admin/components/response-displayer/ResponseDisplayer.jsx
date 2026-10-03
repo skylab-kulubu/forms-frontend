@@ -6,7 +6,9 @@ import { ChevronRight, ClockPlusIcon, ChevronsLeft, ListX, TextSearch } from "lu
 
 import { useResponsePreviewQuery } from "@/lib/hooks/useResponseShare";
 import { ResponseListItem, ResponseListSkeleton } from "./components/ResponseDisplayerComponents";
-import { ResponseActions } from "./components/ResponseActions";
+import { AttemptActions, ResponseActions } from "./components/ResponseActions";
+import { AttemptEmptyState, ProvisionalNotice, TaskRow, attemptWhen } from "./components/AttemptPanels";
+import { RESPONSE_STATUS_PROVISIONAL } from "@/lib/attempt-status";
 import StateCard from "@/app/components/StateCard";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/app/admin/components/utils/Drawer";
 
@@ -58,6 +60,7 @@ const STEP_STATUS = {
   1: { label: "Beklemede", dot: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40" },
   2: { label: "Onaylandı", dot: "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40" },
   3: { label: "Reddedildi", dot: "bg-red-400 shadow-[0_0_6px] shadow-red-400/40" },
+  4: { label: "Geçici", dot: "border border-amber-400" },
 };
 
 const formatDateTime = (value) => {
@@ -67,12 +70,13 @@ const formatDateTime = (value) => {
   return date.toLocaleString();
 };
 
-function WorkflowSteps({ steps, viewStage, onSelect }) {
+function WorkflowSteps({ steps, viewStage, ownStage, onSelect }) {
   return (
     <nav aria-label="Başvuru adımları" className="mx-auto mt-3 w-full max-w-2xl overflow-x-auto scrollbar">
       <ol className="flex items-center gap-1 pb-1">
         {steps.map((step, index) => {
           const isAnswered = Boolean(step.responseId);
+          const isSelectable = isAnswered || step.stage === ownStage;
           const isActive = step.stage === viewStage;
           const status = isAnswered ? STEP_STATUS[step.status] ?? STEP_STATUS[0] : null;
           const title = isAnswered ? `${step.formTitle || "Adsız form"} · ${status.label}` : "Bu adım henüz cevaplanmadı";
@@ -80,8 +84,8 @@ function WorkflowSteps({ steps, viewStage, onSelect }) {
           return (
             <li key={step.stage} className="flex shrink-0 items-center gap-1">
               {index > 0 && <ChevronRight size={12} className="shrink-0 text-neutral-700" />}
-              <button type="button" disabled={!isAnswered} onClick={() => onSelect(step.stage)} title={title} aria-current={isActive ? "step" : undefined}
-                className={`flex max-w-52 items-center gap-2 rounded-md border px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isActive ? "border-white/15 bg-white/5" : isAnswered ? "border-transparent hover:bg-white/3" : "cursor-not-allowed border-transparent opacity-50"}`}
+              <button type="button" disabled={!isSelectable} onClick={() => onSelect(step.stage)} title={title} aria-current={isActive ? "step" : undefined}
+                className={`flex max-w-52 items-center gap-2 rounded-md border px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isActive ? "border-white/15 bg-white/5" : isSelectable ? "border-transparent hover:bg-white/3" : "cursor-not-allowed border-transparent opacity-50"}`}
               >
                 <span className="text-3xs tabular-nums text-neutral-500">{step.stage}</span>
                 <span className={`truncate text-2xs font-medium ${isActive ? "text-neutral-100" : "text-neutral-400"}`}>{step.formTitle || "Adsız form"}</span>
@@ -97,18 +101,19 @@ function WorkflowSteps({ steps, viewStage, onSelect }) {
   );
 }
 
-export default function ResponseDisplayer({ response, token = null }) {
+export default function ResponseDisplayer({ response = null, attemptView = null, token = null }) {
+  const owner = attemptView ?? response;
   const schema = Array.isArray(response?.schema) ? response.schema : [];
   const isSharedView = Boolean(response?.sharedBy);
-  const steps = Array.isArray(response?.workflow?.steps) ? response.workflow.steps : [];
-  const ownStage = response?.workflow?.stage ?? null;
+  const steps = Array.isArray(owner?.workflow?.steps) ? owner.workflow.steps : [];
+  const ownStage = owner?.workflow?.stage ?? null;
 
   const [viewStage, setViewStage] = useState(ownStage);
   const [direction, setDirection] = useState(0);
 
-  const [prevResponseId, setPrevResponseId] = useState(response?.id);
-  if (prevResponseId !== response?.id) {
-    setPrevResponseId(response?.id);
+  const [prevResponseId, setPrevResponseId] = useState(owner?.id);
+  if (prevResponseId !== owner?.id) {
+    setPrevResponseId(owner?.id);
     setViewStage(ownStage);
     setDirection(0);
   }
@@ -124,6 +129,7 @@ export default function ResponseDisplayer({ response, token = null }) {
 
   const viewedStep = steps.find((step) => step.stage === viewStage) ?? null;
   const isOwnView = !viewedStep || viewStage === ownStage;
+  const isOwnAttempt = isOwnView && Boolean(attemptView);
   const otherResponseId = isOwnView ? null : viewedStep.responseId;
 
   const { data: otherData, isLoading: isOtherLoading, error: otherError } = useResponsePreviewQuery(otherResponseId, token, { enabled: Boolean(otherResponseId) });
@@ -136,21 +142,34 @@ export default function ResponseDisplayer({ response, token = null }) {
     setViewStage(stage);
   };
 
-  const renderSchemaList = (items) => {
+  const renderSchemaList = (items, owner) => {
+    const intro = (
+      <>
+        {Number(owner?.status) === RESPONSE_STATUS_PROVISIONAL && <ProvisionalNotice actionable={!isSharedView} />}
+        <TaskRow key={owner?.id} task={owner?.task} />
+      </>
+    );
+
     if (!items || items.length === 0) {
       return (
-        <div className="flex min-h-[40vh]">
-          <StateCard title={"Soru yok"} Icon={ListX} description={"Bu yanıtta gösterilebilecek soru yok."} />
-        </div>
+        <>
+          {intro}
+          <div className="flex min-h-[40vh]">
+            <StateCard title={"Soru yok"} Icon={ListX} description={"Bu yanıtta gösterilebilecek soru yok."} />
+          </div>
+        </>
       )
     }
 
     return (
-      <ul className="mx-auto w-full max-w-2xl divide-y divide-white/5">
-        {items.map((item, index) => (
-          <ResponseListItem key={item?.id ?? `${index}`} questionNumber={index + 1} question={item?.question} answer={item?.answer} type={item?.type} />
-        ))}
-      </ul>
+      <>
+        {intro}
+        <ul className="mx-auto w-full max-w-2xl divide-y divide-white/5">
+          {items.map((item, index) => (
+            <ResponseListItem key={item?.id ?? `${index}`} questionNumber={index + 1} question={item?.question} answer={item?.answer} type={item?.type} />
+          ))}
+        </ul>
+      </>
     );
   };
 
@@ -167,8 +186,15 @@ export default function ResponseDisplayer({ response, token = null }) {
   };
 
   let content = null;
-  if (isOwnView) {
-    content = renderSchemaList(schema);
+  if (isOwnAttempt) {
+    content = (
+      <>
+        <TaskRow key={attemptView.id} task={attemptView.task} />
+        <AttemptEmptyState attempt={attemptView.attempt} />
+      </>
+    );
+  } else if (isOwnView) {
+    content = renderSchemaList(schema, response);
   } else if (isOtherLoading) {
     content = <ResponseListSkeleton />;
   } else if (otherError) {
@@ -184,13 +210,13 @@ export default function ResponseDisplayer({ response, token = null }) {
       </div>
     )
   } else {
-    content = renderSchemaList(otherSchema);
+    content = renderSchemaList(otherSchema, otherResponse);
   }
 
   const isOtherUnavailable = !isOwnView && (isOtherLoading || otherError || !otherResponse);
-  const answeredCount = isOtherUnavailable ? "--" : countAnswered(isOwnView ? schema : otherSchema);
+  const answeredCount = isOtherUnavailable || isOwnAttempt ? "--" : countAnswered(isOwnView ? schema : otherSchema);
   const activeResponse = isOwnView ? response : otherResponse;
-  const activeId = isOwnView ? response?.id : (otherResponse?.id ?? otherResponseId);
+  const activeId = isOwnView ? owner?.id : (otherResponse?.id ?? otherResponseId);
   const actionsLoading = !isOwnView && isOtherLoading;
 
   const renderMainContent = (className) => (
@@ -205,7 +231,7 @@ export default function ResponseDisplayer({ response, token = null }) {
         </div>
 
         {steps.length > 0 && (
-          <WorkflowSteps steps={steps} viewStage={isOwnView ? ownStage : viewStage} onSelect={handleSelectStage} />
+          <WorkflowSteps steps={steps} viewStage={isOwnView ? ownStage : viewStage} ownStage={ownStage} onSelect={handleSelectStage} />
         )}
 
         <div className="mx-auto mt-2 flex w-full max-w-2xl items-center justify-between gap-3">
@@ -214,7 +240,8 @@ export default function ResponseDisplayer({ response, token = null }) {
           )}
           <span className="flex shrink-0 items-center gap-1 text-3xs text-neutral-500">
             <ClockPlusIcon size={11} />
-            {formatDateTime(activeResponse?.submittedAt)}
+            {isOwnAttempt ? attemptWhen(attemptView.attempt) : formatDateTime(activeResponse?.submittedAt)}
+            {!isOwnAttempt && Number(activeResponse?.status) === RESPONSE_STATUS_PROVISIONAL && <span className="text-amber-300/80"> · süre doldu</span>}
           </span>
         </div>
 
@@ -234,7 +261,9 @@ export default function ResponseDisplayer({ response, token = null }) {
 
   const drawerContent = (
      <div className="h-full w-full overflow-y-auto p-4 scrollbar lg:overflow-visible lg:p-0">
-        <ResponseActions response={activeResponse} isLoading={actionsLoading} readOnly={isSharedView} />
+        {isOwnAttempt
+          ? <AttemptActions view={attemptView} />
+          : <ResponseActions response={activeResponse} isLoading={actionsLoading} readOnly={isSharedView} />}
      </div>
   );
 

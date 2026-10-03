@@ -6,12 +6,15 @@ import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
 import { DraftNotice, FormDisplayerHeader, MissingNotice, NextStepNote, RespondentLine } from "./components/FormDisplayerComponents";
-import WorkflowProgress from "./components/WorkflowProgress";
+import WorkflowProgress, { TimerBar } from "./components/WorkflowProgress";
 import StepIntro from "./components/StepIntro";
 import StatusScreen from "./components/StatusScreen";
+import TaskBlock from "./components/TaskBlock";
+import { Countdown, DeliverablesHeader, ExtensionNotice, LateNotice, TaskGate, TaskMeta } from "./components/TimedParts";
 import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
 import Background from "../Background";
-import { Loader2 } from "lucide-react";
+import { settledScreenOf } from "@/lib/form-timing";
+import { Loader2, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -74,24 +77,34 @@ function PageFooter() {
   );
 }
 
-export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null, journey = null, instanceId = null }) {
+export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null, journey = null, instanceId = null, attempt = null, serverNow = null, closesAt = null }) {
   const scrollRef = useRef(null);
   const {
     state, schema, visibleFields,
     isAuthed, isAnyFileUploading, isSubmitting, lastSavedAt,
     handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro,
-  } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId });
+    now, isTimed, isRunning, startAttempt, isStarting, startError,
+  } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt });
 
   const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, workflow: activeJourney,
     instanceId: activeInstanceId, intro, values: formValues, submissionState, submissionMessage, submittedAt, errorMessage, missingFieldIds,
-    draftPromptVisible } = state;
+    draftPromptVisible, attempt: activeAttempt, closesAt: activeClosesAt } = state;
 
   const title = activeForm?.title ?? "";
   const description = activeForm?.description ?? "";
   const activeFormId = activeForm?.id ?? null;
   const hasSchema = schema.length > 0;
-  const isFinished = submissionState !== null;
+  const settledScreen = settledScreenOf(activeAttempt);
+  const isFinished = submissionState !== null || Boolean(settledScreen);
   const showIntro = Boolean(intro) && !isFinished;
+  const showGate = activeAttempt?.state === "notStarted";
+  const task = activeForm?.task?.content?.trim() ? activeForm.task : null;
+  const timer = isRunning && activeAttempt?.deadlineAt ? <Countdown deadlineAt={activeAttempt.deadlineAt} now={now} /> : null;
+  const timeNote = isRunning
+    ? "Süre dolunca o ana kadarki cevaplarınız ekibe geçici cevap olarak iletilir."
+    : !isTimed && activeClosesAt
+      ? isAuthed ? "Form kapanış saatinde kendiliğinden kapanır; gönderilmemiş taslaklar alınmaz." : "Form kapanış saatinde kendiliğinden kapanır."
+      : null;
 
   const questionNumbers = useMemo(() => {
     const numbers = new Map();
@@ -177,8 +190,9 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
             arrivedTitle={intro.arrivedTitle} onDone={endIntro}
           />
         ) : isFinished ? (
-          <StatusScreen key="status" state={submissionState} message={submissionMessage} stage={activeStage} startFormId={activeStartFormId}
+          <StatusScreen key="status" state={submissionState ?? settledScreen} message={submissionMessage} stage={activeStage} startFormId={activeStartFormId}
             workflow={activeJourney} formTitle={title} submittedAt={submittedAt} isWorkflow={activeIsWorkflow} isAuthed={isAuthed}
+            attempt={activeAttempt} closesAt={activeAttempt?.startClosesAt ?? activeClosesAt}
           />
         ) : (
           <motion.div key={`form-${activeFormId}`} className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6"
@@ -190,11 +204,13 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
             <div className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
               <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
 
-                {activeIsWorkflow && (
+                {activeIsWorkflow ? (
                   <WorkflowProgress workflow={activeJourney} stage={activeStage} formTitle={title} fill={requiredFill}
-                    zIndex={visibleFields.length + 10}
+                    zIndex={visibleFields.length + 10} timer={timer}
                   />
-                )}
+                ) : timer ? (
+                  <TimerBar title={title} timer={timer} zIndex={visibleFields.length + 10} />
+                ) : null}
 
                 <motion.div variants={itemVariants}>
                   <FormDisplayerHeader title={title} description={description}>
@@ -203,10 +219,30 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                         <DraftNotice savedAt={draft?.savedAt} onDiscard={handleDiscardDraft} />
                       )}
                     </AnimatePresence>
+                    <ExtensionNotice attempt={activeAttempt} />
                   </FormDisplayerHeader>
                 </motion.div>
 
-                {hasSchema ? (
+                {showGate ? (
+                  <motion.div variants={itemVariants} className="flex flex-1 flex-col">
+                    <TaskGate attempt={activeAttempt} now={now} onStart={startAttempt} starting={isStarting} error={startError} />
+                  </motion.div>
+                ) : (
+                  <>
+                    {task && (
+                      <motion.div variants={itemVariants}>
+                        <TaskBlock task={task} title={title} meta={<TaskMeta attempt={activeAttempt} closesAt={activeClosesAt} now={now} />} />
+                      </motion.div>
+                    )}
+                    {task && hasSchema && (
+                      <motion.div variants={itemVariants}>
+                        <DeliverablesHeader />
+                      </motion.div>
+                    )}
+                  </>
+                )}
+
+                {showGate ? null : hasSchema ? (
                   <>
                     <div className="flex-1 flex flex-col justify-center">
                     <AnimatePresence mode="sync" initial={false}>
@@ -253,6 +289,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     </div>
 
                     <motion.div variants={itemVariants} className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
+                      {isRunning && <LateNotice deadlineAt={activeAttempt.deadlineAt} now={now} />}
                       <MissingNotice fields={missingFields} onJump={jumpToField} />
                       <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
                         <NextStepNote text={nextCopy} />
@@ -268,6 +305,12 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                           ) : "Gönder"}
                         </motion.button>
                       </div>
+                      {timeNote && (
+                        <p className="mt-4 flex items-center gap-1.5 text-2xs text-neutral-500">
+                          <Timer size={12} className="shrink-0" />
+                          {timeNote}
+                        </p>
+                      )}
                       <RespondentLine savedAt={isAuthed ? lastSavedAt : null} />
                     </motion.div>
                   </>

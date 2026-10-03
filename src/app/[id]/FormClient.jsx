@@ -50,9 +50,10 @@ export default function FormClient() {
         }
 
         return (
-          <FormDisplayer form={responseData.data.form} stage={responseData.data.stage ?? 0} isWorkflow={responseData.data.state != null}
+          <FormDisplayer key={responseData.data.form?.id ?? id} form={responseData.data.form} stage={responseData.data.stage ?? 0} isWorkflow={responseData.data.state != null}
             startFormId={responseData.data.startFormId ?? null} draft={isAuthed ? (draftData?.data ?? null) : null}
             journey={responseData.data.workflow ?? null} instanceId={responseData.data.instanceId ?? null}
+            attempt={responseData.data.attempt ?? null} serverNow={responseData.data.serverNow ?? null} closesAt={responseData.data.closesAt ?? null}
           />
         );
       }}
@@ -61,7 +62,7 @@ export default function FormClient() {
           {state === "loading" ? <FormSkeleton /> : (
             <StatusScreen state={state} message={message} stage={stage} startFormId={startFormId} isWorkflow={isWorkflow}
               workflow={payload?.workflow ?? null} formTitle={payload?.formTitle ?? null} submittedAt={payload?.submittedAt ?? null}
-              reviewNote={reviewNote} reviewedAt={reviewedAt} isAuthed={isAuthed}
+              reviewNote={reviewNote} reviewedAt={reviewedAt} isAuthed={isAuthed} closesAt={payload?.closesAt ?? null}
             />
           )}
         </div>

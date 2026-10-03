@@ -15,8 +15,10 @@ const TABS = [
     { id: "description", label: "Açıklama" },
 ];
 
-export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLockedDrag = false }) {
-    const [activeTab, setActiveTab] = useState("components");
+export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLockedDrag = false, tab, onTabChange, hasTask = false, onTaskAdd, focusTiming = 0, eventLinked = false }) {
+    const [localTab, setLocalTab] = useState("components");
+    const activeTab = tab ?? localTab;
+    const setActiveTab = onTabChange ?? setLocalTab;
     const { setNodeRef, isOver } = useDroppable({ id: "library" });
     const { active } = useDndContext();
     const from = active?.data?.current?.from;
@@ -26,10 +28,10 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLoc
     const renderContent = () => {
         switch (activeTab) {
             case "components":
-                return <LibraryComponents layout={layout} onSelect={onLibrarySelect} onGroupSelect={onGroupSelect} />;
+                return <LibraryComponents layout={layout} onSelect={onLibrarySelect} onGroupSelect={onGroupSelect} hasTask={hasTask} onTaskAdd={onTaskAdd} />;
 
             case "settings":
-                return <LibrarySettings />;
+                return <LibrarySettings focusTiming={focusTiming} eventLinked={eventLinked} />;
 
             case "description":
                 return (

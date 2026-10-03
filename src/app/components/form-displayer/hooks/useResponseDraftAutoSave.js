@@ -5,7 +5,7 @@ import { useReliableSave } from "@/lib/hooks/useReliableSave";
 
 const DEBOUNCE_MS = 1000;
 
-export function useResponseDraftAutoSave(formId, answers, savedDraft, startTimeRef, enabled, onSynced) {
+export function useResponseDraftAutoSave(formId, answers, savedDraft, startTimeRef, enabled, onSynced, submission = null) {
   const [lastSave, setLastSave] = useState(null);
 
   const { data: session } = useSession();
@@ -19,7 +19,12 @@ export function useResponseDraftAutoSave(formId, answers, savedDraft, startTimeR
     onSyncedRef.current = onSynced;
   }, [onSynced]);
 
-  const { schedule, cancel } = useReliableSave({
+  const submissionRef = useRef(submission);
+  useEffect(() => {
+    submissionRef.current = submission;
+  }, [submission]);
+
+  const { schedule, cancel, settle } = useReliableSave({
     debounceMs: DEBOUNCE_MS,
     save: (draft, opts) => {
       const options = { ...opts, token: tokenRef.current };
@@ -38,8 +43,11 @@ export function useResponseDraftAutoSave(formId, answers, savedDraft, startTimeR
     }
 
     const timeSpent = Math.floor((Date.now() - (startTimeRef.current || Date.now())) / 1000);
+    const payload = submissionRef.current
+      ? { formId, responses: answers, timeSpent, submission: submissionRef.current }
+      : { formId, responses: answers, timeSpent };
 
-    schedule({ formId, responses: answers, timeSpent }, () => {
+    schedule(payload, () => {
       onSyncedRef.current?.(serialized);
       setLastSave(answers.length ? { formId, at: new Date() } : null);
     });
@@ -47,5 +55,5 @@ export function useResponseDraftAutoSave(formId, answers, savedDraft, startTimeR
 
   const lastSavedAt = lastSave?.formId === formId ? lastSave.at : null;
 
-  return { lastSavedAt, cancel };
+  return { lastSavedAt, cancel, settle };
 }

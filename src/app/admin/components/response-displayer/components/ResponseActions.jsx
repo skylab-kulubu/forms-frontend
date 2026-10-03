@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Clock, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { ArrowRight, Check, Clock, Eye, FileClock, FileX, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
-import { useResponseStatusMutation, useResponseArchiveMutation } from "@/lib/hooks/useResponse";
+import { useResponseStatusMutation, useResponseArchiveMutation, useAttemptActionMutation } from "@/lib/hooks/useResponse";
+import { DecisionSection, ReminderSection, TimeHistory, TimeSection, attemptTimeValue, formatPersonName } from "./AttemptPanels";
+import { ATTEMPT_STATUS, ROW_STATUS, attemptKindOf } from "@/lib/attempt-status";
+import { formatDay, useTicker } from "@/lib/form-timing";
 import { useCreateResponseShareMutation, useRevokeResponseTokenMutation } from "@/lib/hooks/useResponseShare";
 import Popover from "@/app/components/utils/Popover";
 import ShareOverlay from "@/app/admin/components/ShareOverlay";
@@ -20,11 +24,16 @@ const fadeIn = {
 const STATUS_META = {
   2: { label: "Onaylandı", style: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200", Icon: ShieldCheck, color: "text-emerald-400" },
   3: { label: "Reddedildi", style: "border-red-500/40 bg-red-500/10 text-red-200", Icon: ShieldX, color: "text-red-400" },
+  4: { label: "Geçici", style: "border-amber-500/40 bg-amber-500/10 text-amber-200", Icon: FileClock, color: "text-amber-300" },
   default: { label: "Beklemede", style: "border-white/10 bg-white/5 text-neutral-300", Icon: ShieldQuestion, color: "text-neutral-400" },
 };
 
 // Backend inceleme notunu varchar(500) kolonda tutar; daha uzun not isteği düşürür.
 const REVIEW_NOTE_MAX_LENGTH = 500;
+
+const PROVISIONAL = 4;
+
+const ATTEMPT_ICON = { running: Timer, opened: Eye, none: FileX };
 
 
 const formatDateTime = (value) => {
@@ -95,14 +104,19 @@ export function ResponseActions({ response, readOnly = false }) {
   const reviewDescription = response?.reviewDescription || response?.reviewerNote || "";
   const statusValue = Number(response?.status ?? 0);
   const statusInfo = STATUS_META[statusValue] ?? STATUS_META.default;
-  const canReview = statusValue !== 0;
+  const isProvisional = statusValue === PROVISIONAL;
+  const canReview = statusValue !== 0 && !isProvisional;
   const archivedAt = response?.archivedAt;
   const isArchived = Boolean(response?.isArchived);
   const workflow = response?.workflow ?? null;
   const isWorkflowStep = Boolean(workflow);
   const isRouteOpen = !isWorkflowStep || Boolean(workflow.onApprove || workflow.onDecline);
   const canEditReview = !readOnly && canReview && !isArchived && isRouteOpen;
-  const isArchiveBlocked = isWorkflowStep && statusValue === 1;
+  const isArchiveBlocked = (isWorkflowStep && statusValue === 1) || isProvisional;
+  const attempt = readOnly ? null : response?.attempt ?? null;
+  const attemptTime = attemptTimeValue(attempt);
+  const searchParams = useSearchParams();
+  const attemptMutation = useAttemptActionMutation();
   const approveOutcome = describeRoute(workflow?.onApprove, 2);
   const declineOutcome = describeRoute(workflow?.onDecline, 3);
   const timeSpent = response?.timeSpent ?? null;
@@ -248,7 +262,7 @@ export function ResponseActions({ response, readOnly = false }) {
             </button>
             <Popover open={isError} error={error} variant="error" align="bottom-right">
               <button type="button" aria-label="Cevabı sil"
-                title={isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce onaylayın ya da reddedin." : "Cevabı sil"}
+                title={isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin." : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce onaylayın ya da reddedin." : "Cevabı sil"}
                 disabled={isArchivePending || isError || isSuccess || isArchived || isArchiveBlocked} onClick={() => archiveMutate(responseId)}
                 className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-white/5"}`}
               >
@@ -272,11 +286,19 @@ export function ResponseActions({ response, readOnly = false }) {
             <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.03 }} className="px-1 py-4 first:pt-0">
               <SectionTitle>Özet</SectionTitle>
               <div className="flex items-start justify-around">
-                {canReview && (
+                {(canReview || isProvisional) && (
                   <StatBlock label="Durum" value={statusInfo.label} icon={StatusIcon} color={statusInfo.color} />
                 )}
-                <StatBlock label="Süre" value={formatDuration(timeSpent)} icon={Timer} color="text-skylab-300" />
-                <StatBlock label="Gönderim" value={response?.submittedAt ? new Date(response.submittedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "--"} icon={CalendarCheck} color="text-neutral-300" />
+                {attemptTime ? (
+                  <StatBlock label={attemptTime.label} value={attemptTime.value} icon={Timer} color="text-skylab-300" />
+                ) : (
+                  <StatBlock label="Süre" value={formatDuration(timeSpent)} icon={Timer} color="text-skylab-300" />
+                )}
+                {attempt?.startedAt ? (
+                  <StatBlock label="Başladı" value={new Date(attempt.startedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })} icon={CalendarCheck} color="text-neutral-300" />
+                ) : (
+                  <StatBlock label="Gönderim" value={response?.submittedAt ? new Date(response.submittedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "--"} icon={CalendarCheck} color="text-neutral-300" />
+                )}
                 <div className="flex flex-col items-center gap-1.5 text-center">
                   <ChannelIcon source={response?.attribution?.source} size={14} className="text-neutral-300 opacity-60" />
                   <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-neutral-300">
@@ -301,6 +323,12 @@ export function ResponseActions({ response, readOnly = false }) {
               <SectionTitle>Yanıt Sahibi</SectionTitle>
               <UserCard name={submitterName} email={submitterEmail} userId={submitterId} photoUrl={submitterPhotoUrl} hasUser={Boolean(response.user?.fullName)}/>
             </motion.div>
+
+            {attempt?.canDecide && isProvisional && !isArchived && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
+                <DecisionSection key={attempt.id} attempt={attempt} mutation={attemptMutation} initialFlow={searchParams?.get("flow")} />
+              </motion.div>
+            )}
 
             {canReview && (
               <AnimatePresence mode="wait" initial={false}>
@@ -438,6 +466,12 @@ export function ResponseActions({ response, readOnly = false }) {
               </AnimatePresence>
             )}
 
+            {attempt && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.12 }}>
+                <TimeHistory attempt={attempt} />
+              </motion.div>
+            )}
+
         </div>
       </div>
 
@@ -452,6 +486,71 @@ export function ResponseActions({ response, readOnly = false }) {
           revokeMutation={revokeMutation}
         />
       )}
+    </div>
+  );
+}
+
+export function AttemptActions({ view }) {
+  const attempt = view?.attempt ?? null;
+  const searchParams = useSearchParams();
+  const mutation = useAttemptActionMutation();
+  const running = attempt?.status === ATTEMPT_STATUS.STARTED;
+  useTicker(running, 30_000);
+
+  if (!attempt) {
+    return <div></div>;
+  }
+
+  const kind = attemptKindOf(attempt);
+  const status = ROW_STATUS[kind] ?? ROW_STATUS.none;
+  const time = attemptTimeValue(attempt);
+  const user = view.user ?? null;
+  const showTime = running || attempt.canExtend;
+
+  return (
+    <div className="flex h-full flex-col text-neutral-200">
+      <div className="flex items-center gap-2 px-1 lg:h-7">
+        <span className="text-2xs font-medium text-neutral-500">İşlemler</span>
+        <span className="h-px flex-1 bg-white/5" />
+      </div>
+
+      <div className="mt-4 min-h-0 flex-1 overflow-y-auto scrollbar">
+        <div className="divide-y divide-white/5">
+
+            <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.03 }} className="px-1 py-4 first:pt-0">
+              <SectionTitle>Özet</SectionTitle>
+              <div className="flex items-start justify-around">
+                <StatBlock label="Durum" value={status.label} icon={ATTEMPT_ICON[kind] ?? FileX} color={status.text} />
+                <StatBlock label={time.label} value={time.value} icon={Timer} color="text-skylab-300" />
+                <StatBlock label="Başladı" value={attempt.startedAt ? formatDay(attempt.startedAt) : "--"} icon={CalendarCheck} color="text-neutral-300" />
+              </div>
+            </motion.div>
+
+            <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.06 }} className="px-1 py-4 first:pt-0">
+              <SectionTitle>Yanıt Sahibi</SectionTitle>
+              <UserCard name={formatPersonName(user?.fullName) || "Bilinmiyor"} email={user?.email || ""} userId={user?.id || null}
+                photoUrl={user?.profilePictureUrl || null} hasUser={Boolean(user?.fullName)}
+              />
+            </motion.div>
+
+            {kind === "opened" ? (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
+                <ReminderSection key={attempt.id} attempt={attempt} mutation={mutation} />
+              </motion.div>
+            ) : showTime ? (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
+                <TimeSection key={attempt.id} attempt={attempt} mutation={mutation} initialFlow={searchParams?.get("flow")} />
+              </motion.div>
+            ) : null}
+
+            {attempt.events?.length > 0 && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.12 }}>
+                <TimeHistory attempt={attempt} />
+              </motion.div>
+            )}
+
+        </div>
+      </div>
     </div>
   );
 }

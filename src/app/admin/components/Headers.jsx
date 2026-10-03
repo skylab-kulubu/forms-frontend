@@ -136,11 +136,12 @@ export function FormsHeader(toolbarProps) {
 }
 
 function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", showArchived = false, onShowArchivedChange,
-  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onOverview, onRefresh, onExport, exportLoading = false
+  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, timeValue = "all", onTimeChange, counts = null, timed = false,
+  onOverview, onRefresh, onExport, exportLoading = false
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", statusValue !== "all", respondentValue !== "all", showArchived !== false].filter(Boolean).length;
+  const activeFilters = [sortValue !== "desc", statusValue !== "all", respondentValue !== "all", showArchived !== false, timeValue !== "all"].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
   const buttonSize = compact ? "sm" : "md";
 
@@ -160,6 +161,7 @@ function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, s
           <ResponsesFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
             sortValue={sortValue} onSortChange={onSortChange} statusValue={statusValue} onStatusChange={onStatusChange}
             respondentValue={respondentValue} onRespondentChange={onRespondentChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange}
+            timeValue={timeValue} onTimeChange={onTimeChange} counts={counts} timed={timed}
           />
         </div>
         <Tip label="Yenile">

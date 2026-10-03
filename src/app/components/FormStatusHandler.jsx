@@ -106,6 +106,16 @@ const stateConfigs = {
         title: "Form erişime kapalı",
         description: "Form sahibi gönderimleri durdurmuş veya formun süresi dolmuş olabilir.",
     },
+    formClosed: {
+        icon: FileLock2,
+        title: "Form kapandı",
+        description: "Bu form kapanış saatinde kendiliğinden kapandı. Yeni cevap alınmıyor.",
+    },
+    startClosed: {
+        icon: FileLock2,
+        title: "Görev artık başlatılamıyor",
+        description: "Son başlama saati geçti.",
+    },
     unAuthorized: {
         icon: FileLock2,
         title: "Giriş yapmalısınız",
@@ -151,6 +161,8 @@ const formatReviewDate = (value) => {
 function closedStateFor(data) {
     if (data?.reason === "newRunsClosed") return "newRunsClosed";
     if (data?.reason === "workflowClosed") return Number(data?.stage) > 0 ? "workflowPaused" : "workflowClosed";
+    if (data?.reason === "closed") return "formClosed";
+    if (data?.reason === "startClosed") return "startClosed";
     return "notAvailable";
 }
 

@@ -2,7 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, GripVertical, LayoutTemplate, Plus, Rows3 } from "lucide-react";
+import { CheckCircle2, ClipboardList, GripVertical, LayoutTemplate, Plus, Rows3 } from "lucide-react";
 import { COMPONENTS } from "@/app/components/form-registry";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import SearchPicker from "@/app/components/utils/SearchPicker";
@@ -94,7 +94,7 @@ const CATEGORIES = [
     { label: "Diğer", types: ["file", "separator"] },
 ];
 
-export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect }) {
+export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect, hasTask = false, onTaskAdd }) {
     const [search, setSearch] = useState("");
 
     const query = search.trim().toLowerCase();
@@ -113,6 +113,11 @@ export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect }) 
                 <div className="relative flex flex-wrap gap-2">
                     {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
                     <RepeaterAddButton onSelect={onSelect} />
+                    {onTaskAdd && (
+                        <PanelButton icon={hasTask ? CheckCircle2 : ClipboardList} active={hasTask} onClick={onTaskAdd} className="min-w-fit flex-1">
+                            {hasTask ? "Görev eklendi" : "Görev ekle"}
+                        </PanelButton>
+                    )}
                 </div>
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar px-4 pb-4 pt-3">

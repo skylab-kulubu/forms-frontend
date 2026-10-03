@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LibrarySettingsEditors } from "./LibrarySettingsEditors";
 import { WorkflowLockMark, WorkflowManagedRow, WorkflowMembershipSection } from "./WorkflowMembership";
+import { TimingSection } from "./TimingSection";
 import { useFormEditor } from "../FormEditorContext";
 import { WORKFLOW_INTAKE, effectiveFormSettings } from "@/lib/form-settings";
 import { PANEL_SECTION, PANEL_STACK, PanelNotice, SectionHeader, ToggleRow } from "@/app/admin/components/utils/SidePanel";
@@ -11,14 +13,33 @@ const alertVariants = {
     exit: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" }
 };
 
-export function LibrarySettings() {
+const PERSONAL_LOCK = "Kişisel süre açıkken kullanılamaz.";
+
+export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
     const { state, dispatch } = useFormEditor();
-    const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow } = state;
+    const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt } = state;
+    const rootRef = useRef(null);
 
     const isWorkflowLocked = Boolean(workflow?.isPublished);
     const isAnonymousLocked = isWorkflowLocked && !allowAnonymousResponses;
     const isAccepting = effectiveFormSettings(state).isOpen;
     const intake = Number(workflow?.intake ?? WORKFLOW_INTAKE.OPEN);
+    const personal = Boolean(timeLimitMinutes);
+    const repeatable = isWorkflowLocked ? Boolean(workflow.allowMultipleRuns) : allowMultipleResponses;
+
+    const personalBlocker = eventLinked
+        ? "Etkinlik formlarında kullanılamaz."
+        : allowAnonymousResponses
+            ? "Anonim cevap ve birden çok cevap kapalıyken kullanılabilir."
+            : repeatable
+                ? isWorkflowLocked ? "Akışta tekrar başlatma açıkken kullanılamaz." : "Anonim cevap ve birden çok cevap kapalıyken kullanılabilir."
+                : null;
+
+    useEffect(() => {
+        if (!focusTiming) return;
+        const section = rootRef.current?.querySelector('[data-anchor="timing"]');
+        section?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [focusTiming]);
 
     const handleAnonymousToggle = () => {
         const nextValue = !allowAnonymousResponses;
@@ -29,7 +50,7 @@ export function LibrarySettings() {
     };
 
     return (
-        <div className={PANEL_STACK}>
+        <div ref={rootRef} className={PANEL_STACK}>
             <LibrarySettingsEditors />
 
             {workflow ? <WorkflowMembershipSection workflow={workflow} /> : null}
@@ -62,8 +83,9 @@ export function LibrarySettings() {
                         )}
                     </AnimatePresence>
 
-                    <ToggleRow title="Anonim cevap izni" description="Kimlik bilgisi olmadan gönderime izin ver."
-                        checked={allowAnonymousResponses} onChange={handleAnonymousToggle} disabled={isAnonymousLocked}
+                    <ToggleRow title="Anonim cevap izni"
+                        description={personal && !allowAnonymousResponses ? PERSONAL_LOCK : "Kimlik bilgisi olmadan gönderime izin ver."}
+                        checked={allowAnonymousResponses} onChange={handleAnonymousToggle} disabled={isAnonymousLocked || (personal && !allowAnonymousResponses)}
                         adornment={isAnonymousLocked ? <WorkflowLockMark /> : null}
                     />
 
@@ -80,8 +102,9 @@ export function LibrarySettings() {
                         </>
                     ) : (
                         <>
-                            <ToggleRow title="Birden çok cevap izni" description="Aynı kullanıcı yeniden gönderebilsin."
-                                checked={allowMultipleResponses} dimmed={allowAnonymousResponses} disabled={allowAnonymousResponses}
+                            <ToggleRow title="Birden çok cevap izni"
+                                description={personal && !allowMultipleResponses ? PERSONAL_LOCK : "Aynı kullanıcı yeniden gönderebilsin."}
+                                checked={allowMultipleResponses} dimmed={allowAnonymousResponses} disabled={allowAnonymousResponses || (personal && !allowMultipleResponses)}
                                 onChange={() => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: !allowMultipleResponses } })}
                             />
                             <ToggleRow title="Cevap kontrolü" description="Cevapların onaylanması için manuel eylem gerekli olsun."
@@ -92,6 +115,11 @@ export function LibrarySettings() {
                     )}
                 </div>
             </section>
+
+            <TimingSection timeLimitMinutes={timeLimitMinutes} closesAt={closesAt} personalBlocker={personalBlocker} isWorkflowStep={Boolean(workflow)}
+                onTimeLimitChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "timeLimitMinutes", value } })}
+                onClosesAtChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "closesAt", value } })}
+            />
         </div>
     );
 }

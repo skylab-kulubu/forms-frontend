@@ -1,13 +1,19 @@
-import { useReducer, useRef, useEffect, useMemo, useCallback } from "react";
+import { useReducer, useRef, useEffect, useMemo, useCallback, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useSubmitFormMutation, useDisplayFormQuery } from "@/lib/hooks/useForm";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSubmitFormMutation, useDisplayFormQuery, useStartAttemptMutation, fetchDisplayFormById } from "@/lib/hooks/useForm";
 import { useResponseDraftAutoSave } from "./useResponseDraftAutoSave";
 import { FORM_ACCESS_STATUS, WORKFLOW_STATE, getSubmitErrorState } from "../../FormStatusHandler";
 import { getVisibleFields } from "../components/conditionChecker";
+import { useDeadline } from "../components/TimedParts";
 import { migrateSchema } from "@/app/components/form-migrate";
-import { isRepeaterComplete } from "@/app/components/form-components/FormRepeater";
+import { isRepeaterComplete, serializeRepeater } from "@/app/components/form-components/FormRepeater";
+import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { readAttribution } from "@/lib/attribution";
 import { hasJourney, hasSeenIntro } from "@/lib/workflow-journey";
+import { useServerNow } from "@/lib/form-timing";
+
+const RETRY_REASONS = new Set(["timeUp", "notStarted"]);
 
 function getSubmissionState(status) {
   switch (status) {
@@ -60,6 +66,9 @@ const initialState = {
   startFormId: null,
   workflow: null,
   instanceId: null,
+  attempt: null,
+  serverNow: null,
+  closesAt: null,
   intro: null,
   nextFormId: null,
   nextStage: null,
@@ -150,7 +159,23 @@ function reducer(state, action) {
         startFormId: state.startFormId,
         workflow: action.workflow ?? null,
         instanceId: action.instanceId ?? state.instanceId,
+        attempt: action.attempt ?? null,
+        serverNow: action.serverNow ?? null,
+        closesAt: action.closesAt ?? null,
         intro: hasJourney(action.workflow) ? { arrivedTitle: state.arrivedFrom } : null,
+      };
+
+    case "RELOAD_FORM":
+      return {
+        ...state,
+        form: action.form ?? state.form,
+        attempt: action.attempt ?? null,
+        serverNow: action.serverNow ?? state.serverNow,
+        closesAt: action.closesAt ?? null,
+        workflow: action.workflow ?? state.workflow,
+        stage: action.stage || state.stage,
+        instanceId: action.instanceId ?? state.instanceId,
+        isWorkflow: state.isWorkflow || action.isWorkflow,
       };
 
     case "END_INTRO":
@@ -206,6 +231,9 @@ function initState({ form, options }) {
     startFormId: options.startFormId ?? null,
     workflow: journey,
     instanceId,
+    attempt: options.attempt ?? null,
+    serverNow: options.serverNow ?? null,
+    closesAt: options.closesAt ?? null,
     intro: showIntro ? { arrivedTitle: null } : null,
   };
 }
@@ -215,12 +243,17 @@ export function useFormDisplayer(form, draft, options = {}) {
 
   const { status } = useSession();
   const isAuthed = status === "authenticated";
+  const queryClient = useQueryClient();
 
   const submitMutation = useSubmitFormMutation();
+  const startMutation = useStartAttemptMutation();
+  const [startError, setStartError] = useState(null);
   const { data: nextFormData, error: nextFormError } = useDisplayFormQuery(state.nextFormId);
+  const now = useServerNow(state.serverNow);
 
   const draftAppliedRef = useRef(false);
   const startTimeRef = useRef(null);
+  const reloadingRef = useRef(false);
 
   useEffect(() => { startTimeRef.current = Date.now(); }, []);
 
@@ -228,7 +261,10 @@ export function useFormDisplayer(form, draft, options = {}) {
     if (!nextFormData) return;
     const payload = nextFormData.data;
     if (nextFormData.status === FORM_ACCESS_STATUS.AVAILABLE && payload?.form) {
-      dispatch({ type: "LOAD_NEXT_FORM", form: payload.form, stage: payload.stage, workflow: payload.workflow ?? null, instanceId: payload.instanceId ?? null });
+      dispatch({
+        type: "LOAD_NEXT_FORM", form: payload.form, stage: payload.stage, workflow: payload.workflow ?? null, instanceId: payload.instanceId ?? null,
+        attempt: payload.attempt ?? null, serverNow: payload.serverNow ?? null, closesAt: payload.closesAt ?? null,
+      });
       draftAppliedRef.current = false;
       startTimeRef.current = Date.now();
       return;
@@ -258,14 +294,89 @@ export function useFormDisplayer(form, draft, options = {}) {
   const schema = useMemo(() => migrateSchema(state.form?.schema), [state.form?.schema]);
   const answers = useMemo(() => draftAnswers(state.values, state.defaults, schema), [state.values, state.defaults, schema]);
   const handleDraftSynced = useCallback((savedDraft) => dispatch({ type: "DRAFT_SYNCED", draft: savedDraft }), []);
+  const visibleFields = useMemo(() => getVisibleFields(schema, state.values), [schema, state.values]);
 
-  const { lastSavedAt, cancel: cancelDraftSave } = useResponseDraftAutoSave(
+  const isTimed = Boolean(state.attempt);
+  const isRunning = state.attempt?.state === "running";
+
+  const submission = useMemo(() => {
+    if (!isTimed) return null;
+    return visibleFields
+      .filter((field) => field.type !== "separator")
+      .map((field) => ({
+        id: field.id,
+        type: field.type,
+        question: field.props?.question || "",
+        answer: field.type === "repeater" ? serializeRepeater(field.props?.fields, state.values[field.id]) : formatFieldAnswer(field, state.values[field.id]),
+      }))
+      .filter((item) => String(item.answer ?? "").trim() !== "");
+  }, [isTimed, visibleFields, state.values]);
+
+  const { lastSavedAt, cancel: cancelDraftSave, settle: settleDraft } = useResponseDraftAutoSave(
     state.form?.id, answers, state.savedDraft, startTimeRef,
-    isAuthed && !state.submissionState && !state.nextFormId && !submitMutation.isPending,
-    handleDraftSynced
+    isAuthed && !state.submissionState && !state.nextFormId && !submitMutation.isPending && (!isTimed || isRunning),
+    handleDraftSynced,
+    submission
   );
 
-  const visibleFields = useMemo(() => getVisibleFields(schema, state.values), [schema, state.values]);
+  const activeFormId = state.form?.id ?? null;
+
+  const reloadForm = useCallback(async () => {
+    if (!activeFormId || reloadingRef.current) return null;
+    reloadingRef.current = true;
+
+    try {
+      const response = await queryClient.fetchQuery({
+        queryKey: ["display-form", activeFormId],
+        queryFn: () => fetchDisplayFormById(activeFormId),
+        staleTime: 0,
+      });
+      const payload = response?.data;
+
+      if (response?.status === FORM_ACCESS_STATUS.AVAILABLE && payload?.form) {
+        dispatch({
+          type: "RELOAD_FORM", form: payload.form, attempt: payload.attempt ?? null, serverNow: payload.serverNow ?? null, closesAt: payload.closesAt ?? null,
+          workflow: payload.workflow ?? null, stage: payload.stage ?? 0, instanceId: payload.instanceId ?? null, isWorkflow: payload.state != null,
+        });
+      } else {
+        dispatch({ type: "SUBMIT_SUCCESS", status: response?.status, data: payload });
+      }
+
+      return payload ?? null;
+    } catch (error) {
+      dispatch(submitFailureAction(error) ?? { type: "SUBMIT_FAILURE", submissionState: "genericError" });
+      return null;
+    } finally {
+      reloadingRef.current = false;
+    }
+  }, [activeFormId, queryClient]);
+
+  const handleTimeUp = useCallback(async () => {
+    await settleDraft();
+    const payload = await reloadForm();
+    const deadline = payload?.attempt?.state === "running" && payload.attempt.deadlineAt ? new Date(payload.attempt.deadlineAt).getTime() : null;
+    if (deadline && deadline <= Date.now()) setTimeout(() => { reloadForm(); }, 5000);
+  }, [settleDraft, reloadForm]);
+
+  useDeadline(isRunning ? state.attempt.deadlineAt : null, now, handleTimeUp);
+
+  useDeadline(state.attempt?.state === "notStarted" ? state.attempt.startClosesAt : null, now, reloadForm);
+
+  useDeadline(!isTimed && !state.submissionState ? state.closesAt : null, now, () => {
+    dispatch({ type: "SUBMIT_FAILURE", submissionState: "formClosed" });
+  });
+
+  const startAttempt = useCallback(() => {
+    if (!activeFormId || startMutation.isPending) return;
+    setStartError(null);
+    startMutation.mutate(activeFormId, {
+      onSuccess: () => { reloadForm(); },
+      onError: (error) => {
+        setStartError(error?.body?.message ?? "Görev başlatılamadı. Lütfen tekrar deneyin.");
+        if (error?.status === FORM_ACCESS_STATUS.NOT_AVAILABLE) reloadForm();
+      },
+    });
+  }, [activeFormId, startMutation, reloadForm]);
 
   const isAnyFileUploading = Object.values(state.uploadingFields).some(Boolean);
 
@@ -301,6 +412,10 @@ export function useFormDisplayer(form, draft, options = {}) {
         dispatch({ type: "SUBMIT_SUCCESS", status: response?.status, data: response?.data });
       },
       onError: (error) => {
+        if (isTimed && RETRY_REASONS.has(error?.body?.data?.reason)) {
+          handleTimeUp();
+          return;
+        }
         const failure = submitFailureAction(error);
         if (failure) {
           dispatch(failure);
@@ -320,6 +435,7 @@ export function useFormDisplayer(form, draft, options = {}) {
   };
 
   return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || Boolean(state.nextFormId),
-    lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro
+    lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro,
+    now, isTimed, isRunning, startAttempt, isStarting: startMutation.isPending, startError,
   };
 }

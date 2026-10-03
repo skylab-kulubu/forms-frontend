@@ -5,6 +5,7 @@ export const JOURNEY_STATUS = {
   IN_REVIEW: "inReview",
   CURRENT: "current",
   UPCOMING: "upcoming",
+  TIMED_OUT: "timedOut",
 };
 
 export function journeyRoute(workflow) {
@@ -102,7 +103,7 @@ function upcomingDetail(item, previous, phase) {
   return directlyNext ? "Bu formu gönderince açılır" : `${previousTitle} gönderilince açılır`;
 }
 
-export function journeyTimeline(workflow, { phase = "status", arrived = false } = {}) {
+export function journeyTimeline(workflow, { phase = "status", arrived = false, current = null } = {}) {
   const route = journeyRoute(workflow);
 
   return route.map((item, index) => {
@@ -116,7 +117,10 @@ export function journeyTimeline(workflow, { phase = "status", arrived = false } 
         return { key: item.stage, tone: "declined", title, date, detail: withDate("Kabul edilmedi", item.reviewedAt), note: item.reviewNote };
       case JOURNEY_STATUS.IN_REVIEW:
         return { key: item.stage, tone: "review", title, date, detail: "Gönderildi · inceleniyor" };
+      case JOURNEY_STATUS.TIMED_OUT:
+        return { key: item.stage, tone: "declined", title, detail: "Süre doldu · teslim yok" };
       case JOURNEY_STATUS.CURRENT:
+        if (current) return { key: item.stage, title, ...current };
         return phase === "intro"
           ? { key: item.stage, tone: "current", number: item.stage, title, detail: arrived ? "Şimdi açılıyor" : "Şimdi dolduracaksınız" }
           : { key: item.stage, tone: "paused", title, detail: "Başvurular açılınca doldurabilirsiniz." };

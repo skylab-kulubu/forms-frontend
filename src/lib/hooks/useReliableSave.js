@@ -78,6 +78,18 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     try { saveRef.current(job.data, { keepalive: true }); } catch { }
   }, []);
 
+  const settle = useCallback(async () => {
+    clearTimeout(debounceTimer.current);
+    clearTimeout(retryTimer.current);
+    const job = pendingRef.current;
+    if (!job) return;
+    pendingRef.current = null;
+    try {
+      await saveRef.current(job.data, { keepalive: false });
+      job.onSaved?.();
+    } catch { }
+  }, []);
+
   useEffect(() => {
     const onHide = () => flush();
     window.addEventListener("pagehide", onHide);
@@ -89,5 +101,5 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     };
   }, [flush]);
 
-  return { schedule, cancel, flush };
+  return { schedule, cancel, flush, settle };
 }

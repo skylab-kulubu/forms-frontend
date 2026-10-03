@@ -8,7 +8,7 @@ const HISTORY_DEBOUNCE_MS = 800;
 
 const TRACKABLE_ACTIONS = new Set([
     "SET_TITLE", "SET_DESCRIPTION", "SET_SCHEMA",
-    "SET_STATUS", "UPDATE_SETTINGS", "SET_EDITORS",
+    "SET_STATUS", "UPDATE_SETTINGS", "SET_EDITORS", "SET_TASK",
 ]);
 
 const initialFormState = {
@@ -19,6 +19,9 @@ const initialFormState = {
     allowMultipleResponses: false,
     allowAnonymousResponses: false,
     requiresManualReview: false,
+    task: null,
+    closesAt: null,
+    timeLimitMinutes: null,
     editors: [],
     status: 1,
     isSaved: true,
@@ -35,6 +38,9 @@ const draftFields = (state) => ({
     allowAnonymousResponses: state.allowAnonymousResponses,
     allowMultipleResponses: state.allowMultipleResponses,
     requiresManualReview: state.requiresManualReview,
+    task: state.task ?? null,
+    closesAt: state.closesAt ?? null,
+    timeLimitMinutes: state.timeLimitMinutes ?? null,
 });
 
 const savedFields = (state) => ({
@@ -85,7 +91,13 @@ function coreReducer(state, action) {
                 allowMultipleResponses: action.payload.allowMultipleResponses ?? state.allowMultipleResponses,
                 requiresManualReview: action.payload.requiresManualReview ?? state.requiresManualReview,
                 status: action.payload.status ?? state.status,
+                task: action.payload.task !== undefined ? action.payload.task : state.task,
+                closesAt: action.payload.closesAt !== undefined ? action.payload.closesAt : state.closesAt,
+                timeLimitMinutes: action.payload.timeLimitMinutes !== undefined ? action.payload.timeLimitMinutes : state.timeLimitMinutes,
             };
+
+        case "SET_TASK":
+            return { ...state, task: action.payload };
 
         case "MARK_SAVED":
             return { ...state, _saved: savedFields(action.payload ?? state) };

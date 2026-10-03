@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { MousePointerClick, PackagePlus } from "lucide-react";
@@ -11,6 +11,7 @@ import { useFormContext } from "../../providers";
 import { FormEditorProvider, hasDraftChanges, useFormEditor } from "./FormEditorContext";
 import { useFormDnD } from "./hooks/useFormDnD";
 import { GhostComponent, Canvas, CanvasItem, DropSlot, InsertSlot } from "./components/FormEditorComponents";
+import TaskCard from "./components/TaskCard";
 import { genFieldId } from "./fieldId";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
@@ -88,6 +89,12 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
+    const searchParams = useSearchParams();
+    const timingLink = searchParams?.get("panel") === "timing";
+    const [libraryTab, setLibraryTab] = useState(timingLink ? "settings" : "components");
+    const [focusTiming, setFocusTiming] = useState(timingLink ? 1 : 0);
+    const [taskFlash, setTaskFlash] = useState(false);
+    const taskCardRef = useRef(null);
 
     const editorRef = useRef(null);
     const libraryDropElRef = useRef(null);
@@ -197,6 +204,9 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 allowAnonymousResponses: state.allowAnonymousResponses,
                 allowMultipleResponses: state.allowMultipleResponses,
                 requiresManualReview: state.requiresManualReview,
+                task: state.task,
+                closesAt: state.closesAt,
+                timeLimitMinutes: state.timeLimitMinutes,
             });
         } else if (storedDraftRef.current) {
             storedDraftRef.current = false;
@@ -213,7 +223,16 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         state.allowAnonymousResponses,
         state.allowMultipleResponses,
         state.requiresManualReview,
+        state.task,
+        state.closesAt,
+        state.timeLimitMinutes,
     ]);
+
+    useEffect(() => {
+        if (!taskFlash) return;
+        const timer = setTimeout(() => setTaskFlash(false), 1200);
+        return () => clearTimeout(timer);
+    }, [taskFlash]);
 
     useEffect(() => {
         setGlobalTitle(state.title);
@@ -297,7 +316,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 UserId: editor.user.id,
                 Role: Number(editor.role)
             })),
-            EventId: eventRef?.id || handoff?.eventId || null
+            EventId: eventRef?.id || handoff?.eventId || null,
+            Task: state.task?.content?.trim() ? state.task : null,
+            ClosesAt: state.closesAt ?? null,
+            TimeLimitMinutes: eventLinked || state.allowAnonymousResponses ? null : state.timeLimitMinutes ?? null,
         };
 
         saveForm({
@@ -412,6 +434,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         dispatch({ type: "SET_SCHEMA", payload: [...state.schema, ...newFields] });
     };
 
+    const handleTaskAdd = () => {
+        if (!state.task) dispatch({ type: "SET_TASK", payload: { content: "", collapsible: true, downloadable: true } });
+        else taskCardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        setTaskFlash(true);
+        if (!isLgUp) setDrawerOpen(false);
+    };
+
+    const handleOpenTiming = () => {
+        setLibraryTab("settings");
+        setFocusTiming((value) => value + 1);
+        if (!isLgUp) setDrawerOpen(true);
+    };
+
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(SmartKeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -445,7 +480,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 setSchemaTitle={(val) => dispatch({ type: "SET_TITLE", payload: val })}
                 span={isLgUp ? 8 : 11}
             >
-                {state.schema.length === 0 ? (
+                {state.schema.length === 0 && !state.task ? (
                     <div className="grid h-full place-items-center">
                         <div className="flex flex-col items-center gap-5 text-center px-6">
                             <div className="relative grid h-20 w-20 place-items-center rounded-3xl border-2 border-dashed border-neutral-800 bg-neutral-900/50 text-neutral-500">
@@ -461,7 +496,17 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                     </div>
                 ) : (
                     <SortableContext items={state.schema.map((field) => field.id)} strategy={verticalListSortingStrategy}>
-                        <ul className="flex flex-col gap-2 max-w-2xl mx-auto mb-4">
+                        <ul className={`flex flex-col gap-2 max-w-2xl mx-auto mb-4 ${state.task ? "pt-3" : ""}`}>
+                            {state.task && (
+                                <li ref={taskCardRef} className="flex flex-col">
+                                    <TaskCard task={state.task} flash={taskFlash}
+                                        timing={{ timeLimitMinutes: state.timeLimitMinutes, closesAt: state.closesAt }}
+                                        onChange={(next) => dispatch({ type: "SET_TASK", payload: next })}
+                                        onRemove={() => dispatch({ type: "SET_TASK", payload: null })}
+                                        onOpenTiming={handleOpenTiming}
+                                    />
+                                </li>
+                            )}
                             {dragSource === "library"
                                 ? <DropSlot index={0} enabled />
                                 : <InsertSlot index={0} onInsert={insertFieldAt} hidden={!!dragSource} />}
@@ -486,7 +531,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} isLockedDrag={isLockedDrag} />}
 
             {isLgUp && (
-                <Library layout="grid" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag} />
+                <Library layout="grid" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag}
+                    tab={libraryTab} onTabChange={setLibraryTab} hasTask={Boolean(state.task)} onTaskAdd={handleTaskAdd}
+                    focusTiming={focusTiming} eventLinked={eventLinked}
+                />
             )}
         </div>
     );
@@ -520,7 +568,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
-                            <Library layout="drawer" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag} />
+                            <Library layout="drawer" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag}
+                                tab={libraryTab} onTabChange={setLibraryTab} hasTask={Boolean(state.task)} onTaskAdd={handleTaskAdd}
+                                focusTiming={focusTiming} eventLinked={eventLinked}
+                            />
                         </DrawerContent>
                     </Drawer>
                 ) : (
@@ -556,6 +607,9 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
         allowMultipleResponses: initialForm.allowMultipleResponses || false,
         allowAnonymousResponses: initialForm.allowAnonymousResponses || false,
         requiresManualReview: initialForm.requiresManualReview || false,
+        task: initialForm.task ?? null,
+        closesAt: initialForm.closesAt ?? null,
+        timeLimitMinutes: initialForm.timeLimitMinutes ?? null,
         editors: initialForm.collaborators || [],
         status: initialForm.status || 1,
         userRole: initialForm.userRole || 3,

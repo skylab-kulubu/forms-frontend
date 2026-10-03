@@ -21,6 +21,9 @@ const saveFormDraft = (formId, data, { token, keepalive } = {}) =>
         allowMultipleResponses: data.allowMultipleResponses,
         requiresManualReview: data.requiresManualReview,
         status: data.status,
+        task: data.task ?? null,
+        closesAt: data.closesAt ?? null,
+        timeLimitMinutes: data.timeLimitMinutes ?? null,
         savedAt: new Date().toISOString(),
       },
     },
@@ -73,6 +76,9 @@ export function useDraftAutoSave(formId, state, hasInitialDraft = false) {
         allowMultipleResponses: state.allowMultipleResponses,
         requiresManualReview: state.requiresManualReview,
         status: state.status,
+        task: state.task ?? null,
+        closesAt: state.closesAt ?? null,
+        timeLimitMinutes: state.timeLimitMinutes ?? null,
       }, () => markServerDraft(true));
       return;
     }

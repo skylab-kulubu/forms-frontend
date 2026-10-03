@@ -35,8 +35,7 @@ function Segment({ kind, fill }) {
   return <span className="h-1 flex-1 rounded-full bg-white/8" />;
 }
 
-export default function WorkflowProgress({ workflow, stage, formTitle, fill = 0, zIndex = 30 }) {
-  const model = stepBarModel(workflow, stage);
+function useStuck() {
   const sentinelRef = useRef(null);
   const [stuck, setStuck] = useState(false);
 
@@ -52,9 +51,10 @@ export default function WorkflowProgress({ workflow, stage, formTitle, fill = 0,
     return () => observer.disconnect();
   }, []);
 
-  const total = model.total == null ? null : model.uncertain ? `en fazla ${model.total}` : model.total;
-  const label = total == null ? `Başvurunun ${model.stage}. adımı` : `Başvurunun ${model.stage}. adımı, ${total} adımdan`;
+  return { sentinelRef, stuck };
+}
 
+function StickyShell({ zIndex, label, stuck, sentinelRef, children }) {
   return (
     <>
       <div ref={sentinelRef} aria-hidden className="-mb-6 h-px" />
@@ -63,27 +63,55 @@ export default function WorkflowProgress({ workflow, stage, formTitle, fill = 0,
           className={`rounded-2xl border px-3.5 py-2.5 transition-[background-color,border-color,box-shadow] duration-200
             ${stuck ? "border-white/10 bg-neutral-900/95 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl" : "border-transparent"}`}
         >
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <span className="relative h-4 min-w-0 flex-1">
-              <span className={`absolute inset-0 truncate text-xs font-medium text-neutral-300 transition duration-200 ${stuck ? "-translate-y-1.5 opacity-0" : ""}`}>
-                {workflow?.title}
-              </span>
-              <span className={`absolute inset-0 truncate text-xs font-medium text-neutral-100 transition duration-200 ${stuck ? "" : "translate-y-1.5 opacity-0"}`}>
-                {formTitle}
-              </span>
-            </span>
-            <span className="shrink-0 whitespace-nowrap text-3xs font-semibold uppercase tracking-[0.14em] tabular-nums text-neutral-300">
-              Adım {model.stage}
-              {total != null && <span className="text-neutral-500"> / {total}</span>}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {model.segments.map((kind, index) => <Segment key={index} kind={kind} fill={fill} />)}
-            {model.tail && <span className="ml-1 h-0 w-10 shrink-0 border-t border-dashed border-neutral-700" />}
-          </div>
+          {children}
         </div>
       </div>
     </>
+  );
+}
+
+export function TimerBar({ title, timer, zIndex = 30 }) {
+  const { sentinelRef, stuck } = useStuck();
+
+  return (
+    <StickyShell zIndex={zIndex} label="Kalan süre" stuck={stuck} sentinelRef={sentinelRef}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-neutral-300">{title}</span>
+        {timer}
+      </div>
+    </StickyShell>
+  );
+}
+
+export default function WorkflowProgress({ workflow, stage, formTitle, fill = 0, zIndex = 30, timer = null }) {
+  const model = stepBarModel(workflow, stage);
+  const { sentinelRef, stuck } = useStuck();
+
+  const total = model.total == null ? null : model.uncertain ? `en fazla ${model.total}` : model.total;
+  const label = total == null ? `Başvurunun ${model.stage}. adımı` : `Başvurunun ${model.stage}. adımı, ${total} adımdan`;
+
+  return (
+    <StickyShell zIndex={zIndex} label={label} stuck={stuck} sentinelRef={sentinelRef}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="relative h-4 min-w-0 flex-1">
+          <span className={`absolute inset-0 truncate text-xs font-medium text-neutral-300 transition duration-200 ${stuck ? "-translate-y-1.5 opacity-0" : ""}`}>
+            {workflow?.title}
+          </span>
+          <span className={`absolute inset-0 truncate text-xs font-medium text-neutral-100 transition duration-200 ${stuck ? "" : "translate-y-1.5 opacity-0"}`}>
+            {formTitle}
+          </span>
+        </span>
+        {timer}
+        <span className="shrink-0 whitespace-nowrap text-3xs font-semibold uppercase tracking-[0.14em] tabular-nums text-neutral-300">
+          Adım {model.stage}
+          {total != null && <span className="text-neutral-500"> / {total}</span>}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {model.segments.map((kind, index) => <Segment key={index} kind={kind} fill={fill} />)}
+        {model.tail && <span className="ml-1 h-0 w-10 shrink-0 border-t border-dashed border-neutral-700" />}
+      </div>
+    </StickyShell>
   );
 }

@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useFormEditor } from "../FormEditorContext";
 import { REGISTRY } from "../../../../components/form-registry";
 import { FormDisplayerHeader } from "../../../../components/form-displayer/components/FormDisplayerComponents";
+import TaskBlock from "../../../../components/form-displayer/components/TaskBlock";
 import Background from "../../../../components/Background";
 
 const containerVariants = {
@@ -18,7 +19,7 @@ const itemVariants = {
 
 export function FormPreview({ open, onClose }) {
     const { state } = useFormEditor();
-    const { schema, title, description } = state;
+    const { schema, title, description, task } = state;
 
     useEffect(() => {
         if (!open) return;
@@ -56,6 +57,12 @@ export function FormPreview({ open, onClose }) {
                                     <motion.div variants={itemVariants}>
                                         <FormDisplayerHeader title={title} description={description} />
                                     </motion.div>
+
+                                    {task?.content?.trim() && (
+                                        <motion.div variants={itemVariants} className="pointer-events-auto">
+                                            <TaskBlock task={task} title={title} />
+                                        </motion.div>
+                                    )}
 
                                     {schema.length > 0 ? (
                                         schema.map((field, index) => {
