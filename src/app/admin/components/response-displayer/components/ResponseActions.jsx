@@ -23,6 +23,9 @@ const STATUS_META = {
   default: { label: "Beklemede", style: "border-white/10 bg-white/5 text-neutral-300", Icon: ShieldQuestion, color: "text-neutral-400" },
 };
 
+// Backend inceleme notunu varchar(500) kolonda tutar; daha uzun not isteği düşürür.
+const REVIEW_NOTE_MAX_LENGTH = 500;
+
 
 const formatDateTime = (value) => {
   if (!value) return "--";
@@ -108,6 +111,7 @@ export function ResponseActions({ response, readOnly = false }) {
   const [note, setNote] = useState(reviewDescription);
   const [isEditing, setIsEditing] = useState(canEditReview && !reviewedAt);
   const [actionState, setActionState] = useState("idle");
+  const [actionError, setActionError] = useState(null);
   const [pendingDecision, setPendingDecision] = useState(null);
   const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
   const actionTimerRef = useRef(null);
@@ -145,6 +149,7 @@ export function ResponseActions({ response, readOnly = false }) {
   if (prevResponseId !== responseId) {
     setPrevResponseId(responseId);
     setActionState("idle");
+    setActionError(null);
     setPendingDecision(null);
   }
 
@@ -183,6 +188,7 @@ export function ResponseActions({ response, readOnly = false }) {
   const submitStatus = (nextStatus) => {
     if (!canEditReview || !response?.id || isPending || actionState !== "idle") return;
     clearActionTimer();
+    setActionError(null);
     setActionState("loading");
     mutate(
       {
@@ -195,7 +201,9 @@ export function ResponseActions({ response, readOnly = false }) {
           setIsEditing(false);
           setActionState("success");
         },
-        onError: () => {
+        onError: (error) => {
+          // HTTP hatası backend mesajını taşır; ağ/CORS hatasında status yoktur.
+          setActionError(error?.status ? error.message : "Durum güncellenemedi; bağlantıyı kontrol edip tekrar deneyin.");
           setActionState("error");
         },
       }
@@ -410,9 +418,13 @@ export function ResponseActions({ response, readOnly = false }) {
                       <label className="text-3xs font-medium text-neutral-500 mb-1.5 block">
                         Açıklama
                       </label>
-                      <textarea rows={3} placeholder="Açıklama ekle..." value={note} onChange={(event) => setNote(event.target.value)}
+                      <textarea rows={3} placeholder="Açıklama ekle..." value={note} onChange={(event) => setNote(event.target.value)} maxLength={REVIEW_NOTE_MAX_LENGTH}
                         className="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                       />
+                      <p className="mt-1 text-right text-3xs tabular-nums text-neutral-600">{note?.length ?? 0}/{REVIEW_NOTE_MAX_LENGTH}</p>
+                      {actionError && (
+                        <p role="alert" className="mt-1 text-3xs text-red-300">{actionError}</p>
+                      )}
                       {reviewedAt && (
                         <button type="button" onClick={() => { setIsEditing(false); setNote(reviewDescription); }} aria-label="Değişiklikten vazgeç" title="Değişiklikten vazgeç"
                           className="mt-2 inline-flex items-center justify-center rounded-lg border border-white/10 bg-neutral-900/60 px-2 py-1 text-3xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
