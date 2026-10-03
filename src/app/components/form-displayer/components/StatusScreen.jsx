@@ -50,6 +50,9 @@ function buildScreen({ state, message, stage, startFormId, workflow, formTitle, 
   const fallbackNote = !journey && reviewNote ? { note: reviewNote, date: reviewDate } : null;
   const single = { state, submittedAt, reviewedAt, reviewNote, isAuthed };
   const timedContext = journey ? <StageContext workflow={workflow} stage={stage} /> : formTitle;
+  const nextFormId = attempt?.nextFormId ?? null;
+  const nextAction = nextFormId ? { label: "Sonraki adıma geç", onClick: () => window.location.assign(`/${nextFormId}`) } : null;
+  const nextTimeline = (options = {}) => journeyTimeline(workflow, nextFormId ? { ...options, phase: "intro" } : options);
 
   switch (state) {
     case "timeUp":
@@ -66,13 +69,15 @@ function buildScreen({ state, message, stage, startFormId, workflow, formTitle, 
         description: journey
           ? "Süre dolduğunda cevap girilmemişti, teslim kaydedilmedi."
           : "Süre dolduğunda cevap girilmemişti, teslim kaydedilmedi. Ekip gerekirse sürenizi uzatabilir.",
-        timeline: journey ? journeyTimeline(workflow) : attemptTimeline(attempt, { tone: "paused", detail: "Teslim yok" }),
+        timeline: journey ? nextTimeline() : attemptTimeline(attempt, { tone: "paused", detail: "Teslim yok" }),
+        action: nextAction,
       };
     case "timeUpClosed":
       return {
         Icon: FileX, tone: "bad", context: timedContext, title: "Teslim kaydedilmedi",
         description: "Süre dolduğunda teslim tamamlanmamıştı; ekip bu adımı teslim yok olarak kapattı.",
-        timeline: journey ? journeyTimeline(workflow) : attemptTimeline(attempt, { tone: "declined", detail: "Teslim yok" }),
+        timeline: journey ? nextTimeline() : attemptTimeline(attempt, { tone: "declined", detail: "Teslim yok" }),
+        action: nextAction,
       };
     case "startClosed":
       return {

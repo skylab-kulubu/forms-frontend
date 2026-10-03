@@ -103,12 +103,16 @@ export function attemptWhen(attempt) {
   }
 }
 
-export function ProvisionalNotice({ actionable = true }) {
+export function ProvisionalNotice({ actionable = true, closed = false }) {
   return (
     <div className="mx-auto mb-5 w-full max-w-2xl">
-      <PanelNotice>
-        Bu bir geçici cevap. Aday süresi dolduğunda göndermemişti; aşağıdaki cevaplar o anki taslak.
-        {actionable ? " Kararı işlemler panelinden verin." : ""}
+      <PanelNotice tone={closed ? "neutral" : "amber"}>
+        {closed
+          ? "Ekip bu geçici cevabı teslim yok olarak kapattı. Aşağıdaki cevaplar süre dolduğundaki taslak."
+          : <>
+            Bu bir geçici cevap. Aday süresi dolduğunda göndermemişti; aşağıdaki cevaplar o anki taslak.
+            {actionable ? " Kararı işlemler panelinden verin." : ""}
+          </>}
       </PanelNotice>
     </div>
   );
@@ -195,7 +199,7 @@ function routeText(route, endText) {
   return `${route.formTitle || "Sıradaki"} adımı açılır`;
 }
 
-export function DecisionSection({ attempt, mutation, initialFlow = null }) {
+export function DecisionSection({ attempt, mutation, initialFlow = null, onExtended = null }) {
   const [flow, setFlow] = useState(initialFlow === "extend" ? "extend" : null);
   const [decisionNote, setDecisionNote] = useState("");
   const pending = mutation.isPending;
@@ -207,7 +211,12 @@ export function DecisionSection({ attempt, mutation, initialFlow = null }) {
     ? `Akışta "Süre dolduğunda" yolu: ${routeText(attempt.onClose, "başvuru bu adımda sonlanır")}.`
     : "Teslim yok olarak kalır.";
 
-  const run = (action, body) => mutation.mutate({ attemptId: attempt.id, action, body }, { onSuccess: () => setFlow(null) });
+  const run = (action, body) => mutation.mutate({ attemptId: attempt.id, action, body }, {
+    onSuccess: () => {
+      setFlow(null);
+      if (action === "extend") onExtended?.();
+    },
+  });
 
   let inner;
   if (flow === "extend") {

@@ -8,7 +8,7 @@ import { useResponsePreviewQuery } from "@/lib/hooks/useResponseShare";
 import { ResponseListItem, ResponseListSkeleton } from "./components/ResponseDisplayerComponents";
 import { AttemptActions, ResponseActions } from "./components/ResponseActions";
 import { AttemptEmptyState, ProvisionalNotice, TaskRow, attemptWhen } from "./components/AttemptPanels";
-import { RESPONSE_STATUS_PROVISIONAL } from "@/lib/attempt-status";
+import { ATTEMPT_STATUS, RESPONSE_STATUS_PROVISIONAL } from "@/lib/attempt-status";
 import StateCard from "@/app/components/StateCard";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/app/admin/components/utils/Drawer";
 
@@ -145,7 +145,9 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
   const renderSchemaList = (items, owner) => {
     const intro = (
       <>
-        {Number(owner?.status) === RESPONSE_STATUS_PROVISIONAL && <ProvisionalNotice actionable={!isSharedView} />}
+        {Number(owner?.status) === RESPONSE_STATUS_PROVISIONAL && (
+          <ProvisionalNotice actionable={!isSharedView && Boolean(owner?.attempt?.canDecide)} closed={owner?.attempt?.status === ATTEMPT_STATUS.NO_SUBMISSION} />
+        )}
         <TaskRow key={owner?.id} task={owner?.task} />
       </>
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, Clock, Eye, FileClock, FileX, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
@@ -24,6 +24,7 @@ const fadeIn = {
 const STATUS_META = {
   2: { label: "Onaylandı", style: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200", Icon: ShieldCheck, color: "text-emerald-400" },
   3: { label: "Reddedildi", style: "border-red-500/40 bg-red-500/10 text-red-200", Icon: ShieldX, color: "text-red-400" },
+  closed: { label: "Teslim yok", style: "border-white/10 bg-white/5 text-neutral-300", Icon: FileX, color: "text-red-300" },
   4: { label: "Geçici", style: "border-amber-500/40 bg-amber-500/10 text-amber-200", Icon: FileClock, color: "text-amber-300" },
   default: { label: "Beklemede", style: "border-white/10 bg-white/5 text-neutral-300", Icon: ShieldQuestion, color: "text-neutral-400" },
 };
@@ -103,7 +104,8 @@ export function ResponseActions({ response, readOnly = false }) {
   const reviewedAt = response?.reviewedAt;
   const reviewDescription = response?.reviewDescription || response?.reviewerNote || "";
   const statusValue = Number(response?.status ?? 0);
-  const statusInfo = STATUS_META[statusValue] ?? STATUS_META.default;
+  const closedProvisional = statusValue === PROVISIONAL && response?.attempt?.status === ATTEMPT_STATUS.NO_SUBMISSION;
+  const statusInfo = closedProvisional ? STATUS_META.closed : STATUS_META[statusValue] ?? STATUS_META.default;
   const isProvisional = statusValue === PROVISIONAL;
   const canReview = statusValue !== 0 && !isProvisional;
   const archivedAt = response?.archivedAt;
@@ -116,6 +118,8 @@ export function ResponseActions({ response, readOnly = false }) {
   const attempt = readOnly ? null : response?.attempt ?? null;
   const attemptTime = attemptTimeValue(attempt);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const routeParams = useParams();
   const attemptMutation = useAttemptActionMutation();
   const approveOutcome = describeRoute(workflow?.onApprove, 2);
   const declineOutcome = describeRoute(workflow?.onDecline, 3);
@@ -326,7 +330,9 @@ export function ResponseActions({ response, readOnly = false }) {
 
             {attempt?.canDecide && isProvisional && !isArchived && (
               <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
-                <DecisionSection key={attempt.id} attempt={attempt} mutation={attemptMutation} initialFlow={searchParams?.get("flow")} />
+                <DecisionSection key={attempt.id} attempt={attempt} mutation={attemptMutation} initialFlow={searchParams?.get("flow")}
+                  onExtended={() => router.replace(`/admin/forms/${routeParams?.formId ?? response.formId}/responses/${attempt.id}?attempt=1`)}
+                />
               </motion.div>
             )}
 

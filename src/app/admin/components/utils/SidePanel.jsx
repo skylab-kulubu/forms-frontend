@@ -24,6 +24,7 @@ export const PILL_TONE = {
 const NOTICE_TONE = {
   amber: "border-amber-400/40 bg-amber-500/10 text-amber-100",
   red: "border-red-400/40 bg-red-500/10 text-red-100",
+  neutral: "border-white/10 bg-white/5 text-neutral-300",
 };
 
 const HEADER_ROW = "flex h-10 min-w-0 shrink-0 items-center border-b border-neutral-800 px-4 text-sm font-semibold tracking-wide";
