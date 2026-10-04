@@ -56,7 +56,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
             {workflow ? <WorkflowMembershipSection workflow={workflow} /> : null}
 
             <section className={PANEL_SECTION}>
-                <SectionHeader title="Form durumu" pill={isAccepting ? "Yayında" : "Duraklatıldı"} pillTone={isAccepting ? "skylab" : "neutral"}
+                <SectionHeader title="Form durumu" pill={isAccepting ? "Yayında" : "Duraklatıldı"} pillTone={isAccepting ? "emerald" : "neutral"}
                     description="Formu yayından kaldırmadan önce geçici olarak duraklatabilir veya yeniden açabilirsiniz."
                 />
 
