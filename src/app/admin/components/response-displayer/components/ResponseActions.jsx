@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, Clock, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { ArrowRight, Check, Clock, Eye, FileClock, FileX, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
-import { useResponseStatusMutation, useResponseArchiveMutation } from "@/lib/hooks/useResponse";
+import { useResponseStatusMutation, useResponseArchiveMutation, useAttemptActionMutation } from "@/lib/hooks/useResponse";
+import { DecisionSection, ReminderSection, TimeHistory, TimeSection, attemptTimeValue, formatPersonName } from "./AttemptPanels";
+import { ATTEMPT_STATUS, ROW_STATUS, attemptKindOf } from "@/lib/attempt-status";
+import { formatDay, useTicker } from "@/lib/form-timing";
 import { useCreateResponseShareMutation, useRevokeResponseTokenMutation } from "@/lib/hooks/useResponseShare";
 import Popover from "@/app/components/utils/Popover";
 import ShareOverlay from "@/app/admin/components/ShareOverlay";
+import ChannelIcon from "@/app/admin/components/share/ChannelIcon";
+import { sourceLabel } from "@/lib/share-channels";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -18,8 +24,17 @@ const fadeIn = {
 const STATUS_META = {
   2: { label: "Onaylandı", style: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200", Icon: ShieldCheck, color: "text-emerald-400" },
   3: { label: "Reddedildi", style: "border-red-500/40 bg-red-500/10 text-red-200", Icon: ShieldX, color: "text-red-400" },
+  closed: { label: "Teslim yok", style: "border-white/10 bg-white/5 text-neutral-300", Icon: FileX, color: "text-red-300" },
+  4: { label: "Geçici", style: "border-amber-500/40 bg-amber-500/10 text-amber-200", Icon: FileClock, color: "text-amber-300" },
   default: { label: "Beklemede", style: "border-white/10 bg-white/5 text-neutral-300", Icon: ShieldQuestion, color: "text-neutral-400" },
 };
+
+// Backend inceleme notunu varchar(500) kolonda tutar; daha uzun not isteği düşürür.
+const REVIEW_NOTE_MAX_LENGTH = 500;
+
+const PROVISIONAL = 4;
+
+const ATTEMPT_ICON = { running: Timer, opened: Eye, none: FileX };
 
 
 const formatDateTime = (value) => {
@@ -51,6 +66,24 @@ function StatBlock({ label, value, icon: Icon, color = "text-neutral-100" }) {
   );
 }
 
+function describeRoute(route, decision) {
+  if (!route) return null;
+  if (route.endsFlow) return decision === 2 ? "Başvuru tamamlanır" : "Başvuru sonlanır";
+  return `${route.formTitle || "Sonraki adım"} adımı açılır`;
+}
+
+function RouteHint({ label, dot, text }) {
+  if (!text) return null;
+  return (
+    <p className="flex min-w-0 items-center gap-1.5 text-3xs text-neutral-500">
+      <span className={`size-1.5 shrink-0 rounded-full ${dot}`} />
+      <span className="shrink-0">{label}</span>
+      <ArrowRight size={10} className="shrink-0 text-neutral-600" />
+      <span className="truncate text-neutral-300">{text}</span>
+    </p>
+  );
+}
+
 function UserCard({ name, email, userId, photoUrl, hasUser, size = "normal" }) {
   const nameSize = size === "small" ? "text-xs" : "text-sm";
   const subSize = "text-3xs";
@@ -71,16 +104,33 @@ export function ResponseActions({ response, readOnly = false }) {
   const reviewedAt = response?.reviewedAt;
   const reviewDescription = response?.reviewDescription || response?.reviewerNote || "";
   const statusValue = Number(response?.status ?? 0);
-  const statusInfo = STATUS_META[statusValue] ?? STATUS_META.default;
-  const canReview = statusValue !== 0;
+  const closedProvisional = statusValue === PROVISIONAL && response?.attempt?.status === ATTEMPT_STATUS.NO_SUBMISSION;
+  const statusInfo = closedProvisional ? STATUS_META.closed : STATUS_META[statusValue] ?? STATUS_META.default;
+  const isProvisional = statusValue === PROVISIONAL;
+  const canReview = statusValue !== 0 && !isProvisional;
   const archivedAt = response?.archivedAt;
   const isArchived = Boolean(response?.isArchived);
-  const canEditReview = !readOnly && canReview && !isArchived;
+  const workflow = response?.workflow ?? null;
+  const isWorkflowStep = Boolean(workflow);
+  const isRouteOpen = !isWorkflowStep || Boolean(workflow.onApprove || workflow.onDecline);
+  const canEditReview = !readOnly && canReview && !isArchived && isRouteOpen;
+  const isArchiveBlocked = (isWorkflowStep && statusValue === 1) || isProvisional;
+  const attempt = readOnly ? null : response?.attempt ?? null;
+  const attemptTime = attemptTimeValue(attempt);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const routeParams = useParams();
+  const attemptMutation = useAttemptActionMutation();
+  const approveOutcome = describeRoute(workflow?.onApprove, 2);
+  const declineOutcome = describeRoute(workflow?.onDecline, 3);
   const timeSpent = response?.timeSpent ?? null;
+  const scannedFromQr = response?.attribution?.medium === "qr" && response?.attribution?.source !== "qr";
 
   const [note, setNote] = useState(reviewDescription);
   const [isEditing, setIsEditing] = useState(canEditReview && !reviewedAt);
   const [actionState, setActionState] = useState("idle");
+  const [actionError, setActionError] = useState(null);
+  const [pendingDecision, setPendingDecision] = useState(null);
   const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
   const actionTimerRef = useRef(null);
   const responseId = response?.id;
@@ -117,6 +167,8 @@ export function ResponseActions({ response, readOnly = false }) {
   if (prevResponseId !== responseId) {
     setPrevResponseId(responseId);
     setActionState("idle");
+    setActionError(null);
+    setPendingDecision(null);
   }
 
   useEffect(() => () => {
@@ -154,6 +206,7 @@ export function ResponseActions({ response, readOnly = false }) {
   const submitStatus = (nextStatus) => {
     if (!canEditReview || !response?.id || isPending || actionState !== "idle") return;
     clearActionTimer();
+    setActionError(null);
     setActionState("loading");
     mutate(
       {
@@ -166,11 +219,27 @@ export function ResponseActions({ response, readOnly = false }) {
           setIsEditing(false);
           setActionState("success");
         },
-        onError: () => {
+        onError: (error) => {
+          // HTTP hatası backend mesajını taşır; ağ/CORS hatasında status yoktur.
+          setActionError(error?.status ? error.message : "Durum güncellenemedi; bağlantıyı kontrol edip tekrar deneyin.");
           setActionState("error");
         },
       }
     );
+  };
+
+  const requestDecision = (nextStatus) => {
+    if (isWorkflowStep) {
+      setPendingDecision(nextStatus);
+      return;
+    }
+    submitStatus(nextStatus);
+  };
+
+  const confirmDecision = () => {
+    const nextStatus = pendingDecision;
+    setPendingDecision(null);
+    submitStatus(nextStatus);
   };
 
   const showReviewDetails = canReview && Boolean(reviewedAt) && (!isEditing || readOnly) && actionState === "idle";
@@ -196,8 +265,10 @@ export function ResponseActions({ response, readOnly = false }) {
               <Share2 size={15} />
             </button>
             <Popover open={isError} error={error} variant="error" align="bottom-right">
-              <button type="button" aria-label="Cevabı sil" title="Cevabı sil" disabled={isArchivePending || isError || isSuccess || isArchived} onClick={() => archiveMutate(responseId)}
-                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-white/5"}`}
+              <button type="button" aria-label="Cevabı sil"
+                title={isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin." : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce onaylayın ya da reddedin." : "Cevabı sil"}
+                disabled={isArchivePending || isError || isSuccess || isArchived || isArchiveBlocked} onClick={() => archiveMutate(responseId)}
+                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-white/5"}`}
               >
                 <Archive size={15} />
               </button>
@@ -219,18 +290,51 @@ export function ResponseActions({ response, readOnly = false }) {
             <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.03 }} className="px-1 py-4 first:pt-0">
               <SectionTitle>Özet</SectionTitle>
               <div className="flex items-start justify-around">
-                {canReview && (
+                {(canReview || isProvisional) && (
                   <StatBlock label="Durum" value={statusInfo.label} icon={StatusIcon} color={statusInfo.color} />
                 )}
-                <StatBlock label="Süre" value={formatDuration(timeSpent)} icon={Timer} color="text-skylab-300" />
-                <StatBlock label="Gönderim" value={response?.submittedAt ? new Date(response.submittedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "--"} icon={CalendarCheck} color="text-neutral-300" />
+                {attemptTime ? (
+                  <StatBlock label={attemptTime.label} value={attemptTime.value} icon={Timer} color="text-skylab-300" />
+                ) : (
+                  <StatBlock label="Süre" value={formatDuration(timeSpent)} icon={Timer} color="text-skylab-300" />
+                )}
+                {attempt?.startedAt ? (
+                  <StatBlock label="Başladı" value={new Date(attempt.startedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })} icon={CalendarCheck} color="text-neutral-300" />
+                ) : (
+                  <StatBlock label="Gönderim" value={response?.submittedAt ? new Date(response.submittedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "--"} icon={CalendarCheck} color="text-neutral-300" />
+                )}
+                <div className="flex flex-col items-center gap-1.5 text-center">
+                  <ChannelIcon source={response?.attribution?.source} size={14} className="text-neutral-300 opacity-60" />
+                  <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-neutral-300">
+                    {sourceLabel(response?.attribution?.source)}
+                    {scannedFromQr && <span className="rounded-full border border-white/10 px-1.5 text-3xs font-medium leading-4 text-neutral-400">QR</span>}
+                  </p>
+                  <p className="text-3xs text-neutral-500">Kaynak</p>
+                </div>
               </div>
+              {(scannedFromQr || response?.attribution?.campaign || response?.attribution?.content) && (
+                <p className="mt-3 text-center font-mono text-3xs text-neutral-600">
+                  {[
+                    scannedFromQr && "QR okutmasıyla geldi",
+                    response.attribution.campaign && `kampanya: ${response.attribution.campaign}`,
+                    response.attribution.content && `içerik: ${response.attribution.content}`,
+                  ].filter(Boolean).join(" · ")}
+                </p>
+              )}
             </motion.div>
 
             <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.06 }} className="px-1 py-4 first:pt-0">
               <SectionTitle>Yanıt Sahibi</SectionTitle>
               <UserCard name={submitterName} email={submitterEmail} userId={submitterId} photoUrl={submitterPhotoUrl} hasUser={Boolean(response.user?.fullName)}/>
             </motion.div>
+
+            {attempt?.canDecide && isProvisional && !isArchived && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
+                <DecisionSection key={attempt.id} attempt={attempt} mutation={attemptMutation} initialFlow={searchParams?.get("flow")}
+                  onExtended={() => router.replace(`/admin/forms/${routeParams?.formId ?? response.formId}/responses/${attempt.id}?attempt=1`)}
+                />
+              </motion.div>
+            )}
 
             {canReview && (
               <AnimatePresence mode="wait" initial={false}>
@@ -281,20 +385,50 @@ export function ResponseActions({ response, readOnly = false }) {
                     <SectionTitle>Değerlendirme</SectionTitle>
 
                     <AnimatePresence mode="wait" initial={false}>
-                      {actionState === "idle" ? (
-                        <motion.div layout key="actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex items-center gap-3"
+                      {actionState === "idle" && pendingDecision ? (
+                        <motion.div layout key="confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="rounded-xl border border-white/10 bg-white/3 p-3"
                         >
-                          <button type="button" onClick={() => submitStatus(2)} disabled={isPending} aria-label="Onayla" title="Onayla"
-                            className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Check size={16} className="mx-auto" />
-                          </button>
-                          <button type="button" onClick={() => submitStatus(3)} disabled={isPending} aria-label="Reddet" title="Reddet"
-                            className="flex-1 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <X size={16} className="mx-auto" />
-                          </button>
+                          <p className="text-xs font-medium text-neutral-100">{pendingDecision === 2 ? "Cevabı onayla" : "Cevabı reddet"}</p>
+                          {(pendingDecision === 2 ? approveOutcome : declineOutcome) && (
+                            <p className="mt-1 text-2xs text-neutral-300">{pendingDecision === 2 ? approveOutcome : declineOutcome}.</p>
+                          )}
+                          <p className="mt-1 text-3xs leading-relaxed text-neutral-500">Bu karar başvurunun yönünü belirler ve geri alınamaz.</p>
+                          <div className="mt-3 flex items-center gap-2">
+                            <button type="button" onClick={() => setPendingDecision(null)}
+                              className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                            >
+                              Vazgeç
+                            </button>
+                            <button type="button" onClick={confirmDecision} disabled={isPending}
+                              className={`flex-1 rounded-lg border px-3 py-1.5 text-2xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-50 ${pendingDecision === 2 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20" : "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20"}`}
+                            >
+                              {pendingDecision === 2 ? "Onayla" : "Reddet"}
+                            </button>
+                          </div>
+                        </motion.div>
+                      ) : actionState === "idle" ? (
+                        <motion.div layout key="actions" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <button type="button" onClick={() => requestDecision(2)} disabled={isPending} aria-label="Onayla" title="Onayla"
+                              className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Check size={16} className="mx-auto" />
+                            </button>
+                            <button type="button" onClick={() => requestDecision(3)} disabled={isPending} aria-label="Reddet" title="Reddet"
+                              className="flex-1 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <X size={16} className="mx-auto" />
+                            </button>
+                          </div>
+                          {isWorkflowStep && (approveOutcome || declineOutcome) && (
+                            <div className="mt-3 space-y-1">
+                              <RouteHint label="Onaylanırsa" dot="bg-emerald-400/70" text={approveOutcome} />
+                              <RouteHint label="Reddedilirse" dot="bg-red-400/70" text={declineOutcome} />
+                            </div>
+                          )}
                         </motion.div>
                       ) : (
                         <motion.div layout key="feedback" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -318,9 +452,13 @@ export function ResponseActions({ response, readOnly = false }) {
                       <label className="text-3xs font-medium text-neutral-500 mb-1.5 block">
                         Açıklama
                       </label>
-                      <textarea rows={3} placeholder="Açıklama ekle..." value={note} onChange={(event) => setNote(event.target.value)}
+                      <textarea rows={3} placeholder="Açıklama ekle..." value={note} onChange={(event) => setNote(event.target.value)} maxLength={REVIEW_NOTE_MAX_LENGTH}
                         className="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                       />
+                      <p className="mt-1 text-right text-3xs tabular-nums text-neutral-600">{note?.length ?? 0}/{REVIEW_NOTE_MAX_LENGTH}</p>
+                      {actionError && (
+                        <p role="alert" className="mt-1 text-3xs text-red-300">{actionError}</p>
+                      )}
                       {reviewedAt && (
                         <button type="button" onClick={() => { setIsEditing(false); setNote(reviewDescription); }} aria-label="Değişiklikten vazgeç" title="Değişiklikten vazgeç"
                           className="mt-2 inline-flex items-center justify-center rounded-lg border border-white/10 bg-neutral-900/60 px-2 py-1 text-3xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
@@ -334,6 +472,12 @@ export function ResponseActions({ response, readOnly = false }) {
               </AnimatePresence>
             )}
 
+            {attempt && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.12 }}>
+                <TimeHistory attempt={attempt} />
+              </motion.div>
+            )}
+
         </div>
       </div>
 
@@ -341,11 +485,78 @@ export function ResponseActions({ response, readOnly = false }) {
         <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
           resource="response" resourceId={responseId}
           title="Cevabı Paylaş"
-          description="Bu bağlantıyla paylaşılan kişi cevabı görüntüleyebilir. Bağlantı 1 saat geçerlidir."
+          description={isWorkflowStep
+            ? "Bu bağlantı başvurunun tüm adımlarını açar. Bağlantı 1 saat geçerlidir."
+            : "Bu bağlantıyla paylaşılan kişi cevabı görüntüleyebilir. Bağlantı 1 saat geçerlidir."}
           shareMutation={shareMutation}
           revokeMutation={revokeMutation}
         />
       )}
+    </div>
+  );
+}
+
+export function AttemptActions({ view }) {
+  const attempt = view?.attempt ?? null;
+  const searchParams = useSearchParams();
+  const mutation = useAttemptActionMutation();
+  const running = attempt?.status === ATTEMPT_STATUS.STARTED;
+  useTicker(running, 30_000);
+
+  if (!attempt) {
+    return <div></div>;
+  }
+
+  const kind = attemptKindOf(attempt);
+  const status = ROW_STATUS[kind] ?? ROW_STATUS.none;
+  const time = attemptTimeValue(attempt);
+  const user = view.user ?? null;
+  const showTime = running || attempt.canExtend;
+
+  return (
+    <div className="flex h-full flex-col text-neutral-200">
+      <div className="flex items-center gap-2 px-1 lg:h-7">
+        <span className="text-2xs font-medium text-neutral-500">İşlemler</span>
+        <span className="h-px flex-1 bg-white/5" />
+      </div>
+
+      <div className="mt-4 min-h-0 flex-1 overflow-y-auto scrollbar">
+        <div className="divide-y divide-white/5">
+
+            <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.03 }} className="px-1 py-4 first:pt-0">
+              <SectionTitle>Özet</SectionTitle>
+              <div className="flex items-start justify-around">
+                <StatBlock label="Durum" value={status.label} icon={ATTEMPT_ICON[kind] ?? FileX} color={status.text} />
+                <StatBlock label={time.label} value={time.value} icon={Timer} color="text-skylab-300" />
+                <StatBlock label="Başladı" value={attempt.startedAt ? formatDay(attempt.startedAt) : "--"} icon={CalendarCheck} color="text-neutral-300" />
+              </div>
+            </motion.div>
+
+            <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.06 }} className="px-1 py-4 first:pt-0">
+              <SectionTitle>Yanıt Sahibi</SectionTitle>
+              <UserCard name={formatPersonName(user?.fullName) || "Bilinmiyor"} email={user?.email || ""} userId={user?.id || null}
+                photoUrl={user?.profilePictureUrl || null} hasUser={Boolean(user?.fullName)}
+              />
+            </motion.div>
+
+            {kind === "opened" ? (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
+                <ReminderSection key={attempt.id} attempt={attempt} mutation={mutation} />
+              </motion.div>
+            ) : showTime ? (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
+                <TimeSection key={attempt.id} attempt={attempt} mutation={mutation} initialFlow={searchParams?.get("flow")} />
+              </motion.div>
+            ) : null}
+
+            {attempt.events?.length > 0 && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.12 }}>
+                <TimeHistory attempt={attempt} />
+              </motion.div>
+            )}
+
+        </div>
+      </div>
     </div>
   );
 }

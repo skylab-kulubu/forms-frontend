@@ -19,13 +19,13 @@ function hasUnsavedInputRisk(pathname) {
   if (pathname.startsWith("/admin")) {
     return (
       pathname === "/admin/forms/new-form" ||
-      pathname === "/admin/component-groups/new-group" ||
+      pathname === "/admin/templates/new-template" ||
       /^\/admin\/forms\/[^/]+\/edit$/.test(pathname) ||
-      /^\/admin\/component-groups\/[^/]+$/.test(pathname)
+      /^\/admin\/templates\/[^/]+$/.test(pathname)
     );
   }
   if (pathname === "/") return false;
-  if (pathname.startsWith("/responses") || pathname.startsWith("/component-groups")) return false;
+  if (pathname.startsWith("/responses") || pathname.startsWith("/templates")) return false;
   // Everything else at the root segment is (or may be) the public form-fill page (/[id]);
   // unknown pages also land here so a misclassification degrades to the safe option.
   return true;

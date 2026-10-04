@@ -43,7 +43,7 @@ const FEATURES = [
     Demo: ResponseManagementDemo,
   },
   {
-    id: "groups", num: "04", eyebrow: "Bileşen Grupları",
+    id: "groups", num: "04", eyebrow: "Şablonlar",
     title: "Bir kez tasarla, her yerde kullan.",
     desc: "Sık kullandığınız soru setlerini yapı taşı olarak kaydedin. İstediğiniz formda tek tıkla yeniden kullanın ve merkezden güncelleyin.",
     bullets: [

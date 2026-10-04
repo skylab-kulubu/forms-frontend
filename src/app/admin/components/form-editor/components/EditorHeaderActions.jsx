@@ -82,7 +82,7 @@ export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSavin
  */
 const emptySubscribe = () => () => {};
 
-export function EditorHeaderActions({ saveStatus, returnHref, onPreview, onShare, isShareDisabled, hasDraft, onDiscardDraft, isDiscardingDraft, onUndo, canUndo, onDelete, isDeleteDisabled, onSave, isPending, isError, error, draftNotice, onDraftNoticeClose }) {
+export function EditorHeaderActions({ saveStatus, returnHref, onPreview, onShare, isShareDisabled, hasDraft, onDiscardDraft, isDiscardingDraft, onUndo, canUndo, onDelete, isDeleteDisabled, deleteLabel = "Formu sil", onSave, isPending, isError, error, draftNotice, onDraftNoticeClose }) {
     // SSR'da false, hydration sonrası true; slot div'leri o noktada DOM'da hazır.
     const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
@@ -133,8 +133,8 @@ export function EditorHeaderActions({ saveStatus, returnHref, onPreview, onShare
                     <Undo2 size={16} />
                 </button>
             </Tip>
-            <Tip label="Formu sil">
-                <button type="button" aria-label="Formu sil" onClick={onDelete} disabled={isDeleteDisabled}
+            <Tip label={deleteLabel}>
+                <button type="button" aria-label={deleteLabel} onClick={onDelete} disabled={isDeleteDisabled}
                     className={`rounded-lg p-1.5 transition-colors ${isDeleteDisabled ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-neutral-800/70"}`}
                 >
                     <Trash2 size={16} />

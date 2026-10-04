@@ -65,7 +65,8 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
     if (!box || !content) return;
 
     const apply = () => {
-      box.style.height = `${Math.min(content.offsetHeight, LIST_MAX_HEIGHT)}px`;
+      const border = box.offsetHeight - box.clientHeight;
+      box.style.height = `${Math.min(content.offsetHeight + border, LIST_MAX_HEIGHT)}px`;
     };
 
     apply();
@@ -97,7 +98,7 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
         ) : null}
 
         <motion.div variants={itemVariants} ref={listRef}
-          className={`${showSearch ? "mt-2 " : ""}overflow-auto rounded-lg border border-white/10 bg-white/5 transition-[height] duration-200 ease-out`}
+          className={`${showSearch ? "mt-2 " : ""}scrollbar overflow-y-auto rounded-lg border border-white/10 bg-white/5 transition-[height] duration-200 ease-out`}
         >
           <div ref={listContentRef} className={`transition-opacity duration-150 ${loading ? "opacity-60" : "opacity-100"}`}>
             {pageItems.length === 0 ? (

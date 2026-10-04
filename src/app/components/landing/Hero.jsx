@@ -199,7 +199,7 @@ export default function Hero() {
 
             <motion.div variants={item} className="flex items-center gap-2 sm:gap-4 mb-12">
               <Magnetic strength={0.25}>
-                <a href="https://arge.yildizskylab.com"
+                <a href={process.env.NEXT_PUBLIC_ARGE_URL ?? "http://localhost:3001"}
                   className="group inline-flex items-center gap-2 sm:gap-3 px-5 sm:px-7 py-2.5 sm:py-3 bg-neutral-900 border border-neutral-800 text-neutral-300 rounded-xl font-medium text-xs sm:text-sm hover:text-white hover:border-skylab-500/50 hover:bg-neutral-800 transition-all duration-300 hover:shadow-[0_0_20px_rgba(224,200,229,0.15)]"
                 >
                   <span>Ekiplere göz at</span>

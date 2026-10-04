@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { FileText, Plus, Layers, ChartColumn, ArrowRight, ArrowUpRight, BookOpen, PencilLine } from "lucide-react";
+import { FileText, Plus, LayoutTemplate, ChartColumn, ArrowRight, ArrowUpRight, BookOpen, PencilLine } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useUserFormsQuery, useServiceMetricsQuery } from "@/lib/hooks/useFormAdmin";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
@@ -77,7 +77,7 @@ function PanelHeading({ mobileTitle, desktopTitle, mobileNote, desktopNote, emph
 const QUICK_ACTIONS = [
   { icon: Plus, label: "Yeni form oluştur", href: "/admin/forms/new-form", primary: true },
   { icon: FileText, label: "Tüm formlar", href: "/admin/forms" },
-  { icon: Layers, label: "Bileşen grupları", href: "/admin/component-groups" },
+  { icon: LayoutTemplate, label: "Şablonlar", href: "/admin/templates" },
   { icon: BookOpen, label: "Nasıl kullanılır", href: "/admin/how-to-use" },
 ];
 
@@ -101,7 +101,7 @@ const SERVICE_STATS = [
   { key: "forms", label: "Sistemdeki toplam form", dot: "bg-neutral-500", tone: "text-neutral-100", href: "/admin/forms/all", superAdminOnly: true },
   { key: "responses", label: "Sistemdeki toplam cevap", dot: "bg-skylab-400 shadow-[0_0_6px] shadow-skylab-400/40", tone: "text-neutral-100" },
   { key: "pending", label: "Sistemdeki bekleyen onay", dot: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40", tone: "text-amber-300" },
-  { key: "groups", label: "Sana ait bileşen grubu", dot: "bg-neutral-500", tone: "text-neutral-100", href: "/admin/component-groups" },
+  { key: "groups", label: "Sana ait şablon", dot: "bg-neutral-500", tone: "text-neutral-100", href: "/admin/templates" },
 ];
 
 function ServiceStats({ values, isLoading, isSuperAdmin }) {

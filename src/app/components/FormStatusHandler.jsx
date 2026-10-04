@@ -9,17 +9,31 @@ import Background from "./Background";
 
 export const FORM_ACCESS_STATUS = {
     AVAILABLE: 200,
+    BAD_REQUEST: 400,
     PENDING_APPROVAL: 600,
     REQUIRES_PARENT_APPROVAL: 603,
-    COMPLETED: 201, 
+    COMPLETED: 201,
     APPROVED: 601,
     DECLINED: 602,
     FULLY_COMPLETED: 604,
+    WORKFLOW_FAULTED: 605,
     UNAUTHORIZED: 401,
     NOT_AUTHORIZED: 403,
     NOT_FOUND: 404,
     NOT_AVAILABLE: 410,
 };
+
+export const WORKFLOW_STATE = {
+    SHOW_FORM: 1,
+    AWAITING_REVIEW: 2,
+    COMPLETED: 3,
+    DECLINED: 4,
+    FAULTED: 5,
+    REQUIRES_PREVIOUS_STEP: 6,
+    CLOSED: 7,
+};
+
+const REPORT_MAILTO = "mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi";
 
 const stateConfigs = {
     loading: {
@@ -55,17 +69,52 @@ const stateConfigs = {
     requiresParent: {
         icon: FilePenLine,
         title: "Bir önceki adım gerekli",
-        description: "Devam etmek için önceki formu doldurmanız gerekiyor.",
+        description: "Bu form bir başvurunun ilerleyen adımı. Başvurunuza kaldığınız yerden devam edebilirsiniz.",
+    },
+    faulted: {
+        icon: FileXCorner,
+        title: "Başvurunuz yönlendirilemedi",
+        description: "Başvurunuz bir sonraki adıma aktarılamadı. Bu sizden kaynaklanan bir sorun değil; lütfen bize bildirin.",
+    },
+    rejected: {
+        icon: FileXCorner,
+        title: "Cevabınız gönderilemedi",
+        description: "Bu form şu anda yeni bir cevap kabul etmiyor.",
     },
     notFound: {
         icon: FileSearchCorner,
         title: "Form bulunamadı",
         description: "Form silinmiş olabilir, hiç oluşturulmamış olabilir ya da adres hatalı olabilir.",
     },
+    newRunsClosed: {
+        icon: FileLock2,
+        title: "Yeni başvuru alınmıyor",
+        description: "Bu başvuru şu anda yeni başvuru kabul etmiyor.",
+    },
+    workflowClosed: {
+        icon: FileLock2,
+        title: "Başvurular kapalı",
+        description: "Bu başvuru şu anda kapalı.",
+    },
+    workflowPaused: {
+        icon: FileClock,
+        title: "Başvurular geçici olarak durduruldu",
+        description: "Başvurunuz kayıtlı. Başvurular yeniden açıldığında kaldığınız yerden devam edebilirsiniz.",
+    },
     notAvailable: {
         icon: FileLock2,
         title: "Form erişime kapalı",
         description: "Form sahibi gönderimleri durdurmuş veya formun süresi dolmuş olabilir.",
+    },
+    formClosed: {
+        icon: FileLock2,
+        title: "Form kapandı",
+        description: "Bu form kapanış saatinde kendiliğinden kapandı. Yeni cevap alınmıyor.",
+    },
+    startClosed: {
+        icon: FileLock2,
+        title: "Görev artık başlatılamıyor",
+        description: "Son başlama saati geçti.",
     },
     unAuthorized: {
         icon: FileLock2,
@@ -109,15 +158,36 @@ const formatReviewDate = (value) => {
     return date.toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
 };
 
-export function FormStatusDisplayer({ state, message, step, reviewNote, reviewedAt, variant = "form" }) {
+function closedStateFor(data) {
+    if (data?.reason === "newRunsClosed") return "newRunsClosed";
+    if (data?.reason === "workflowClosed") return Number(data?.stage) > 0 ? "workflowPaused" : "workflowClosed";
+    if (data?.reason === "closed") return "formClosed";
+    if (data?.reason === "startClosed") return "startClosed";
+    return "notAvailable";
+}
+
+export function getSubmitErrorState(status, data = null) {
+    switch (status) {
+        case FORM_ACCESS_STATUS.REQUIRES_PARENT_APPROVAL: return "requiresParent";
+        case FORM_ACCESS_STATUS.WORKFLOW_FAULTED:         return "faulted";
+        case FORM_ACCESS_STATUS.NOT_AVAILABLE:            return closedStateFor(data);
+        case FORM_ACCESS_STATUS.BAD_REQUEST:              return "rejected";
+        default:                                          return null;
+    }
+}
+
+export function FormStatusDisplayer({ state, message, stage = 0, startFormId = null, reviewNote, reviewedAt, variant = "form" }) {
     const configSet = variant === "response" ? responseStateConfigs : stateConfigs;
     const config = configSet[state];
 
     if (!config) return null;
 
     const Icon = config.icon;
-    const description = message || config.description;
+    const stageDescription = state === "pending" && stage > 1 ? `Başvurunuzun ${stage}. adımı şu an inceleniyor.` : null;
+    const description = message || stageDescription || config.description;
     const showSignIn = state === "unAuthorized";
+    const showResume = state === "requiresParent" && Boolean(startFormId);
+    const showReport = state === "faulted";
     const normalizedReviewNote = typeof reviewNote === "string" ? reviewNote.trim() : "";
     const showReviewDetails = (state === "approved" || state === "declined") && (normalizedReviewNote || reviewedAt);
 
@@ -154,17 +224,30 @@ export function FormStatusDisplayer({ state, message, step, reviewNote, reviewed
                         <LoginButton onClick={handleSignIn} label="E-Skylab ile giriş yap" />
                     </motion.div>
                 )}
-            </StateCard>
 
-            {step > 0 && <div className="mb-auto hidden sm:block h-10"></div>}
+                {showResume && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.6 }}>
+                        <LoginButton onClick={() => window.location.assign(`/${startFormId}`)} label="Kaldığım yerden devam et" hoverIcon="arrow" />
+                    </motion.div>
+                )}
+
+                {showReport && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.6 }}>
+                        <LoginButton onClick={() => window.location.assign(REPORT_MAILTO)} label="Sorun bildir" hoverIcon="arrow" />
+                    </motion.div>
+                )}
+            </StateCard>
         </motion.div>
     );
 }
 
-export function FormStatusHandler({ isLoading, error, data, renderForm, variant = "form", withBackground = false }) {
-    const step = data?.data?.step ?? 0;
-    const reviewNote = data?.data?.reviewNote ?? null;
-    const reviewedAt = data?.data?.reviewedAt ?? null;
+export function FormStatusHandler({ isLoading, error, data, renderForm, renderState, variant = "form", withBackground = false }) {
+    const payload = data?.data ?? error?.body?.data ?? null;
+    const reviewNote = payload?.reviewNote ?? null;
+    const reviewedAt = payload?.reviewedAt ?? null;
+    const stage = data?.data?.stage ?? error?.body?.data?.stage ?? 0;
+    const isWorkflow = payload?.state != null || Boolean(payload?.reason);
+    const startFormId = error?.body?.data?.startFormId ?? data?.data?.startFormId ?? null;
 
     const getUiState = () => {
         if (isLoading) return "loading";
@@ -190,13 +273,17 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
                 case FORM_ACCESS_STATUS.NOT_FOUND:
                     return "notFound";
                 case FORM_ACCESS_STATUS.NOT_AVAILABLE:
-                    return "notAvailable";
+                    return closedStateFor(error.body?.data);
                 case FORM_ACCESS_STATUS.UNAUTHORIZED:
                     return "unAuthorized";
                 case FORM_ACCESS_STATUS.NOT_AUTHORIZED:
                     return "notAuthorized";
                 case FORM_ACCESS_STATUS.REQUIRES_PARENT_APPROVAL:
                     return "requiresParent";
+                case FORM_ACCESS_STATUS.WORKFLOW_FAULTED:
+                    return "faulted";
+                case FORM_ACCESS_STATUS.BAD_REQUEST:
+                    return "rejected";
 
                 default:
                     return "genericError";
@@ -225,13 +312,18 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, variant 
     };
 
     const uiState = getUiState();
+    const message = uiState === "rejected" ? (error?.body?.message ?? null) : null;
 
     return (
         <>
             {withBackground && <Background instant />}
-            {uiState === "success" ? renderForm(data) : (
+            {uiState === "success" ? renderForm(data) : renderState ? (
+                renderState({ state: uiState, message, stage, startFormId, isWorkflow, reviewNote, reviewedAt, payload })
+            ) : (
                 <AnimatePresence mode="wait">
-                    <FormStatusDisplayer key={uiState} state={uiState} step={step} reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant} />
+                    <FormStatusDisplayer key={uiState} state={uiState} message={message} stage={stage} startFormId={startFormId}
+                        reviewNote={reviewNote} reviewedAt={reviewedAt} variant={variant}
+                    />
                 </AnimatePresence>
             )}
         </>

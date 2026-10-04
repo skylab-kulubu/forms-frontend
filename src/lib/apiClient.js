@@ -37,6 +37,7 @@ export async function request(path, options = {}) {
   }
 
   const buildOptions = (authToken) => ({
+    cache: "no-store",
     ...otherOptions,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
