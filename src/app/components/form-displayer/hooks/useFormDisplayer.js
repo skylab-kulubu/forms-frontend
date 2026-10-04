@@ -398,6 +398,7 @@ export function useFormDisplayer(form, draft, options = {}) {
   const endIntro = useCallback(() => dispatch({ type: "END_INTRO" }), []);
 
   const handleSubmit = (formattedResponses) => {
+    dispatch({ type: "CLEAR_ERROR" });
     cancelDraftSave();
     const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
     const payload = {
@@ -421,11 +422,10 @@ export function useFormDisplayer(form, draft, options = {}) {
           dispatch(failure);
           return;
         }
-        // On 401 the SessionExpiredHandler banner supplies the re-login button; the button
-        // label only needs to say why the submit failed.
-        const message = error?.status === 401 ? "Oturum süresi doldu" : "Bir hata oluştu.";
+        const message = error?.status === 401
+          ? "Oturumunuzun süresi doldu. Yeniden giriş yapıp tekrar gönderin."
+          : "Cevabınız gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.";
         dispatch({ type: "SET_ERROR", message });
-        setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 2000);
       },
     });
   };
@@ -434,8 +434,10 @@ export function useFormDisplayer(form, draft, options = {}) {
     dispatch({ type: "SET_MISSING_FIELDS", fieldIds });
   };
 
+  const clearError = useCallback(() => dispatch({ type: "CLEAR_ERROR" }), []);
+
   return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || Boolean(state.nextFormId),
-    lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro,
+    lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro, clearError,
     now, isTimed, isRunning, startAttempt, isStarting: startMutation.isPending, startError,
   };
 }

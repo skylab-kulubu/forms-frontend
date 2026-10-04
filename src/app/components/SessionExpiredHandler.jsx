@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { TimerOff } from "lucide-react";
 import { loginWithKeycloak } from "@/lib/authActions";
 import { SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
 import LoginButton from "./utils/LoginButton";
+import NoticeDock from "./utils/NoticeDock";
 
 const AUTO_RELOGIN_KEY = "sessionAutoReloginAt";
 const AUTO_RELOGIN_COOLDOWN_MS = 2 * 60 * 1000;
@@ -99,19 +100,9 @@ export default function SessionExpiredHandler() {
   return (
     <AnimatePresence>
       {showBanner && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4"
-        >
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-neutral-900/90 px-4 py-3 shadow-lg backdrop-blur">
-            <div className="flex items-center gap-2 text-xs text-neutral-200">
-              <TimerOff size={14} className="text-skylab-300" />
-              <span>Oturumunuzun süresi doldu. Kaldığınız yerden devam etmek için yeniden giriş yapın.</span>
-            </div>
-            <LoginButton onClick={handleRelogin} label="Yeniden giriş yap" hoverIcon="arrow" />
-          </div>
-        </motion.div>
+        <NoticeDock icon={TimerOff} role="alert" action={<LoginButton onClick={handleRelogin} label="Yeniden giriş yap" hoverIcon="arrow" className="shrink-0" />}>
+          Oturumunuzun süresi doldu. Kaldığınız yerden devam etmek için yeniden giriş yapın.
+        </NoticeDock>
       )}
     </AnimatePresence>
   );

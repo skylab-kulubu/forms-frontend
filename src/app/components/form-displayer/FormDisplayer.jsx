@@ -1,20 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
-import { DraftNotice, FormDisplayerHeader, MissingNotice, NextStepNote, RespondentLine } from "./components/FormDisplayerComponents";
+import { AnonymousNotice, DraftNotice, FormDisplayerHeader, HeaderNote, MissingFields, NextStepNote, RespondentLine } from "./components/FormDisplayerComponents";
 import WorkflowProgress, { TimerBar } from "./components/WorkflowProgress";
 import StepIntro from "./components/StepIntro";
 import StatusScreen from "./components/StatusScreen";
 import TaskBlock from "./components/TaskBlock";
-import { Countdown, DeliverablesHeader, ExtensionNotice, LateNotice, TaskGate, TaskMeta } from "./components/TimedParts";
+import { Countdown, DeliverablesHeader, ExtensionNotice, TaskGate, TaskMeta, useIsLate } from "./components/TimedParts";
 import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
 import Background from "../Background";
-import { settledScreenOf } from "@/lib/form-timing";
-import { Loader2, Timer } from "lucide-react";
+import NoticeDock from "../utils/NoticeDock";
+import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
+import { CalendarClock, CircleAlert, Loader2, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -82,9 +84,11 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const {
     state, schema, visibleFields,
     isAuthed, isAnyFileUploading, isSubmitting, lastSavedAt,
-    handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro,
+    handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro, clearError,
     now, isTimed, isRunning, startAttempt, isStarting, startError,
   } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt });
+  const { data: session } = useSession();
+  const [dismissedLateFor, setDismissedLateFor] = useState(null);
 
   const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, workflow: activeJourney,
     instanceId: activeInstanceId, intro, values: formValues, submissionState, submissionMessage, submittedAt, errorMessage, missingFieldIds,
@@ -100,11 +104,9 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const showGate = activeAttempt?.state === "notStarted";
   const task = activeForm?.task?.content?.trim() ? activeForm.task : null;
   const timer = isRunning && activeAttempt?.deadlineAt ? <Countdown deadlineAt={activeAttempt.deadlineAt} now={now} /> : null;
-  const timeNote = isRunning
-    ? "Süre dolunca o ana kadarki cevaplarınız ekibe geçici cevap olarak iletilir."
-    : !isTimed && activeClosesAt
-      ? isAuthed ? "Form kapanış saatinde kendiliğinden kapanır; gönderilmemiş taslaklar alınmaz." : "Form kapanış saatinde kendiliğinden kapanır."
-      : null;
+  const lateKey = isRunning ? activeAttempt?.deadlineAt ?? null : null;
+  const isLate = useIsLate(lateKey, now);
+  const sessionExpired = session?.error === "RefreshAccessTokenError";
 
   const questionNumbers = useMemo(() => {
     const numbers = new Map();
@@ -128,6 +130,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     .filter((id) => questionNumbers.has(id))
     .map((id) => ({ id, number: questionNumbers.get(id) }))
     .sort((a, b) => a.number - b.number);
+
+  const hasAnswers = visibleFields.some((field) => field.type !== "separator" && hasValue(field, formValues[field.id]));
 
   const nextCopy = nextStepCopy({
     workflow: activeJourney,
@@ -170,6 +174,33 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
       handleSubmit(formattedResponses);
     }, 100);
   };
+
+  const renderNotice = () => {
+    if (sessionExpired || isFinished || showIntro) return null;
+    if (errorMessage) {
+      return (
+        <NoticeDock key="error" icon={CircleAlert} tone="text-red-300" role="alert" onClose={clearError}>
+          {errorMessage}
+        </NoticeDock>
+      );
+    }
+    if (missingFields.length) {
+      return (
+        <NoticeDock key="missing" icon={CircleAlert} tone="text-red-300" role="alert">
+          <MissingFields fields={missingFields} onJump={jumpToField} />
+        </NoticeDock>
+      );
+    }
+    if (isLate && dismissedLateFor !== lateKey) {
+      return (
+        <NoticeDock key="late" icon={CircleAlert} tone="text-amber-300" role="alert" onClose={() => setDismissedLateFor(lateKey)}>
+          Sürenin bitmesine 10 dakikadan az kaldı. Gönder&apos;e basmazsanız o ana kadarki cevaplarınız ekibe geçici cevap olarak iletilir.
+        </NoticeDock>
+      );
+    }
+    return null;
+  };
+  const notice = renderNotice();
 
   return (
     <div ref={scrollRef} className="relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
@@ -220,6 +251,20 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                       )}
                     </AnimatePresence>
                     <ExtensionNotice attempt={activeAttempt} />
+                    {isRunning && (
+                      <HeaderNote icon={Timer}>
+                        <span>Süre dolunca o ana kadarki cevaplarınız ekibe geçici cevap olarak iletilir.</span>
+                      </HeaderNote>
+                    )}
+                    {!isTimed && activeClosesAt && (
+                      <HeaderNote icon={CalendarClock}>
+                        <span>
+                          <span className="text-neutral-200">{formatLongDate(activeClosesAt)}</span> itibarıyla kapanır
+                          {isAuthed && <span className="text-neutral-500"> · gönderilmemiş taslaklar alınmaz</span>}
+                        </span>
+                      </HeaderNote>
+                    )}
+                    <AnonymousNotice hasAnswers={hasAnswers} />
                   </FormDisplayerHeader>
                 </motion.div>
 
@@ -289,29 +334,21 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     </div>
 
                     <motion.div variants={itemVariants} className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
-                      {isRunning && <LateNotice deadlineAt={activeAttempt.deadlineAt} now={now} />}
-                      <MissingNotice fields={missingFields} onJump={jumpToField} />
                       <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
                         <NextStepNote text={nextCopy} />
-                        <motion.button onClick={onSubmit} disabled={isSubmitting || errorMessage || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        <motion.button onClick={onSubmit} disabled={isSubmitting || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                           className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none sm:ml-auto sm:shrink-0
-                          ${errorMessage ? "bg-red-900/20 border-red-800/50 hover:bg-red-900/30 text-red-200" : isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}
+                          ${isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}
                         >
-                          {errorMessage ? errorMessage : isSubmitting ? (
+                          {isSubmitting || isAnyFileUploading ? (
                             <>
                               <Loader2 className="animate-spin" size={16} />
-                              <span>Gönderiliyor</span>
+                              <span>{isSubmitting ? "Gönderiliyor" : "Dosya yükleniyor"}</span>
                             </>
                           ) : "Gönder"}
                         </motion.button>
                       </div>
-                      {timeNote && (
-                        <p className="mt-4 flex items-center gap-1.5 text-2xs text-neutral-500">
-                          <Timer size={12} className="shrink-0" />
-                          {timeNote}
-                        </p>
-                      )}
-                      <RespondentLine savedAt={isAuthed ? lastSavedAt : null} />
+                      <RespondentLine savedAt={isAuthed ? lastSavedAt : null} hasAnswers={hasAnswers} />
                     </motion.div>
                   </>
                 ) : (
@@ -323,9 +360,12 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
             </div>
 
             <PageFooter />
+            {notice && <div className="h-12 w-full shrink-0" />}
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence mode="wait">{notice}</AnimatePresence>
     </div>
   );
 }
