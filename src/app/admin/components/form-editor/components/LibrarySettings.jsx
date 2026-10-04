@@ -53,6 +53,11 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
         <div ref={rootRef} className={PANEL_STACK}>
             <LibrarySettingsEditors />
 
+            <TimingSection timeLimitMinutes={timeLimitMinutes} closesAt={closesAt} personalBlocker={personalBlocker} isWorkflowStep={Boolean(workflow)}
+                onTimeLimitChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "timeLimitMinutes", value } })}
+                onClosesAtChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "closesAt", value } })}
+            />
+
             {workflow ? <WorkflowMembershipSection workflow={workflow} /> : null}
 
             <section className={PANEL_SECTION}>
@@ -115,11 +120,6 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
                     )}
                 </div>
             </section>
-
-            <TimingSection timeLimitMinutes={timeLimitMinutes} closesAt={closesAt} personalBlocker={personalBlocker} isWorkflowStep={Boolean(workflow)}
-                onTimeLimitChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "timeLimitMinutes", value } })}
-                onClosesAtChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "closesAt", value } })}
-            />
         </div>
     );
 }
