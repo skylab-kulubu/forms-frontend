@@ -41,7 +41,7 @@ const TRIGGER_SECTION = {
 };
 
 const INTAKE_STATE = {
-  [WORKFLOW_INTAKE.OPEN]: { pill: "Açık", tone: "skylab" },
+  [WORKFLOW_INTAKE.OPEN]: { pill: "Açık", tone: "emerald" },
   [WORKFLOW_INTAKE.NEW_RUNS_CLOSED]: { pill: "Yeni başvuru kapalı", tone: "amber" },
   [WORKFLOW_INTAKE.CLOSED]: { pill: "Kapalı", tone: "red" },
 };

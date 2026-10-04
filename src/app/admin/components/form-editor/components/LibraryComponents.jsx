@@ -2,11 +2,12 @@ import { useDraggable } from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion"
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, ClipboardList, GripVertical, LayoutTemplate, Plus, Rows3 } from "lucide-react";
+import { CheckCircle2, ClipboardList, GripVertical, LayoutTemplate, Plus, Rows3, Trash2 } from "lucide-react";
 import { COMPONENTS } from "@/app/components/form-registry";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import SearchPicker from "@/app/components/utils/SearchPicker";
-import { FOCUS_RING, PanelButton, PanelInput, ROW, ROW_HOVER, TILE } from "@/app/admin/components/utils/SidePanel";
+import { ACTION_ICON, FOCUS_RING, PanelButton, PanelInput, ROW, ROW_HOVER, TILE } from "@/app/admin/components/utils/SidePanel";
+import { TaskRemoveConfirm } from "./TaskCard";
 
 function GroupPicker({ onGroupSelect }) {
     const [open, setOpen] = useState(false);
@@ -87,6 +88,44 @@ function RepeaterAddButton({ onSelect }) {
     );
 }
 
+function TaskButton({ hasTask, taskHasContent, onAdd, onRemove }) {
+    const [confirming, setConfirming] = useState(false);
+
+    if (!hasTask || !onRemove) {
+        return (
+            <PanelButton icon={hasTask ? CheckCircle2 : ClipboardList} active={hasTask} onClick={onAdd} className="min-w-fit flex-1">
+                {hasTask ? "Görev eklendi" : "Görev ekle"}
+            </PanelButton>
+        );
+    }
+
+    if (confirming) {
+        return (
+            <div className="flex h-7 min-w-fit flex-1 items-center rounded-lg border border-red-500/30 bg-red-500/10 px-3">
+                <TaskRemoveConfirm onConfirm={() => { setConfirming(false); onRemove(); }} onCancel={() => setConfirming(false)} />
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex h-7 min-w-fit flex-1 overflow-hidden rounded-lg border border-skylab-400/30 bg-skylab-500/10 text-2xs font-medium text-skylab-300">
+            <button type="button" onClick={onAdd} title="Göreve git"
+                className={`group flex flex-1 items-center justify-center gap-2 px-3 transition-colors hover:bg-skylab-500/10 ${FOCUS_RING}`}
+            >
+                <CheckCircle2 size={13} className={ACTION_ICON} />
+                Görev eklendi
+            </button>
+            <span className="w-px bg-skylab-400/20" />
+            <button type="button" aria-label="Görevi kaldır" title="Görevi kaldır"
+                onClick={() => (taskHasContent ? setConfirming(true) : onRemove())}
+                className={`grid w-8 place-items-center text-skylab-300/70 transition-colors hover:bg-red-500/10 hover:text-red-300 ${FOCUS_RING}`}
+            >
+                <Trash2 size={13} />
+            </button>
+        </div>
+    );
+}
+
 const CATEGORIES = [
     { label: "Metin", types: ["short_text", "long_text"] },
     { label: "Seçim", types: ["toggle", "combobox", "multi_choice", "slider", "matrix"] },
@@ -94,7 +133,7 @@ const CATEGORIES = [
     { label: "Diğer", types: ["file", "separator"] },
 ];
 
-export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect, hasTask = false, onTaskAdd }) {
+export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect, hasTask = false, taskHasContent = false, onTaskAdd, onTaskRemove }) {
     const [search, setSearch] = useState("");
 
     const query = search.trim().toLowerCase();
@@ -113,11 +152,7 @@ export function LibraryComponents({ layout = "grid", onSelect, onGroupSelect, ha
                 <div className="relative flex flex-wrap gap-2">
                     {onGroupSelect && <GroupPicker onGroupSelect={onGroupSelect} />}
                     <RepeaterAddButton onSelect={onSelect} />
-                    {onTaskAdd && (
-                        <PanelButton icon={hasTask ? CheckCircle2 : ClipboardList} active={hasTask} onClick={onTaskAdd} className="min-w-fit flex-1">
-                            {hasTask ? "Görev eklendi" : "Görev ekle"}
-                        </PanelButton>
-                    )}
+                    {onTaskAdd && <TaskButton hasTask={hasTask} taskHasContent={taskHasContent} onAdd={onTaskAdd} onRemove={onTaskRemove} />}
                 </div>
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar px-4 pb-4 pt-3">

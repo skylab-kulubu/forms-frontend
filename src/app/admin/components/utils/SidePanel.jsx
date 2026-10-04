@@ -15,10 +15,11 @@ export const ACTION_ICON = "shrink-0 opacity-70 transition-opacity group-hover:o
 export const PANEL_BOX = "rounded-lg border border-white/10 bg-neutral-900/60 transition-[border-color,box-shadow] focus-within:border-skylab-400/50 focus-within:ring-2 focus-within:ring-skylab-400/20";
 
 export const PILL_TONE = {
-  skylab: "border-skylab-400/30 text-skylab-300/80",
-  neutral: "border-white/10 text-neutral-400",
-  amber: "border-amber-400/35 text-amber-300",
-  red: "border-red-400/35 text-red-300",
+  emerald: "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/50",
+  skylab: "bg-skylab-500",
+  neutral: "bg-neutral-500",
+  amber: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/50",
+  red: "bg-red-400 shadow-[0_0_6px] shadow-red-400/50",
 };
 
 const NOTICE_TONE = {
@@ -63,7 +64,8 @@ export function PanelTabs({ tabs, active, onChange }) {
 
 export function StatePill({ tone = "skylab", children }) {
   return (
-    <span className={`shrink-0 rounded-full border px-3 py-0.5 text-3xs font-semibold uppercase tracking-[0.18em] ${PILL_TONE[tone] ?? PILL_TONE.neutral}`}>
+    <span className={`flex h-6 shrink-0 items-center gap-1.5 text-2xs font-medium ${tone === "neutral" ? "text-neutral-400" : "text-neutral-300"}`}>
+      <span className={`size-1.5 shrink-0 rounded-full ${PILL_TONE[tone] ?? PILL_TONE.neutral}`} />
       {children}
     </span>
   );
