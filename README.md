@@ -207,6 +207,31 @@ Create a `.env.local` file in the project root:
 | `KEYCLOAK_ISSUER`                | Keycloak realm URL (server-side)         |
 | `AUTH_SECRET`                    | NextAuth encryption secret               |
 
+### Keycloak Client Requirements
+
+`KEYCLOAK_CLIENT_ID` is the login client (production: `skyforms`). The backend is a
+separate Keycloak client (`forms`) and rejects every access token whose `aud` does not
+contain `forms`, so the login client must carry an **Audience** mapper for it:
+
+- Client scope `skyforms-forms-audience` with an `oidc-audience-mapper` named
+  `forms-audience`: *Included Client Audience* `forms`, *Add to access token* on,
+  *Add to ID token* off.
+- Attached to the `skyforms` client as a **Default** client scope.
+
+Without the mapper only users who hold `forms` client roles (`skyforms:*`) get `forms`
+into `aud` through Keycloak's built-in *audience resolve* mapper. Admins keep working,
+plain members get `401` on every API call and the app shows the session-expired banner.
+Every realm that runs this app (production, sandbox) needs the mapper.
+
+### Session Expiry Handling
+
+`src/lib/apiClient.js` retries a `401` once with a freshly read session. If the session
+still hands back the same access token, it announces `skyforms:session-expired` with that
+token; `SessionExpiredHandler` then re-syncs the `SessionProvider` once per rejected token
+and shows the banner until a *different* token arrives (refresh rotation or re-login).
+A session object without an error flag is not treated as recovery: clearing the banner on
+that used to re-enable session-gated queries, which were rejected again, in a loop.
+
 ### Running the App
 
 ```bash
