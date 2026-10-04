@@ -94,6 +94,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const [libraryTab, setLibraryTab] = useState(timingLink ? "settings" : "components");
     const [focusTiming, setFocusTiming] = useState(timingLink ? 1 : 0);
     const [taskFlash, setTaskFlash] = useState(false);
+    const [taskRemoved, setTaskRemoved] = useState(false);
     const taskCardRef = useRef(null);
 
     const editorRef = useRef(null);
@@ -233,6 +234,12 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         const timer = setTimeout(() => setTaskFlash(false), 1200);
         return () => clearTimeout(timer);
     }, [taskFlash]);
+
+    useEffect(() => {
+        if (!taskRemoved) return;
+        const timer = setTimeout(() => setTaskRemoved(false), 6000);
+        return () => clearTimeout(timer);
+    }, [taskRemoved]);
 
     useEffect(() => {
         setGlobalTitle(state.title);
@@ -434,11 +441,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         dispatch({ type: "SET_SCHEMA", payload: [...state.schema, ...newFields] });
     };
 
+    const taskHasContent = Boolean(state.task?.content?.trim());
+
     const handleTaskAdd = () => {
         if (!state.task) dispatch({ type: "SET_TASK", payload: { content: "", collapsible: true, downloadable: true } });
         else taskCardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
         setTaskFlash(true);
+        setTaskRemoved(false);
         if (!isLgUp) setDrawerOpen(false);
+    };
+
+    const handleTaskRemove = () => {
+        dispatch({ type: "SET_TASK", payload: null });
+        setTaskRemoved(true);
     };
 
     const handleOpenTiming = () => {
@@ -497,14 +512,18 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 ) : (
                     <SortableContext items={state.schema.map((field) => field.id)} strategy={verticalListSortingStrategy}>
                         <ul className={`flex flex-col gap-2 max-w-2xl mx-auto mb-4 ${state.task ? "pt-3" : ""}`}>
-                            {state.task && (
+                            {state.task ? (
                                 <li ref={taskCardRef} className="flex flex-col">
                                     <TaskCard task={state.task} flash={taskFlash}
                                         timing={{ timeLimitMinutes: state.timeLimitMinutes, closesAt: state.closesAt }}
                                         onChange={(next) => dispatch({ type: "SET_TASK", payload: next })}
-                                        onRemove={() => dispatch({ type: "SET_TASK", payload: null })}
+                                        onRemove={handleTaskRemove}
                                         onOpenTiming={handleOpenTiming}
                                     />
+                                </li>
+                            ) : taskRemoved && (
+                                <li className="rounded-lg border border-dashed border-white/10 px-3 py-2.5 text-2xs text-neutral-500">
+                                    Görev kaldırıldı. Üst bardaki geri al ile geri getirebilirsin.
                                 </li>
                             )}
                             {dragSource === "library"
@@ -532,7 +551,8 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
 
             {isLgUp && (
                 <Library layout="grid" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag}
-                    tab={libraryTab} onTabChange={setLibraryTab} hasTask={Boolean(state.task)} onTaskAdd={handleTaskAdd}
+                    tab={libraryTab} onTabChange={setLibraryTab} hasTask={Boolean(state.task)} taskHasContent={taskHasContent}
+                    onTaskAdd={handleTaskAdd} onTaskRemove={handleTaskRemove}
                     focusTiming={focusTiming} eventLinked={eventLinked}
                 />
             )}
@@ -569,7 +589,8 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
                             <Library layout="drawer" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag}
-                                tab={libraryTab} onTabChange={setLibraryTab} hasTask={Boolean(state.task)} onTaskAdd={handleTaskAdd}
+                                tab={libraryTab} onTabChange={setLibraryTab} hasTask={Boolean(state.task)} taskHasContent={taskHasContent}
+                                onTaskAdd={handleTaskAdd} onTaskRemove={handleTaskRemove}
                                 focusTiming={focusTiming} eventLinked={eventLinked}
                             />
                         </DrawerContent>
