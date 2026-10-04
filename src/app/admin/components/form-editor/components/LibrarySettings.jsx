@@ -53,10 +53,15 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
         <div ref={rootRef} className={PANEL_STACK}>
             <LibrarySettingsEditors />
 
+            <TimingSection timeLimitMinutes={timeLimitMinutes} closesAt={closesAt} personalBlocker={personalBlocker} isWorkflowStep={Boolean(workflow)}
+                onTimeLimitChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "timeLimitMinutes", value } })}
+                onClosesAtChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "closesAt", value } })}
+            />
+
             {workflow ? <WorkflowMembershipSection workflow={workflow} /> : null}
 
             <section className={PANEL_SECTION}>
-                <SectionHeader title="Form durumu" pill={isAccepting ? "Yayında" : "Duraklatıldı"} pillTone={isAccepting ? "skylab" : "neutral"}
+                <SectionHeader title="Form durumu" pill={isAccepting ? "Yayında" : "Duraklatıldı"} pillTone={isAccepting ? "emerald" : "neutral"}
                     description="Formu yayından kaldırmadan önce geçici olarak duraklatabilir veya yeniden açabilirsiniz."
                 />
 
@@ -115,11 +120,6 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
                     )}
                 </div>
             </section>
-
-            <TimingSection timeLimitMinutes={timeLimitMinutes} closesAt={closesAt} personalBlocker={personalBlocker} isWorkflowStep={Boolean(workflow)}
-                onTimeLimitChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "timeLimitMinutes", value } })}
-                onClosesAtChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "closesAt", value } })}
-            />
         </div>
     );
 }

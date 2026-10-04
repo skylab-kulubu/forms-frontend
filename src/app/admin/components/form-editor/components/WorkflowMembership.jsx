@@ -36,7 +36,7 @@ export function WorkflowMembershipSection({ workflow }) {
 
     return (
         <section className={PANEL_SECTION}>
-            <SectionHeader title="Akış" pill={workflow.isPublished ? "Canlı" : "Taslak"} pillTone={workflow.isPublished ? "skylab" : "neutral"}
+            <SectionHeader title="Akış" pill={workflow.isPublished ? "Canlı" : "Taslak"} pillTone={workflow.isPublished ? "emerald" : "neutral"}
                 description={workflow.isPublished
                     ? "Akış yayında olduğu için bu formun akışın dayandığı kısımları kilitli."
                     : "Akış henüz yayınlanmadı; yayınlanana kadar bu formda hiçbir şey kilitlenmez. Yayınlanınca cevap kabulü, çoklu cevap ve onay ayarlarını akış yönetir."}

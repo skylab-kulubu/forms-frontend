@@ -96,6 +96,20 @@ function insertAtCursor(textarea, kind) {
     }
 }
 
+export function TaskRemoveConfirm({ onConfirm, onCancel }) {
+    return (
+        <span className="inline-flex items-center gap-2.5 text-2xs">
+            <span className="text-neutral-300">Görev metni silinecek.</span>
+            <button type="button" onClick={onConfirm} className={`${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`}>
+                Kaldır
+            </button>
+            <button type="button" onClick={onCancel} className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}>
+                Vazgeç
+            </button>
+        </span>
+    );
+}
+
 function OnOffRow({ label, value, onChange }) {
     return (
         <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
@@ -120,6 +134,7 @@ export default function TaskCard({ task, timing, flash = false, onChange, onRemo
     const [mode, setMode] = useState("write");
     const [dragging, setDragging] = useState(false);
     const [notice, setNotice] = useState(null);
+    const [confirmingRemove, setConfirmingRemove] = useState(false);
     const textareaRef = useRef(null);
     const fileRef = useRef(null);
     const preview = mode === "preview";
@@ -156,18 +171,15 @@ export default function TaskCard({ task, timing, flash = false, onChange, onRemo
         if (key === "i") { event.preventDefault(); insertAtCursor(event.currentTarget, "italic"); }
     };
 
-    return (
-        <div className="group/item relative" data-task-card>
-            <div className="pointer-events-none absolute -top-3 left-3 z-20 flex translate-y-1 items-center gap-0.5 rounded-lg border border-white/15 bg-neutral-900 px-1 py-0.5 opacity-0 shadow-lg transition-[opacity,transform] duration-150 group-hover/item:pointer-events-auto group-hover/item:translate-y-0 group-hover/item:opacity-60 hover:opacity-100! focus-within:pointer-events-auto focus-within:translate-y-0 focus-within:opacity-100">
-                <button type="button" aria-label="Görevi kaldır" title="Görevi kaldır" onClick={onRemove}
-                    className="grid size-6 place-items-center rounded-md text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-                >
-                    <Trash2 size={13} />
-                </button>
-            </div>
+    const requestRemove = () => {
+        if (content.trim()) setConfirmingRemove(true);
+        else onRemove();
+    };
 
+    return (
+        <div className="relative" data-task-card>
             <div className={`mx-auto w-full max-w-2xl rounded-xl border shadow-lg transition-all duration-300 group relative bg-neutral-900 border-skylab-400/30 shadow-skylab-500/5 focus-within:border-skylab-400/40 ${flash ? "ring-3 ring-skylab-500/25" : ""}`}>
-                <div className="flex items-center gap-3 border-b border-white/5 px-3 py-2.5">
+                <div className="flex min-h-12 items-center gap-3 border-b border-white/5 px-3 py-2.5">
                     <div className="grid size-6 place-items-center rounded-md border border-skylab-400/40 bg-skylab-500/10 text-xs font-semibold text-skylab-300">
                         <ClipboardList size={13} />
                     </div>
@@ -178,20 +190,32 @@ export default function TaskCard({ task, timing, flash = false, onChange, onRemo
                             Formun başında
                         </span>
                     </div>
-                    <div className="ml-auto flex items-center">
-                        <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-                            <button type="button" aria-pressed={!preview} onClick={() => setMode("write")}
-                                className={`px-2 py-1 text-2xs rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${!preview ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+                    {confirmingRemove ? (
+                        <div className="ml-auto">
+                            <TaskRemoveConfirm onConfirm={onRemove} onCancel={() => setConfirmingRemove(false)} />
+                        </div>
+                    ) : (
+                        <div className="ml-auto flex items-center">
+                            <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+                                <button type="button" aria-pressed={!preview} onClick={() => setMode("write")}
+                                    className={`px-2 py-1 text-2xs rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${!preview ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+                                >
+                                    Yaz
+                                </button>
+                                <button type="button" aria-pressed={preview} onClick={() => setMode("preview")}
+                                    className={`px-2 py-1 text-2xs rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${preview ? "bg-skylab-400/20 text-skylab-300" : "text-neutral-300 hover:text-neutral-200"}`}
+                                >
+                                    Önizle
+                                </button>
+                            </div>
+                            <div className="mx-2 h-5 w-px bg-white/10" />
+                            <button type="button" aria-label="Görevi kaldır" title="Görevi kaldır" onClick={requestRemove}
+                                className="grid size-7 place-items-center rounded-lg border border-white/15 bg-white/5 text-neutral-400 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
                             >
-                                Yaz
-                            </button>
-                            <button type="button" aria-pressed={preview} onClick={() => setMode("preview")}
-                                className={`px-2 py-1 text-2xs rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${preview ? "bg-skylab-400/20 text-skylab-300" : "text-neutral-300 hover:text-neutral-200"}`}
-                            >
-                                Önizle
+                                <Trash2 size={13} />
                             </button>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 <div className="relative z-0 flex flex-col gap-3 p-3 md:p-4">

@@ -15,7 +15,7 @@ const TABS = [
     { id: "description", label: "Açıklama" },
 ];
 
-export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLockedDrag = false, tab, onTabChange, hasTask = false, onTaskAdd, focusTiming = 0, eventLinked = false }) {
+export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLockedDrag = false, tab, onTabChange, hasTask = false, taskHasContent = false, onTaskAdd, onTaskRemove, focusTiming = 0, eventLinked = false }) {
     const [localTab, setLocalTab] = useState("components");
     const activeTab = tab ?? localTab;
     const setActiveTab = onTabChange ?? setLocalTab;
@@ -28,7 +28,7 @@ export function Library({ layout = "grid", onLibrarySelect, onGroupSelect, isLoc
     const renderContent = () => {
         switch (activeTab) {
             case "components":
-                return <LibraryComponents layout={layout} onSelect={onLibrarySelect} onGroupSelect={onGroupSelect} hasTask={hasTask} onTaskAdd={onTaskAdd} />;
+                return <LibraryComponents layout={layout} onSelect={onLibrarySelect} onGroupSelect={onGroupSelect} hasTask={hasTask} taskHasContent={taskHasContent} onTaskAdd={onTaskAdd} onTaskRemove={onTaskRemove} />;
 
             case "settings":
                 return <LibrarySettings focusTiming={focusTiming} eventLinked={eventLinked} />;

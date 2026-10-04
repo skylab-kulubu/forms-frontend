@@ -57,6 +57,18 @@ export function isPastDate(value) {
   return Boolean(date) && date.getTime() <= Date.now();
 }
 
+export function untilText(value) {
+  const date = toDate(value);
+  if (!date) return null;
+  const minutes = Math.round((date.getTime() - Date.now()) / MINUTE);
+  if (minutes <= 0) return null;
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  if (days) return hours ? `${days} gün ${hours} saat sonra` : `${days} gün sonra`;
+  if (hours) return `${hours} saat sonra`;
+  return `${minutes} dakika sonra`;
+}
+
 export function formatLongDate(value) {
   const date = toDate(value);
   if (!date) return "";

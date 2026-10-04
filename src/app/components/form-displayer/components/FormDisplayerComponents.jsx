@@ -3,8 +3,9 @@
 import { Fragment, useState } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { CircleAlert, Clock, RotateCcw, UserRound, UserRoundX } from "lucide-react";
+import { Clock, RotateCcw, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
+import { loginWithKeycloak } from "@/lib/authActions";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors";
 
@@ -47,8 +48,65 @@ export function FormDisplayerHeader({ title, description, children }) {
         />
       )}
 
+      {children && <div className="mt-3.5 flex flex-col gap-1.5 empty:hidden">{children}</div>}
+    </div>
+  );
+}
+
+export function HeaderNote({ icon: Icon, children }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-neutral-400">
+      <Icon size={13} className="shrink-0 text-neutral-500" />
       {children}
     </div>
+  );
+}
+
+function useLoginPrompt(hasAnswers) {
+  const [confirming, setConfirming] = useState(false);
+  const login = () => loginWithKeycloak(window.location.href);
+
+  return {
+    confirming,
+    request: () => (hasAnswers ? setConfirming(true) : login()),
+    confirm: login,
+    cancel: () => setConfirming(false),
+  };
+}
+
+function LoginConfirm({ prompt }) {
+  return (
+    <>
+      <span className="text-neutral-300">Girişe giderseniz yazdığınız cevaplar silinir.</span>
+      <button type="button" onClick={prompt.confirm} className={`${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`}>
+        Yine de giriş yap
+      </button>
+      <button type="button" onClick={prompt.cancel} className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}>
+        Vazgeç
+      </button>
+    </>
+  );
+}
+
+export function AnonymousNotice({ hasAnswers }) {
+  const { status } = useSession();
+  const prompt = useLoginPrompt(hasAnswers);
+
+  if (status !== "unauthenticated") return null;
+
+  return (
+    <HeaderNote icon={UserRoundX}>
+      {prompt.confirming ? <LoginConfirm prompt={prompt} /> : (
+        <>
+          <span>Anonim yanıtlıyorsunuz. Giriş yaparsanız cevaplarınız taslak olarak kaydedilir.</span>
+          <button type="button" onClick={prompt.request}
+            className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+          >
+            Giriş yap
+          </button>
+        </>
+      )}
+    </HeaderNote>
   );
 }
 
@@ -57,7 +115,7 @@ export function DraftNotice({ savedAt, onDiscard }) {
   const time = formatDraftTime(savedAt);
 
   return (
-    <motion.div className="mt-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-neutral-400"
+    <motion.div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-neutral-400"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
     >
       <RotateCcw size={13} className="shrink-0 text-neutral-500" />
@@ -92,26 +150,21 @@ export function DraftNotice({ savedAt, onDiscard }) {
   );
 }
 
-export function MissingNotice({ fields, onJump }) {
-  if (!fields.length) return null;
-
+export function MissingFields({ fields, onJump }) {
   return (
-    <div className="mb-4 flex items-start gap-2 text-xs leading-5 text-red-200" role="alert">
-      <CircleAlert size={14} className="mt-0.5 shrink-0 text-red-300" />
-      <span>
-        {fields.length} zorunlu soru boş:{" "}
-        {fields.map((field, index) => (
-          <Fragment key={field.id}>
-            {index > 0 && ", "}
-            <button type="button" onClick={() => onJump(field.id)}
-              className={`${LINK_BUTTON} decoration-red-200/35 hover:decoration-red-200/80`}
-            >
-              {field.number}. soru
-            </button>
-          </Fragment>
-        ))}
-      </span>
-    </div>
+    <>
+      {fields.length} zorunlu soru boş:{" "}
+      {fields.map((field, index) => (
+        <Fragment key={field.id}>
+          {index > 0 && ", "}
+          <button type="button" onClick={() => onJump(field.id)}
+            className={`${LINK_BUTTON} text-red-200 decoration-red-200/35 hover:decoration-red-200/80`}
+          >
+            {field.number}. soru
+          </button>
+        </Fragment>
+      ))}
+    </>
   );
 }
 
@@ -126,8 +179,9 @@ export function NextStepNote({ text }) {
   );
 }
 
-export function RespondentLine({ savedAt }) {
+export function RespondentLine({ savedAt, hasAnswers = false }) {
   const { data: session, status } = useSession();
+  const prompt = useLoginPrompt(hasAnswers);
 
   if (status === "loading") return null;
 
@@ -135,6 +189,15 @@ export function RespondentLine({ savedAt }) {
   const user = session?.user;
   const fullName = user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Kullanıcı";
   const savedTime = savedAt ? savedAt.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : null;
+
+  if (!isAuthed && prompt.confirming) {
+    return (
+      <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
+        <UserRoundX size={12} className="shrink-0" />
+        <LoginConfirm prompt={prompt} />
+      </p>
+    );
+  }
 
   return (
     <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
@@ -147,7 +210,12 @@ export function RespondentLine({ savedAt }) {
       {!isAuthed && (
         <>
           <span className="text-neutral-700">·</span>
-          <span>Giriş yapmadığınız için taslak kaydedilmiyor</span>
+          <span>Taslak kaydedilmiyor</span>
+          <button type="button" onClick={prompt.request}
+            className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+          >
+            Giriş yap
+          </button>
         </>
       )}
       {isAuthed && savedTime && (

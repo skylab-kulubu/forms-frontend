@@ -44,16 +44,9 @@ export function TimeLeft({ deadlineAt, now }) {
   return <span>{leftText(remaining)}</span>;
 }
 
-export function LateNotice({ deadlineAt, now }) {
+export function useIsLate(deadlineAt, now) {
   const remaining = useRemaining(deadlineAt, now);
-  if (remaining > 10 * MINUTE || remaining <= 0) return null;
-
-  return (
-    <div className="mb-4 flex items-start gap-2 text-xs leading-5 text-amber-200" role="alert">
-      <CircleAlert size={14} className="mt-0.5 shrink-0 text-amber-300" />
-      <span>Sürenin bitmesine 10 dakikadan az kaldı. Gönder&apos;e basmazsanız o ana kadarki cevaplarınız ekibe geçici cevap olarak iletilir.</span>
-    </div>
-  );
+  return Boolean(deadlineAt) && remaining > 0 && remaining <= 10 * MINUTE;
 }
 
 export function useDeadline(deadlineAt, now, onReached) {
@@ -106,7 +99,7 @@ export function ExtensionNotice({ attempt }) {
   if (!extension || attempt?.state !== "running") return null;
 
   return (
-    <div className="mt-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-neutral-400">
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-neutral-400">
       <ClockPlus size={13} className="shrink-0 text-neutral-500" />
       <span>
         Ekip sürenize {durationText(extension.minutes)} ekledi
