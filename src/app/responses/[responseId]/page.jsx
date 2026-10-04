@@ -8,7 +8,7 @@ async function fetchMeta(responseId, token) {
     if (!responseId || !token) return null;
     try {
         const res = await fetch(
-            `${API_URL}/api/responses/${responseId}/meta?token=${encodeURIComponent(token)}`,
+            `${API_URL}/api/forms/responses/${responseId}/meta?token=${encodeURIComponent(token)}`,
             { cache: "no-store" }
         );
         if (!res.ok) return null;

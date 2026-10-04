@@ -10,7 +10,9 @@ import { GroupEditorProvider, useGroupEditor } from "./GroupEditorContext";
 import { useFormDnD } from "../form-editor/hooks/useFormDnD";
 import { GhostComponent, Canvas, CanvasItem, DropSlot } from "../form-editor/components/FormEditorComponents";
 import { LibraryTrigger } from "../form-editor/components/LibraryTrigger";
+import { HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
 import { GroupLibrary } from "./GroupLibrary";
+import GroupHeaderActions from "./GroupHeaderActions";
 import { useGroupMutation, useDeleteGroupMutation } from "@/lib/hooks/useGroupAdmin";
 import { useCreateGroupShareMutation } from "@/lib/hooks/useGroupShare";
 import ApprovalOverlay from "../ApprovalOverlay";
@@ -58,6 +60,7 @@ function GroupEditorContent({ isNewGroup }) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
     const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
+    const [savedAt, setSavedAt] = useState(null);
 
     const editorRef = useRef(null);
     const libraryDropElRef = useRef(null);
@@ -97,10 +100,12 @@ function GroupEditorContent({ isNewGroup }) {
             isUpdate: !isNewGroup,
         }, {
             onSuccess: (data) => {
+                dispatch({ type: "MARK_SAVED" });
+                setSavedAt(new Date());
                 if (!isNewGroup) return;
                 const group = data?.data ?? data;
                 const nextId = group?.id;
-                if (nextId) router.push(`/admin/component-groups/${nextId}`);
+                if (nextId) router.push(`/admin/templates/${nextId}`);
             },
         });
     };
@@ -149,7 +154,7 @@ function GroupEditorContent({ isNewGroup }) {
                                 {isLgUp ? <MousePointerClick size={32} strokeWidth={1.5} className="opacity-80" /> : <PackagePlus size={32} strokeWidth={1.5} className="opacity-80" />}
                             </div>
                             <div className="space-y-1.5 max-w-xs mx-auto">
-                                <h3 className="text-lg font-semibold text-neutral-200">Grubunuzu oluşturmaya başlayın</h3>
+                                <h3 className="text-lg font-semibold text-neutral-200">Şablonunuzu oluşturmaya başlayın</h3>
                                 <p className="text-xs leading-relaxed text-neutral-500">
                                     {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Bileşen panelini açın."}
                                 </p>
@@ -173,46 +178,30 @@ function GroupEditorContent({ isNewGroup }) {
 
             {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} />}
 
-            {isLgUp && (
-                <GroupLibrary layout="grid"
-                    onSave={handleSave}
-                    onUndo={handleUndo}
-                    canUndo={canUndo}
-                    onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
-                    onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
-                    isPending={isPending}
-                    isSuccess={isSuccess}
-                    isError={isError}
-                    error={error}
-                    isDeleteDisabled={isNewGroup || isDeletePending}
-                    isShareDisabled={isNewGroup}
-                    onLibrarySelect={handleLibrarySelect}
-                />
-            )}
+            {isLgUp && <GroupLibrary layout="grid" onLibrarySelect={handleLibrarySelect} />}
         </div>
     );
 
     return (
         <DndContext collisionDetection={pointerWithin} sensors={sensors} {...handlers}>
+            <GroupHeaderActions
+                saveStatus={<HeaderStatusPill dirty={!state.isSaved} isSaving={isPending} isFailed={isError} lastSavedAt={savedAt} />}
+                onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
+                onUndo={handleUndo}
+                canUndo={canUndo}
+                onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
+                isDeleteDisabled={isNewGroup || isDeletePending}
+                onSave={handleSave}
+                isPending={isPending}
+                isError={isError}
+                error={error}
+            />
             <div ref={editorRef} className="relative">
                 {!isLgUp ? (
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
-                            <GroupLibrary layout="drawer"
-                                onSave={handleSave}
-                                onUndo={handleUndo}
-                                canUndo={canUndo}
-                                onShare={!isNewGroup ? () => setShareOverlayOpen(true) : undefined}
-                                onDelete={!isNewGroup ? () => setDeleteOverlayOpen(true) : undefined}
-                                isPending={isPending}
-                                isSuccess={isSuccess}
-                                isError={isError}
-                                error={error}
-                                isDeleteDisabled={isNewGroup || isDeletePending}
-                                isShareDisabled={isNewGroup}
-                                onLibrarySelect={handleLibrarySelect}
-                            />
+                            <GroupLibrary layout="drawer" onLibrarySelect={handleLibrarySelect} />
                         </DrawerContent>
                     </Drawer>
                 ) : (
@@ -224,14 +213,14 @@ function GroupEditorContent({ isNewGroup }) {
                 </DragOverlay>
 
                 <ApprovalOverlay open={deleteOverlayOpen} preset="delete-group" context={{ isPending: isDeletePending }}
-                    onApprove={() => deleteGroup(state.id, { onSuccess: () => router.push("/admin/component-groups"), onError: () => setDeleteOverlayOpen(false) })}
+                    onApprove={() => deleteGroup(state.id, { onSuccess: () => router.push("/admin/templates"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
                 />
 
                 <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
                     resource="component-group" resourceId={state.id}
-                    title="Grubu Paylaş"
-                    description="Bu bağlantıyla paylaşılan kişi grubu görüntüleyip kendi gruplarına ekleyebilir. Bağlantı 48 saat geçerlidir."
+                    title="Şablonu Paylaş"
+                    description="Bu bağlantıyla paylaşılan kişi şablonu görüntüleyip kendi şablonlarına ekleyebilir. Bağlantı 48 saat geçerlidir."
                     shareMutation={shareMutation}
                 />
             </div>
@@ -243,7 +232,7 @@ export default function GroupEditor({ initialGroup = null }) {
     const normalizedInitialData = initialGroup ? {
         id: initialGroup.id,
         schema: initialGroup.schema || [],
-        title: initialGroup.title || "Yeni Grup",
+        title: initialGroup.title || "Yeni Şablon",
         description: initialGroup.description || "",
     } : null;
 

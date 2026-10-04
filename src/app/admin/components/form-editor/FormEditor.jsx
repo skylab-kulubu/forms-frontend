@@ -1,24 +1,23 @@
 ﻿"use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DndContext, DragOverlay, pointerWithin, useSensor, useSensors, PointerSensor, KeyboardSensor, useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { MousePointerClick, PackagePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import { useFormContext } from "../../providers";
-import { FormEditorProvider, useFormEditor } from "./FormEditorContext";
+import { FormEditorProvider, hasDraftChanges, useFormEditor } from "./FormEditorContext";
 import { useFormDnD } from "./hooks/useFormDnD";
 import { GhostComponent, Canvas, CanvasItem, DropSlot, InsertSlot } from "./components/FormEditorComponents";
+import TaskCard from "./components/TaskCard";
 import { genFieldId } from "./fieldId";
 import { Library } from "./components/Library";
 import { LibraryTrigger } from "./components/LibraryTrigger";
 import { EditorHeaderActions, EventReturnBar, HeaderStatusPill } from "./components/EditorHeaderActions";
-import { PreviousDraftPicker } from "./components/PreviousDraftPicker";
 import { useDeleteFormMutation, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { useDraftAutoSave } from "./hooks/useDraftAutoSave";
-import { useDeleteDraftMutation } from "@/lib/hooks/useDraft";
 import { request } from "@/lib/apiClient";
 import {
     FORM_STATUS_OPEN,
@@ -32,36 +31,29 @@ import {
     identityKeyOf,
 } from "@/lib/event-handoff";
 import ApprovalOverlay from "../ApprovalOverlay";
-import ShareOverlay from "../ShareOverlay";
+import FormShareDialog from "../share/FormShareDialog";
 import { Drawer, DrawerContent } from "../utils/Drawer";
 import { FormPreview } from "./components/FormPreview";
 import {
-    captureReturnTo,
     editPathWithReturnTo,
     eventRefFromForm,
-    readStoredReturnTo,
     returnToEventHref,
+    sanitizeReturnTo,
 } from "@/lib/return-to";
 
 import { REGISTRY } from "../../../components/form-registry";
 import { migrateSchema } from "../../../components/form-migrate";
 
-function useMediaQuery(query) {
-    const [matches, setMatches] = useState(() => {
-        if (typeof window === "undefined") return false;
-        return window.matchMedia(query).matches;
-    });
+const emptySubscribe = () => () => {};
 
-    useEffect(() => {
-        if (typeof window === "undefined") return;
+function useMediaQuery(query) {
+    const subscribe = useCallback((onChange) => {
         const media = window.matchMedia(query);
-        const handleChange = (event) => setMatches(event.matches);
-        media.addEventListener("change", handleChange);
-        setMatches(media.matches);
-        return () => media.removeEventListener("change", handleChange);
+        media.addEventListener("change", onChange);
+        return () => media.removeEventListener("change", onChange);
     }, [query]);
 
-    return matches;
+    return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false);
 }
 
 class SmartKeyboardSensor extends KeyboardSensor {
@@ -94,10 +86,15 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const { state, dispatch } = useFormEditor();
 
     const [drawerOpen, setDrawerOpen] = useState(false);
-    const [linkOverlay, setLinkOverlay] = useState({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
     const [deleteOverlayOpen, setDeleteOverlayOpen] = useState(false);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
+    const searchParams = useSearchParams();
+    const timingLink = searchParams?.get("panel") === "timing";
+    const [libraryTab, setLibraryTab] = useState(timingLink ? "settings" : "components");
+    const [focusTiming, setFocusTiming] = useState(timingLink ? 1 : 0);
+    const [taskFlash, setTaskFlash] = useState(false);
+    const taskCardRef = useRef(null);
 
     const editorRef = useRef(null);
     const libraryDropElRef = useRef(null);
@@ -107,36 +104,30 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const { mutate: saveForm, isPending, isSuccess, isError, error, reset } = useFormMutation();
     const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
 
-    const { cancel: cancelDraftAutoSave, syncStatus: draftSyncStatus, draftSavedAt } = useDraftAutoSave(isNewForm ? null : state.id, state);
+    const { hasServerDraft, syncStatus: draftSyncStatus, draftSavedAt } = useDraftAutoSave(isNewForm ? null : state.id, state, Boolean(draft));
     const [publishedFlash, setPublishedFlash] = useState(false);
-    const { mutate: deleteDraft, isPending: isDiscardingDraft } = useDeleteDraftMutation();
-    const [hasDraft, setHasDraft] = useState(!!draft);
-    const [draftNotice, setDraftNotice] = useState(false);
-    const [returnHref, setReturnHref] = useState(null);
-    const [hasReturnTo, setHasReturnTo] = useState(false);
-    const [eventRef, setEventRef] = useState(null);
-    const [seededFrom, setSeededFrom] = useState(null);
+    const [isDiscardingDraft, setIsDiscardingDraft] = useState(false);
+    const [initialDraft] = useState(draft);
+    const [draftNotice, setDraftNotice] = useState(!!draft);
+    const hasUnsavedDraft = hasDraftChanges(state);
+    const storedDraftRef = useRef(false);
 
-    useEffect(() => {
-        const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-        const raw =
-            typeof window === "undefined"
-                ? null
-                : new URLSearchParams(window.location.search).get("returnTo");
-        const stored = captureReturnTo(raw, storage);
-        setHasReturnTo(Boolean(stored) || Boolean(handoff?.eventId));
-        setReturnHref(state.id && stored ? returnToEventHref(stored, state.id) : null);
-        setEventRef(
-            eventRefFromForm(
-                {
-                    event: formEvent || { id: handoff?.eventId, name: handoff?.title },
-                    eventId: formEvent?.id || handoff?.eventId,
-                    eventName: formEvent?.name || handoff?.title,
-                },
-                stored,
-            ),
-        );
-    }, [state.id, handoff?.eventId, handoff?.title, formEvent]);
+    const rawReturnTo = useSyncExternalStore(
+        emptySubscribe,
+        () => new URLSearchParams(window.location.search).get("returnTo"),
+        () => null,
+    );
+    const returnTo = sanitizeReturnTo(rawReturnTo);
+    const hasReturnTo = Boolean(returnTo) || Boolean(handoff?.eventId);
+    const returnHref = state.id && returnTo ? returnToEventHref(returnTo, state.id) : null;
+    const eventRef = eventRefFromForm(
+        {
+            event: formEvent || { id: handoff?.eventId, name: handoff?.title },
+            eventId: formEvent?.id || handoff?.eventId,
+            eventName: formEvent?.name || handoff?.title,
+        },
+        returnTo,
+    );
 
     const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id);
 
@@ -152,29 +143,21 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     }, [eventLinked, state.schema, state.allowAnonymousResponses, dispatch]);
 
     useEffect(() => {
-        if (!draft) return;
-        dispatch({ type: "LOAD_DRAFT", payload: draft });
-        setDraftNotice(true);
+        if (!initialDraft) return;
         const timer = setTimeout(() => setDraftNotice(false), 4000);
         return () => clearTimeout(timer);
-    }, []);
+    }, [initialDraft]);
 
     useEffect(() => {
         if (!isNewForm) return;
         let cancelled = false;
         const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-        const raw =
-            typeof window === "undefined"
-                ? null
-                : new URLSearchParams(window.location.search).get("returnTo");
-        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
 
         (async () => {
-            const local = readNewFormDraft(storage, stored);
+            const local = readNewFormDraft(storage, returnTo);
             if (local?.schema?.length) {
                 if (cancelled) return;
                 dispatch({ type: "LOAD_DRAFT", payload: local });
-                setSeededFrom("local");
                 setDraftNotice(true);
                 return;
             }
@@ -188,12 +171,9 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                         type: "LOAD_DRAFT",
                         payload: { schema, status: handoff.open ? FORM_STATUS_OPEN : row?.status },
                     });
-                    setSeededFrom("form");
                     setDraftNotice(true);
                     return;
-                } catch {
-                    /* picker remains */
-                }
+                } catch {}
             }
             if (!handoff?.ownerTeam) return;
             try {
@@ -202,38 +182,40 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 const match = pickTemplateGroup(items, handoff.ownerTeam);
                 if (cancelled || !match) return;
                 dispatch({ type: "SET_SCHEMA", payload: cloneSchema(match.schema) });
-                setSeededFrom("group");
                 setDraftNotice(true);
-            } catch {
-                /* picker remains */
-            }
+            } catch {}
         })();
 
         return () => {
             cancelled = true;
         };
-    }, [isNewForm, handoff?.fromForm, handoff?.ownerTeam, handoff?.open, dispatch]);
+    }, [isNewForm, returnTo, handoff?.fromForm, handoff?.ownerTeam, handoff?.open, dispatch]);
 
     useEffect(() => {
-        if (!isNewForm) return;
+        if (!isNewForm || !returnTo) return;
         const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-        const raw =
-            typeof window === "undefined"
-                ? null
-                : new URLSearchParams(window.location.search).get("returnTo");
-        const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
-        if (!stored || !state.schema.length) return;
-        writeNewFormDraft(storage, stored, {
-            title: state.title,
-            description: state.description,
-            schema: state.schema,
-            status: state.status,
-            allowAnonymousResponses: state.allowAnonymousResponses,
-            allowMultipleResponses: state.allowMultipleResponses,
-            requiresManualReview: state.requiresManualReview,
-        });
+        if (hasUnsavedDraft) {
+            storedDraftRef.current = true;
+            writeNewFormDraft(storage, returnTo, {
+                title: state.title,
+                description: state.description,
+                schema: state.schema,
+                status: state.status,
+                allowAnonymousResponses: state.allowAnonymousResponses,
+                allowMultipleResponses: state.allowMultipleResponses,
+                requiresManualReview: state.requiresManualReview,
+                task: state.task,
+                closesAt: state.closesAt,
+                timeLimitMinutes: state.timeLimitMinutes,
+            });
+        } else if (storedDraftRef.current) {
+            storedDraftRef.current = false;
+            clearNewFormDraft(storage, returnTo);
+        }
     }, [
         isNewForm,
+        returnTo,
+        hasUnsavedDraft,
         state.title,
         state.description,
         state.schema,
@@ -241,7 +223,16 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         state.allowAnonymousResponses,
         state.allowMultipleResponses,
         state.requiresManualReview,
+        state.task,
+        state.closesAt,
+        state.timeLimitMinutes,
     ]);
+
+    useEffect(() => {
+        if (!taskFlash) return;
+        const timer = setTimeout(() => setTaskFlash(false), 1200);
+        return () => clearTimeout(timer);
+    }, [taskFlash]);
 
     useEffect(() => {
         setGlobalTitle(state.title);
@@ -299,9 +290,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         }
     }, [state.schema, dispatch, eventLinked]);
 
-    const { dragSource, activeDragItem, handlers } = useFormDnD(state.schema, setSchemaBridge, libraryDropElRef);
+    const workflow = state.workflow ?? null;
+    const isWorkflowLocked = Boolean(workflow?.isPublished);
+    const lockedById = useMemo(() => new Map(
+        isWorkflowLocked
+            ? (workflow.lockedQuestions ?? []).map((question) => [question.id, { values: Array.isArray(question.values) ? question.values : [] }])
+            : []
+    ), [workflow, isWorkflowLocked]);
+
+    const { dragSource, activeDragItem, handlers } = useFormDnD(state.schema, setSchemaBridge, libraryDropElRef, (fieldId) => lockedById.has(fieldId));
+    const isLockedDrag = dragSource === "canvas" && lockedById.has(activeDragItem?.data?.current?.id);
 
     const handleSave = () => {
+        const savedState = state;
         const payload = {
             Id: state.id || null,
             Title: state.title,
@@ -311,12 +312,14 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             AllowMultipleResponses: eventLinked || state.allowAnonymousResponses ? true : state.allowMultipleResponses,
             AllowAnonymousResponses: eventLinked ? true : state.allowAnonymousResponses,
             RequiresManualReview: state.requiresManualReview,
-            LinkedFormId: state.allowAnonymousResponses ? null : (state.linkedFormId || null),
             Collaborators: state.editors.map((editor) => ({
                 UserId: editor.user.id,
                 Role: Number(editor.role)
             })),
-            EventId: eventRef?.id || handoff?.eventId || null
+            EventId: eventRef?.id || handoff?.eventId || null,
+            Task: state.task?.content?.trim() ? state.task : null,
+            ClosesAt: state.closesAt ?? null,
+            TimeLimitMinutes: eventLinked || state.allowAnonymousResponses ? null : state.timeLimitMinutes ?? null,
         };
 
         saveForm({
@@ -325,30 +328,17 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
             isUpdate: !isNewForm
         }, {
             onSuccess: (data) => {
-                cancelDraftAutoSave();
-                dispatch({ type: "MARK_SAVED" });
+                dispatch({ type: "MARK_SAVED", payload: savedState });
                 setLastSavedAt(new Date());
                 setPublishedFlash(true);
-                const storage = typeof sessionStorage === "undefined" ? null : sessionStorage;
-                const raw =
-                    typeof window === "undefined"
-                        ? null
-                        : new URLSearchParams(window.location.search).get("returnTo");
-                const stored = readStoredReturnTo(storage) || captureReturnTo(raw, storage);
-                clearNewFormDraft(storage, stored);
+                setDraftNotice(false);
 
                 if (isNewForm) {
+                    clearNewFormDraft(typeof sessionStorage === "undefined" ? null : sessionStorage, returnTo);
                     const nextId = data?.data?.id ?? data?.id;
                     if (nextId) {
-                        router.push(editPathWithReturnTo(nextId, stored));
+                        router.push(editPathWithReturnTo(nextId, returnTo));
                     }
-                    return;
-                }
-
-                if (state.id) {
-                    deleteDraft(state.id, {
-                        onSuccess: () => { setHasDraft(false); setDraftNotice(false); },
-                    });
                 }
             },
         });
@@ -357,20 +347,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const handleUndo = () => dispatch({ type: "UNDO" });
     const canUndo = state._history.length > 0;
 
-    const handleDiscardDraft = () => {
-        if (!state.id) return;
-        deleteDraft(state.id, {
-            onSuccess: async () => {
-                setHasDraft(false);
-                setDraftNotice(false);
-                if (!onRefresh) return;
-                try {
-                    const result = await onRefresh();
-                    const refreshedForm = result?.data?.data ?? result?.data;
-                    if (refreshedForm) dispatch({ type: "LOAD_FORM", payload: refreshedForm });
-                } catch (e) { console.error(e); }
-            },
-        });
+    const handleDiscardDraft = async () => {
+        if (!state.id || !onRefresh) return;
+        setIsDiscardingDraft(true);
+        setDraftNotice(false);
+        try {
+            const result = await onRefresh();
+            const refreshedForm = result?.data?.data ?? result?.data;
+            if (refreshedForm) dispatch({ type: "LOAD_FORM", payload: refreshedForm });
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsDiscardingDraft(false);
+        }
     };
 
     const updateField = (id, updates) => {
@@ -405,6 +394,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
 
     const deleteField = (id) => {
         if (isIdentityField(state.schema.find((field) => field.id === id))) return;
+        if (lockedById.has(id)) return;
         // Silinen alana bağlı koşullar da temizlenir (sürükle-sil ile aynı davranış).
         const next = state.schema.filter((field) => field.id !== id).map((field) => {
             if (field.condition?.fieldId !== id) return field;
@@ -437,12 +427,24 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     const handleGroupSelect = (group) => {
         const groupSchema = Array.isArray(group?.schema) ? group.schema : [];
         if (groupSchema.length === 0) return;
-        const newFields = groupSchema.map((field) => ({
-            ...field,
-            id: genFieldId(),
-            props: structuredClone(field.props ?? REGISTRY[field.type]?.defaults ?? {}),
-        }));
+        const newFields = cloneSchema(
+            groupSchema.map((field) => ({ ...field, props: field.props ?? REGISTRY[field.type]?.defaults })),
+            genFieldId,
+        );
         dispatch({ type: "SET_SCHEMA", payload: [...state.schema, ...newFields] });
+    };
+
+    const handleTaskAdd = () => {
+        if (!state.task) dispatch({ type: "SET_TASK", payload: { content: "", collapsible: true, downloadable: true } });
+        else taskCardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        setTaskFlash(true);
+        if (!isLgUp) setDrawerOpen(false);
+    };
+
+    const handleOpenTiming = () => {
+        setLibraryTab("settings");
+        setFocusTiming((value) => value + 1);
+        if (!isLgUp) setDrawerOpen(true);
     };
 
     const sensors = useSensors(
@@ -478,7 +480,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 setSchemaTitle={(val) => dispatch({ type: "SET_TITLE", payload: val })}
                 span={isLgUp ? 8 : 11}
             >
-                {state.schema.length === 0 ? (
+                {state.schema.length === 0 && !state.task ? (
                     <div className="grid h-full place-items-center">
                         <div className="flex flex-col items-center gap-5 text-center px-6">
                             <div className="relative grid h-20 w-20 place-items-center rounded-3xl border-2 border-dashed border-neutral-800 bg-neutral-900/50 text-neutral-500">
@@ -490,23 +492,21 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                                     {isLgUp ? "Sağ taraftaki kütüphaneden dilediğiniz bileşeni sürükleyip buraya bırakın." : "Bileşen panelini açın."}
                                 </p>
                             </div>
-                            {isNewForm ? (
-                                <PreviousDraftPicker
-                                    ownerTeam={handoff?.ownerTeam}
-                                    busy={Boolean(seededFrom === "loading")}
-                                    onApply={({ schema }) => {
-                                        dispatch({ type: "SET_SCHEMA", payload: schema });
-                                        if (handoff?.open) dispatch({ type: "SET_STATUS", payload: FORM_STATUS_OPEN });
-                                        setSeededFrom("picker");
-                                        setDraftNotice(true);
-                                    }}
-                                />
-                            ) : null}
                         </div>
                     </div>
                 ) : (
                     <SortableContext items={state.schema.map((field) => field.id)} strategy={verticalListSortingStrategy}>
-                        <ul className="flex flex-col gap-2 max-w-2xl mx-auto mb-4">
+                        <ul className={`flex flex-col gap-2 max-w-2xl mx-auto mb-4 ${state.task ? "pt-3" : ""}`}>
+                            {state.task && (
+                                <li ref={taskCardRef} className="flex flex-col">
+                                    <TaskCard task={state.task} flash={taskFlash}
+                                        timing={{ timeLimitMinutes: state.timeLimitMinutes, closesAt: state.closesAt }}
+                                        onChange={(next) => dispatch({ type: "SET_TASK", payload: next })}
+                                        onRemove={() => dispatch({ type: "SET_TASK", payload: null })}
+                                        onOpenTiming={handleOpenTiming}
+                                    />
+                                </li>
+                            )}
                             {dragSource === "library"
                                 ? <DropSlot index={0} enabled />
                                 : <InsertSlot index={0} onInsert={insertFieldAt} hidden={!!dragSource} />}
@@ -516,6 +516,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                                         dragActive={!!dragSource}
                                         onDuplicate={duplicateField} onDelete={deleteField} onMove={moveField}
                                         canMoveUp={index > 0} canMoveDown={index < state.schema.length - 1}
+                                        workflowLock={lockedById.get(field.id) ?? null}
                                     />
                                     {dragSource === "library"
                                         ? <DropSlot index={index + 1} enabled />
@@ -527,10 +528,13 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 )}
             </Canvas>
 
-            {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} />}
+            {!isLgUp && <LibraryTrigger ref={setLibraryDropRef} dragSource={dragSource} isDropOver={isLibraryDropOver} isLgUp={isLgUp} isLockedDrag={isLockedDrag} />}
 
             {isLgUp && (
-                <Library layout="grid" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} />
+                <Library layout="grid" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag}
+                    tab={libraryTab} onTabChange={setLibraryTab} hasTask={Boolean(state.task)} onTaskAdd={handleTaskAdd}
+                    focusTiming={focusTiming} eventLinked={eventLinked}
+                />
             )}
         </div>
     );
@@ -543,18 +547,19 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 onPreview={() => setPreviewOpen(true)}
                 onShare={!isNewForm ? () => setShareOverlayOpen(true) : undefined}
                 isShareDisabled={isNewForm}
-                hasDraft={hasDraft}
+                hasDraft={hasServerDraft && hasUnsavedDraft}
                 onDiscardDraft={handleDiscardDraft}
                 isDiscardingDraft={isDiscardingDraft}
                 onUndo={handleUndo}
                 canUndo={canUndo}
                 onDelete={!isNewForm ? () => setDeleteOverlayOpen(true) : undefined}
-                isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3}
+                isDeleteDisabled={isNewForm || isDeletePending || Number(state.userRole) !== 3 || isWorkflowLocked}
+                deleteLabel={isWorkflowLocked ? "Yayındaki akışta kullanıldığı için silinemez" : "Formu sil"}
                 onSave={handleSave}
                 isPending={isPending}
                 isError={isError}
                 error={error}
-                draftNotice={draftNotice}
+                draftNotice={draftNotice && hasUnsavedDraft}
                 onDraftNoticeClose={() => setDraftNotice(false)}
             />
             <div ref={editorRef} className="relative">
@@ -563,7 +568,10 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                         <div className="flex-1 h-full w-full p-4">{gridContent}</div>
                         <DrawerContent className="h-full">
-                            <Library layout="drawer" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} />
+                            <Library layout="drawer" onLibrarySelect={handleLibrarySelect} onGroupSelect={handleGroupSelect} isLockedDrag={isLockedDrag}
+                                tab={libraryTab} onTabChange={setLibraryTab} hasTask={Boolean(state.task)} onTaskAdd={handleTaskAdd}
+                                focusTiming={focusTiming} eventLinked={eventLinked}
+                            />
                         </DrawerContent>
                     </Drawer>
                 ) : (
@@ -574,20 +582,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                     {activeDragItem ? <GhostComponent active={activeDragItem} schema={state.schema} /> : null}
                 </DragOverlay>
 
-                <ApprovalOverlay open={linkOverlay.open} preset={linkOverlay.scenario || "default"}
-                    onApprove={() => {
-                        if (linkOverlay.scenario?.includes("link")) {
-                            const isRemove = linkOverlay.scenario === "link-remove";
-                            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormId", value: isRemove ? "" : linkOverlay.nextId } });
-                            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "linkedFormTitle", value: isRemove ? "" : (linkOverlay.nextTitle || "") } });
-                        }
-                        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
-                    }}
-                    onReject={() => {
-                        if (linkOverlay.reason === "anonymous-toggle") dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: false } });
-                        setLinkOverlay({ open: false, scenario: null, previousId: "", nextId: "", reason: null });
-                    }}
-                />
                 <ApprovalOverlay open={deleteOverlayOpen} preset="delete-form" context={{ isPending: isDeletePending }}
                     onApprove={() => deleteForm(state.id, { onSuccess: () => router.push("/admin/forms"), onError: () => setDeleteOverlayOpen(false) })}
                     onReject={() => setDeleteOverlayOpen(false)}
@@ -595,10 +589,9 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
 
                 <FormPreview open={previewOpen} onClose={() => setPreviewOpen(false)} />
 
-                <ShareOverlay open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
-                    resource="form" resourceId={state.id}
-                    title="Formu Paylaş"
-                    description="Bu bağlantıyla form herkese açık olarak doldurulabilir."
+                <FormShareDialog open={shareOverlayOpen} onClose={() => setShareOverlayOpen(false)}
+                    formId={state.id} formTitle={state.title} formStatus={state.status}
+                    allowAnonymous={state.allowAnonymousResponses} canEdit={Number(state.userRole) >= 2}
                 />
             </div>
         </DndContext>
@@ -611,15 +604,16 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
         schema: migrateSchema(initialForm.schema),
         title: initialForm.title || "Yeni Form",
         description: initialForm.description || "",
-        linkedFormId: initialForm.linkedForm?.id || initialForm.linkedFormId || "",
-        linkedFormTitle: initialForm.linkedForm?.title || "",
         allowMultipleResponses: initialForm.allowMultipleResponses || false,
         allowAnonymousResponses: initialForm.allowAnonymousResponses || false,
         requiresManualReview: initialForm.requiresManualReview || false,
+        task: initialForm.task ?? null,
+        closesAt: initialForm.closesAt ?? null,
+        timeLimitMinutes: initialForm.timeLimitMinutes ?? null,
         editors: initialForm.collaborators || [],
         status: initialForm.status || 1,
-        isChildForm: initialForm.isChildForm || false,
-        userRole: initialForm.userRole || 3
+        userRole: initialForm.userRole || 3,
+        workflow: initialForm.workflow ?? null
     } : handoff?.eventLinked ? {
         title: handoff.title || "Yeni Form",
         status: handoff.open ? FORM_STATUS_OPEN : 1,
@@ -629,7 +623,7 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
     } : null;
 
     return (
-        <FormEditorProvider initialData={normalizedInitialData}>
+        <FormEditorProvider initialData={normalizedInitialData} initialDraft={draft}>
             <FormEditorContent isNewForm={!initialForm?.id} draft={draft} onRefresh={onRefresh} handoff={handoff} formEvent={initialForm?.event ?? null} />
         </FormEditorProvider>
     );

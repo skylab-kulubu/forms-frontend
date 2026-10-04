@@ -9,7 +9,7 @@ import { useGroupsQuery, useDeleteGroupMutation } from "@/lib/hooks/useGroupAdmi
 import StateCard from "@/app/components/StateCard";
 import ApprovalOverlay from "../components/ApprovalOverlay";
 import { COMPONENTS } from "@/app/components/form-registry";
-import { Layers, GripVertical, SearchX, Hash, PencilLine, Trash2 } from "lucide-react";
+import { LayoutTemplate, GripVertical, SearchX, Hash, PencilLine, Trash2 } from "lucide-react";
 
 const componentMap = new Map(COMPONENTS.map((c) => [c.type, c]));
 
@@ -42,7 +42,7 @@ function GroupCard({ group, index: cardIndex, onDelete }) {
           >
             <Trash2 size={12} />
           </button>
-          <a href={`/admin/component-groups/${group.id}`}
+          <a href={`/admin/templates/${group.id}`}
             className="inline-flex h-6 w-6 items-center justify-center rounded-md text-neutral-500 hover:text-skylab-500 hover:bg-white/5 transition-colors"
             title="Düzenle"
           >
@@ -59,7 +59,7 @@ function GroupCard({ group, index: cardIndex, onDelete }) {
       {schema.length === 0 ? (
         <div className="px-4 pb-4">
           <div className="flex items-center justify-center py-5 rounded-lg border border-dashed border-white/5">
-            <p className="text-3xs text-neutral-600">Boş grup</p>
+            <p className="text-3xs text-neutral-600">Boş şablon</p>
           </div>
         </div>
       ) : (
@@ -149,7 +149,7 @@ export default function ComponentGroupsPage() {
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-4 lg:p-6">
       <GroupsHeader searchValue={searchValue} onSearchChange={setSearchValue}
-        onRefresh={() => refetch()} onCreate={() => router.push("/admin/component-groups/new-group")}
+        onRefresh={() => refetch()} onCreate={() => router.push("/admin/templates/new-template")}
       />
 
       <AnimatePresence mode="wait">
@@ -161,10 +161,10 @@ export default function ComponentGroupsPage() {
               <GroupCardSkeleton count={6} />
             </div>
           ) : hasError ? (
-            <StateCard title="Gruplar yüklenemedi" Icon={SearchX} description="Grup verileri yüklenirken hata oluştu." />
+            <StateCard title="Şablonlar yüklenemedi" Icon={SearchX} description="Şablon verileri yüklenirken hata oluştu." />
           ) : groups.length === 0 ? (
-            <StateCard title="Grup bulunamadı" Icon={Layers}
-              description={searchValue !== "" ? "Aranılan kelimede grup bulunamadı." : "Henüz bir bileşen grubu oluşturmadınız."}
+            <StateCard title="Şablon bulunamadı" Icon={LayoutTemplate}
+              description={searchValue !== "" ? "Aranılan kelimede şablon bulunamadı." : "Henüz bir şablon oluşturmadınız."}
             />
           ) : (
             <div className="flex min-h-0 flex-1 flex-col">
@@ -177,7 +177,7 @@ export default function ComponentGroupsPage() {
               </div>
               <div className="flex items-center justify-between gap-3 border-t border-white/10">
                 <p className="pt-3 text-2xs text-neutral-500">
-                  <span className="font-semibold tabular-nums text-neutral-200">{totalCount}</span> grup gösteriliyor
+                  <span className="font-semibold tabular-nums text-neutral-200">{totalCount}</span> şablon gösteriliyor
                 </p>
                 <Pagination current={groupsMeta.page ?? page}
                   totalPages={groupsMeta.totalPages ?? 1}

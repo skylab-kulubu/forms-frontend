@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Archive, ArchiveX, ArrowDown, ArrowUp, CheckCircle2, Clock, SlidersHorizontal, User, UserX, Users, XCircle } from "lucide-react";
+import { STATUS_FILTERS } from "@/lib/attempt-status";
 
-function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
+export function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   const count = Math.max(options.length, 1);
   const activeIndex = Math.max(0, options.findIndex((option) => option.value === value));
   const indicatorStyle = {
@@ -35,7 +35,7 @@ function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   );
 }
 
-function TwoStateIconButton({ value = false, onChange, icon: Icon, label }) {
+export function TwoStateIconButton({ value = false, onChange, icon: Icon, label }) {
   const nextValue = !value;
 
   const stateClass = value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300";
@@ -49,7 +49,6 @@ function TwoStateIconButton({ value = false, onChange, icon: Icon, label }) {
   );
 }
 
-
 const panelVariants = {
   hidden: { opacity: 0, y: -8, scale: 0.98 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
@@ -58,15 +57,49 @@ const panelVariants = {
 
 const contentVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: -8, height: 0 },
-  visible: { opacity: 1, y: 0, height: "auto", transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: -6 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
 };
 
-export default function ResponsesFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, showArchived = false, onShowArchivedChange, className = "", align = "center" }) {
+const SORT_OPTIONS = [
+  { value: "desc", label: "Yeni önce" },
+  { value: "asc", label: "Eski önce" },
+];
+
+const RESPONDENT_OPTIONS = [
+  { value: "all", label: "Hepsi" },
+  { value: "registered", label: "Kayıtlı" },
+  { value: "anonymous", label: "Anonim" },
+];
+
+const TIME_OPTIONS = [
+  { value: "all", label: "Hepsi" },
+  { value: "extended", label: "Uzatılanlar" },
+  { value: "soon", label: "Bitmek üzere" },
+];
+
+const ARCHIVE_OPTIONS = [
+  { value: "out", label: "Hariç" },
+  { value: "in", label: "Dahil" },
+];
+
+function FilterSection({ label, children }) {
+  return (
+    <motion.div variants={itemVariants} className="space-y-2">
+      <p className="text-2xs font-medium text-neutral-500">{label}</p>
+      {children}
+    </motion.div>
+  );
+}
+
+export default function ResponsesFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, statusValue = "all", onStatusChange,
+  respondentValue = "all", onRespondentChange, showArchived = false, onShowArchivedChange, timeValue = "all", onTimeChange,
+  counts = null, timed = false, className = "", align = "center"
+}) {
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -88,68 +121,52 @@ export default function ResponsesFilterShell({ open, anchorRef, onClose, sortVal
     };
   }, [open, onClose, anchorRef]);
 
-  const sortOptions = [
-    { value: "desc", label: "Azalan", icon: ArrowDown },
-    { value: "asc", label: "Artan", icon: ArrowUp },
-  ];
-
-  const statusOptions = [
-    { value: "all", label: "Hepsi", icon: SlidersHorizontal },
-    { value: "pending", label: "Beklemede", icon: Clock },
-    { value: "approved", label: "Onayli", icon: CheckCircle2 },
-    { value: "rejected", label: "Reddedilen", icon: XCircle },
-  ];
-
-  const respondentOptions = [
-    { value: "all", label: "Hepsi", icon: Users },
-    { value: "anonymous", label: "Anonim", icon: UserX },
-    { value: "registered", label: "Kayitli", icon: User },
-  ];
+  const statusOptions = STATUS_FILTERS.filter((option) => timed || !option.timed);
 
   return (
     <AnimatePresence>
       {open ? (
-        <motion.div ref={panelRef} role="dialog" aria-label="Responses filters" layout
+        <motion.div ref={panelRef} role="dialog" aria-label="Cevap filtreleri"
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
-          transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-white/15 bg-neutral-950/90 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
-          <motion.div variants={contentVariants} className="flex flex-col text-center p-4">
-            <motion.div variants={itemVariants} className="overflow-hidden">
-              <div className="space-y-2">
-                <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Tarih Sıralaması
-                </p>
-                <SegmentedControl options={sortOptions} value={sortValue} onChange={onSortChange} ariaLabel="Tarih Sıralaması" />
-              </div>
-            </motion.div>
+          <motion.div variants={contentVariants} className="flex flex-col gap-4 p-4">
+            <FilterSection label="Sıralama">
+              <SegmentedControl options={SORT_OPTIONS} value={sortValue} onChange={onSortChange} ariaLabel="Sıralama" />
+            </FilterSection>
 
-            <motion.div variants={itemVariants} className="overflow-hidden">
-              <div className="space-y-2 pt-4">
-                <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Arşiv Durumu
-                </p>
-                <TwoStateIconButton value={showArchived} onChange={onShowArchivedChange} icon={showArchived ? ArchiveX : Archive} label={showArchived ? "Arşiv dahil" : "Arşiv hariç"}/>
+            <FilterSection label="Durum">
+              <div className="grid grid-cols-2 gap-1.5">
+                {statusOptions.map((option) => {
+                  const selected = statusValue === option.value;
+                  const count = option.count(counts);
+                  return (
+                    <button key={option.value} type="button" onClick={() => onStatusChange?.(option.value)} aria-pressed={selected}
+                      className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
+                        ${selected ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300"}`}
+                    >
+                      {option.dot && <span className={`size-1.5 shrink-0 rounded-full ${option.dot}`} />}
+                      <span className="min-w-0 flex-1 truncate text-left">{option.label}</span>
+                      {count != null && <span className={`tabular-nums ${selected ? "text-skylab-300/70" : "text-neutral-500"}`}>{count}</span>}
+                    </button>
+                  );
+                })}
               </div>
-            </motion.div>
+            </FilterSection>
 
-            <motion.div variants={itemVariants} className="overflow-hidden">
-              <div className="space-y-2 pt-4">
-                <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Cevap Durumu
-                </p>
-                <SegmentedControl options={statusOptions} value={statusValue} onChange={onStatusChange} ariaLabel="Cevap Durumu" />
-              </div>
-            </motion.div>
+            <FilterSection label="Kimlik">
+              <SegmentedControl options={RESPONDENT_OPTIONS} value={respondentValue} onChange={onRespondentChange} ariaLabel="Kimlik" />
+            </FilterSection>
 
-            <motion.div variants={itemVariants} className="overflow-hidden">
-              <div className="space-y-2 pt-4">
-                <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Anonimlik Durumu
-                </p>
-                <SegmentedControl options={respondentOptions} value={respondentValue} onChange={onRespondentChange} ariaLabel="Anonimlik Durumu" />
-              </div>
-            </motion.div>
+            {timed && (
+              <FilterSection label="Süre">
+                <SegmentedControl options={TIME_OPTIONS} value={timeValue} onChange={onTimeChange} ariaLabel="Süre" />
+              </FilterSection>
+            )}
+
+            <FilterSection label="Arşiv">
+              <SegmentedControl options={ARCHIVE_OPTIONS} value={showArchived ? "in" : "out"} onChange={(value) => onShowArchivedChange?.(value === "in")} ariaLabel="Arşiv" />
+            </FilterSection>
           </motion.div>
         </motion.div>
       ) : null}

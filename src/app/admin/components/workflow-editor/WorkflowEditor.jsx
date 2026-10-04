@@ -1,0 +1,598 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useQueries } from "@tanstack/react-query";
+import { X } from "lucide-react";
+import { fetchFormById } from "@/lib/hooks/useFormAdmin";
+import {
+  useArchiveWorkflowMutation, useCreateWorkflowMutation, usePublishWorkflowMutation, useSaveDefinitionMutation,
+  useUpdateWorkflowIntakeMutation, useUpdateWorkflowIntakeScheduleMutation, useUpdateWorkflowMutation, useWorkflowVersionsQuery, useAvailableFormsQuery,
+} from "@/lib/hooks/useWorkflowAdmin";
+import { WORKFLOW_INTAKE } from "@/lib/form-settings";
+import { isPastDate } from "@/lib/form-timing";
+import { useWorkflowContext } from "../../providers";
+import ApprovalOverlay from "../ApprovalOverlay";
+import { Drawer, DrawerContent } from "../utils/Drawer";
+import { HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
+import { LibraryTrigger } from "../form-editor/components/LibraryTrigger";
+import { EMPTY_RULE, WorkflowEditorProvider, useWorkflowEditor } from "./WorkflowEditorContext";
+import WorkflowCanvas from "./components/WorkflowCanvas";
+import WorkflowInspector from "./components/WorkflowInspector";
+import WorkflowHeaderActions from "./components/WorkflowHeaderActions";
+import { TRIGGER, connectionError, groupTransitions, toDefinitionPayload } from "./workflow-graph";
+import { COMPARISON_SYMBOL, CONNECTION_COPY, VALUELESS_COMPARISONS, fieldQuestionLabel, validationMessage } from "./workflow-copy";
+
+const DEFINITION_DEBOUNCE_MS = 1200;
+const META_DEBOUNCE_MS = 900;
+
+const TRIGGER_LABEL = {
+  [TRIGGER.SUBMITTED]: "gönderilince",
+  [TRIGGER.APPROVED]: "onaylanırsa",
+  [TRIGGER.DECLINED]: "reddedilirse",
+  [TRIGGER.TIMED_OUT]: "süre dolunca",
+};
+
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(query).matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const media = window.matchMedia(query);
+    const handleChange = (event) => setMatches(event.matches);
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
+  }, [query]);
+
+  return matches;
+}
+
+function WorkflowEditorContent({ workflow, onRefresh }) {
+  const router = useRouter();
+  const { state, dispatch } = useWorkflowEditor();
+  const { setName: setGlobalName } = useWorkflowContext();
+  const isLgUp = useMediaQuery("(min-width: 1024px)");
+
+  const [validation, setValidation] = useState(workflow?.validation ?? null);
+  const [savedAt, setSavedAt] = useState(null);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [issuesOpen, setIssuesOpen] = useState(false);
+  const [publishedFlash, setPublishedFlash] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
+
+  const propIntake = workflow?.intake;
+  const [intake, setIntake] = useState(Number(propIntake ?? WORKFLOW_INTAKE.OPEN));
+  const [trackedPropIntake, setTrackedPropIntake] = useState(propIntake);
+  if (trackedPropIntake !== propIntake) {
+    setTrackedPropIntake(propIntake);
+    if (propIntake !== undefined && propIntake !== null) setIntake(Number(propIntake));
+  }
+
+  const propClosesAt = workflow?.intakeClosesAt ?? null;
+  const [intakeClosesAt, setIntakeClosesAt] = useState(propClosesAt);
+  const [trackedPropClosesAt, setTrackedPropClosesAt] = useState(propClosesAt);
+  if (trackedPropClosesAt !== propClosesAt) {
+    setTrackedPropClosesAt(propClosesAt);
+    setIntakeClosesAt(propClosesAt);
+  }
+  const effectiveIntake = intake === WORKFLOW_INTAKE.OPEN && intakeClosesAt && isPastDate(intakeClosesAt) ? WORKFLOW_INTAKE.NEW_RUNS_CLOSED : intake;
+
+  const focusNonce = state.focus?.nonce ?? 0;
+  const [seenFocusNonce, setSeenFocusNonce] = useState(focusNonce);
+  if (seenFocusNonce !== focusNonce) {
+    setSeenFocusNonce(focusNonce);
+    if (!isLgUp && state.focus?.localId) setDrawerOpen(true);
+  }
+
+  useEffect(() => {
+    setGlobalName(state.name);
+  }, [state.name, setGlobalName]);
+
+  const metaRef = useRef(workflow ? {
+    name: workflow.name ?? "",
+    description: workflow.description ?? "",
+    allowMultipleRuns: Boolean(workflow.allowMultipleRuns),
+  } : null);
+  const definitionTimer = useRef(null);
+  const metaTimer = useRef(null);
+
+  const [loadedDefinition] = useState(() => JSON.stringify(toDefinitionPayload(state.nodes, state.transitions)));
+  const savedDefinitionRef = useRef(loadedDefinition);
+  const [hasDraft, setHasDraft] = useState(Boolean(workflow?.draft) || !workflow?.published);
+
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  });
+
+  const createMutation = useCreateWorkflowMutation();
+  const saveDefinitionMutation = useSaveDefinitionMutation();
+  const updateWorkflowMutation = useUpdateWorkflowMutation();
+  const publishMutation = usePublishWorkflowMutation();
+  const archiveMutation = useArchiveWorkflowMutation();
+  const intakeMutation = useUpdateWorkflowIntakeMutation();
+  const scheduleMutation = useUpdateWorkflowIntakeScheduleMutation();
+
+  const creatingRef = useRef(null);
+  const ensureWorkflow = useCallback(() => {
+    const current = stateRef.current;
+    if (current.id) return Promise.resolve(current.id);
+    if (creatingRef.current) return creatingRef.current;
+
+    const payload = { name: current.name, description: current.description || null, allowMultipleRuns: current.allowMultipleRuns };
+
+    creatingRef.current = createMutation.mutateAsync(payload)
+      .then((response) => {
+        const created = response?.data ?? response ?? {};
+        const id = created.id;
+        if (!id) throw new Error("Akış oluşturulamadı");
+
+        metaRef.current = {
+          name: created.name ?? "",
+          description: created.description ?? "",
+          allowMultipleRuns: Boolean(created.allowMultipleRuns),
+        };
+        dispatch({ type: "SET_ID", id });
+        window.history.replaceState(null, "", `/admin/workflows/${id}`);
+        return id;
+      })
+      .finally(() => { creatingRef.current = null; });
+
+    return creatingRef.current;
+  }, [createMutation, dispatch]);
+
+  const ensureRef = useRef(ensureWorkflow);
+  useEffect(() => {
+    ensureRef.current = ensureWorkflow;
+  });
+
+  const { data: versionsData } = useWorkflowVersionsQuery(state.id);
+  const { data: availableFormsData, isLoading: isFormsLoading } = useAvailableFormsQuery(state.id, { enabled: pickerOpen && Boolean(state.id) });
+
+  const formQueries = useQueries({
+    queries: state.nodes.map((node) => ({
+      queryKey: ["form", node.formId],
+      queryFn: () => fetchFormById(node.formId),
+      enabled: Boolean(node.formId),
+      retry: false,
+      staleTime: 60000,
+    })),
+  });
+
+  const schemasByFormId = useMemo(() => {
+    const map = {};
+    formQueries.forEach((query, index) => {
+      const node = state.nodes[index];
+      const form = query.data?.data ?? query.data;
+      if (!node || !form) return;
+      map[node.formId] = {
+        title: form.title ?? node.formTitle,
+        schema: Array.isArray(form.schema) ? form.schema : [],
+        timeLimitMinutes: Number(form.timeLimitMinutes) > 0 ? form.timeLimitMinutes : null,
+      };
+    });
+    return map;
+  }, [formQueries, state.nodes]);
+
+  useEffect(() => {
+    if (Object.keys(schemasByFormId).length === 0) return;
+    dispatch({ type: "SYNC_NODE_FORMS", forms: schemasByFormId });
+  }, [schemasByFormId, dispatch]);
+
+  useEffect(() => {
+    if (state.id || state.isSaved) return undefined;
+
+    const timer = setTimeout(() => { ensureRef.current().catch(() => {}); }, DEFINITION_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [state.id, state.isSaved, state.name, state.description, state.allowMultipleRuns, state.nodes, state.transitions]);
+
+  useEffect(() => {
+    if (!state.id || state.isSaved) return undefined;
+
+    definitionTimer.current = setTimeout(() => {
+      const definition = toDefinitionPayload(state.nodes, state.transitions);
+      const serialized = JSON.stringify(definition);
+
+      if (serialized === savedDefinitionRef.current) {
+        dispatch({ type: "MARK_SAVED" });
+        return;
+      }
+
+      saveDefinitionMutation.mutate(
+        { workflowId: state.id, definition },
+        {
+          onSuccess: (response) => {
+            savedDefinitionRef.current = serialized;
+            setHasDraft(response?.data ? Boolean(response.data.draft) : true);
+            dispatch({ type: "MARK_SAVED" });
+            setSavedAt(new Date());
+            const next = response?.data?.validation ?? response?.data;
+            if (next?.errors) setValidation(next);
+          },
+        }
+      );
+    }, DEFINITION_DEBOUNCE_MS);
+
+    return () => clearTimeout(definitionTimer.current);
+  }, [state.id, state.isSaved, state.nodes, state.transitions]);
+
+  useEffect(() => {
+    if (!state.id || !metaRef.current) return undefined;
+
+    const current = { name: state.name, description: state.description, allowMultipleRuns: state.allowMultipleRuns };
+    const previous = metaRef.current;
+    const unchanged = current.name === previous.name && current.description === previous.description && current.allowMultipleRuns === previous.allowMultipleRuns;
+    if (unchanged) return undefined;
+
+    metaTimer.current = setTimeout(() => {
+      updateWorkflowMutation.mutate(
+        { workflowId: state.id, payload: { name: current.name, description: current.description, allowMultipleRuns: current.allowMultipleRuns } },
+        { onSuccess: () => { metaRef.current = current; setSavedAt(new Date()); } }
+      );
+    }, META_DEBOUNCE_MS);
+
+    return () => clearTimeout(metaTimer.current);
+  }, [state.id, state.name, state.description, state.allowMultipleRuns]);
+
+  useEffect(() => {
+    if (!publishedFlash) return undefined;
+    const timer = setTimeout(() => setPublishedFlash(false), 2200);
+    return () => clearTimeout(timer);
+  }, [publishedFlash]);
+
+  useEffect(() => {
+    if (state.isSaved) return undefined;
+    const warn = (event) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [state.isSaved]);
+
+  const issues = useMemo(() => (Array.isArray(validation?.errors) ? validation.errors : []), [validation]);
+
+  const issuesByNode = useMemo(() => {
+    const map = {};
+    issues.forEach((issue) => {
+      if (!issue.nodeKey) return;
+      map[issue.nodeKey] = [...(map[issue.nodeKey] ?? []), issue];
+    });
+    return map;
+  }, [issues]);
+
+  const globalIssues = issues.filter((issue) => !issue.nodeKey);
+
+  const loadingFormIds = new Set(formQueries.flatMap((query, index) => (query.isLoading && state.nodes[index] ? [state.nodes[index].formId] : [])));
+
+  const questionCounts = useMemo(() => {
+    const counts = {};
+    Object.entries(schemasByFormId).forEach(([formId, form]) => {
+      counts[formId] = form.schema.filter((field) => field?.type !== "separator").length;
+    });
+    return counts;
+  }, [schemasByFormId]);
+
+  const labelForTransition = useCallback((transition) => {
+    const group = groupTransitions(state.transitions, transition.sourceNodeKey, transition.trigger);
+    const hasConditional = group.some((item) => item.condition);
+
+    if (!transition.condition) {
+      return hasConditional ? "aksi halde" : TRIGGER_LABEL[transition.trigger];
+    }
+
+    const rules = transition.condition.rules ?? [];
+    const rule = rules[0];
+    if (!rule?.questionId) return "koşul eksik";
+
+    const sourceNode = rule.nodeKey
+      ? state.nodes.find((node) => node.nodeKey === rule.nodeKey)
+      : state.nodes.find((node) => node.nodeKey === transition.sourceNodeKey);
+
+    const field = schemasByFormId[sourceNode?.formId]?.schema?.find((item) => item.id === rule.questionId);
+    const question = field ? fieldQuestionLabel(field) : rule.questionId;
+    const comparison = Number(rule.comparison);
+    const value = Array.isArray(rule.values) && rule.values.length > 0 ? rule.values.join(", ") : rule.value;
+    const summary = VALUELESS_COMPARISONS.includes(comparison)
+      ? `${question} ${COMPARISON_SYMBOL[comparison]}`
+      : `${question} ${COMPARISON_SYMBOL[comparison]} ${value || "?"}`;
+
+    return rules.length > 1 ? `${summary} +${rules.length - 1}` : summary;
+  }, [state.transitions, state.nodes, schemasByFormId]);
+
+  const lockedHighlights = useMemo(() => {
+    const locked = new Map();
+
+    state.transitions.forEach((transition) => {
+      (transition.condition?.rules ?? []).forEach((rule) => {
+        if (!rule.questionId) return;
+        const node = rule.nodeKey
+          ? state.nodes.find((item) => item.nodeKey === rule.nodeKey)
+          : state.nodes.find((item) => item.nodeKey === transition.sourceNodeKey);
+        if (!node) return;
+
+        const field = schemasByFormId[node.formId]?.schema?.find((item) => item.id === rule.questionId);
+        const question = field ? fieldQuestionLabel(field) : rule.questionId;
+        const values = Array.isArray(rule.values) && rule.values.length > 0 ? rule.values : rule.value ? [rule.value] : [];
+        const key = `${node.formTitle}|${question}`;
+        const current = locked.get(key) ?? { form: node.formTitle, question, values: new Set() };
+        values.forEach((value) => current.values.add(value));
+        locked.set(key, current);
+      });
+    });
+
+    const lines = [...locked.values()].map((item) => {
+      const values = [...item.values];
+      const valueText = values.length > 0 ? `, ${values.map((value) => `"${value}"`).join(" ve ")} seçeneği yeniden adlandırılamaz` : "";
+      return `${item.form} formundaki "${item.question}" sorusu silinemez${valueText}.`;
+    });
+
+    return [
+      ...lines,
+      "Akıştaki formlar kapatılamaz, silinemez ve anonim cevaba açılamaz.",
+      "Devam eden başvurular yayındaki eski sürümde kalmaya devam eder.",
+    ];
+  }, [state.transitions, state.nodes, schemasByFormId]);
+
+  const handlePublish = () => {
+    publishMutation.mutate(state.id, {
+      onSuccess: (response) => {
+        const next = response?.data?.validation ?? response?.data;
+        if (next?.errors) setValidation(next);
+        setHasDraft(false);
+        setPublishOpen(false);
+        setPublishedFlash(true);
+        onRefresh?.();
+      },
+      onError: (error) => {
+        const next = error?.body?.data;
+        if (next?.errors) setValidation(next);
+        setPublishOpen(false);
+        setIssuesOpen(true);
+      },
+    });
+  };
+
+  const handleArchive = () => {
+    archiveMutation.mutate(state.id, {
+      onSuccess: () => router.push("/admin/workflows"),
+      onError: () => setDeleteOpen(false),
+    });
+  };
+
+  const usedFormIds = state.nodes.map((node) => node.formId);
+
+  const availableFormsPayload = availableFormsData?.data ?? availableFormsData;
+  const availableForms = Array.isArray(availableFormsPayload) ? availableFormsPayload : availableFormsPayload?.items ?? [];
+
+  const versionsPayload = versionsData?.data ?? versionsData;
+  const versions = Array.isArray(versionsPayload) ? versionsPayload : versionsPayload?.items ?? [];
+  const isLive = Boolean(workflow?.published) || versions.some((version) => Number(version.status) === 1);
+
+  const changeIntake = (next, onDone) => {
+    if (!state.id) return;
+    const previous = intake;
+    setIntake(next);
+    intakeMutation.mutate({ workflowId: state.id, intake: next }, {
+      onSuccess: (response) => {
+        const saved = response?.data?.intake;
+        if (saved !== undefined && saved !== null) setIntake(Number(saved));
+        onDone?.();
+      },
+      onError: () => {
+        setIntake(previous);
+        onDone?.();
+      },
+    });
+  };
+
+  const changeClosesAt = (next) => {
+    if (!state.id) return;
+    const previous = intakeClosesAt;
+    setIntakeClosesAt(next);
+    scheduleMutation.mutate({ workflowId: state.id, closesAt: next }, {
+      onSuccess: (response) => setIntakeClosesAt(response?.data ? response.data.intakeClosesAt ?? null : next),
+      onError: () => setIntakeClosesAt(previous),
+    });
+  };
+
+  const reopenNewRuns = () => {
+    if (intakeClosesAt && isPastDate(intakeClosesAt)) changeClosesAt(null);
+    if (intake !== WORKFLOW_INTAKE.OPEN) changeIntake(WORKFLOW_INTAKE.OPEN);
+  };
+
+  const showIntake = () => {
+    dispatch({ type: "SET_PANEL_TAB", tab: "flow" });
+    if (!isLgUp) setDrawerOpen(true);
+  };
+
+  const issuesOverlay = issuesOpen && issues.length > 0 ? (
+        <div className="max-h-56 overflow-y-auto rounded-lg border border-red-400/25 bg-neutral-900/95 p-3 shadow-xl backdrop-blur scrollbar">
+          <div className="flex items-center gap-2">
+            <span className="text-2xs font-medium text-red-200">Yayınlamayı engelleyen {issues.length} sorun</span>
+            <span className="h-px flex-1 bg-red-400/20" />
+            <button type="button" onClick={() => setIssuesOpen(false)} aria-label="Kapat" className="rounded p-0.5 text-red-200/70 transition-colors hover:text-red-100">
+              <X size={12} />
+            </button>
+          </div>
+          <ul className="mt-2 space-y-1">
+            {issues.map((issue, index) => (
+              <li key={`${issue.code}-${index}`}>
+                <button type="button" disabled={!issue.nodeKey}
+                  onClick={() => { if (issue.nodeKey) { dispatch({ type: "SELECT", nodeKey: issue.nodeKey }); setIssuesOpen(false); } }}
+                  className={`flex w-full items-start gap-2 rounded px-1 py-0.5 text-left text-2xs text-red-200/90 ${issue.nodeKey ? "transition-colors hover:bg-red-500/10 hover:text-red-100" : "cursor-default"}`}
+                >
+                  <span className="mt-1.5 size-1 shrink-0 rounded-full bg-red-400" />
+                  <span className="min-w-0">
+                    {validationMessage(issue)}
+                    {issue.nodeKey ? (
+                      <span className="ml-1 text-red-200/50">
+                        · {state.nodes.find((node) => node.nodeKey === issue.nodeKey)?.formTitle ?? issue.nodeKey}
+                      </span>
+                    ) : null}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+  ) : globalIssues.length > 0 ? (
+        <button type="button" onClick={() => setIssuesOpen(true)}
+          className="flex w-full items-center gap-2 rounded-lg border border-red-400/25 bg-neutral-900/95 px-3 py-2 text-left text-2xs text-red-200 shadow-xl backdrop-blur transition-colors hover:bg-red-500/10"
+        >
+          <span className="size-1.5 shrink-0 rounded-full bg-red-400" />
+          {validationMessage(globalIssues[0])}
+          {globalIssues.length > 1 ? <span className="text-red-200/60">+{globalIssues.length - 1}</span> : null}
+        </button>
+  ) : null;
+
+  const handleConnect = (sourceKey, trigger, targetKey) => {
+    const error = connectionError(sourceKey, targetKey, state.nodes, state.transitions);
+    if (error) return { ok: false, reason: CONNECTION_COPY[error].message };
+
+    const group = groupTransitions(state.transitions, sourceKey, trigger);
+
+    if (trigger === TRIGGER.TIMED_OUT && group.length > 0) {
+      const [route] = group;
+      if ((route.targetNodeKey ?? null) !== (targetKey ?? null)) {
+        dispatch({ type: "UPDATE_TRANSITION", localId: route.localId, patch: { targetNodeKey: targetKey ?? null } });
+      }
+      dispatch({ type: "FOCUS_ROUTE", localId: route.localId });
+      return { ok: true };
+    }
+
+    if (group.length === 0) {
+      if (targetKey) dispatch({ type: "ADD_TRANSITION", sourceNodeKey: sourceKey, trigger, targetNodeKey: targetKey, condition: null, focus: true });
+      else dispatch({ type: "FOCUS_PORT", nodeKey: sourceKey, trigger });
+      return { ok: true };
+    }
+
+    const existing = group.find((transition) => (transition.targetNodeKey ?? null) === (targetKey ?? null));
+    if (existing) {
+      dispatch({ type: "FOCUS_ROUTE", localId: existing.localId });
+      return { ok: true };
+    }
+
+    dispatch({
+      type: "ADD_TRANSITION", sourceNodeKey: sourceKey, trigger, targetNodeKey: targetKey,
+      condition: { operator: 0, rules: [{ ...EMPTY_RULE }] }, focus: true,
+    });
+    return { ok: true };
+  };
+
+  const openPicker = () => {
+    dispatch({ type: "SET_PANEL_TAB", tab: "flow" });
+    if (!isLgUp) setDrawerOpen(true);
+    ensureRef.current()
+      .then(() => setPickerOpen(true))
+      .catch(() => {});
+  };
+
+  const inspector = (
+    <WorkflowInspector state={state} dispatch={dispatch} schemasByFormId={schemasByFormId}
+      issuesByNode={issuesByNode} versions={versions} layout={isLgUp ? "grid" : "drawer"}
+      picker={{
+        open: pickerOpen, forms: availableForms, usedFormIds, isLoading: isFormsLoading,
+        onOpen: openPicker, onClose: () => setPickerOpen(false),
+        onSelect: (form) => { dispatch({ type: "ADD_NODE", form }); setPickerOpen(false); },
+      }}
+      onRelayout={() => dispatch({ type: "RELAYOUT" })}
+      intakeControl={isLive ? {
+        intake: effectiveIntake,
+        isPending: intakeMutation.isPending || scheduleMutation.isPending,
+        isError: intakeMutation.isError,
+        closedBySchedule: effectiveIntake !== intake,
+        onChange: (next) => changeIntake(next),
+        onReopenNewRuns: reopenNewRuns,
+        onRequestClose: () => setCloseOpen(true),
+      } : null}
+      scheduleControl={state.id ? {
+        closesAt: intakeClosesAt,
+        isPending: scheduleMutation.isPending,
+        isError: scheduleMutation.isError,
+        onChange: changeClosesAt,
+      } : null}
+    />
+  );
+
+  const gridContent = (
+    <div className="grid grid-cols-12 gap-4">
+      <WorkflowCanvas
+        nodes={state.nodes} transitions={state.transitions} selectedKey={state.selectedKey}
+        issuesByNode={issuesByNode} questionCounts={questionCounts} loadingFormIds={loadingFormIds}
+        name={state.name} onNameChange={(value) => dispatch({ type: "SET_META", key: "name", value })}
+        onSelect={(nodeKey) => dispatch({ type: "SELECT", nodeKey })}
+        onMove={(nodeKey, position) => dispatch({ type: "MOVE_NODE", nodeKey, position })}
+        onAddStep={openPicker}
+        onConnect={handleConnect}
+        onFocusRoute={(localId) => dispatch({ type: "FOCUS_ROUTE", localId })}
+        onFocusPort={(nodeKey, trigger) => dispatch({ type: "FOCUS_PORT", nodeKey, trigger })}
+        highlightedRouteId={state.focus?.localId ?? null}
+        labelForTransition={labelForTransition}
+        span={isLgUp ? 8 : 11} isLgUp={isLgUp} overlay={issuesOverlay}
+      />
+
+      {!isLgUp && <LibraryTrigger isLgUp={isLgUp} />}
+      {isLgUp && inspector}
+    </div>
+  );
+
+  return (
+    <>
+      <WorkflowHeaderActions
+        saveStatus={<HeaderStatusPill dirty={!state.isSaved} isSaving={saveDefinitionMutation.isPending || createMutation.isPending}
+          isFailed={saveDefinitionMutation.isError || createMutation.isError} lastSavedAt={savedAt} publishedFlash={publishedFlash} />}
+        intake={isLive ? effectiveIntake : WORKFLOW_INTAKE.OPEN}
+        onShowIntake={showIntake}
+        issueCount={issues.length}
+        onShowIssues={() => setIssuesOpen((open) => !open)}
+        onUndo={() => dispatch({ type: "UNDO" })}
+        canUndo={state._history.length > 0}
+        onArchive={() => setDeleteOpen(true)}
+        isArchiveDisabled={!state.id || archiveMutation.isPending}
+        onPublish={() => setPublishOpen(true)}
+        isPublishing={publishMutation.isPending}
+        isError={publishMutation.isError}
+        error={publishMutation.error}
+        canPublish={Boolean(state.id) && state.nodes.length > 0 && hasDraft}
+      />
+
+      <div className="relative">
+        {!isLgUp ? (
+          <Drawer open={drawerOpen} onOpenChange={(open) => { setDrawerOpen(open); if (!open) setPickerOpen(false); }}>
+            <div className="h-full w-full flex-1 p-4">{gridContent}</div>
+            <DrawerContent className="h-full">{inspector}</DrawerContent>
+          </Drawer>
+        ) : (
+          <div className="h-full w-full flex-1 p-4">{gridContent}</div>
+        )}
+
+        <ApprovalOverlay open={publishOpen} preset="publish-workflow"
+          context={{ highlights: lockedHighlights, isPending: publishMutation.isPending }}
+          onApprove={handlePublish} onReject={() => setPublishOpen(false)}
+        />
+
+        <ApprovalOverlay open={closeOpen} preset="close-workflow"
+          context={{ activeRunCount: workflow?.activeRunCount ?? null, isPending: intakeMutation.isPending }}
+          onApprove={() => changeIntake(WORKFLOW_INTAKE.CLOSED, () => setCloseOpen(false))}
+          onReject={() => setCloseOpen(false)}
+        />
+
+        <ApprovalOverlay open={deleteOpen} preset="archive-workflow" context={{ isPending: archiveMutation.isPending }}
+          onApprove={handleArchive} onReject={() => setDeleteOpen(false)}
+        />
+      </div>
+    </>
+  );
+}
+
+export default function WorkflowEditor({ workflow, onRefresh, initialFormId = null }) {
+  return (
+    <WorkflowEditorProvider workflow={workflow} initialFormId={initialFormId}>
+      <WorkflowEditorContent workflow={workflow} onRefresh={onRefresh} />
+    </WorkflowEditorProvider>
+  );
+}

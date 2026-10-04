@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useReducer, useMemo, useCallback, useRef } from "react";
+import { createContext, useContext, useReducer, useMemo, useCallback, useRef, useEffect } from "react";
 import { migrateSchema } from "@/app/components/form-migrate";
 
 const MAX_HISTORY = 20;
@@ -8,7 +8,7 @@ const HISTORY_DEBOUNCE_MS = 800;
 
 const TRACKABLE_ACTIONS = new Set([
     "SET_TITLE", "SET_DESCRIPTION", "SET_SCHEMA",
-    "SET_STATUS", "UPDATE_SETTINGS", "SET_EDITORS",
+    "SET_STATUS", "UPDATE_SETTINGS", "SET_EDITORS", "SET_TASK",
 ]);
 
 const initialFormState = {
@@ -16,42 +16,70 @@ const initialFormState = {
     schema: [],
     title: "Yeni Form",
     description: "",
-    linkedFormId: "",
-    linkedFormTitle: "",
     allowMultipleResponses: false,
     allowAnonymousResponses: false,
     requiresManualReview: false,
+    task: null,
+    closesAt: null,
+    timeLimitMinutes: null,
     editors: [],
     status: 1,
-    isChildForm: false,
     isSaved: true,
     userRole: 3,
+    workflow: null,
     _history: [],
 };
+
+const draftFields = (state) => ({
+    title: state.title,
+    description: state.description,
+    schema: state.schema,
+    status: state.status,
+    allowAnonymousResponses: state.allowAnonymousResponses,
+    allowMultipleResponses: state.allowMultipleResponses,
+    requiresManualReview: state.requiresManualReview,
+    task: state.task ?? null,
+    closesAt: state.closesAt ?? null,
+    timeLimitMinutes: state.timeLimitMinutes ?? null,
+});
+
+const savedFields = (state) => ({
+    ...draftFields(state),
+    editors: (state.editors ?? []).map((editor) => [editor.user?.id, Number(editor.role)]),
+});
+
+export const hasDraftChanges = (state) =>
+    JSON.stringify(draftFields(state)) !== JSON.stringify(draftFields(state._saved));
+
+const withSavedFlag = (state) => ({
+    ...state,
+    isSaved: JSON.stringify(savedFields(state)) === JSON.stringify(state._saved),
+});
+
+const withSnapshot = (state) => ({ ...state, _saved: savedFields(state), isSaved: true });
 
 function coreReducer(state, action) {
     switch (action.type) {
         case "LOAD_FORM":
-            return {
+            return withSnapshot({
                 ...state,
                 ...action.payload,
                 schema: migrateSchema(action.payload.schema),
                 editors: Array.isArray(action.payload.collaborators) ? action.payload.collaborators : [],
                 title: action.payload.title || "Yeni Form",
-                isSaved: true
-            };
+            });
 
         case "SET_TITLE":
-            return { ...state, title: action.payload, isSaved: false };
+            return { ...state, title: action.payload };
 
         case "SET_DESCRIPTION":
-            return { ...state, description: action.payload, isSaved: false };
+            return { ...state, description: action.payload };
 
         case "SET_SCHEMA":
-            return { ...state, schema: action.payload, isSaved: false };
+            return { ...state, schema: action.payload };
 
         case "SET_STATUS":
-            return { ...state, status: action.payload, isSaved: false };
+            return { ...state, status: action.payload };
 
         case "LOAD_DRAFT":
             return {
@@ -63,20 +91,25 @@ function coreReducer(state, action) {
                 allowMultipleResponses: action.payload.allowMultipleResponses ?? state.allowMultipleResponses,
                 requiresManualReview: action.payload.requiresManualReview ?? state.requiresManualReview,
                 status: action.payload.status ?? state.status,
-                isSaved: false,
+                task: action.payload.task !== undefined ? action.payload.task : state.task,
+                closesAt: action.payload.closesAt !== undefined ? action.payload.closesAt : state.closesAt,
+                timeLimitMinutes: action.payload.timeLimitMinutes !== undefined ? action.payload.timeLimitMinutes : state.timeLimitMinutes,
             };
 
+        case "SET_TASK":
+            return { ...state, task: action.payload };
+
         case "MARK_SAVED":
-            return state.isSaved ? state : { ...state, isSaved: true };
+            return { ...state, _saved: savedFields(action.payload ?? state) };
 
         case "UPDATE_SETTINGS":
-            return { ...state, [action.payload.key]: action.payload.value, isSaved: false };
+            return { ...state, [action.payload.key]: action.payload.value };
 
         case "SET_EDITORS":
-            return { ...state, editors: action.payload, isSaved: false };
+            return { ...state, editors: action.payload };
 
         case "RESET_FORM":
-             return { ...initialFormState };
+             return withSnapshot(initialFormState);
 
         default:
             return state;
@@ -88,11 +121,11 @@ function formReducer(state, action) {
         const history = state._history;
         if (history.length === 0) return state;
         const previous = history[history.length - 1];
-        return {
+        return withSavedFlag({
             ...previous,
+            _saved: state._saved,
             _history: history.slice(0, -1),
-            isSaved: false,
-        };
+        });
     }
 
     if (action.type === "_COMMIT_HISTORY") {
@@ -104,19 +137,23 @@ function formReducer(state, action) {
     }
 
     const next = coreReducer(state, action);
-    return next === state ? state : { ...next, _history: state._history };
+    return next === state ? state : withSavedFlag({ ...next, _history: state._history });
+}
+
+function initEditorState({ initialData, initialDraft }) {
+    const state = withSnapshot(initialData ? { ...initialFormState, ...initialData, _history: [] } : initialFormState);
+    return initialDraft ? formReducer(state, { type: "LOAD_DRAFT", payload: initialDraft }) : state;
 }
 
 const FormEditorContext = createContext(null);
 
-export function FormEditorProvider({ children, initialData }) {
-    const initializer = initialData
-        ? { ...initialFormState, ...initialData, _history: [] }
-        : initialFormState;
-    const [state, rawDispatch] = useReducer(formReducer, initializer);
+export function FormEditorProvider({ children, initialData, initialDraft = null }) {
+    const [state, rawDispatch] = useReducer(formReducer, { initialData, initialDraft }, initEditorState);
 
     const stateRef = useRef(state);
-    stateRef.current = state;
+    useEffect(() => {
+        stateRef.current = state;
+    }, [state]);
 
     const pendingSnapshotRef = useRef(null);
     const timerRef = useRef(null);

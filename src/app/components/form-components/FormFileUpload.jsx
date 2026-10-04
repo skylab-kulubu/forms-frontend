@@ -7,6 +7,7 @@ import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { uploadWithProgress } from "@/lib/apiClient";
+import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes)) return "-";
@@ -209,11 +210,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
       <div className="flex flex-col p-2 md:p-4">
 
         <div className="flex gap-3">
-          {questionNumber != null && (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
-              {questionNumber}
-            </div>
-          )}
+          <QuestionNumber number={questionNumber} missing={missing} />
           <div className="flex flex-col">
             <p className="text-sm font-medium text-neutral-100">
               {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-400/80">*</span>}
@@ -299,7 +296,7 @@ export function DisplayFormFileUpload({ question, questionNumber, description, r
           )}
         </div>
 
-        {missing && !error && <span className="mt-2 px-1 text-xs font-medium text-red-400 animate-in fade-in">Bu alan zorunludur.</span>}
+        {!error && <QuestionHint required={required} missing={missing} className="mt-2" />}
       </div>
     </div>
   );

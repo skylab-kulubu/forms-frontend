@@ -1,48 +1,44 @@
-import { Link, Shredder, Unlink } from "lucide-react";
+import { Shredder, Workflow } from "lucide-react";
 
 export const APPROVAL_PRESETS = {
-    "link-add": {
+    "publish-workflow": {
         variant: "delayed",
-        delaySeconds: 3,
-        requiredPhrase: "Onaylıyorum",
-        icon: Link,
-        title: "Bu formu başka bir formla bağla",
-        highlights: () => [
-            "Seçtiğiniz formla kalıcı bir bağlantı kurulacak.",
-            "Ayarlar ve düzenleme ekibi bağlı forma aktarılacak, bağlantı koparılana kadar senkronize kalacak.",
-            "Kullanıcılar bu formu doldurup cevabı onaylandığında otomatik olarak bağlı forma yönlendirilecek.",
-            "Bu bağlantıyı istediğiniz zaman ayarlardan kaldırabilir veya değiştirebilirsiniz.",
-        ],
-        approveLabel: (ctx) => ctx.isPending ? "Bağlanıyor..." : "Bağlantıyı kur",
+        delaySeconds: 2,
+        icon: Workflow,
+        title: "Akışı yayınla",
+        highlights: (ctx) => ctx.highlights ?? [],
+        approveLabel: (ctx) => ctx.isPending ? "Yayınlanıyor..." : "Yayınla",
         rejectLabel: () => "Vazgeç",
     },
 
-    "link-change": {
+    "close-workflow": {
         variant: "delayed",
-        delaySeconds: 3,
-        requiredPhrase: "Onaylıyorum",
-        icon: Link,
-        title: "Bağlı formu değiştir",
-        highlights: () => [
-            "Mevcut bağlantı kaldırılıp yeni seçilen forma yönlendirilecek.",
-            "Eski bağlantıya dayanan akışlar bundan sonra yeni forma göre çalışacak.",
-            "Değişikliği istediğiniz zaman ayarlardan geri alabilirsiniz.",
+        delaySeconds: 2,
+        icon: Workflow,
+        title: "Akışı kapat",
+        highlights: (ctx) => [
+            "Akıştaki bütün adımlar cevap almayı bırakır; yeni başvuru da başlatılamaz.",
+            ctx.activeRunCount > 0
+                ? `Devam eden ${ctx.activeRunCount} başvuru, akış yeniden açılana kadar bekler.`
+                : "Devam eden başvurular, akış yeniden açılana kadar bekler.",
+            "İnceleyenler bekleyen cevaplar için karar vermeye devam edebilir.",
+            "Tamamlanan başvuruların sonucu görünmeye devam eder.",
         ],
-        approveLabel: (ctx) => ctx.isPending ? "Güncelleniyor..." : "Bağlantıyı değiştir",
+        approveLabel: (ctx) => ctx.isPending ? "Kapatılıyor..." : "Akışı kapat",
         rejectLabel: () => "Vazgeç",
     },
 
-    "link-remove": {
+    "archive-workflow": {
         variant: "phrase",
         requiredPhrase: "Kabul ediyorum",
-        icon: Unlink,
-        title: "Form bağlantısını kaldır",
+        icon: Workflow,
+        title: "Bu akışı arşivle",
         highlights: () => [
-            "Kullanıcılar bu formu doldurduktan sonra artık başka bir forma yönlendirilmeyecek.",
-            "Bağlantıya dayalı akışlarınız varsa bunlar devre dışı kalabilir.",
-            "İstediğiniz zaman yeni bir bağlantı kurabilirsiniz.",
+            "Akış yayından kalkar, yeni başvuru başlatılamaz.",
+            "Devam eden başvurular bulundukları sürümde kalmaya devam eder.",
+            "Akıştaki formlar ve cevapları silinmez.",
         ],
-        approveLabel: (ctx) => ctx.isPending ? "Kaldırılıyor..." : "Bağlantıyı kaldır",
+        approveLabel: (ctx) => ctx.isPending ? "Arşivleniyor..." : "Akışı arşivle",
         rejectLabel: () => "Vazgeç",
     },
 
@@ -52,7 +48,6 @@ export const APPROVAL_PRESETS = {
         icon: Shredder,
         title: "Bu formu kalıcı olarak sil",
         highlights: () => [
-            "Bağlı formlar ve akışlar devre dışı kalacak.",
             "Tüm yanıtlar ve istatistikler kalıcı olarak silinecek.",
             "Bu işlem geri alınamaz.",
         ],
@@ -65,29 +60,14 @@ export const APPROVAL_PRESETS = {
         delaySeconds: 1,
         requiredPhrase: "Kabul ediyorum",
         icon: Shredder,
-        title: "Bu bileşen grubunu kalıcı olarak sil",
+        title: "Bu şablonu kalıcı olarak sil",
         highlights: () => [
-            "Bu gruba ait tüm bileşenler kalıcı olarak silinecek.",
-            "Bu grubu kullanan formlar etkilenebilir.",
+            "Bu şablona ait tüm bileşenler kalıcı olarak silinecek.",
+            "Bu şablonu kullanan formlar etkilenebilir.",
             "Bu işlem geri alınamaz.",
         ],
-        approveLabel: (ctx) => ctx.isPending ? "Siliniyor..." : "Grubu sil",
+        approveLabel: (ctx) => ctx.isPending ? "Siliniyor..." : "Şablonu sil",
         rejectLabel: () => "İptal",
-    },
-
-    "anonymous-toggle": {
-        variant: "delayed",
-        delaySeconds: 3,
-        requiredPhrase: "Onaylıyorum",
-        title: "Anonim yanıtları etkinleştir",
-        icon: Unlink,
-        highlights: () => [
-            "Anonim yanıtlar açıldığında mevcut form bağlantısı otomatik olarak kaldırılacak.",
-            "Kullanıcı kimliği toplanmayacağından kişiye özel akışlar çalışmayabilir.",
-            "Bu ayarı istediğiniz zaman geri kapatabilirsiniz.",
-        ],
-        approveLabel: (ctx) => ctx.isPending ? "Etkinleştiriliyor..." : "Anonim yanıtları aç",
-        rejectLabel: () => "Vazgeç",
     },
 
     default: {

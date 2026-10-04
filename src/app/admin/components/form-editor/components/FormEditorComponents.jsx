@@ -35,7 +35,7 @@ export function GhostComponent({ active, schema }) {
 }
 
 
-export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span = 8, toolbar }) {
+export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span = 8 }) {
     const { setNodeRef, isOver } = useDroppable({ id: "canvas" });
     const showDrop = isOver && dragSource === "library";
     const spanClass = span === 12 ? "col-span-12" : span === 11 ? "col-span-11" : "col-span-8";
@@ -56,7 +56,6 @@ export function Canvas({ children, dragSource, schemaTitle, setSchemaTitle, span
                         <PencilLine size={12} className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-neutral-500" />
                     )}
                 </div>
-                {toolbar ? <div className="flex items-center gap-2">{toolbar}</div> : null}
             </div>
             <motion.div ref={setNodeRef} className={`overflow-y-auto rounded-xl transition border-2 scrollbar-hidden min-h-0 flex-1
                 bg-[radial-gradient(rgba(255,255,255,0.06)_1px,transparent_1px)] bg-size-[22px_22px] bg-local
@@ -81,7 +80,7 @@ function ItemActionButton({ label, onClick, disabled, danger, children }) {
     );
 }
 
-export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDuplicate, onDelete, onMove, canMoveUp, canMoveDown }) {
+export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDuplicate, onDelete, onMove, canMoveUp, canMoveDown, workflowLock = null }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
         id: field.id,
         data: { from: "canvas", id: field.id },
@@ -130,7 +129,9 @@ export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDupli
                         <Copy size={13} />
                     </ItemActionButton>
                     <span className="mx-0.5 h-4 w-px bg-white/10" />
-                    <ItemActionButton label="Sil" onClick={() => onDelete(field.id)} danger disabled={isIdentityField(field)}>
+                    <ItemActionButton label={workflowLock ? "Akış koşulu bu soruyu okuyor; silinemez" : "Sil"} onClick={() => onDelete(field.id)} danger
+                        disabled={isIdentityField(field) || Boolean(workflowLock)}
+                    >
                         <Trash2 size={13} />
                     </ItemActionButton>
                 </div>
@@ -141,6 +142,7 @@ export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDupli
                     condition={field.condition}
                     onConditionChange={(cond) => onUpdate(field.id, { condition: cond })}
                     availableFields={availableFields}
+                    workflowLock={workflowLock}
                 />
             ) : null}
         </div>
