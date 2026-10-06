@@ -136,6 +136,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const hasAnswers = visibleFields.some((field) => field.type !== "separator" && hasValue(field, formValues[field.id]));
   const identityEmailField = visibleFields.find((field) => field.props?.identity === "email");
   const typedEmail = identityEmailField ? String(formValues[identityEmailField.id] ?? "").trim() : "";
+  const asksIdentity = visibleFields.some((field) => field.props?.identity);
 
   const nextCopy = nextStepCopy({
     workflow: activeJourney,
@@ -328,7 +329,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                           >
                             <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionNumbers.get(field.id)} value={formValues[field.id]}
                               onChange={(e) => handleValueChange(field.id, e.target.value, e.isDefault)} missing={isMissing}
-                              disableAutoFill={Boolean(field.props?.identity || activeForm?.eventId)}
+                              disableAutoFill={asksIdentity}
                               onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
                             />
                           </motion.div>
