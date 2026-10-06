@@ -31,6 +31,8 @@ const itemVariants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } }
 };
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function hasValue(field, value) {
   if (field.type === "toggle") return value === true;
   if (value === undefined || value === null) return false;
@@ -132,6 +134,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     .sort((a, b) => a.number - b.number);
 
   const hasAnswers = visibleFields.some((field) => field.type !== "separator" && hasValue(field, formValues[field.id]));
+  const identityEmailField = visibleFields.find((field) => field.props?.identity === "email");
+  const typedEmail = identityEmailField ? String(formValues[identityEmailField.id] ?? "").trim() : "";
 
   const nextCopy = nextStepCopy({
     workflow: activeJourney,
@@ -348,7 +352,9 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                           ) : "Gönder"}
                         </motion.button>
                       </div>
-                      <RespondentLine savedAt={isAuthed ? lastSavedAt : null} hasAnswers={hasAnswers} />
+                      <RespondentLine savedAt={isAuthed ? lastSavedAt : null} hasAnswers={hasAnswers}
+                        copyEmail={EMAIL_PATTERN.test(typedEmail) ? typedEmail : null}
+                      />
                     </motion.div>
                   </>
                 ) : (

@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { Clock, RotateCcw, UserRound, UserRoundX } from "lucide-react";
+import { Clock, Mail, RotateCcw, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import { loginWithKeycloak } from "@/lib/authActions";
 
@@ -179,7 +179,7 @@ export function NextStepNote({ text }) {
   );
 }
 
-export function RespondentLine({ savedAt, hasAnswers = false }) {
+export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null }) {
   const { data: session, status } = useSession();
   const prompt = useLoginPrompt(hasAnswers);
 
@@ -200,33 +200,45 @@ export function RespondentLine({ savedAt, hasAnswers = false }) {
   }
 
   return (
-    <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
-      <span className="inline-flex items-center gap-1.5">
-        {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
-        {isAuthed
-          ? <span><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
-          : <span>Anonim olarak yanıtlıyorsunuz</span>}
-      </span>
-      {!isAuthed && (
-        <>
-          <span className="text-neutral-700">·</span>
-          <span>Taslak kaydedilmiyor</span>
-          <button type="button" onClick={prompt.request}
-            className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
-          >
-            Giriş yap
-          </button>
-        </>
-      )}
-      {isAuthed && savedTime && (
-        <>
-          <span className="text-neutral-700">·</span>
-          <span className="inline-flex items-center gap-1.5">
-            <Clock size={11} className="shrink-0" />
-            Taslak kaydedildi {savedTime}
+    <>
+      <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
+        <span className="inline-flex items-center gap-1.5">
+          {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
+          {isAuthed
+            ? <span><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
+            : <span>Anonim olarak yanıtlıyorsunuz</span>}
+        </span>
+        {!isAuthed && (
+          <>
+            <span className="text-neutral-700">·</span>
+            <span>Taslak kaydedilmiyor</span>
+            <button type="button" onClick={prompt.request}
+              className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+            >
+              Giriş yap
+            </button>
+          </>
+        )}
+        {isAuthed && savedTime && (
+          <>
+            <span className="text-neutral-700">·</span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={11} className="shrink-0" />
+              Taslak kaydedildi {savedTime}
+            </span>
+          </>
+        )}
+      </p>
+      {/* Kayıtlı kullanıcının mailleri hesabındaki adrese gider; formda yazılan adres yalnızca misafirde kullanılır.
+          Metin kopyanın bu gönderimde gideceğini vaat etmez: aynı adrese form başına tek kopya ve günlük sınır var. */}
+      {!isAuthed && copyEmail && (
+        <p className="mt-1.5 flex items-center gap-1.5 text-2xs text-neutral-500">
+          <Mail size={12} className="shrink-0" />
+          <span className="min-w-0">
+            Bu formla ilgili e-postalar <span className="break-all text-neutral-200">{copyEmail}</span> adresine gönderilecek.
           </span>
-        </>
+        </p>
       )}
-    </p>
+    </>
   );
 }
