@@ -193,8 +193,10 @@ export function ResponseActions({ response, readOnly = false }) {
   const reviewerName = response.reviewer?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "Bilinmiyor";
   const reviewerPhotoUrl = response.reviewer?.profilePictureUrl || null;
 
-  const submitterName = response.user?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "Anonim Kullanıcı";
-  const submitterEmail = response.user?.email || "";
+  const guest = response.guest;
+  const submitterFullName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}` : "");
+  const submitterName = formatPersonName(submitterFullName) || "Anonim Kullanıcı";
+  const submitterEmail = response.user?.email || guest?.email || "";
   const submitterId = response.user?.id || null;
   const submitterPhotoUrl = response.user?.profilePictureUrl || null;
   const archiverId = response.archiver?.id || null;
@@ -325,7 +327,7 @@ export function ResponseActions({ response, readOnly = false }) {
 
             <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.06 }} className="px-1 py-4 first:pt-0">
               <SectionTitle>Yanıt Sahibi</SectionTitle>
-              <UserCard name={submitterName} email={submitterEmail} userId={submitterId} photoUrl={submitterPhotoUrl} hasUser={Boolean(response.user?.fullName)}/>
+              <UserCard name={submitterName} email={submitterEmail} userId={submitterId} photoUrl={submitterPhotoUrl} hasUser={Boolean(submitterFullName)}/>
             </motion.div>
 
             {attempt?.canDecide && isProvisional && !isArchived && (
