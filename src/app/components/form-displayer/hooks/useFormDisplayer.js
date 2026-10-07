@@ -18,6 +18,10 @@ import { useGuestUploads } from "./useGuestUploads";
 
 const RETRY_REASONS = new Set(["timeUp", "notStarted"]);
 const GUEST_FILE_REASONS = new Set(["fileScanning", "fileRejected", "fileExpired", "fileTypeNotAllowed", "fileTooLarge"]);
+const BUSY_REASONS = new Set(["tooManySubmissions", "submitUnavailable"]);
+const BUSY_RETRY_LIMIT = 3;
+const BUSY_WAIT_LIMIT_SECONDS = 60;
+const BUSY_JITTER_MS = 3000;
 
 function getSubmissionState(status) {
   switch (status) {
@@ -311,6 +315,8 @@ export function useFormDisplayer(form, draft, options = {}) {
   const [guestNotice, setGuestNotice] = useState(null);
   const [isPreparing, setPreparing] = useState(false);
   const [scanWait, setScanWait] = useState(null);
+  const [busyRetry, setBusyRetry] = useState(null);
+  const busyAttemptsRef = useRef(0);
   const answers = useMemo(() => draftAnswers(state.values, state.defaults, schema), [state.values, state.defaults, schema]);
   const handleDraftSynced = useCallback((savedDraft) => dispatch({ type: "DRAFT_SYNCED", draft: savedDraft }), []);
   const visibleFields = useMemo(() => getVisibleFields(schema, state.values), [schema, state.values]);
@@ -435,6 +441,18 @@ export function useFormDisplayer(form, draft, options = {}) {
     const data = error?.body?.data;
     const reason = data?.reason;
 
+    if (BUSY_REASONS.has(reason)) {
+      const seconds = Number(data?.retryAfterSeconds) || 5;
+      busyAttemptsRef.current += 1;
+      if (seconds <= BUSY_WAIT_LIMIT_SECONDS && busyAttemptsRef.current <= BUSY_RETRY_LIMIT) {
+        setBusyRetry({ at: Date.now() + seconds * 1000 + Math.round(Math.random() * BUSY_JITTER_MS) });
+        return true;
+      }
+      busyAttemptsRef.current = 0;
+      setGuestNotice({ kind: reason === "submitUnavailable" ? "submitUnavailable" : "busy", seconds });
+      return true;
+    }
+
     if (reason === "verificationFailed") {
       if (verifyRetried || !payload.turnstileToken) {
         setGuestNotice({ kind: "verify" });
@@ -475,6 +493,7 @@ export function useFormDisplayer(form, draft, options = {}) {
   const sendResponse = (payload, verifyRetried = false) => {
     submitMutation.mutate(payload, {
       onSuccess: (response) => {
+        busyAttemptsRef.current = 0;
         dispatch({ type: "SUBMIT_SUCCESS", status: response?.status, data: response?.data });
       },
       onError: (error) => {
@@ -496,7 +515,8 @@ export function useFormDisplayer(form, draft, options = {}) {
     });
   };
 
-  const handleSubmit = async (formattedResponses) => {
+  const handleSubmit = async (formattedResponses, { auto = false } = {}) => {
+    if (!auto) busyAttemptsRef.current = 0;
     dispatch({ type: "CLEAR_ERROR" });
     setGuestNotice(null);
     cancelDraftSave();
@@ -514,6 +534,7 @@ export function useFormDisplayer(form, draft, options = {}) {
     }
 
     setPreparing(true);
+    setBusyRetry(null);
     try {
       const turnstileToken = await requestSubmitToken();
       sendResponse({ ...payload, turnstileToken, guestUploadSession: guest.sessionId() });
@@ -532,11 +553,12 @@ export function useFormDisplayer(form, draft, options = {}) {
   const clearGuestNotice = useCallback(() => setGuestNotice(null), []);
   const startScanWait = useCallback(() => setScanWait(Date.now()), []);
   const stopScanWait = useCallback(() => setScanWait(null), []);
+  const clearBusyRetry = useCallback(() => setBusyRetry(null), []);
 
-  return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || isPreparing || Boolean(state.nextFormId),
+  return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || isPreparing || Boolean(state.nextFormId) || Boolean(busyRetry),
     lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro, clearError,
     now, isTimed, isRunning, startAttempt, isStarting: startMutation.isPending, startError,
     isGuest, guest, guestNotice, showGuestNotice: setGuestNotice, clearGuestNotice, turnstileBlocked: scriptBlocked && !verificationOutage, verificationOutage,
-    scanWait, startScanWait, stopScanWait,
+    scanWait, startScanWait, stopScanWait, busyRetry, clearBusyRetry,
   };
 }

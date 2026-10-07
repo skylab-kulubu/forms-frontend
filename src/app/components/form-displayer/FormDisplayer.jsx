@@ -17,7 +17,7 @@ import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
 import Background from "../Background";
 import NoticeDock from "../utils/NoticeDock";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
-import { scanResultCopy } from "@/lib/guest-uploads";
+import { scanResultCopy, waitCopy } from "@/lib/guest-uploads";
 import { CalendarClock, CircleAlert, Hourglass, Loader2, ShieldAlert, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -59,6 +59,13 @@ function guestNoticeCopy(notice, questionNumbers, scriptBlocked) {
       return { icon: Hourglass, tone: "text-amber-300", retry: true, text: "Dosyanız hâlâ taranıyor. Birkaç saniye sonra tekrar gönderin." };
     case "scanSlow":
       return { icon: Hourglass, tone: "text-amber-300", retry: true, text: "Dosyanızın taranması uzun sürüyor. Biraz bekleyip tekrar gönderin." };
+    case "busy":
+      return {
+        icon: Hourglass, tone: "text-amber-300", retry: true,
+        text: notice.seconds > 60 ? `Şu an çok yoğun. ${waitCopy(notice.seconds)} sonra tekrar gönderin.` : "Şu an çok yoğun. Birkaç saniye sonra tekrar gönderin.",
+      };
+    case "submitUnavailable":
+      return { icon: CircleAlert, tone: "text-red-300", retry: true, text: "Şu an gönderilemiyor. Biraz sonra tekrar deneyin." };
     case "login":
       return { icon: CircleAlert, tone: "text-red-300", login: true, text: "Bu forma şu an giriş yapmadan dosya gönderilemiyor. Dosyayla göndermek için giriş yapın." };
     default:
@@ -123,6 +130,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro, clearError,
     now, isTimed, isRunning, startAttempt, isStarting, startError,
     isGuest, guest, guestNotice, showGuestNotice, clearGuestNotice, turnstileBlocked, verificationOutage, scanWait, startScanWait, stopScanWait,
+    busyRetry, clearBusyRetry,
   } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt, guestUploads });
   const { data: session } = useSession();
   const [dismissedLateFor, setDismissedLateFor] = useState(null);
@@ -209,12 +217,13 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     if (element) element.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
   };
 
-  const onSubmit = () => {
+  const onSubmit = (auto = false) => {
     clearGuestNotice();
     setTimeout(() => {
       const missing = visibleFields.filter((field) => isFieldMissing(field, formValues[field.id])).map((field) => field.id);
 
       if (missing.length > 0) {
+        clearBusyRetry();
         showMissingFields(missing);
         setTimeout(() => jumpToField(missing[0]), 150);
         return;
@@ -222,11 +231,13 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
       if (isGuest) {
         if (guest.isScanning(fileFieldIds)) {
+          clearBusyRetry();
           startScanWait();
           return;
         }
         const problem = guest.problemIn(fileFieldIds);
         if (problem) {
+          clearBusyRetry();
           showGuestNotice({ kind: "file", status: problem.status, questionId: problem.questionId, scanResult: problem.scanResult ?? null, flagged: true });
           setTimeout(() => jumpToField(problem.questionId), 150);
           return;
@@ -241,7 +252,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
         return { id: field.id, type: field.type, question: field.props?.question || "", answer: finalAnswer };
       });
 
-      handleSubmit(formattedResponses);
+      handleSubmit(formattedResponses, { auto });
     }, 100);
   };
 
@@ -266,6 +277,12 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     }, Math.max(0, SCAN_WAIT_MS - (Date.now() - scanWait)));
     return () => clearTimeout(timer);
   }, [scanWait, stopScanWait, showGuestNotice]);
+
+  useEffect(() => {
+    if (!busyRetry) return undefined;
+    const timer = setTimeout(() => submitRef.current?.(true), Math.max(0, busyRetry.at - Date.now()));
+    return () => clearTimeout(timer);
+  }, [busyRetry]);
 
   const renderNotice = () => {
     if (sessionExpired || isFinished || showIntro) return null;
@@ -442,7 +459,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     <motion.div variants={itemVariants} className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
                       <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
                         <NextStepNote text={nextCopy} />
-                        <motion.button onClick={onSubmit} disabled={isSubmitting || isAnyFileUploading || isScanWaiting} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        <motion.button onClick={() => onSubmit()} disabled={isSubmitting || isAnyFileUploading || isScanWaiting} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                           className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none sm:ml-auto sm:shrink-0
                           ${isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}
                         >

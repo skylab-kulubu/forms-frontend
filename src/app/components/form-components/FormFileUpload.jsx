@@ -355,6 +355,11 @@ const VERIFICATION_LOCKS = {
   outage: { icon: CloudOff, title: "Dosya yükleme şu an kullanılamıyor", detail: "Güvenlik doğrulama hizmetine ulaşılamıyor. Biraz sonra tekrar deneyin." },
 };
 
+const QUEUE_REASONS = new Set(["tooManyUploads", "tooManySessions"]);
+const QUEUE_WAIT_LIMIT_SECONDS = 60;
+const QUEUE_RETRY_LIMIT = 3;
+const QUEUE_JITTER_MS = 2000;
+
 function lockFor(seconds, lock) {
   return { ...lock, lock: true, until: Date.now() + Math.max(1, Number(seconds) || 30) * 1000 };
 }
@@ -490,17 +495,23 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
   const entry = guest.files[fieldId] ?? null;
 
   const [pending, setPending] = useState(null);
+  const [queued, setQueued] = useState(null);
   const [progress, setProgress] = useState(0);
   const [problem, setProblem] = useState(null);
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef(null);
+  const startRef = useRef(null);
+  const reportUploadingRef = useRef(onUploadStateChange);
 
   const uploading = Boolean(pending);
+  const busy = uploading || Boolean(queued);
   const scanning = entry?.status === "scanning";
-  const entryIssue = uploading ? null : entryProblem(entry, rules);
-  const lock = uploading || entry ? null : VERIFICATION_LOCKS[guest.verification] ?? (problem?.lock ? problem : null);
-  const issue = uploading || lock ? null : entryIssue ?? (problem?.lock ? null : problem);
-  const shown = uploading ? { name: pending.name, size: pending.size } : entryIssue ? null : entry;
+  const entryIssue = busy ? null : entryProblem(entry, rules);
+  const lock = busy || entry ? null : VERIFICATION_LOCKS[guest.verification] ?? (problem?.lock ? problem : null);
+  const issue = busy || lock ? null : entryIssue ?? (problem?.lock ? null : problem);
+  const shown = uploading ? { name: pending.name, size: pending.size }
+    : queued ? { name: queued.file.name, size: queued.file.size }
+      : entryIssue ? null : entry;
 
   useEffect(() => {
     if (!problem?.until) return undefined;
@@ -508,23 +519,49 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
     return () => clearTimeout(timer);
   }, [problem]);
 
-  const start = async (file) => {
+  const start = async (file, attempt = 0) => {
     setProblem(null);
+    setQueued(null);
     setPending(file);
     setProgress(0);
     onUploadStateChange?.(true);
     onChange?.({ target: { value: null } });
 
+    let requeued = false;
     try {
       const media = await guest.upload(fieldId, file, setProgress);
       if (media.status !== "rejected") onChange?.({ target: { value: String(media.id) } });
     } catch (error) {
-      const next = guestProblem(error, rules);
-      setProblem(next ? { ...next, file } : null);
+      const seconds = Number(error?.body?.data?.retryAfterSeconds) || 0;
+      requeued = QUEUE_REASONS.has(error?.reason ?? guestReasonOf(error)) && seconds > 0 && seconds <= QUEUE_WAIT_LIMIT_SECONDS && attempt < QUEUE_RETRY_LIMIT;
+      if (requeued) {
+        setQueued({ file, attempt: attempt + 1, at: Date.now() + seconds * 1000 + Math.round(Math.random() * QUEUE_JITTER_MS) });
+      } else {
+        const next = guestProblem(error, rules);
+        setProblem(next ? { ...next, file } : null);
+      }
     } finally {
       setPending(null);
-      onUploadStateChange?.(false);
+      if (!requeued) onUploadStateChange?.(false);
     }
+  };
+
+  useEffect(() => {
+    startRef.current = start;
+    reportUploadingRef.current = onUploadStateChange;
+  });
+
+  useEffect(() => () => reportUploadingRef.current?.(false), []);
+
+  useEffect(() => {
+    if (!queued) return undefined;
+    const timer = setTimeout(() => startRef.current?.(queued.file, queued.attempt), Math.max(0, queued.at - Date.now()));
+    return () => clearTimeout(timer);
+  }, [queued]);
+
+  const cancelQueued = () => {
+    setQueued(null);
+    onUploadStateChange?.(false);
   };
 
   const reject = (nextProblem) => {
@@ -627,8 +664,8 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
             {!issue && shown && (
               <div className="flex items-center justify-between w-full animate-in fade-in duration-300">
                 <div className="flex items-center gap-4 overflow-hidden">
-                  <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${uploading || scanning ? "bg-skylab-500/10 text-skylab-400" : "bg-white/10 text-neutral-300"}`}>
-                    {uploading || scanning ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
+                  <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${busy || scanning ? "bg-skylab-500/10 text-skylab-400" : "bg-white/10 text-neutral-300"}`}>
+                    {busy || scanning ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
                   </div>
 
                   <div className="flex flex-col truncate text-left">
@@ -640,6 +677,8 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
                       <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
                       {uploading ? (
                         <span className="text-skylab-400/80">Yükleniyor... {progress}%</span>
+                      ) : queued ? (
+                        <span className="text-skylab-400/80">Sırada, birkaç saniye içinde yüklenecek</span>
                       ) : scanning ? (
                         <span className="text-skylab-400/80">Virüs taraması yapılıyor</span>
                       ) : (
@@ -654,7 +693,7 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
                 </div>
 
                 {!uploading && (
-                  <button type="button" onClick={(event) => { event.stopPropagation(); remove(); }} aria-label="Dosyayı kaldır"
+                  <button type="button" onClick={(event) => { event.stopPropagation(); if (queued) cancelQueued(); else remove(); }} aria-label="Dosyayı kaldır"
                     className="ml-4 shrink-0 inline-flex items-center justify-center rounded-sm p-2 text-neutral-400 hover:bg-red-500/20 hover:text-red-400 transition-colors"
                   >
                     <X size={16} />
