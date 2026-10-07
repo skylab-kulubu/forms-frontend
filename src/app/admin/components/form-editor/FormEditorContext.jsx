@@ -191,6 +191,10 @@ export function FormEditorProvider({ children, initialData, initialDraft = null 
     );
 }
 
+export function useOptionalFormEditor() {
+    return useContext(FormEditorContext);
+}
+
 export function useFormEditor() {
     const context = useContext(FormEditorContext);
     if (!context) {

@@ -12,8 +12,12 @@ import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { readAttribution } from "@/lib/attribution";
 import { hasJourney, hasSeenIntro } from "@/lib/workflow-journey";
 import { useServerNow } from "@/lib/form-timing";
+import { useTurnstile } from "@/lib/hooks/useTurnstile";
+import { useTurnstileStatusQuery } from "@/lib/hooks/useTurnstileStatus";
+import { useGuestUploads } from "./useGuestUploads";
 
 const RETRY_REASONS = new Set(["timeUp", "notStarted"]);
+const GUEST_FILE_REASONS = new Set(["fileScanning", "fileRejected", "fileExpired", "fileTypeNotAllowed", "fileTooLarge"]);
 
 function getSubmissionState(status) {
   switch (status) {
@@ -99,6 +103,9 @@ function reducer(state, action) {
         errorMessage: null,
         missingFieldIds: withoutResolved(state, action),
       };
+
+    case "CLEAR_VALUE":
+      return { ...state, values: { ...state.values, [action.fieldId]: null } };
 
     case "SET_DEFAULT":
       return {
@@ -243,6 +250,7 @@ export function useFormDisplayer(form, draft, options = {}) {
 
   const { status } = useSession();
   const isAuthed = status === "authenticated";
+  const isGuest = status === "unauthenticated";
   const queryClient = useQueryClient();
 
   const submitMutation = useSubmitFormMutation();
@@ -292,6 +300,17 @@ export function useFormDisplayer(form, draft, options = {}) {
   }, [draft]);
 
   const schema = useMemo(() => migrateSchema(state.form?.schema), [state.form?.schema]);
+  const hasFileQuestion = schema.some((field) => field.type === "file");
+
+  const { status: submitTurnstileStatus, getToken: getSubmitToken } = useTurnstile({ action: "guest-submit", enabled: isGuest });
+  const scriptBlocked = isGuest && submitTurnstileStatus === "blocked";
+  const { data: turnstileHealth } = useTurnstileStatusQuery({ enabled: scriptBlocked });
+  const verificationOutage = scriptBlocked && turnstileHealth?.data?.enabled === true && turnstileHealth?.data?.reachable === false;
+  const invalidateFile = useCallback((fieldId) => dispatch({ type: "CLEAR_VALUE", fieldId }), []);
+  const guest = useGuestUploads({ formId: state.form?.id, capability: options.guestUploads ?? null, isGuest, hasFileQuestion, onInvalidate: invalidateFile });
+  const [guestNotice, setGuestNotice] = useState(null);
+  const [isPreparing, setPreparing] = useState(false);
+  const [scanWait, setScanWait] = useState(null);
   const answers = useMemo(() => draftAnswers(state.values, state.defaults, schema), [state.values, state.defaults, schema]);
   const handleDraftSynced = useCallback((savedDraft) => dispatch({ type: "DRAFT_SYNCED", draft: savedDraft }), []);
   const visibleFields = useMemo(() => getVisibleFields(schema, state.values), [schema, state.values]);
@@ -397,17 +416,63 @@ export function useFormDisplayer(form, draft, options = {}) {
 
   const endIntro = useCallback(() => dispatch({ type: "END_INTRO" }), []);
 
-  const handleSubmit = (formattedResponses) => {
-    dispatch({ type: "CLEAR_ERROR" });
-    cancelDraftSave();
-    const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    const payload = {
-      formId: state.form?.id,
-      responses: formattedResponses,
-      timeSpent: timeSpentInSeconds,
-      attribution: readAttribution(state.form?.id, state.startFormId),
-    };
+  const requestSubmitToken = async () => {
+    try {
+      return await getSubmitToken();
+    } catch (error) {
+      if (error?.code === "cancelled") throw error;
+      if (error?.code !== "failed") return null;
+    }
+    try {
+      return await getSubmitToken();
+    } catch (error) {
+      if (error?.code === "cancelled") throw error;
+      return null;
+    }
+  };
 
+  const handleGuestFailure = (error, payload, verifyRetried) => {
+    const data = error?.body?.data;
+    const reason = data?.reason;
+
+    if (reason === "verificationFailed") {
+      if (verifyRetried || !payload.turnstileToken) {
+        setGuestNotice({ kind: "verify" });
+        return true;
+      }
+      setPreparing(true);
+      requestSubmitToken()
+        .then((turnstileToken) => sendResponse({ ...payload, turnstileToken }, true))
+        .catch(() => { })
+        .finally(() => setPreparing(false));
+      return true;
+    }
+
+    if (GUEST_FILE_REASONS.has(reason) && data?.questionId) {
+      const flagged = guest.flag(data.questionId, reason, data.scanResult ?? null);
+      if (reason === "fileScanning") {
+        if (flagged) setScanWait(Date.now());
+        else setGuestNotice({ kind: "scanning" });
+        return true;
+      }
+      setGuestNotice({ kind: "file", status: reason, questionId: data.questionId, scanResult: data.scanResult ?? null, flagged });
+      return true;
+    }
+
+    if (reason === "guestUploadsDisabled") {
+      setGuestNotice({ kind: "login" });
+      return true;
+    }
+
+    if (reason === "guestUploadsUnavailable") {
+      setGuestNotice({ kind: "unavailable" });
+      return true;
+    }
+
+    return false;
+  };
+
+  const sendResponse = (payload, verifyRetried = false) => {
     submitMutation.mutate(payload, {
       onSuccess: (response) => {
         dispatch({ type: "SUBMIT_SUCCESS", status: response?.status, data: response?.data });
@@ -417,6 +482,7 @@ export function useFormDisplayer(form, draft, options = {}) {
           handleTimeUp();
           return;
         }
+        if (isGuest && handleGuestFailure(error, payload, verifyRetried)) return;
         const failure = submitFailureAction(error);
         if (failure) {
           dispatch(failure);
@@ -430,14 +496,47 @@ export function useFormDisplayer(form, draft, options = {}) {
     });
   };
 
+  const handleSubmit = async (formattedResponses) => {
+    dispatch({ type: "CLEAR_ERROR" });
+    setGuestNotice(null);
+    cancelDraftSave();
+    const timeSpentInSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    const payload = {
+      formId: state.form?.id,
+      responses: formattedResponses,
+      timeSpent: timeSpentInSeconds,
+      attribution: readAttribution(state.form?.id, state.startFormId),
+    };
+
+    if (!isGuest) {
+      sendResponse(payload);
+      return;
+    }
+
+    setPreparing(true);
+    try {
+      const turnstileToken = await requestSubmitToken();
+      sendResponse({ ...payload, turnstileToken, guestUploadSession: guest.sessionId() });
+    } catch {
+      return;
+    } finally {
+      setPreparing(false);
+    }
+  };
+
   const showMissingFields = (fieldIds) => {
     dispatch({ type: "SET_MISSING_FIELDS", fieldIds });
   };
 
   const clearError = useCallback(() => dispatch({ type: "CLEAR_ERROR" }), []);
+  const clearGuestNotice = useCallback(() => setGuestNotice(null), []);
+  const startScanWait = useCallback(() => setScanWait(Date.now()), []);
+  const stopScanWait = useCallback(() => setScanWait(null), []);
 
-  return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || Boolean(state.nextFormId),
+  return { state, dispatch, schema, visibleFields, isAuthed, isAnyFileUploading, isSubmitting: submitMutation.isPending || isPreparing || Boolean(state.nextFormId),
     lastSavedAt, handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro, clearError,
     now, isTimed, isRunning, startAttempt, isStarting: startMutation.isPending, startError,
+    isGuest, guest, guestNotice, showGuestNotice: setGuestNotice, clearGuestNotice, turnstileBlocked: scriptBlocked && !verificationOutage, verificationOutage,
+    scanWait, startScanWait, stopScanWait,
   };
 }

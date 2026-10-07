@@ -6,7 +6,8 @@ import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
-import { AnonymousNotice, DraftNotice, FormDisplayerHeader, HeaderNote, MissingFields, NextStepNote, RespondentLine } from "./components/FormDisplayerComponents";
+import { AnonymousNotice, DraftNotice, FormDisplayerHeader, GuestNoticeDock, HeaderNote, MissingFields, NextStepNote, RespondentLine } from "./components/FormDisplayerComponents";
+import { GuestUploadContext } from "./GuestUploadContext";
 import WorkflowProgress, { TimerBar } from "./components/WorkflowProgress";
 import StepIntro from "./components/StepIntro";
 import StatusScreen from "./components/StatusScreen";
@@ -16,7 +17,8 @@ import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
 import Background from "../Background";
 import NoticeDock from "../utils/NoticeDock";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
-import { CalendarClock, CircleAlert, Loader2, Timer } from "lucide-react";
+import { scanResultCopy } from "@/lib/guest-uploads";
+import { CalendarClock, CircleAlert, Hourglass, Loader2, ShieldAlert, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -32,6 +34,37 @@ const itemVariants = {
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SCAN_WAIT_MS = 180000;
+const FILE_PROBLEMS = new Set(["rejected", "expired", "invalid"]);
+
+function fileNoticeAfter(status, scanResult) {
+  if (status === "rejected" || status === "fileRejected") return ` dosya güvenlik taramasından geçmedi. ${scanResultCopy(scanResult)}`;
+  if (status === "expired" || status === "fileExpired") return " dosyanın süresi doldu. Dosyayı yeniden yükleyin.";
+  return " dosya bu soruya uymuyor. Başka bir dosya yükleyin.";
+}
+
+function guestNoticeCopy(notice, questionNumbers, scriptBlocked) {
+  switch (notice.kind === "verify" && scriptBlocked ? "blocked" : notice.kind) {
+    case "verify":
+      return { icon: ShieldAlert, tone: "text-red-300", login: true, text: "Güvenlik doğrulaması geçmedi. Tekrar gönderin ya da giriş yapın." };
+    case "blocked":
+      return { icon: ShieldAlert, tone: "text-amber-300", login: true, text: "Güvenlik doğrulaması yüklenemedi. Reklam engelleyiciyi bu sayfada kapatıp tekrar gönderin ya da giriş yapın." };
+    case "file": {
+      const number = questionNumbers.get(notice.questionId);
+      const jump = number ? { id: notice.questionId, label: `${number}. sorudaki` } : null;
+      const after = fileNoticeAfter(notice.status, notice.scanResult);
+      return { icon: CircleAlert, tone: "text-red-300", jump, text: jump ? after : `Yüklediğiniz${after}` };
+    }
+    case "scanning":
+      return { icon: Hourglass, tone: "text-amber-300", retry: true, text: "Dosyanız hâlâ taranıyor. Birkaç saniye sonra tekrar gönderin." };
+    case "scanSlow":
+      return { icon: Hourglass, tone: "text-amber-300", retry: true, text: "Dosyanızın taranması uzun sürüyor. Biraz bekleyip tekrar gönderin." };
+    case "login":
+      return { icon: CircleAlert, tone: "text-red-300", login: true, text: "Bu forma şu an giriş yapmadan dosya gönderilemiyor. Dosyayla göndermek için giriş yapın." };
+    default:
+      return { icon: CircleAlert, tone: "text-red-300", retry: true, text: "Dosyalar şu an kaydedilemiyor. Biraz sonra tekrar deneyin." };
+  }
+}
 
 function hasValue(field, value) {
   if (field.type === "toggle") return value === true;
@@ -81,14 +114,16 @@ function PageFooter() {
   );
 }
 
-export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null, journey = null, instanceId = null, attempt = null, serverNow = null, closesAt = null }) {
+export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null, journey = null, instanceId = null, attempt = null, serverNow = null, closesAt = null, guestUploads = null }) {
   const scrollRef = useRef(null);
+  const submitRef = useRef(null);
   const {
     state, schema, visibleFields,
     isAuthed, isAnyFileUploading, isSubmitting, lastSavedAt,
     handleValueChange, handleUploadStateChange, handleDiscardDraft, handleSubmit, showMissingFields, endIntro, clearError,
     now, isTimed, isRunning, startAttempt, isStarting, startError,
-  } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt });
+    isGuest, guest, guestNotice, showGuestNotice, clearGuestNotice, turnstileBlocked, verificationOutage, scanWait, startScanWait, stopScanWait,
+  } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt, guestUploads });
   const { data: session } = useSession();
   const [dismissedLateFor, setDismissedLateFor] = useState(null);
 
@@ -138,6 +173,22 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const typedEmail = identityEmailField ? String(formValues[identityEmailField.id] ?? "").trim() : "";
   const asksIdentity = visibleFields.some((field) => field.props?.identity);
 
+  const fileFieldIds = useMemo(() => visibleFields.filter((field) => field.type === "file").map((field) => field.id), [visibleFields]);
+  const stillScanning = isGuest && guest.isScanning(fileFieldIds);
+  const isScanWaiting = Boolean(scanWait) && stillScanning;
+
+  const guestContext = useMemo(() => (isGuest ? {
+    mode: guest.available ? "upload" : "login",
+    capability: guestUploads,
+    files: guest.files,
+    upload: guest.upload,
+    remove: guest.remove,
+    hasAnswers,
+    verification: verificationOutage ? "outage" : turnstileBlocked ? "blocked" : "ok",
+  } : null), [isGuest, guest.available, guest.files, guest.upload, guest.remove, guestUploads, hasAnswers, verificationOutage, turnstileBlocked]);
+
+  const shownGuestNotice = guestNotice?.kind === "file" && guestNotice.flagged && !FILE_PROBLEMS.has(guest.files[guestNotice.questionId]?.status) ? null : guestNotice;
+
   const nextCopy = nextStepCopy({
     workflow: activeJourney,
     isWorkflow: activeIsWorkflow,
@@ -159,6 +210,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   };
 
   const onSubmit = () => {
+    clearGuestNotice();
     setTimeout(() => {
       const missing = visibleFields.filter((field) => isFieldMissing(field, formValues[field.id])).map((field) => field.id);
 
@@ -166,6 +218,19 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
         showMissingFields(missing);
         setTimeout(() => jumpToField(missing[0]), 150);
         return;
+      }
+
+      if (isGuest) {
+        if (guest.isScanning(fileFieldIds)) {
+          startScanWait();
+          return;
+        }
+        const problem = guest.problemIn(fileFieldIds);
+        if (problem) {
+          showGuestNotice({ kind: "file", status: problem.status, questionId: problem.questionId, scanResult: problem.scanResult ?? null, flagged: true });
+          setTimeout(() => jumpToField(problem.questionId), 150);
+          return;
+        }
       }
 
       const formattedResponses = visibleFields.filter((field) => field.type !== "separator").map((field) => {
@@ -180,8 +245,38 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     }, 100);
   };
 
+  useEffect(() => {
+    submitRef.current = onSubmit;
+  });
+
+  useEffect(() => {
+    if (!scanWait || stillScanning) return undefined;
+    const timer = setTimeout(() => {
+      stopScanWait();
+      submitRef.current?.();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [scanWait, stillScanning, stopScanWait]);
+
+  useEffect(() => {
+    if (!scanWait) return undefined;
+    const timer = setTimeout(() => {
+      stopScanWait();
+      showGuestNotice({ kind: "scanSlow" });
+    }, Math.max(0, SCAN_WAIT_MS - (Date.now() - scanWait)));
+    return () => clearTimeout(timer);
+  }, [scanWait, stopScanWait, showGuestNotice]);
+
   const renderNotice = () => {
     if (sessionExpired || isFinished || showIntro) return null;
+    if (shownGuestNotice) {
+      const copy = guestNoticeCopy(shownGuestNotice, questionNumbers, turnstileBlocked);
+      return (
+        <GuestNoticeDock key={`guest-${shownGuestNotice.kind}`} notice={copy} hasAnswers={hasAnswers} onClose={clearGuestNotice} onJump={jumpToField}
+          onRetry={copy.retry ? () => onSubmit() : null}
+        />
+      );
+    }
     if (errorMessage) {
       return (
         <NoticeDock key="error" icon={CircleAlert} tone="text-red-300" role="alert" onClose={clearError}>
@@ -270,6 +365,11 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                       </HeaderNote>
                     )}
                     <AnonymousNotice hasAnswers={hasAnswers} />
+                    {isGuest && turnstileBlocked && (
+                      <HeaderNote icon={ShieldAlert}>
+                        <span className="min-w-0 flex-1">Güvenlik doğrulaması yüklenemedi. Göndermek için bu sayfada reklam engelleyiciyi kapatın ya da giriş yapın.</span>
+                      </HeaderNote>
+                    )}
                   </FormDisplayerHeader>
                 </motion.div>
 
@@ -293,7 +393,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                 )}
 
                 {showGate ? null : hasSchema ? (
-                  <>
+                  <GuestUploadContext.Provider value={guestContext}>
                     <div className="flex-1 flex flex-col justify-center">
                     <AnimatePresence mode="sync" initial={false}>
                       {visibleFields.map((field, index) => {
@@ -331,6 +431,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                               onChange={(e) => handleValueChange(field.id, e.target.value, e.isDefault)} missing={isMissing}
                               disableAutoFill={asksIdentity}
                               onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
+                              {...(field.type === "file" ? { fieldId: field.id } : {})}
                             />
                           </motion.div>
                         );
@@ -341,14 +442,14 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     <motion.div variants={itemVariants} className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
                       <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
                         <NextStepNote text={nextCopy} />
-                        <motion.button onClick={onSubmit} disabled={isSubmitting || isAnyFileUploading} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        <motion.button onClick={onSubmit} disabled={isSubmitting || isAnyFileUploading || isScanWaiting} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                           className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none sm:ml-auto sm:shrink-0
                           ${isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}
                         >
-                          {isSubmitting || isAnyFileUploading ? (
+                          {isSubmitting || isAnyFileUploading || isScanWaiting ? (
                             <>
                               <Loader2 className="animate-spin" size={16} />
-                              <span>{isSubmitting ? "Gönderiliyor" : "Dosya yükleniyor"}</span>
+                              <span>{isSubmitting ? "Gönderiliyor" : isAnyFileUploading ? "Dosya yükleniyor" : "Dosya taranıyor"}</span>
                             </>
                           ) : "Gönder"}
                         </motion.button>
@@ -357,7 +458,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                         copyEmail={EMAIL_PATTERN.test(typedEmail) ? typedEmail : null}
                       />
                     </motion.div>
-                  </>
+                  </GuestUploadContext.Provider>
                 ) : (
                   <motion.div variants={itemVariants} className="flex flex-1 min-h-[30vh] items-center justify-center text-sm text-neutral-400">
                     Bu formda gösterilecek soru yok.

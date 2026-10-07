@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Clock, Mail, RotateCcw, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
+import NoticeDock from "@/app/components/utils/NoticeDock";
+import LoginButton from "@/app/components/utils/LoginButton";
 import { loginWithKeycloak } from "@/lib/authActions";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors";
@@ -62,7 +64,7 @@ export function HeaderNote({ icon: Icon, children }) {
   );
 }
 
-function useLoginPrompt(hasAnswers) {
+export function useLoginPrompt(hasAnswers) {
   const [confirming, setConfirming] = useState(false);
   const login = () => loginWithKeycloak(window.location.href);
 
@@ -74,7 +76,7 @@ function useLoginPrompt(hasAnswers) {
   };
 }
 
-function LoginConfirm({ prompt }) {
+export function LoginConfirm({ prompt }) {
   return (
     <>
       <span className="text-neutral-300">Girişe giderseniz yazdığınız cevaplar silinir.</span>
@@ -165,6 +167,33 @@ export function MissingFields({ fields, onJump }) {
         </Fragment>
       ))}
     </>
+  );
+}
+
+export function GuestNoticeDock({ notice, hasAnswers, onClose, onJump, onRetry = null }) {
+  const prompt = useLoginPrompt(hasAnswers);
+  const action = prompt.confirming ? null
+    : notice.login ? <LoginButton onClick={prompt.request} label="Giriş yap" className="shrink-0" />
+      : onRetry ? <LoginButton onClick={onRetry} label="Tekrar dene" hoverIcon="arrow" className="shrink-0" />
+        : null;
+
+  return (
+    <NoticeDock icon={notice.icon} tone={notice.tone} role="alert" onClose={onClose} action={action}>
+      {prompt.confirming ? (
+        <span className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <LoginConfirm prompt={prompt} />
+        </span>
+      ) : (
+        <>
+          {notice.jump && (
+            <button type="button" onClick={() => onJump(notice.jump.id)} className={`${LINK_BUTTON} text-neutral-100 decoration-white/30 hover:decoration-white/70`}>
+              {notice.jump.label}
+            </button>
+          )}
+          {notice.text}
+        </>
+      )}
+    </NoticeDock>
   );
 }
 
