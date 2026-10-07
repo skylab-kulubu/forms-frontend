@@ -34,8 +34,22 @@ const SCAN_RESULT_COPY = {
   scan_timeout: "Tarama tamamlanamadı. Lütfen yeniden yükleyin.",
 };
 
+const SCAN_RESULT_LABEL = {
+  infected: "zararlı içerik bulundu",
+  too_large_to_scan: "bütünüyle taranamadı",
+  archive_invalid: "bozuk ya da şifreli",
+  archive_nested: "iç içe arşiv",
+  lost: "işlenemedi",
+  integrity: "işlenemedi",
+  scan_timeout: "tarama tamamlanamadı",
+};
+
 export function scanResultCopy(code) {
   return SCAN_RESULT_COPY[code] ?? "Dosya güvenlik taramasından geçmedi. Başka bir dosya yükleyin.";
+}
+
+export function scanResultLabel(code) {
+  return SCAN_RESULT_LABEL[code] ?? "taramadan geçmedi";
 }
 
 export function waitCopy(seconds) {
