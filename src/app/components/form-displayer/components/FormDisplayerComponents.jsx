@@ -208,7 +208,18 @@ export function NextStepNote({ text }) {
   );
 }
 
-export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null }) {
+export function CopyEmailNote({ email, className = "mt-1.5" }) {
+  return (
+    <p className={`${className} flex items-center gap-1.5 text-2xs text-neutral-500`}>
+      <Mail size={12} className="shrink-0" />
+      <span className="min-w-0">
+        Bu formla ilgili e-postalar <span className="break-all text-neutral-200">{email}</span> adresine gönderilecek.
+      </span>
+    </p>
+  );
+}
+
+export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null, compact = false }) {
   const { data: session, status } = useSession();
   const prompt = useLoginPrompt(hasAnswers);
 
@@ -221,9 +232,41 @@ export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null }
 
   if (!isAuthed && prompt.confirming) {
     return (
-      <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
+      <p className={`${compact ? "" : "mt-5 "}flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500`}>
         <UserRoundX size={12} className="shrink-0" />
         <LoginConfirm prompt={prompt} />
+      </p>
+    );
+  }
+
+  if (compact) {
+    return (
+      <p className="flex h-4 min-w-0 flex-wrap items-center gap-x-2 overflow-hidden text-2xs text-neutral-500">
+        <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
+          {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
+          {isAuthed
+            ? <span className="min-w-0 truncate"><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
+            : <span className="min-w-0 truncate">Anonim olarak yanıtlıyorsunuz</span>}
+        </span>
+        {!isAuthed && (
+          <span className="inline-flex items-center gap-x-2 whitespace-nowrap">
+            <span className="text-neutral-700">·</span>
+            <button type="button" onClick={prompt.request}
+              className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+            >
+              Giriş yap
+            </button>
+          </span>
+        )}
+        {isAuthed && savedTime && (
+          <span className="inline-flex items-center gap-x-2 whitespace-nowrap">
+            <span className="text-neutral-700">·</span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={11} className="shrink-0" />
+              Taslak kaydedildi {savedTime}
+            </span>
+          </span>
+        )}
       </p>
     );
   }
@@ -260,14 +303,7 @@ export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null }
       </p>
       {/* Kayıtlı kullanıcının mailleri hesabındaki adrese gider; formda yazılan adres yalnızca misafirde kullanılır.
           Metin kopyanın bu gönderimde gideceğini vaat etmez: aynı adrese form başına tek kopya ve günlük sınır var. */}
-      {!isAuthed && copyEmail && (
-        <p className="mt-1.5 flex items-center gap-1.5 text-2xs text-neutral-500">
-          <Mail size={12} className="shrink-0" />
-          <span className="min-w-0">
-            Bu formla ilgili e-postalar <span className="break-all text-neutral-200">{copyEmail}</span> adresine gönderilecek.
-          </span>
-        </p>
-      )}
+      {!isAuthed && copyEmail && <CopyEmailNote email={copyEmail} />}
     </>
   );
 }

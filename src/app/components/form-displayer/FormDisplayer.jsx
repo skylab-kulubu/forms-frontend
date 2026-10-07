@@ -6,7 +6,7 @@ import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
-import { AnonymousNotice, DraftNotice, FormDisplayerHeader, GuestNoticeDock, HeaderNote, MissingFields, NextStepNote, RespondentLine } from "./components/FormDisplayerComponents";
+import { AnonymousNotice, CopyEmailNote, DraftNotice, FormDisplayerHeader, GuestNoticeDock, HeaderNote, MissingFields, NextStepNote, RespondentLine } from "./components/FormDisplayerComponents";
 import { GuestUploadContext } from "./GuestUploadContext";
 import WorkflowProgress, { TimerBar } from "./components/WorkflowProgress";
 import StepIntro from "./components/StepIntro";
@@ -457,10 +457,14 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     </div>
 
                     <motion.div variants={itemVariants} className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
-                      <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-                        <NextStepNote text={nextCopy} />
+                      <div className={`flex flex-col items-stretch gap-4 sm:flex-row sm:justify-between sm:gap-6 ${nextCopy ? "sm:items-end" : "sm:items-center"}`}>
+                        {nextCopy ? <NextStepNote text={nextCopy} /> : (
+                          <div className="order-2 min-w-0 sm:order-1">
+                            <RespondentLine savedAt={isAuthed ? lastSavedAt : null} hasAnswers={hasAnswers} compact />
+                          </div>
+                        )}
                         <motion.button onClick={() => onSubmit()} disabled={isSubmitting || isAnyFileUploading || isScanWaiting} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                          className={`relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none sm:ml-auto sm:shrink-0
+                          className={`relative order-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none sm:order-2 sm:ml-auto sm:shrink-0
                           ${isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}
                         >
                           {isSubmitting || isAnyFileUploading || isScanWaiting ? (
@@ -471,9 +475,13 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                           ) : "Gönder"}
                         </motion.button>
                       </div>
-                      <RespondentLine savedAt={isAuthed ? lastSavedAt : null} hasAnswers={hasAnswers}
-                        copyEmail={EMAIL_PATTERN.test(typedEmail) ? typedEmail : null}
-                      />
+                      {nextCopy ? (
+                        <RespondentLine savedAt={isAuthed ? lastSavedAt : null} hasAnswers={hasAnswers}
+                          copyEmail={EMAIL_PATTERN.test(typedEmail) ? typedEmail : null}
+                        />
+                      ) : isGuest && EMAIL_PATTERN.test(typedEmail) ? (
+                        <CopyEmailNote email={typedEmail} className="mt-4" />
+                      ) : null}
                     </motion.div>
                   </GuestUploadContext.Provider>
                 ) : (
