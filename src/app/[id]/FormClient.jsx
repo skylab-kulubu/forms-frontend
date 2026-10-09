@@ -54,6 +54,7 @@ export default function FormClient() {
             startFormId={responseData.data.startFormId ?? null} draft={isAuthed ? (draftData?.data ?? null) : null}
             journey={responseData.data.workflow ?? null} instanceId={responseData.data.instanceId ?? null}
             attempt={responseData.data.attempt ?? null} serverNow={responseData.data.serverNow ?? null} closesAt={responseData.data.closesAt ?? null}
+            guestUploads={responseData.data.guestUploads ?? null}
           />
         );
       }}

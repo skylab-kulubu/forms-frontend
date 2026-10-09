@@ -130,7 +130,8 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         returnTo,
     );
 
-    const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id);
+    // Backend etkinliği bilmez; açılan etkinlik formu kimlik alanlarından tanınır.
+    const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id || state.schema.some(isIdentityField));
 
     useEffect(() => {
         if (!eventLinked) return;
@@ -323,7 +324,6 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
                 UserId: editor.user.id,
                 Role: Number(editor.role)
             })),
-            EventId: eventRef?.id || handoff?.eventId || null,
             Task: state.task?.content?.trim() ? state.task : null,
             ClosesAt: state.closesAt ?? null,
             TimeLimitMinutes: eventLinked || state.allowAnonymousResponses ? null : state.timeLimitMinutes ?? null,

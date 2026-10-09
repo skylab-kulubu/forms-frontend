@@ -266,7 +266,9 @@ export function ResponseListItem({ formId, response, className = "", onRemind, r
   const status = ROW_STATUS[kind] ?? ROW_STATUS.submitted;
   const attempt = response.attempt;
   const isAttemptRow = response.status == null && attempt;
-  const userName = formatPersonName(response.user?.fullName) || "Anonim Kullanıcı";
+  const guest = response.guest;
+  const personName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}` : "");
+  const userName = formatPersonName(personName) || "Anonim Kullanıcı";
   const userId = response.user?.id || "";
   const photoUrl = response.user?.profilePictureUrl || null;
   const reviewerName = formatPersonName(response.reviewedBy?.fullName);
@@ -288,13 +290,13 @@ export function ResponseListItem({ formId, response, className = "", onRemind, r
         </div>
 
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar name={response.user?.fullName ? userName : ""} photoUrl={photoUrl} size="md" />
+          <Avatar name={personName ? userName : ""} photoUrl={photoUrl} size="md" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">{userName}</p>
             <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
               {response.isArchived && <Archive size={10} className="shrink-0 text-skylab-500/70" />}
               <span className={`shrink-0 text-3xs font-medium lg:hidden ${status.text}`}>{status.label}</span>
-              <span className="truncate text-3xs text-neutral-500">{userId || "Anonim"}</span>
+              <span className="truncate text-3xs text-neutral-500">{userId || guest?.email || "Anonim"}</span>
             </div>
           </div>
         </div>
