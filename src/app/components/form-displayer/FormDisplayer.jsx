@@ -182,7 +182,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const asksIdentity = visibleFields.some((field) => field.props?.identity);
 
   const fileFieldIds = useMemo(() => visibleFields.filter((field) => field.type === "file").map((field) => field.id), [visibleFields]);
-  const stillScanning = isGuest && guest.isScanning(fileFieldIds);
+  const stillScanning = isGuest ? guest.isScanning(fileFieldIds) : fileFieldIds.some((id) => state.uploadingFields[id] === "scanning");
   const isScanWaiting = Boolean(scanWait) && stillScanning;
 
   const guestContext = useMemo(() => (isGuest ? {
@@ -242,6 +242,10 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
           setTimeout(() => jumpToField(problem.questionId), 150);
           return;
         }
+      } else if (stillScanning) {
+        clearBusyRetry();
+        startScanWait();
+        return;
       }
 
       const formattedResponses = visibleFields.filter((field) => field.type !== "separator").map((field) => {
