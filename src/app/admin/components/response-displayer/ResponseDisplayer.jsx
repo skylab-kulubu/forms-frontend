@@ -168,7 +168,9 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
         {intro}
         <ul className="mx-auto w-full max-w-2xl divide-y divide-white/5">
           {items.map((item, index) => (
-            <ResponseListItem key={item?.id ?? `${index}`} questionNumber={index + 1} question={item?.question} answer={item?.answer} type={item?.type} />
+            <ResponseListItem key={item?.id ?? `${index}`} questionNumber={index + 1} question={item?.question} answer={item?.answer} type={item?.type}
+              responseId={owner?.id ?? null} token={token}
+            />
           ))}
         </ul>
       </>

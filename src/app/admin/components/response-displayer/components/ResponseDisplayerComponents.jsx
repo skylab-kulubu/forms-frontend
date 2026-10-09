@@ -16,7 +16,7 @@ const formatAnswer = (answer) => {
   return String(answer).trim();
 };
 
-export function ResponseListItem({ questionNumber, question, answer, type, className = "" }) {
+export function ResponseListItem({ questionNumber, question, answer, type, responseId = null, token = null, className = "" }) {
   const hasNumber = Number.isFinite(Number(questionNumber));
   const questionText = typeof question === "string" ? question.trim() : "";
 
@@ -68,7 +68,7 @@ export function ResponseListItem({ questionNumber, question, answer, type, class
         </p>
 
         {type === "file" && answerText ? (
-          <FilePreview mediaId={answerText} />
+          <FilePreview mediaId={answerText} responseId={responseId} token={token} />
         ) : type === "repeater" && groupColumns.length > 0 ? (
           <div className="flex flex-col gap-2">
             {groupRows.map((row, ri) => (

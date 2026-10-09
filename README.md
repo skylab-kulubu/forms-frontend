@@ -206,6 +206,7 @@ Create a `.env.local` file in the project root:
 | `KEYCLOAK_CLIENT_SECRET`         | OAuth client secret                      |
 | `KEYCLOAK_ISSUER`                | Keycloak realm URL (server-side)         |
 | `AUTH_SECRET`                    | NextAuth encryption secret               |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key of the Invisible widget. Empty turns guest verification and guest uploads off in the browser. For local work use the test key `1x00000000000000000000BB` |
 
 ### Running the App
 

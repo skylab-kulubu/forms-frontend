@@ -121,7 +121,8 @@ export default function ResponsesFilterShell({ open, anchorRef, onClose, sortVal
     };
   }, [open, onClose, anchorRef]);
 
-  const statusOptions = STATUS_FILTERS.filter((option) => timed || !option.timed);
+  const statusOptions = STATUS_FILTERS.filter((option) => (timed || !option.timed)
+    && (!option.whenPresent || option.value === statusValue || option.count(counts) > 0));
 
   return (
     <AnimatePresence>

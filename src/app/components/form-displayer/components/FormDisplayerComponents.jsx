@@ -3,8 +3,10 @@
 import { Fragment, useState } from "react";
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { Clock, RotateCcw, UserRound, UserRoundX } from "lucide-react";
+import { Clock, Mail, RotateCcw, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
+import NoticeDock from "@/app/components/utils/NoticeDock";
+import LoginButton from "@/app/components/utils/LoginButton";
 import { loginWithKeycloak } from "@/lib/authActions";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors";
@@ -62,7 +64,7 @@ export function HeaderNote({ icon: Icon, children }) {
   );
 }
 
-function useLoginPrompt(hasAnswers) {
+export function useLoginPrompt(hasAnswers) {
   const [confirming, setConfirming] = useState(false);
   const login = () => loginWithKeycloak(window.location.href);
 
@@ -74,7 +76,7 @@ function useLoginPrompt(hasAnswers) {
   };
 }
 
-function LoginConfirm({ prompt }) {
+export function LoginConfirm({ prompt }) {
   return (
     <>
       <span className="text-neutral-300">Girişe giderseniz yazdığınız cevaplar silinir.</span>
@@ -168,6 +170,33 @@ export function MissingFields({ fields, onJump }) {
   );
 }
 
+export function GuestNoticeDock({ notice, hasAnswers, onClose, onJump, onRetry = null }) {
+  const prompt = useLoginPrompt(hasAnswers);
+  const action = prompt.confirming ? null
+    : notice.login ? <LoginButton onClick={prompt.request} label="Giriş yap" className="shrink-0" />
+      : onRetry ? <LoginButton onClick={onRetry} label="Tekrar dene" hoverIcon="arrow" className="shrink-0" />
+        : null;
+
+  return (
+    <NoticeDock icon={notice.icon} tone={notice.tone} role="alert" onClose={onClose} action={action}>
+      {prompt.confirming ? (
+        <span className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <LoginConfirm prompt={prompt} />
+        </span>
+      ) : (
+        <>
+          {notice.jump && (
+            <button type="button" onClick={() => onJump(notice.jump.id)} className={`${LINK_BUTTON} text-neutral-100 decoration-white/30 hover:decoration-white/70`}>
+              {notice.jump.label}
+            </button>
+          )}
+          {notice.text}
+        </>
+      )}
+    </NoticeDock>
+  );
+}
+
 export function NextStepNote({ text }) {
   if (!text) return null;
 
@@ -179,7 +208,18 @@ export function NextStepNote({ text }) {
   );
 }
 
-export function RespondentLine({ savedAt, hasAnswers = false }) {
+export function CopyEmailNote({ email, className = "mt-1.5" }) {
+  return (
+    <p className={`${className} flex items-center gap-1.5 text-2xs text-neutral-500`}>
+      <Mail size={12} className="shrink-0" />
+      <span className="min-w-0">
+        Bu formla ilgili e-postalar <span className="break-all text-neutral-200">{email}</span> adresine gönderilecek.
+      </span>
+    </p>
+  );
+}
+
+export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null, compact = false }) {
   const { data: session, status } = useSession();
   const prompt = useLoginPrompt(hasAnswers);
 
@@ -192,41 +232,78 @@ export function RespondentLine({ savedAt, hasAnswers = false }) {
 
   if (!isAuthed && prompt.confirming) {
     return (
-      <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
+      <p className={`${compact ? "" : "mt-5 "}flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500`}>
         <UserRoundX size={12} className="shrink-0" />
         <LoginConfirm prompt={prompt} />
       </p>
     );
   }
 
-  return (
-    <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
-      <span className="inline-flex items-center gap-1.5">
-        {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
-        {isAuthed
-          ? <span><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
-          : <span>Anonim olarak yanıtlıyorsunuz</span>}
-      </span>
-      {!isAuthed && (
-        <>
-          <span className="text-neutral-700">·</span>
-          <span>Taslak kaydedilmiyor</span>
-          <button type="button" onClick={prompt.request}
-            className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
-          >
-            Giriş yap
-          </button>
-        </>
-      )}
-      {isAuthed && savedTime && (
-        <>
-          <span className="text-neutral-700">·</span>
-          <span className="inline-flex items-center gap-1.5">
-            <Clock size={11} className="shrink-0" />
-            Taslak kaydedildi {savedTime}
+  if (compact) {
+    return (
+      <p className="flex h-4 min-w-0 flex-wrap items-center gap-x-2 overflow-hidden text-2xs text-neutral-500">
+        <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
+          {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
+          {isAuthed
+            ? <span className="min-w-0 truncate"><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
+            : <span className="min-w-0 truncate">Anonim olarak yanıtlıyorsunuz</span>}
+        </span>
+        {!isAuthed && (
+          <span className="inline-flex items-center gap-x-2 whitespace-nowrap">
+            <span className="text-neutral-700">·</span>
+            <button type="button" onClick={prompt.request}
+              className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+            >
+              Giriş yap
+            </button>
           </span>
-        </>
-      )}
-    </p>
+        )}
+        {isAuthed && savedTime && (
+          <span className="inline-flex items-center gap-x-2 whitespace-nowrap">
+            <span className="text-neutral-700">·</span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={11} className="shrink-0" />
+              Taslak kaydedildi {savedTime}
+            </span>
+          </span>
+        )}
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
+        <span className="inline-flex items-center gap-1.5">
+          {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
+          {isAuthed
+            ? <span><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
+            : <span>Anonim olarak yanıtlıyorsunuz</span>}
+        </span>
+        {!isAuthed && (
+          <>
+            <span className="text-neutral-700">·</span>
+            <span>Taslak kaydedilmiyor</span>
+            <button type="button" onClick={prompt.request}
+              className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+            >
+              Giriş yap
+            </button>
+          </>
+        )}
+        {isAuthed && savedTime && (
+          <>
+            <span className="text-neutral-700">·</span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={11} className="shrink-0" />
+              Taslak kaydedildi {savedTime}
+            </span>
+          </>
+        )}
+      </p>
+      {/* Kayıtlı kullanıcının mailleri hesabındaki adrese gider; formda yazılan adres yalnızca misafirde kullanılır.
+          Metin kopyanın bu gönderimde gideceğini vaat etmez: aynı adrese form başına tek kopya ve günlük sınır var. */}
+      {!isAuthed && copyEmail && <CopyEmailNote email={copyEmail} />}
+    </>
   );
 }

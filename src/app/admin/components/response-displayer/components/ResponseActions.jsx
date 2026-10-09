@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Clock, Eye, FileClock, FileX, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { ArrowRight, Check, Clock, Eye, FileClock, FileX, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldAlert, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { useResponseStatusMutation, useResponseArchiveMutation, useAttemptActionMutation } from "@/lib/hooks/useResponse";
 import { DecisionSection, ReminderSection, TimeHistory, TimeSection, attemptTimeValue, formatPersonName } from "./AttemptPanels";
@@ -26,6 +26,7 @@ const STATUS_META = {
   3: { label: "Reddedildi", style: "border-red-500/40 bg-red-500/10 text-red-200", Icon: ShieldX, color: "text-red-400" },
   closed: { label: "Teslim yok", style: "border-white/10 bg-white/5 text-neutral-300", Icon: FileX, color: "text-red-300" },
   4: { label: "Geçici", style: "border-amber-500/40 bg-amber-500/10 text-amber-200", Icon: FileClock, color: "text-amber-300" },
+  5: { label: "Doğrulanmadı", style: "border-orange-500/40 bg-orange-500/10 text-orange-200", Icon: ShieldAlert, color: "text-orange-300" },
   default: { label: "Beklemede", style: "border-white/10 bg-white/5 text-neutral-300", Icon: ShieldQuestion, color: "text-neutral-400" },
 };
 
@@ -33,6 +34,7 @@ const STATUS_META = {
 const REVIEW_NOTE_MAX_LENGTH = 500;
 
 const PROVISIONAL = 4;
+const FLAGGED = 5;
 
 const ATTEMPT_ICON = { running: Timer, opened: Eye, none: FileX };
 
@@ -193,8 +195,10 @@ export function ResponseActions({ response, readOnly = false }) {
   const reviewerName = response.reviewer?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "Bilinmiyor";
   const reviewerPhotoUrl = response.reviewer?.profilePictureUrl || null;
 
-  const submitterName = response.user?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "Anonim Kullanıcı";
-  const submitterEmail = response.user?.email || "";
+  const guest = response.guest;
+  const submitterFullName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}` : "");
+  const submitterName = formatPersonName(submitterFullName) || "Anonim Kullanıcı";
+  const submitterEmail = response.user?.email || guest?.email || "";
   const submitterId = response.user?.id || null;
   const submitterPhotoUrl = response.user?.profilePictureUrl || null;
   const archiverId = response.archiver?.id || null;
@@ -325,7 +329,7 @@ export function ResponseActions({ response, readOnly = false }) {
 
             <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.06 }} className="px-1 py-4 first:pt-0">
               <SectionTitle>Yanıt Sahibi</SectionTitle>
-              <UserCard name={submitterName} email={submitterEmail} userId={submitterId} photoUrl={submitterPhotoUrl} hasUser={Boolean(response.user?.fullName)}/>
+              <UserCard name={submitterName} email={submitterEmail} userId={submitterId} photoUrl={submitterPhotoUrl} hasUser={Boolean(submitterFullName)}/>
             </motion.div>
 
             {attempt?.canDecide && isProvisional && !isArchived && (
@@ -428,6 +432,12 @@ export function ResponseActions({ response, readOnly = false }) {
                               <RouteHint label="Onaylanırsa" dot="bg-emerald-400/70" text={approveOutcome} />
                               <RouteHint label="Reddedilirse" dot="bg-red-400/70" text={declineOutcome} />
                             </div>
+                          )}
+                          {statusValue === FLAGGED && (
+                            <p className="mt-3 flex gap-1.5 text-3xs leading-relaxed text-neutral-500">
+                              <ShieldAlert size={11} className="mt-0.5 shrink-0 text-orange-300" />
+                              <span>Güvenlik doğrulaması yapılamadan alındı; onaylanana kadar kabul edilmiş sayılmaz. Reddederseniz yanıtlayana e-posta gitmez.</span>
+                            </p>
                           )}
                         </motion.div>
                       ) : (
