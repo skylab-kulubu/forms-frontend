@@ -21,7 +21,7 @@ import Background from "../Background";
 import NoticeDock from "../utils/NoticeDock";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
 import { scanResultCopy, waitCopy } from "@/lib/guest-uploads";
-import { CalendarClock, CircleAlert, History, Hourglass, Loader2, LogIn, RotateCcw, ShieldAlert, Timer } from "lucide-react";
+import { CalendarClock, CircleAlert, History, Hourglass, Loader2, LogIn, LogOut, RotateCcw, ShieldAlert, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -41,6 +41,12 @@ const SCAN_WAIT_MS = 180000;
 const FILE_PROBLEMS = new Set(["rejected", "expired", "invalid"]);
 const INFO_SECONDS = 6;
 const LINKED_INFO_SECONDS = 10;
+
+const SIGNED_OUT_COPY = {
+  cleared: "Çıkış yaptınız. Cevaplarınız hesabınızda taslak olarak duruyor.",
+  kept: "Çıkış yaptınız. Cevaplar ekranda kaldı, artık anonim yanıtlıyorsunuz.",
+  empty: "Çıkış yaptınız.",
+};
 
 function reuploadCopy(fileIds, questionNumbers) {
   const numbers = (fileIds ?? []).map((id) => questionNumbers.get(id)).filter(Boolean).sort((a, b) => a - b);
@@ -143,7 +149,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     now, isTimed, isRunning, startAttempt, isStarting, startError,
     isGuest, guest, guestNotice, showGuestNotice, clearGuestNotice, turnstileBlocked, verificationOutage, scanWait, startScanWait, stopScanWait,
     busyRetry, clearBusyRetry,
-    respondent, user, hasGuestFiles, login,
+    respondent, user, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout,
     clearInfo, hideDraftPrompt,
   } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt, guestUploads });
   const { data: session } = useSession();
@@ -170,8 +176,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const sessionExpired = session?.error === "RefreshAccessTokenError";
 
   const authValue = useMemo(() => ({
-    respondent, user, hasGuestFiles, login,
-  }), [respondent, user, hasGuestFiles, login]);
+    respondent, user, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout,
+  }), [respondent, user, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout]);
 
   const questionNumbers = useMemo(() => {
     const numbers = new Map();
@@ -342,6 +348,14 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
       return (
         <NoticeDock key="carried" icon={LogIn} duration={INFO_SECONDS} onClose={clearInfo}>
           {info.merged ? "Girişten önce yazdığınız cevaplar korundu. Boş kalan sorular taslağınızdan dolduruldu." : "Girişten önce yazdığınız cevaplar korundu."}
+          {reuploadCopy(info.files, questionNumbers)}
+        </NoticeDock>
+      );
+    }
+    if (info?.kind === "signedOut") {
+      return (
+        <NoticeDock key="signed-out" icon={LogOut} duration={INFO_SECONDS} onClose={clearInfo}>
+          {SIGNED_OUT_COPY[info.outcome] ?? SIGNED_OUT_COPY.empty}
           {reuploadCopy(info.files, questionNumbers)}
         </NoticeDock>
       );

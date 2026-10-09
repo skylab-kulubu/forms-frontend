@@ -1,5 +1,7 @@
 const ANSWERS_PREFIX = "skyforms:answers:";
+const SIGN_OUT_KEY = "skyforms:signed-out";
 const ANSWERS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const SIGN_OUT_MAX_AGE_MS = 2 * 60 * 1000;
 
 function read(key) {
   try {
@@ -37,3 +39,14 @@ export function clearAnswers(formId) {
   if (formId) remove(ANSWERS_PREFIX + formId);
 }
 
+export function noteSignOut(formId, outcome) {
+  write(SIGN_OUT_KEY, { formId, outcome, at: Date.now() });
+}
+
+export function takeSignOut(formId) {
+  const note = read(SIGN_OUT_KEY);
+  if (!note) return null;
+  remove(SIGN_OUT_KEY);
+  if (note.formId !== formId || Date.now() - note.at > SIGN_OUT_MAX_AGE_MS) return null;
+  return note.outcome;
+}

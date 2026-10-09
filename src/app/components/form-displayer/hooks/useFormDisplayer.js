@@ -1,8 +1,8 @@
 import { useReducer, useRef, useEffect, useMemo, useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRespondent } from "@/lib/hooks/useRespondent";
-import { loginWithKeycloak } from "@/lib/authActions";
-import { clearAnswers, loadAnswers, saveAnswers } from "@/lib/answer-stash";
+import { loginWithKeycloak, logout } from "@/lib/authActions";
+import { clearAnswers, loadAnswers, noteSignOut, saveAnswers, takeSignOut } from "@/lib/answer-stash";
 import { useSubmitFormMutation, useDisplayFormQuery, useStartAttemptMutation, fetchDisplayFormById } from "@/lib/hooks/useForm";
 import { useResponseDraftAutoSave } from "./useResponseDraftAutoSave";
 import { FORM_ACCESS_STATUS, WORKFLOW_STATE, getSubmitErrorState } from "../../FormStatusHandler";
@@ -232,6 +232,9 @@ function reducer(state, action) {
     case "APPLY_STASH":
       return { ...state, values: { ...state.values, ...action.values }, draftPromptVisible: false, info: action.info };
 
+    case "SHOW_INFO":
+      return { ...state, info: action.info };
+
     case "CLEAR_INFO":
       return { ...state, info: null };
 
@@ -296,6 +299,8 @@ export function useFormDisplayer(form, draft, options = {}) {
   const isAuthed = respondent === "user";
   const isGuest = respondent === "guest";
   const queryClient = useQueryClient();
+
+  const [logoutConfirming, setLogoutConfirming] = useState(false);
 
   const submitMutation = useSubmitFormMutation();
   const startMutation = useStartAttemptMutation();
@@ -385,6 +390,7 @@ export function useFormDisplayer(form, draft, options = {}) {
   );
 
   const activeFormId = state.form?.id ?? null;
+  const allowsAnonymous = !isTimed && state.form?.allowAnonymousResponses !== false;
   const hasGuestFiles = isGuest && Object.keys(guest.files).length > 0;
 
   const restoredRef = useRef(false);
@@ -392,18 +398,23 @@ export function useFormDisplayer(form, draft, options = {}) {
     if (restoredRef.current || !activeFormId) return;
     restoredRef.current = true;
     const stash = loadAnswers(activeFormId);
+    const signedOut = takeSignOut(activeFormId);
     const values = stash ? knownAnswers(stash.values, schema) : {};
     const files = stash ? stash.files.filter((id) => schema.some((field) => field.id === id)) : [];
 
-    if (!Object.keys(values).length && !files.length) return;
-    if (isAuthed) {
-      const merged = Boolean(draft?.responses?.some((response) => !(response.id in values)));
-      dispatch({ type: "APPLY_STASH", values, info: { kind: "carried", merged, files } });
-      clearAnswers(activeFormId);
+    if (Object.keys(values).length || files.length) {
+      if (isAuthed) {
+        const merged = Boolean(draft?.responses?.some((response) => !(response.id in values)));
+        dispatch({ type: "APPLY_STASH", values, info: { kind: "carried", merged, files } });
+        clearAnswers(activeFormId);
+        return;
+      }
+      const info = stash.reason === "logout" ? { kind: "signedOut", outcome: "kept", files } : { kind: "restored", files };
+      dispatch({ type: "APPLY_STASH", values, info });
       return;
     }
-    dispatch({ type: "APPLY_STASH", values, info: { kind: "restored", files } });
-  }, [activeFormId, schema, isAuthed, draft]);
+    if (signedOut && isGuest) dispatch({ type: "SHOW_INFO", info: { kind: "signedOut", outcome: signedOut, files: [] } });
+  }, [activeFormId, schema, isAuthed, isGuest, draft]);
 
   useEffect(() => {
     if (!isGuest || !activeFormId || state.submissionState || state.nextFormId) return undefined;
@@ -416,6 +427,26 @@ export function useFormDisplayer(form, draft, options = {}) {
     loginWithKeycloak(window.location.href);
   }, [activeFormId, state.values, state.defaults, schema]);
 
+  const signOut = useCallback(async (keep) => {
+    setLogoutConfirming(false);
+    await settleDraft();
+    const snapshot = stashableAnswers(state.values, state.defaults, schema);
+    const answered = Object.keys(snapshot.values).length > 0 || snapshot.files.length > 0;
+    if (keep) saveAnswers(activeFormId, snapshot, "logout");
+    else clearAnswers(activeFormId);
+    if (allowsAnonymous) noteSignOut(activeFormId, keep ? "kept" : answered ? "cleared" : "empty");
+    logout({ callbackUrl: window.location.href });
+  }, [settleDraft, state.values, state.defaults, schema, activeFormId, allowsAnonymous]);
+
+  const requestLogout = useCallback(() => {
+    if (answers.length && allowsAnonymous) {
+      setLogoutConfirming(true);
+      return;
+    }
+    signOut(false);
+  }, [answers.length, allowsAnonymous, signOut]);
+
+  const cancelLogout = useCallback(() => setLogoutConfirming(false), []);
   const clearInfo = useCallback(() => dispatch({ type: "CLEAR_INFO" }), []);
   const hideDraftPrompt = useCallback(() => dispatch({ type: "HIDE_DRAFT_PROMPT" }), []);
 
@@ -644,7 +675,7 @@ export function useFormDisplayer(form, draft, options = {}) {
     now, isTimed, isRunning, startAttempt, isStarting: startMutation.isPending, startError,
     isGuest, guest, guestNotice, showGuestNotice: setGuestNotice, clearGuestNotice, turnstileBlocked: scriptBlocked && !verificationOutage, verificationOutage,
     scanWait, startScanWait, stopScanWait, busyRetry, clearBusyRetry,
-    respondent, user, hasGuestFiles, login,
+    respondent, user, allowsAnonymous, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout: signOut, cancelLogout,
     clearInfo, hideDraftPrompt,
   };
 }

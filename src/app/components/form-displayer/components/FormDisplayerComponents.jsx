@@ -2,7 +2,7 @@
 
 import { createContext, Fragment, useContext, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Mail, UserRound, UserRoundX } from "lucide-react";
+import { Clock, LogOut, Mail, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import NoticeDock from "@/app/components/utils/NoticeDock";
 import LoginButton from "@/app/components/utils/LoginButton";
@@ -19,7 +19,11 @@ const FALLBACK_AUTH = {
   respondent: "loading",
   user: null,
   hasGuestFiles: false,
+  logoutConfirming: false,
   login: () => loginWithKeycloak(window.location.href),
+  requestLogout: () => { },
+  confirmLogout: () => { },
+  cancelLogout: () => { },
 };
 
 export const FormAuthContext = createContext(null);
@@ -129,7 +133,35 @@ export function LoginConfirm({ prompt }) {
   );
 }
 
-function identityNoteOf(prompt) {
+function identityNoteOf(auth, prompt) {
+  const dot = <span className="text-neutral-600"> · </span>;
+
+  if (auth.respondent === "user" && auth.logoutConfirming) {
+    return {
+      key: "logout", icon: LogOut,
+      content: (
+        <>
+          Çıkınca cevaplarınız ekranda kalsın mı? Taslağınız hesabınızda kayıtlı.{" "}
+          <span className="whitespace-nowrap">
+            <NoteLink onClick={() => auth.confirmLogout(false)}>Temizle</NoteLink>{dot}
+            <NoteLink onClick={() => auth.confirmLogout(true)}>Kalsın</NoteLink>{dot}
+            <NoteLink onClick={auth.cancelLogout}>Vazgeç</NoteLink>
+          </span>
+        </>
+      ),
+    };
+  }
+  if (auth.respondent === "user") {
+    return {
+      key: "user", icon: UserRound,
+      content: (
+        <>
+          <span className="text-neutral-200">{displayName(auth.user)}</span> olarak yanıtlıyorsunuz.{" "}
+          <NoteLink onClick={auth.requestLogout}>Çıkış yap</NoteLink>
+        </>
+      ),
+    };
+  }
   if (prompt.confirming) return { key: "login", icon: UserRoundX, content: <LoginConfirm prompt={prompt} /> };
   return {
     key: "guest", icon: UserRoundX,
@@ -141,9 +173,9 @@ export function IdentityNote() {
   const auth = useFormAuth();
   const prompt = useLoginPrompt();
 
-  if (auth.respondent !== "guest") return null;
+  if (auth.respondent === "loading") return null;
 
-  const note = identityNoteOf(prompt);
+  const note = identityNoteOf(auth, prompt);
   return <SwapNote swapKey={note.key} icon={note.icon}>{note.content}</SwapNote>;
 }
 
