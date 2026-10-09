@@ -205,6 +205,9 @@ function reducer(state, action) {
     case "DISCARD_DRAFT":
       return { ...state, values: { ...state.defaults }, draftPromptVisible: false, missingFieldIds: [], fileProblems: {} };
 
+    case "HIDE_DRAFT_PROMPT":
+      return { ...state, draftPromptVisible: false };
+
     case "APPLY_DRAFT": {
       const values = { ...state.values, ...action.values };
       const answers = draftAnswers(values, state.defaults, migrateSchema(state.form?.schema));
@@ -355,6 +358,7 @@ export function useFormDisplayer(form, draft, options = {}) {
   );
 
   const activeFormId = state.form?.id ?? null;
+  const hideDraftPrompt = useCallback(() => dispatch({ type: "HIDE_DRAFT_PROMPT" }), []);
 
   const reloadForm = useCallback(async () => {
     if (!activeFormId || reloadingRef.current) return null;
@@ -579,5 +583,6 @@ export function useFormDisplayer(form, draft, options = {}) {
     now, isTimed, isRunning, startAttempt, isStarting: startMutation.isPending, startError,
     isGuest, guest, guestNotice, showGuestNotice: setGuestNotice, clearGuestNotice, turnstileBlocked: scriptBlocked && !verificationOutage, verificationOutage,
     scanWait, startScanWait, stopScanWait, busyRetry, clearBusyRetry,
+    hideDraftPrompt,
   };
 }

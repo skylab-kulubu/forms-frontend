@@ -110,6 +110,26 @@ body {
   }
 }
 
+.notice-countdown {
+  animation: notice-countdown var(--notice-duration, 6s) linear forwards;
+}
+
+.notice:focus-within .notice-countdown {
+  animation-play-state: paused;
+}
+
+@media (hover: hover) {
+  .notice:hover .notice-countdown {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes notice-countdown {
+  to {
+    transform: scaleX(0);
+  }
+}
+
 @layer components {
   .checkbox {
     appearance: none;

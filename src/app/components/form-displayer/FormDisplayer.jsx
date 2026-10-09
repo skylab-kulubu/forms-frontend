@@ -6,7 +6,10 @@ import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
-import { AnonymousNotice, CopyEmailNote, DraftNotice, FormDisplayerHeader, GuestNoticeDock, HeaderNote, MissingFields, NextStepNote, RespondentLine, SwapNote } from "./components/FormDisplayerComponents";
+import {
+  AnonymousNotice, CopyEmailNote, FormDisplayerHeader, GuestNoticeDock, HeaderNote, MissingFields, NextStepNote, RespondentLine,
+  RestoreNoticeDock, SwapNote, WARNING_SECONDS, formatDraftTime,
+} from "./components/FormDisplayerComponents";
 import { GuestUploadContext } from "./GuestUploadContext";
 import WorkflowProgress, { TimerBar } from "./components/WorkflowProgress";
 import StepIntro from "./components/StepIntro";
@@ -18,7 +21,7 @@ import Background from "../Background";
 import NoticeDock from "../utils/NoticeDock";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
 import { scanResultCopy, waitCopy } from "@/lib/guest-uploads";
-import { CalendarClock, CircleAlert, Hourglass, Loader2, ShieldAlert, Timer } from "lucide-react";
+import { CalendarClock, CircleAlert, Hourglass, Loader2, RotateCcw, ShieldAlert, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -36,6 +39,7 @@ const itemVariants = {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SCAN_WAIT_MS = 180000;
 const FILE_PROBLEMS = new Set(["rejected", "expired", "invalid"]);
+const LINKED_INFO_SECONDS = 10;
 
 function fileNoticeAfter(status, scanResult) {
   if (status === "rejected" || status === "fileRejected") return ` dosya güvenlik taramasından geçmedi. ${scanResultCopy(scanResult)}`;
@@ -131,9 +135,12 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     now, isTimed, isRunning, startAttempt, isStarting, startError,
     isGuest, guest, guestNotice, showGuestNotice, clearGuestNotice, turnstileBlocked, verificationOutage, scanWait, startScanWait, stopScanWait,
     busyRetry, clearBusyRetry,
+    hideDraftPrompt,
   } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt, guestUploads });
   const { data: session } = useSession();
   const [dismissedLateFor, setDismissedLateFor] = useState(null);
+  const [missingNotice, setMissingNotice] = useState(0);
+  const [dismissedMissing, setDismissedMissing] = useState(-1);
 
   const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, workflow: activeJourney,
     instanceId: activeInstanceId, intro, values: formValues, submissionState, submissionMessage, submittedAt, errorMessage, missingFieldIds,
@@ -225,6 +232,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
       if (missing.length > 0) {
         clearBusyRetry();
         showMissingFields(missing);
+        setMissingNotice((count) => count + 1);
         setTimeout(() => jumpToField(missing[0]), 150);
         return;
       }
@@ -300,23 +308,32 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     }
     if (errorMessage) {
       return (
-        <NoticeDock key="error" icon={CircleAlert} tone="text-red-300" role="alert" onClose={clearError}>
+        <NoticeDock key="error" icon={CircleAlert} tone="text-red-300" role="alert" duration={WARNING_SECONDS} onClose={clearError}>
           {errorMessage}
         </NoticeDock>
       );
     }
-    if (missingFields.length) {
+    if (missingFields.length && dismissedMissing !== missingNotice) {
       return (
-        <NoticeDock key="missing" icon={CircleAlert} tone="text-red-300" role="alert">
+        <NoticeDock key="missing" icon={CircleAlert} tone="text-red-300" role="alert" duration={WARNING_SECONDS} onClose={() => setDismissedMissing(missingNotice)}>
           <MissingFields fields={missingFields} onJump={jumpToField} />
         </NoticeDock>
       );
     }
     if (isLate && dismissedLateFor !== lateKey) {
       return (
-        <NoticeDock key="late" icon={CircleAlert} tone="text-amber-300" role="alert" onClose={() => setDismissedLateFor(lateKey)}>
+        <NoticeDock key="late" icon={CircleAlert} tone="text-amber-300" role="alert" duration={WARNING_SECONDS} onClose={() => setDismissedLateFor(lateKey)}>
           Sürenin bitmesine 10 dakikadan az kaldı. Gönder&apos;e basmazsanız o ana kadarki cevaplarınız ekibe geçici cevap olarak iletilir.
         </NoticeDock>
+      );
+    }
+    if (draftPromptVisible) {
+      const draftTime = formatDraftTime(draft?.savedAt);
+      return (
+        <RestoreNoticeDock key="draft" icon={RotateCcw} duration={LINKED_INFO_SECONDS} onClose={hideDraftPrompt} onDiscard={handleDiscardDraft}>
+          Kaldığınız yerden devam ediyorsunuz
+          {draftTime && <span className="text-neutral-500"> · <span className="whitespace-nowrap">taslak {draftTime}</span></span>}
+        </RestoreNoticeDock>
       );
     }
     return null;
@@ -367,7 +384,6 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                 <motion.div variants={itemVariants}>
                   <FormDisplayerHeader title={title} description={description}>
                     <AnimatePresence initial={false}>
-                      {draftPromptVisible && <DraftNotice key="draft" savedAt={draft?.savedAt} onDiscard={handleDiscardDraft} />}
                       <ExtensionNotice key="extension" attempt={activeAttempt} />
                       {isRunning && (
                         <HeaderNote key="timer" icon={Timer}>

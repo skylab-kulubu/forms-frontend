@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Mail, RotateCcw, UserRound, UserRoundX } from "lucide-react";
+import { Clock, Mail, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import NoticeDock from "@/app/components/utils/NoticeDock";
 import LoginButton from "@/app/components/utils/LoginButton";
@@ -14,7 +14,9 @@ const LINK_NEUTRAL = `${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:
 const LINK_DANGER = `${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`;
 const NOTE_EASE = [0.22, 1, 0.36, 1];
 
-function formatDraftTime(savedAt) {
+export const WARNING_SECONDS = 30;
+
+export function formatDraftTime(savedAt) {
   if (!savedAt) return null;
   const date = new Date(savedAt);
   if (Number.isNaN(date.getTime())) return null;
@@ -126,12 +128,11 @@ export function AnonymousNotice({ hasAnswers }) {
   );
 }
 
-export function DraftNotice({ savedAt, onDiscard }) {
+export function RestoreNoticeDock({ icon, duration, onDiscard, onClose, children }) {
   const [confirming, setConfirming] = useState(false);
-  const time = formatDraftTime(savedAt);
 
   return (
-    <HeaderNote icon={RotateCcw}>
+    <NoticeDock icon={icon} duration={duration} paused={confirming} onClose={onClose}>
       {confirming ? (
         <>
           Bütün cevaplarınız silinecek.{" "}
@@ -140,12 +141,11 @@ export function DraftNotice({ savedAt, onDiscard }) {
         </>
       ) : (
         <>
-          Kaldığınız yerden devam ediyorsunuz
-          {time && <span className="text-neutral-500"> · <span className="whitespace-nowrap">taslak {time}</span></span>}{" "}
+          {children}{" "}
           <NoteLink onClick={() => setConfirming(true)}>Baştan başla</NoteLink>
         </>
       )}
-    </HeaderNote>
+    </NoticeDock>
   );
 }
 
@@ -175,12 +175,8 @@ export function GuestNoticeDock({ notice, hasAnswers, onClose, onJump, onRetry =
         : null;
 
   return (
-    <NoticeDock icon={notice.icon} tone={notice.tone} role="alert" onClose={onClose} action={action}>
-      {prompt.confirming ? (
-        <span className="inline-flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <LoginConfirm prompt={prompt} />
-        </span>
-      ) : (
+    <NoticeDock icon={notice.icon} tone={notice.tone} role="alert" onClose={onClose} action={action} duration={WARNING_SECONDS} paused={prompt.confirming}>
+      {prompt.confirming ? <LoginConfirm prompt={prompt} /> : (
         <>
           {notice.jump && (
             <button type="button" onClick={() => onJump(notice.jump.id)} className={`${LINK_BUTTON} text-neutral-100 decoration-white/30 hover:decoration-white/70`}>
