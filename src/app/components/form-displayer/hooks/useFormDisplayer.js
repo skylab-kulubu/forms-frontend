@@ -502,6 +502,10 @@ export function useFormDisplayer(form, draft, options = {}) {
           return;
         }
         if (isGuest && handleGuestFailure(error, payload, verifyRetried)) return;
+        if (isAuthed && GUEST_FILE_REASONS.has(error?.body?.data?.reason)) {
+          dispatch({ type: "SET_ERROR", message: error.body.message });
+          return;
+        }
         const failure = submitFailureAction(error);
         if (failure) {
           dispatch(failure);

@@ -88,7 +88,7 @@ export async function request(path, options = {}) {
   return data;
 }
 
-export async function uploadWithProgress(path, file, onProgress) {
+export async function uploadWithProgress(path, file, onProgress, purpose) {
   const attempt = (authToken) =>
     new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -123,6 +123,7 @@ export async function uploadWithProgress(path, file, onProgress) {
       xhr.onerror = () => reject(new Error("Network hatası"));
 
       const formData = new FormData();
+      if (purpose) formData.append("purpose", purpose);
       formData.append("file", file);
 
       xhr.send(formData);

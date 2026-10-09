@@ -171,7 +171,7 @@ function AccountFileUpload({ question, questionNumber, description, required = f
     try {
       const response = await uploadWithProgress("/v1/media", file, (percent) => {
         setUploadProgress(percent);
-      });
+      }, "answer_file");
 
       // Core returns the created media object itself, not wrapped in `data`.
       const uploadedId = response?.id;
@@ -181,7 +181,7 @@ function AccountFileUpload({ question, questionNumber, description, required = f
         onChange({ target: { value: String(uploadedId) } });
       }
     } catch (err) {
-      setError("Dosya yüklenirken hata oluştu.");
+      setError(err?.status === 413 ? "Dosya boyutu sınırı aşıldı." : err?.status === 415 ? "Bu dosya türüne izin verilmiyor." : "Dosya yüklenirken hata oluştu.");
       setInternalFile(null);
       if (onChange) onChange({ target: { value: null } });
     } finally {
