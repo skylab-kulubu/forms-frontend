@@ -1,6 +1,8 @@
 import { useReducer, useRef, useEffect, useMemo, useCallback, useState } from "react";
-import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRespondent } from "@/lib/hooks/useRespondent";
+import { loginWithKeycloak } from "@/lib/authActions";
+import { clearAnswers, loadAnswers, saveAnswers } from "@/lib/answer-stash";
 import { useSubmitFormMutation, useDisplayFormQuery, useStartAttemptMutation, fetchDisplayFormById } from "@/lib/hooks/useForm";
 import { useResponseDraftAutoSave } from "./useResponseDraftAutoSave";
 import { FORM_ACCESS_STATUS, WORKFLOW_STATE, getSubmitErrorState } from "../../FormStatusHandler";
@@ -22,6 +24,7 @@ const BUSY_REASONS = new Set(["tooManySubmissions", "submitUnavailable"]);
 const BUSY_RETRY_LIMIT = 3;
 const BUSY_WAIT_LIMIT_SECONDS = 60;
 const BUSY_JITTER_MS = 3000;
+const STASH_DEBOUNCE_MS = 400;
 
 function getSubmissionState(status) {
   switch (status) {
@@ -54,6 +57,23 @@ function draftAnswers(values, defaults, schema) {
       question: field.props?.question || "",
       answer: JSON.stringify(values[field.id]),
     }));
+}
+
+function stashableAnswers(values, defaults, schema) {
+  const kept = {};
+  const files = [];
+  schema.forEach((field) => {
+    const value = values[field.id];
+    if (isBlankAnswer(value) || JSON.stringify(value) === JSON.stringify(defaults[field.id])) return;
+    if (field.type === "file") files.push(field.id);
+    else kept[field.id] = value;
+  });
+  return { values: kept, files };
+}
+
+function knownAnswers(values, schema) {
+  const ids = new Set(schema.filter((field) => field.type !== "file").map((field) => field.id));
+  return Object.fromEntries(Object.entries(values).filter(([id]) => ids.has(id)));
 }
 
 export function isFieldMissing(field, value) {
@@ -93,6 +113,7 @@ const initialState = {
   fileProblems: {},
   uploadingFields: {},
   draftPromptVisible: false,
+  info: null,
 };
 
 function withoutResolved(state, action) {
@@ -203,10 +224,16 @@ function reducer(state, action) {
       return { ...state, intro: null };
 
     case "DISCARD_DRAFT":
-      return { ...state, values: { ...state.defaults }, draftPromptVisible: false, missingFieldIds: [], fileProblems: {} };
+      return { ...state, values: { ...state.defaults }, draftPromptVisible: false, missingFieldIds: [], fileProblems: {}, info: null };
 
     case "HIDE_DRAFT_PROMPT":
       return { ...state, draftPromptVisible: false };
+
+    case "APPLY_STASH":
+      return { ...state, values: { ...state.values, ...action.values }, draftPromptVisible: false, info: action.info };
+
+    case "CLEAR_INFO":
+      return { ...state, info: null };
 
     case "APPLY_DRAFT": {
       const values = { ...state.values, ...action.values };
@@ -265,9 +292,9 @@ function initState({ form, options }) {
 export function useFormDisplayer(form, draft, options = {}) {
   const [state, dispatch] = useReducer(reducer, { form, options }, initState);
 
-  const { status } = useSession();
-  const isAuthed = status === "authenticated";
-  const isGuest = status === "unauthenticated";
+  const { kind: respondent, user } = useRespondent();
+  const isAuthed = respondent === "user";
+  const isGuest = respondent === "guest";
   const queryClient = useQueryClient();
 
   const submitMutation = useSubmitFormMutation();
@@ -358,6 +385,38 @@ export function useFormDisplayer(form, draft, options = {}) {
   );
 
   const activeFormId = state.form?.id ?? null;
+  const hasGuestFiles = isGuest && Object.keys(guest.files).length > 0;
+
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current || !activeFormId) return;
+    restoredRef.current = true;
+    const stash = loadAnswers(activeFormId);
+    const values = stash ? knownAnswers(stash.values, schema) : {};
+    const files = stash ? stash.files.filter((id) => schema.some((field) => field.id === id)) : [];
+
+    if (!Object.keys(values).length && !files.length) return;
+    if (isAuthed) {
+      const merged = Boolean(draft?.responses?.some((response) => !(response.id in values)));
+      dispatch({ type: "APPLY_STASH", values, info: { kind: "carried", merged, files } });
+      clearAnswers(activeFormId);
+      return;
+    }
+    dispatch({ type: "APPLY_STASH", values, info: { kind: "restored", files } });
+  }, [activeFormId, schema, isAuthed, draft]);
+
+  useEffect(() => {
+    if (!isGuest || !activeFormId || state.submissionState || state.nextFormId) return undefined;
+    const timer = setTimeout(() => saveAnswers(activeFormId, stashableAnswers(state.values, state.defaults, schema), "tab"), STASH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [isGuest, activeFormId, state.values, state.defaults, schema, state.submissionState, state.nextFormId]);
+
+  const login = useCallback(() => {
+    saveAnswers(activeFormId, stashableAnswers(state.values, state.defaults, schema), "login");
+    loginWithKeycloak(window.location.href);
+  }, [activeFormId, state.values, state.defaults, schema]);
+
+  const clearInfo = useCallback(() => dispatch({ type: "CLEAR_INFO" }), []);
   const hideDraftPrompt = useCallback(() => dispatch({ type: "HIDE_DRAFT_PROMPT" }), []);
 
   const reloadForm = useCallback(async () => {
@@ -432,8 +491,9 @@ export function useFormDisplayer(form, draft, options = {}) {
 
   const handleDiscardDraft = useCallback(() => {
     dispatch({ type: "DISCARD_DRAFT" });
+    clearAnswers(activeFormId);
     startTimeRef.current = Date.now();
-  }, []);
+  }, [activeFormId]);
 
   const endIntro = useCallback(() => dispatch({ type: "END_INTRO" }), []);
 
@@ -509,6 +569,7 @@ export function useFormDisplayer(form, draft, options = {}) {
     submitMutation.mutate(payload, {
       onSuccess: (response) => {
         busyAttemptsRef.current = 0;
+        clearAnswers(payload.formId);
         dispatch({ type: "SUBMIT_SUCCESS", status: response?.status, data: response?.data });
       },
       onError: (error) => {
@@ -583,6 +644,7 @@ export function useFormDisplayer(form, draft, options = {}) {
     now, isTimed, isRunning, startAttempt, isStarting: startMutation.isPending, startError,
     isGuest, guest, guestNotice, showGuestNotice: setGuestNotice, clearGuestNotice, turnstileBlocked: scriptBlocked && !verificationOutage, verificationOutage,
     scanWait, startScanWait, stopScanWait, busyRetry, clearBusyRetry,
-    hideDraftPrompt,
+    respondent, user, hasGuestFiles, login,
+    clearInfo, hideDraftPrompt,
   };
 }

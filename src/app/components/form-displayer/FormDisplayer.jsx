@@ -7,7 +7,7 @@ import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
 import {
-  AnonymousNotice, CopyEmailNote, FormDisplayerHeader, GuestNoticeDock, HeaderNote, MissingFields, NextStepNote, RespondentLine,
+  CopyEmailNote, FormAuthContext, FormDisplayerHeader, GuestNoticeDock, HeaderNote, IdentityNote, MissingFields, NextStepNote, RespondentLine,
   RestoreNoticeDock, SwapNote, WARNING_SECONDS, formatDraftTime,
 } from "./components/FormDisplayerComponents";
 import { GuestUploadContext } from "./GuestUploadContext";
@@ -21,7 +21,7 @@ import Background from "../Background";
 import NoticeDock from "../utils/NoticeDock";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
 import { scanResultCopy, waitCopy } from "@/lib/guest-uploads";
-import { CalendarClock, CircleAlert, Hourglass, Loader2, RotateCcw, ShieldAlert, Timer } from "lucide-react";
+import { CalendarClock, CircleAlert, History, Hourglass, Loader2, LogIn, RotateCcw, ShieldAlert, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -39,7 +39,15 @@ const itemVariants = {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SCAN_WAIT_MS = 180000;
 const FILE_PROBLEMS = new Set(["rejected", "expired", "invalid"]);
+const INFO_SECONDS = 6;
 const LINKED_INFO_SECONDS = 10;
+
+function reuploadCopy(fileIds, questionNumbers) {
+  const numbers = (fileIds ?? []).map((id) => questionNumbers.get(id)).filter(Boolean).sort((a, b) => a - b);
+  if (!numbers.length) return null;
+  const list = numbers.length === 1 ? `${numbers[0]}.` : `${numbers.slice(0, -1).map((number) => `${number}.`).join(", ")} ve ${numbers.at(-1)}.`;
+  return ` ${list} sorudaki ${numbers.length === 1 ? "dosyayı" : "dosyaları"} yeniden yükleyin.`;
+}
 
 function fileNoticeAfter(status, scanResult) {
   if (status === "rejected" || status === "fileRejected") return ` dosya güvenlik taramasından geçmedi. ${scanResultCopy(scanResult)}`;
@@ -135,7 +143,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     now, isTimed, isRunning, startAttempt, isStarting, startError,
     isGuest, guest, guestNotice, showGuestNotice, clearGuestNotice, turnstileBlocked, verificationOutage, scanWait, startScanWait, stopScanWait,
     busyRetry, clearBusyRetry,
-    hideDraftPrompt,
+    respondent, user, hasGuestFiles, login,
+    clearInfo, hideDraftPrompt,
   } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt, guestUploads });
   const { data: session } = useSession();
   const [dismissedLateFor, setDismissedLateFor] = useState(null);
@@ -144,7 +153,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
   const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, workflow: activeJourney,
     instanceId: activeInstanceId, intro, values: formValues, submissionState, submissionMessage, submittedAt, errorMessage, missingFieldIds,
-    fileProblems, draftPromptVisible, attempt: activeAttempt, closesAt: activeClosesAt } = state;
+    fileProblems, draftPromptVisible, info, attempt: activeAttempt, closesAt: activeClosesAt } = state;
 
   const title = activeForm?.title ?? "";
   const description = activeForm?.description ?? "";
@@ -159,6 +168,10 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const lateKey = isRunning ? activeAttempt?.deadlineAt ?? null : null;
   const isLate = useIsLate(lateKey, now);
   const sessionExpired = session?.error === "RefreshAccessTokenError";
+
+  const authValue = useMemo(() => ({
+    respondent, user, hasGuestFiles, login,
+  }), [respondent, user, hasGuestFiles, login]);
 
   const questionNumbers = useMemo(() => {
     const numbers = new Map();
@@ -183,7 +196,6 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     .map((id) => ({ id, number: questionNumbers.get(id) }))
     .sort((a, b) => a.number - b.number);
 
-  const hasAnswers = visibleFields.some((field) => field.type !== "separator" && hasValue(field, formValues[field.id]));
   const identityEmailField = visibleFields.find((field) => field.props?.identity === "email");
   const typedEmail = identityEmailField ? String(formValues[identityEmailField.id] ?? "").trim() : "";
   const asksIdentity = visibleFields.some((field) => field.props?.identity);
@@ -198,9 +210,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     files: guest.files,
     upload: guest.upload,
     remove: guest.remove,
-    hasAnswers,
     verification: verificationOutage ? "outage" : turnstileBlocked ? "blocked" : "ok",
-  } : null), [isGuest, guest.available, guest.files, guest.upload, guest.remove, guestUploads, hasAnswers, verificationOutage, turnstileBlocked]);
+  } : null), [isGuest, guest.available, guest.files, guest.upload, guest.remove, guestUploads, verificationOutage, turnstileBlocked]);
 
   const shownGuestNotice = guestNotice?.kind === "file" && guestNotice.flagged && !FILE_PROBLEMS.has(guest.files[guestNotice.questionId]?.status) ? null : guestNotice;
 
@@ -301,7 +312,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     if (shownGuestNotice) {
       const copy = guestNoticeCopy(shownGuestNotice, questionNumbers, turnstileBlocked);
       return (
-        <GuestNoticeDock key={`guest-${shownGuestNotice.kind}`} notice={copy} hasAnswers={hasAnswers} onClose={clearGuestNotice} onJump={jumpToField}
+        <GuestNoticeDock key={`guest-${shownGuestNotice.kind}`} notice={copy} onClose={clearGuestNotice} onJump={jumpToField}
           onRetry={copy.retry ? () => onSubmit() : null}
         />
       );
@@ -327,6 +338,21 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
         </NoticeDock>
       );
     }
+    if (info?.kind === "carried") {
+      return (
+        <NoticeDock key="carried" icon={LogIn} duration={INFO_SECONDS} onClose={clearInfo}>
+          {info.merged ? "Girişten önce yazdığınız cevaplar korundu. Boş kalan sorular taslağınızdan dolduruldu." : "Girişten önce yazdığınız cevaplar korundu."}
+          {reuploadCopy(info.files, questionNumbers)}
+        </NoticeDock>
+      );
+    }
+    if (info?.kind === "restored") {
+      return (
+        <RestoreNoticeDock key="restored" icon={History} duration={LINKED_INFO_SECONDS} onClose={clearInfo} onDiscard={handleDiscardDraft}>
+          Bu sekmede yazdığınız cevaplar geri yüklendi.{reuploadCopy(info.files, questionNumbers)}
+        </RestoreNoticeDock>
+      );
+    }
     if (draftPromptVisible) {
       const draftTime = formatDraftTime(draft?.savedAt);
       return (
@@ -340,7 +366,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   };
   const notice = renderNotice();
 
-  return (
+  const page = (
     <div ref={scrollRef} className="relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
 
       <AnimatePresence>
@@ -396,7 +422,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                           {isAuthed && <span className="text-neutral-500"> · gönderilmemiş taslaklar alınmaz</span>}
                         </SwapNote>
                       )}
-                      <AnonymousNotice key="identity" hasAnswers={hasAnswers} />
+                      <IdentityNote key="identity" />
                       {isGuest && turnstileBlocked && (
                         <HeaderNote key="turnstile" icon={ShieldAlert}>
                           Güvenlik doğrulaması yüklenemedi. Göndermek için bu sayfada reklam engelleyiciyi kapatın ya da giriş yapın.
@@ -476,7 +502,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                       <div className={`flex flex-col items-stretch gap-4 sm:flex-row sm:justify-between sm:gap-6 ${nextCopy ? "sm:items-end" : "sm:items-center"}`}>
                         {nextCopy ? <NextStepNote text={nextCopy} /> : (
                           <div className="order-2 min-w-0 sm:order-1">
-                            <RespondentLine savedAt={isAuthed ? lastSavedAt : null} hasAnswers={hasAnswers} compact />
+                            <RespondentLine savedAt={isAuthed ? lastSavedAt : null} compact />
                           </div>
                         )}
                         <motion.button onClick={() => onSubmit()} disabled={isSubmitting || isAnyFileUploading || isScanWaiting} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -492,7 +518,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                         </motion.button>
                       </div>
                       {nextCopy ? (
-                        <RespondentLine savedAt={isAuthed ? lastSavedAt : null} hasAnswers={hasAnswers}
+                        <RespondentLine savedAt={isAuthed ? lastSavedAt : null}
                           copyEmail={EMAIL_PATTERN.test(typedEmail) ? typedEmail : null}
                         />
                       ) : isGuest && EMAIL_PATTERN.test(typedEmail) ? (
@@ -517,4 +543,6 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
       <AnimatePresence mode="wait">{notice}</AnimatePresence>
     </div>
   );
+
+  return <FormAuthContext.Provider value={authValue}>{page}</FormAuthContext.Provider>;
 }

@@ -1,7 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
-import { useSession } from "next-auth/react";
+import { createContext, Fragment, useContext, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Mail, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
@@ -16,6 +15,19 @@ const NOTE_EASE = [0.22, 1, 0.36, 1];
 
 export const WARNING_SECONDS = 30;
 
+const FALLBACK_AUTH = {
+  respondent: "loading",
+  user: null,
+  hasGuestFiles: false,
+  login: () => loginWithKeycloak(window.location.href),
+};
+
+export const FormAuthContext = createContext(null);
+
+export function useFormAuth() {
+  return useContext(FormAuthContext) ?? FALLBACK_AUTH;
+}
+
 export function formatDraftTime(savedAt) {
   if (!savedAt) return null;
   const date = new Date(savedAt);
@@ -23,6 +35,10 @@ export function formatDraftTime(savedAt) {
   const day = date.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
   const time = date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
   return `${day}, ${time}`;
+}
+
+function displayName(user) {
+  return user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Kullanıcı";
 }
 
 function NoteLink({ onClick, danger = false, children }) {
@@ -91,13 +107,13 @@ export function SwapNote({ swapKey, icon, children }) {
   );
 }
 
-export function useLoginPrompt(hasAnswers) {
+export function useLoginPrompt() {
+  const { login, hasGuestFiles } = useFormAuth();
   const [confirming, setConfirming] = useState(false);
-  const login = () => loginWithKeycloak(window.location.href);
 
   return {
     confirming,
-    request: () => (hasAnswers ? setConfirming(true) : login()),
+    request: () => (hasGuestFiles ? setConfirming(true) : login()),
     confirm: login,
     cancel: () => setConfirming(false),
   };
@@ -106,26 +122,29 @@ export function useLoginPrompt(hasAnswers) {
 export function LoginConfirm({ prompt }) {
   return (
     <>
-      <span className="text-neutral-300">Girişe giderseniz yazdığınız cevaplar silinir.</span>{" "}
+      <span className="text-neutral-300">Yüklediğiniz dosyaları girişten sonra yeniden yüklemeniz gerekecek.</span>{" "}
       <NoteLink onClick={prompt.confirm} danger>Yine de giriş yap</NoteLink>{" "}
       <NoteLink onClick={prompt.cancel}>Vazgeç</NoteLink>
     </>
   );
 }
 
-export function AnonymousNotice({ hasAnswers }) {
-  const { status } = useSession();
-  const prompt = useLoginPrompt(hasAnswers);
+function identityNoteOf(prompt) {
+  if (prompt.confirming) return { key: "login", icon: UserRoundX, content: <LoginConfirm prompt={prompt} /> };
+  return {
+    key: "guest", icon: UserRoundX,
+    content: <>Anonim yanıtlıyorsunuz. Giriş yaparsanız cevaplarınız taslak olarak kaydedilir. <NoteLink onClick={prompt.request}>Giriş yap</NoteLink></>,
+  };
+}
 
-  if (status !== "unauthenticated") return null;
+export function IdentityNote() {
+  const auth = useFormAuth();
+  const prompt = useLoginPrompt();
 
-  return (
-    <SwapNote swapKey={prompt.confirming ? "login" : "guest"} icon={UserRoundX}>
-      {prompt.confirming ? <LoginConfirm prompt={prompt} /> : (
-        <>Anonim yanıtlıyorsunuz. Giriş yaparsanız cevaplarınız taslak olarak kaydedilir. <NoteLink onClick={prompt.request}>Giriş yap</NoteLink></>
-      )}
-    </SwapNote>
-  );
+  if (auth.respondent !== "guest") return null;
+
+  const note = identityNoteOf(prompt);
+  return <SwapNote swapKey={note.key} icon={note.icon}>{note.content}</SwapNote>;
 }
 
 export function RestoreNoticeDock({ icon, duration, onDiscard, onClose, children }) {
@@ -167,8 +186,8 @@ export function MissingFields({ fields, onJump }) {
   );
 }
 
-export function GuestNoticeDock({ notice, hasAnswers, onClose, onJump, onRetry = null }) {
-  const prompt = useLoginPrompt(hasAnswers);
+export function GuestNoticeDock({ notice, onClose, onJump, onRetry = null }) {
+  const prompt = useLoginPrompt();
   const action = prompt.confirming ? null
     : notice.login ? <LoginButton onClick={prompt.request} label="Giriş yap" className="shrink-0" />
       : onRetry ? <LoginButton onClick={onRetry} label="Tekrar dene" hoverIcon="arrow" className="shrink-0" />
@@ -212,15 +231,14 @@ export function CopyEmailNote({ email, className = "mt-1.5" }) {
   );
 }
 
-export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null, compact = false }) {
-  const { data: session, status } = useSession();
-  const prompt = useLoginPrompt(hasAnswers);
+export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
+  const auth = useFormAuth();
+  const prompt = useLoginPrompt();
 
-  if (status === "loading") return null;
+  if (auth.respondent === "loading") return null;
 
-  const isAuthed = status === "authenticated";
-  const user = session?.user;
-  const fullName = user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Kullanıcı";
+  const isAuthed = auth.respondent === "user";
+  const fullName = displayName(auth.user);
   const savedTime = savedAt ? savedAt.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : null;
 
   if (!isAuthed && prompt.confirming) {
@@ -244,9 +262,7 @@ export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null, 
         {!isAuthed && (
           <span className="inline-flex items-center gap-x-2 whitespace-nowrap">
             <span className="text-neutral-700">·</span>
-            <button type="button" onClick={prompt.request}
-              className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
-            >
+            <button type="button" onClick={prompt.request} className={LINK_NEUTRAL}>
               Giriş yap
             </button>
           </span>
@@ -277,9 +293,7 @@ export function RespondentLine({ savedAt, hasAnswers = false, copyEmail = null, 
           <>
             <span className="text-neutral-700">·</span>
             <span>Taslak kaydedilmiyor</span>
-            <button type="button" onClick={prompt.request}
-              className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
-            >
+            <button type="button" onClick={prompt.request} className={LINK_NEUTRAL}>
               Giriş yap
             </button>
           </>

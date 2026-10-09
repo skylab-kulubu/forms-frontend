@@ -516,8 +516,8 @@ function LoginLink({ prompt, label = "Giriş yap" }) {
   );
 }
 
-function GuestLoginRequired({ question, questionNumber, description, required, missing, reason, hasAnswers }) {
-  const prompt = useLoginPrompt(hasAnswers);
+function GuestLoginRequired({ question, questionNumber, description, required, missing, reason }) {
+  const prompt = useLoginPrompt();
 
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
@@ -815,8 +815,8 @@ export function DisplayFormFileUpload({ fieldId, fileProblem, ...props }) {
   if (guest.mode === "upload") {
     const rules = guestFileRules(props.acceptedFiles, props.maxSize, guest.capability);
     if (rules.types.length) return <GuestFileUpload fieldId={fieldId} guest={guest} {...props} />;
-    return <GuestLoginRequired {...props} hasAnswers={guest.hasAnswers} reason="Bu sorunun istediği dosya türü giriş yapmadan yüklenemiyor." />;
+    return <GuestLoginRequired {...props} reason="Bu sorunun istediği dosya türü giriş yapmadan yüklenemiyor." />;
   }
 
-  return <GuestLoginRequired {...props} hasAnswers={guest.hasAnswers} reason="Bu forma giriş yapmadan dosya yüklenemiyor." />;
+  return <GuestLoginRequired {...props} reason="Bu forma giriş yapmadan dosya yüklenemiyor." />;
 }
