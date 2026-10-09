@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../apiClient";
 
 // Devirden sonra form editörde kalır (editör olarak), şablon ve akış ise sahibinin listesinden çıkar.
@@ -23,6 +23,11 @@ const KINDS = {
 const transferOwnership = ({ kind, id, userId }) =>
   request(`${KINDS[kind].base}/${id}/transfer`, { method: "POST", body: { userId } });
 
+const fetchOrphaned = ({ kind, page, pageSize }) => {
+  const params = new URLSearchParams({ Page: String(page), PageSize: String(pageSize) });
+  return request(`${KINDS[kind].base}/orphaned?${params.toString()}`);
+};
+
 export const useTransferOwnershipMutation = (kind) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -30,6 +35,17 @@ export const useTransferOwnershipMutation = (kind) => {
     onSuccess: (_data, { id }) => {
       KINDS[kind].drop(id).forEach((queryKey) => queryClient.removeQueries({ queryKey }));
       KINDS[kind].refresh(id).forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+      queryClient.invalidateQueries({ queryKey: ["orphaned", kind] });
     },
+  });
+};
+
+export const useOrphanedQuery = (kind, options = {}) => {
+  const { page = 1, pageSize = 10, ...queryOptions } = options;
+  return useQuery({
+    queryKey: ["orphaned", kind, page, pageSize],
+    queryFn: () => fetchOrphaned({ kind, page, pageSize }),
+    retry: queryOptions.retry ?? false,
+    ...queryOptions,
   });
 };

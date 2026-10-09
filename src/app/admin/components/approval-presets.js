@@ -112,6 +112,20 @@ export const APPROVAL_PRESETS = {
         rejectLabel: () => "Vazgeç",
     },
 
+    "transfer-orphaned": {
+        variant: "phrase",
+        requiredPhrase: "Kabul ediyorum",
+        icon: ArrowRightLeft,
+        title: "Sahipsiz içeriği devret",
+        highlights: (ctx) => [
+            `${ctx.itemLabel} ${ctx.targetName} kişisine geçer; hesabı silinen sahibin yetkileri onun olur.`,
+            ...(ctx.kind === "workflow" ? ["Akıştaki sahipsiz formlar da akışla birlikte geçer."] : []),
+            "Sahipliği bundan sonra yalnız yeni sahip devredebilir.",
+        ],
+        approveLabel: (ctx) => ctx.isPending ? "Devrediliyor..." : "Sahipliği devret",
+        rejectLabel: () => "Vazgeç",
+    },
+
     default: {
         variant: "phrase",
         requiredPhrase: "Onaylıyorum",

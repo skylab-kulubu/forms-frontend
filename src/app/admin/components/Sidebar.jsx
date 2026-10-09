@@ -8,7 +8,7 @@ import { logout } from "@/lib/authActions";
 import { useFormContext, useWorkflowContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow } from "lucide-react";
+import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow, UserX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ClubSwitcher from "./ClubSwitcher";
 
@@ -22,6 +22,7 @@ const breadcrumbLabels = {
   "/admin/templates/new-template": "Yeni Şablon",
   "/admin/workflows": "Akışlar",
   "/admin/workflows/new-workflow": "Yeni Akış",
+  "/admin/ownership": "Sahipsiz içerikler",
 };
 
 function SectionLabel({ children }) {
@@ -237,6 +238,15 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
           ]}
         />
       </div>
+
+      {isSuperAdmin ? (
+        <div className="space-y-2">
+          <SectionLabel>Yönetim</SectionLabel>
+          <div className="space-y-1">
+            <NavItem href="/admin/ownership" icon={UserX} label="Sahipsiz içerikler" active={pathname === "/admin/ownership"} onClick={onItemClick} />
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-auto space-y-2">
         <NavItem href="/admin/how-to-use" icon={BookOpen} label="Nasıl Kullanılır" active={pathname === "/admin/how-to-use"} onClick={onItemClick} />
