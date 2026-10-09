@@ -6,10 +6,10 @@ import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 import { createGuestUploadSession, fetchGuestUploadStatus, guestReasonOf, uploadGuestFile } from "@/lib/guest-uploads";
 
 const SESSION_MARGIN_MS = 60000;
-const POLL_LIMIT = 120;
+export const POLL_LIMIT = 120;
 const PROBLEMS = new Set(["rejected", "expired", "invalid"]);
 
-function pollDelay(attempt) {
+export function pollDelay(attempt) {
   if (attempt < 15) return 2000;
   if (attempt < 40) return 5000;
   return 15000;
