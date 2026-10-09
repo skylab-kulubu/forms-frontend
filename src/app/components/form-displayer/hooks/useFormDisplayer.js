@@ -502,7 +502,7 @@ export function useFormDisplayer(form, draft, options = {}) {
           return;
         }
         if (isGuest && handleGuestFailure(error, payload, verifyRetried)) return;
-        if (isAuthed && GUEST_FILE_REASONS.has(error?.body?.data?.reason)) {
+        if (isAuthed && (GUEST_FILE_REASONS.has(error?.body?.data?.reason) || error?.body?.data?.reason === "guestUploadsUnavailable")) {
           dispatch({ type: "SET_ERROR", message: error.body.message });
           return;
         }
