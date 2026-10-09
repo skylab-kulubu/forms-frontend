@@ -60,7 +60,10 @@ export function useGuestUploads({ formId, capability, isGuest, hasFileQuestion, 
 
   const poll = useCallback(function pollStatus(questionId, mediaId, attempt = 0) {
     stopPolling(questionId);
-    if (attempt >= POLL_LIMIT) return;
+    if (attempt >= POLL_LIMIT) {
+      settle(questionId, mediaId, null);
+      return;
+    }
 
     timersRef.current[questionId] = setTimeout(async () => {
       const sessionId = sessionRef.current?.id;

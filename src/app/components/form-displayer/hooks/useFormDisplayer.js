@@ -403,6 +403,7 @@ export function useFormDisplayer(form, draft, options = {}) {
     });
   }, [activeFormId, startMutation, reloadForm]);
 
+  // A signed-in file field reports "scanning" after its upload; only true means a file is still uploading.
   const isAnyFileUploading = Object.values(state.uploadingFields).some((value) => value === true);
 
   const handleValueChange = (fieldId, value, isDefault = false) => {

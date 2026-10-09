@@ -174,9 +174,11 @@ function AccountFileUpload({ question, questionNumber, description, required = f
 
   useEffect(() => {
     const poll = pollRef.current;
+    poll.unmounted = false;
     return () => {
       clearTimeout(poll.timer);
       poll.mediaId = null;
+      poll.unmounted = true;
       reportUploadingRef.current?.(false);
     };
   }, []);
@@ -194,7 +196,10 @@ function AccountFileUpload({ question, questionNumber, description, required = f
   };
 
   const followScan = (mediaId, attempt = 0) => {
-    if (attempt >= POLL_LIMIT) return;
+    if (attempt >= POLL_LIMIT) {
+      settleScan(mediaId, null);
+      return;
+    }
 
     pollRef.current.timer = setTimeout(async () => {
       if (pollRef.current.mediaId !== mediaId) return;
@@ -240,6 +245,7 @@ function AccountFileUpload({ question, questionNumber, description, required = f
         onChange({ target: { value: String(uploadedId) } });
       }
 
+      if (pollRef.current.unmounted) return;
       status = response.status === "scanning" ? "scanning" : response.status === "rejected" ? "rejected" : "ready";
       pollRef.current.mediaId = uploadedId;
       setScan({ status, scanResult: response.scanResult ?? null });
@@ -762,8 +768,12 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
                         <span className="text-skylab-400/80">Virüs taraması yapılıyor</span>
                       ) : (
                         <>
-                          <span className="text-emerald-300/80">Tarandı</span>
-                          <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                          {entry?.status === "ready" && (
+                            <>
+                              <span className="text-emerald-300/80">Tarandı</span>
+                              <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                            </>
+                          )}
                           <span className="text-neutral-400">Değiştirmek için tıkla</span>
                         </>
                       )}
