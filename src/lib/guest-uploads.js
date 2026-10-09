@@ -2,10 +2,13 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
 export const GUEST_SESSION_HEADER = "X-Guest-Upload-Session";
 
-const GUEST_TYPES = {
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+const FILE_TYPES = {
   "application/pdf": { label: "PDF", extensions: [".pdf"] },
   "image/jpeg": { label: "JPG", extensions: [".jpg", ".jpeg", ".jpe", ".jfif"] },
   "image/png": { label: "PNG", extensions: [".png"] },
+  [DOCX]: { label: "DOCX", extensions: [".docx"] },
 };
 
 const ACCEPT_RULES = {
@@ -15,14 +18,19 @@ const ACCEPT_RULES = {
   ".jpe": ["image/jpeg"],
   ".jfif": ["image/jpeg"],
   ".png": ["image/png"],
+  ".docx": [DOCX],
   "image/*": ["image/jpeg", "image/png"],
-  "application/*": ["application/pdf"],
+  "application/*": ["application/pdf", DOCX],
   "application/pdf": ["application/pdf"],
   "image/jpeg": ["image/jpeg"],
   "image/jpg": ["image/jpeg"],
   "image/pjpeg": ["image/jpeg"],
   "image/png": ["image/png"],
+  [DOCX]: [DOCX],
 };
+
+// What core's answer_file purpose takes from a signed-in respondent; core refuses anything else.
+const ACCOUNT_UPLOADS = { maxBytes: 50 * 1024 * 1024, types: ["application/pdf", "image/jpeg", "image/png", DOCX] };
 
 const SCAN_RESULT_COPY = {
   infected: "Dosyada zararlı içerik bulundu ve silindi. Temiz bir kopyasını yükleyin.",
@@ -63,24 +71,31 @@ export function guestFileRules(acceptedFiles, maxSize, capability) {
   const rules = typeof acceptedFiles === "string"
     ? acceptedFiles.split(",").map((rule) => rule.trim().toLowerCase()).filter(Boolean)
     : [];
-  const wanted = rules.length ? new Set(rules.flatMap((rule) => ACCEPT_RULES[rule] ?? [])) : new Set(Object.keys(GUEST_TYPES));
-  const types = Object.keys(GUEST_TYPES).filter((type) => allowed.has(type) && wanted.has(type));
+  const wanted = rules.length ? new Set(rules.flatMap((rule) => ACCEPT_RULES[rule] ?? [])) : new Set(Object.keys(FILE_TYPES));
+  const types = Object.keys(FILE_TYPES).filter((type) => allowed.has(type) && wanted.has(type));
   const questionBytes = Number(maxSize) > 0 ? Number(maxSize) * 1024 * 1024 : Infinity;
   const maxBytes = Math.min(Number(capability?.maxBytes) || 0, questionBytes);
 
   return {
     types,
     maxBytes,
-    accept: types.flatMap((type) => GUEST_TYPES[type].extensions).join(","),
-    label: types.map((type) => GUEST_TYPES[type].label).join(", "),
+    accept: types.flatMap((type) => FILE_TYPES[type].extensions).join(","),
+    label: types.map((type) => FILE_TYPES[type].label).join(", "),
+    ignored: rules.filter((rule) => !ACCEPT_RULES[rule]?.some((type) => allowed.has(type))),
   };
 }
+
+export function accountFileRules(acceptedFiles, maxSize) {
+  return guestFileRules(acceptedFiles, maxSize, ACCOUNT_UPLOADS);
+}
+
+export const ACCOUNT_MAX_BYTES = ACCOUNT_UPLOADS.maxBytes;
 
 export function fileMatchesGuestTypes(file, types) {
   const name = (file?.name || "").toLowerCase();
   const extension = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
   const type = (file?.type || "").toLowerCase();
-  return types.some((allowed) => allowed === type || GUEST_TYPES[allowed]?.extensions.includes(extension));
+  return types.some((allowed) => allowed === type || FILE_TYPES[allowed]?.extensions.includes(extension));
 }
 
 export function guestReasonOf(error) {

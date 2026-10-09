@@ -10,7 +10,7 @@ import { RichText } from "@/app/components/rich-text/RichText";
 import { GuestUploadContext } from "@/app/components/form-displayer/GuestUploadContext";
 import { LoginConfirm, useLoginPrompt } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import { request, uploadWithProgress } from "@/lib/apiClient";
-import { fileMatchesGuestTypes, guestFileRules, guestReasonOf, scanResultCopy, waitCopy } from "@/lib/guest-uploads";
+import { ACCOUNT_MAX_BYTES, accountFileRules, fileMatchesGuestTypes, guestFileRules, guestReasonOf, scanResultCopy, waitCopy } from "@/lib/guest-uploads";
 import { useGuestUploadCapabilityQuery } from "@/lib/hooks/useGuestUploadCapability";
 import { POLL_LIMIT, pollDelay } from "@/app/components/form-displayer/hooks/useGuestUploads";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
@@ -31,32 +31,20 @@ function formatMegabytes(bytes) {
   return `${Math.round(bytes / 1024 / 1024)} MB`;
 }
 
-function parseAccept(acceptedFiles) {
-  if (!acceptedFiles || typeof acceptedFiles !== "string") return [];
-  return acceptedFiles
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .map((t) => t.toLowerCase());
-}
+function AccountUploadHint({ acceptedFiles }) {
+  const rules = accountFileRules(acceptedFiles, 0);
 
-function fileMatchesAccept(file, acceptList) {
-  if (!acceptList || acceptList.length === 0) return true;
-  const name = (file?.name || "").toLowerCase();
-  const type = (file?.type || "").toLowerCase();
-  const ext = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
-  return acceptList.some((rule) => {
-    if (!rule) return false;
-    if (rule.startsWith(".")) {
-      return ext === rule;
-    }
-    if (rule.endsWith("/*")) {
-      const base = rule.slice(0, -2);
-      return type.startsWith(`${base}/`);
-    }
-    // Exact mime type
-    return type === rule;
-  });
+  if (!rules.types.length) {
+    return <span className="px-0.5 text-2xs text-amber-300/80">Bu türlerden hiçbiri yüklenemiyor. Yanıtlayanlar yalnız PDF, JPG, PNG ya da DOCX yükleyebilir.</span>;
+  }
+
+  if (!rules.ignored.length) return null;
+
+  return (
+    <span className="px-0.5 text-2xs text-amber-300/80">
+      {rules.ignored.join(", ")} yüklenemez; yanıtlayanlar yalnız {rules.label} yükleyebilir.
+    </span>
+  );
 }
 
 function GuestUploadHint({ acceptedFiles, maxSize }) {
@@ -114,7 +102,7 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
             className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
             placeholder="Örn: .pdf,.jpg,.png veya image/*"
           />
-          <span className="px-0.5 text-2xs text-neutral-500">Virgülle ayırın. Boş bırakılırsa tüm türlere izin verilir.</span>
+          <span className="px-0.5 text-2xs text-neutral-500">Virgülle ayırın. Boş bırakılırsa PDF, JPG, PNG ve DOCX kabul edilir.</span>
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="file-maxsize" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
@@ -122,12 +110,13 @@ export function CreateFormFileUpload({ questionNumber, props, onPropsChange, rea
           </label>
           <input id="file-maxsize" type="number" min={0} {...bind("maxSize")}
             className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-            placeholder="0 = sınırsız"
+            placeholder={`0 = ${formatMegabytes(ACCOUNT_MAX_BYTES)}`}
           />
-          <span className="px-0.5 text-2xs text-neutral-500">0 ise sınır yok</span>
+          <span className="px-0.5 text-2xs text-neutral-500">En çok {formatMegabytes(ACCOUNT_MAX_BYTES)}; 0 bırakılırsa {formatMegabytes(ACCOUNT_MAX_BYTES)} uygulanır.</span>
         </div>
       </div>
 
+      <AccountUploadHint acceptedFiles={prop.acceptedFiles} />
       {anonymous && <GuestUploadHint acceptedFiles={prop.acceptedFiles} maxSize={prop.maxSize} />}
     </FieldShell>
   );
@@ -148,8 +137,7 @@ function FileQuestionHeader({ question, questionNumber, description, required, m
 }
 
 function AccountFileUpload({ question, questionNumber, description, required = false, acceptedFiles = "", maxSize = 0, onChange, missing = false, onUploadStateChange }) {
-  const acceptList = useMemo(() => parseAccept(acceptedFiles), [acceptedFiles]);
-  const maxBytes = Number(maxSize) > 0 ? Number(maxSize) * 1024 * 1024 : Infinity;
+  const rules = useMemo(() => accountFileRules(acceptedFiles, maxSize), [acceptedFiles, maxSize]);
 
   const [internalFile, setInternalFile] = useState(null);
   const [error, setError] = useState("");
@@ -266,11 +254,11 @@ function AccountFileUpload({ question, questionNumber, description, required = f
       clear();
       return;
     }
-    if (!fileMatchesAccept(f, acceptList)) {
+    if (!fileMatchesGuestTypes(f, rules.types)) {
       setError("Bu dosya türüne izin verilmiyor.");
       return;
     }
-    if (f.size > maxBytes) {
+    if (f.size > rules.maxBytes) {
       setError("Dosya boyutu sınırı aşıldı.");
       return;
     }
@@ -324,13 +312,24 @@ function AccountFileUpload({ question, questionNumber, description, required = f
     }
   }, [error]);
 
+  if (!rules.types.length) {
+    return (
+      <div className="mx-auto w-full max-w-2xl rounded-xl">
+        <div className="flex flex-col p-2 md:p-4">
+          <FileQuestionHeader question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} />
+          <LockedBox lock={{ icon: LockKeyhole, title: "Bu soruya dosya yüklenemiyor", detail: "Sorunun istediği dosya türü desteklenmiyor. Form sahibine haber verin." }} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
 
         <FileQuestionHeader question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} />
 
-        <input ref={inputRef} type="file" name="file" accept={acceptedFiles || undefined} aria-required={required} onChange={handleInputChange} className="sr-only" />
+        <input ref={inputRef} type="file" name="file" accept={rules.accept || undefined} aria-required={required} onChange={handleInputChange} className="sr-only" />
 
         <div role="button" tabIndex={0} onClick={() => !isUploading && inputRef.current?.click()}
           onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !isUploading) inputRef.current?.click(); }}
@@ -352,8 +351,7 @@ function AccountFileUpload({ question, questionNumber, description, required = f
                   {error ? error : "Dosya yükle veya sürükle"}
                 </span>
                 <span className="mt-0.5 text-2xs font-medium tracking-wide text-neutral-500 uppercase">
-                  {acceptedFiles ? acceptedFiles.replace(/,/g, ', ') : "TÜM TÜRLER"}
-                  {maxBytes !== Infinity ? ` • MAKS ${Math.round(maxBytes / 1024 / 1024)}MB` : ""}
+                  {rules.label} • MAKS {Math.round(rules.maxBytes / 1024 / 1024)}MB
                 </span>
               </div>
             </div>
