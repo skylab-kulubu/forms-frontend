@@ -14,6 +14,7 @@ import Popover from "@/app/components/utils/Popover";
 import ShareOverlay from "@/app/admin/components/ShareOverlay";
 import ChannelIcon from "@/app/admin/components/share/ChannelIcon";
 import { sourceLabel } from "@/lib/share-channels";
+import { isDeletedUser } from "@/lib/deleted-user";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -96,7 +97,7 @@ function UserCard({ name, email, userId, photoUrl, hasUser, size = "normal" }) {
       <div className="min-w-0 space-y-0.5">
         <p className={`${nameSize} font-semibold text-neutral-100 truncate leading-tight`}>{name}</p>
         {email && <p className={`${subSize} text-neutral-500 truncate`}>{email}</p>}
-        {userId && <p className={`${subSize} text-neutral-500/70 truncate`}>ID: {userId}</p>}
+        {userId && !isDeletedUser(userId) && <p className={`${subSize} text-neutral-500/70 truncate`}>ID: {userId}</p>}
       </div>
     </div>
   );
@@ -204,7 +205,7 @@ export function ResponseActions({ response, readOnly = false }) {
   const archiverId = response.archiver?.id || null;
   const archiverEmail = response.archiver?.email || "";
   const archiverName = response.archiver?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR"))).join(" ") || "";
-  const archiverSecondary = archiverEmail || (archiverId ? `ID: ${archiverId}` : "");
+  const archiverSecondary = archiverEmail || (archiverId && !isDeletedUser(archiverId) ? `ID: ${archiverId}` : "");
   const archiverLabel = [archiverName, archiverSecondary].filter(Boolean).join(" • ");
 
   const submitStatus = (nextStatus) => {

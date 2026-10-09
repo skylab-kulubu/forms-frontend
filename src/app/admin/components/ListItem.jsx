@@ -8,6 +8,7 @@ import { eventRefFromForm } from "@/lib/return-to";
 import { effectiveFormSettings } from "@/lib/form-settings";
 import { ROW_STATUS, rowKindOf } from "@/lib/attempt-status";
 import { currentTime, leftText, shortDuration } from "@/lib/form-timing";
+import { isDeletedUser } from "@/lib/deleted-user";
 
 const FORM_GRID = [
   "grid items-center gap-3",
@@ -269,7 +270,8 @@ export function ResponseListItem({ formId, response, className = "", onRemind, r
   const guest = response.guest;
   const personName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}` : "");
   const userName = formatPersonName(personName) || "Anonim Kullanıcı";
-  const userId = response.user?.id || "";
+  const isErased = isDeletedUser(response.user?.id);
+  const userId = isErased ? "" : response.user?.id || "";
   const photoUrl = response.user?.profilePictureUrl || null;
   const reviewerName = formatPersonName(response.reviewedBy?.fullName);
   const isReviewed = kind === "approved" || kind === "declined";
@@ -296,7 +298,7 @@ export function ResponseListItem({ formId, response, className = "", onRemind, r
             <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
               {response.isArchived && <Archive size={10} className="shrink-0 text-skylab-500/70" />}
               <span className={`shrink-0 text-3xs font-medium lg:hidden ${status.text}`}>{status.label}</span>
-              <span className="truncate text-3xs text-neutral-500">{userId || guest?.email || "Anonim"}</span>
+              <span className="truncate text-3xs text-neutral-500">{userId || guest?.email || (isErased ? "" : "Anonim")}</span>
             </div>
           </div>
         </div>
