@@ -90,12 +90,18 @@ const initialState = {
   submittedAt: null,
   errorMessage: null,
   missingFieldIds: [],
+  fileProblems: {},
   uploadingFields: {},
   draftPromptVisible: false,
 };
 
 function withoutResolved(state, action) {
   return action.resolved ? state.missingFieldIds.filter((id) => id !== action.fieldId) : state.missingFieldIds;
+}
+
+function withoutFileProblem(state, fieldId) {
+  if (!state.fileProblems[fieldId]) return state.fileProblems;
+  return Object.fromEntries(Object.entries(state.fileProblems).filter(([id]) => id !== fieldId));
 }
 
 function reducer(state, action) {
@@ -106,6 +112,7 @@ function reducer(state, action) {
         values: { ...state.values, [action.fieldId]: action.value },
         errorMessage: null,
         missingFieldIds: withoutResolved(state, action),
+        fileProblems: withoutFileProblem(state, action.fieldId),
       };
 
     case "CLEAR_VALUE":
@@ -130,6 +137,9 @@ function reducer(state, action) {
 
     case "SET_MISSING_FIELDS":
       return { ...state, missingFieldIds: action.fieldIds };
+
+    case "SET_FILE_PROBLEM":
+      return { ...state, fileProblems: { ...state.fileProblems, [action.fieldId]: action.problem } };
 
     case "SUBMIT_SUCCESS": {
       const { status, data } = action;
@@ -193,7 +203,7 @@ function reducer(state, action) {
       return { ...state, intro: null };
 
     case "DISCARD_DRAFT":
-      return { ...state, values: { ...state.defaults }, draftPromptVisible: false, missingFieldIds: [] };
+      return { ...state, values: { ...state.defaults }, draftPromptVisible: false, missingFieldIds: [], fileProblems: {} };
 
     case "APPLY_DRAFT": {
       const values = { ...state.values, ...action.values };
@@ -503,7 +513,11 @@ export function useFormDisplayer(form, draft, options = {}) {
           return;
         }
         if (isGuest && handleGuestFailure(error, payload, verifyRetried)) return;
-        if (isAuthed && (GUEST_FILE_REASONS.has(error?.body?.data?.reason) || error?.body?.data?.reason === "guestUploadsUnavailable")) {
+        const data = error?.body?.data;
+        if (isAuthed && (GUEST_FILE_REASONS.has(data?.reason) || data?.reason === "guestUploadsUnavailable")) {
+          if (data.questionId && data.reason !== "fileScanning") {
+            dispatch({ type: "SET_FILE_PROBLEM", fieldId: data.questionId, problem: { reason: data.reason, scanResult: data.scanResult ?? null } });
+          }
           dispatch({ type: "SET_ERROR", message: error.body.message });
           return;
         }

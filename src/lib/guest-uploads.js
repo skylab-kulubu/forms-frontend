@@ -98,6 +98,12 @@ export function fileMatchesGuestTypes(file, types) {
   return types.some((allowed) => allowed === type || FILE_TYPES[allowed]?.extensions.includes(extension));
 }
 
+export function fileStatusOfReason(reason) {
+  if (reason === "fileRejected") return "rejected";
+  if (reason === "fileExpired") return "expired";
+  return "invalid";
+}
+
 export function guestReasonOf(error) {
   return error?.body?.data?.reason ?? null;
 }

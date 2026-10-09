@@ -137,7 +137,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
   const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, workflow: activeJourney,
     instanceId: activeInstanceId, intro, values: formValues, submissionState, submissionMessage, submittedAt, errorMessage, missingFieldIds,
-    draftPromptVisible, attempt: activeAttempt, closesAt: activeClosesAt } = state;
+    fileProblems, draftPromptVisible, attempt: activeAttempt, closesAt: activeClosesAt } = state;
 
   const title = activeForm?.title ?? "";
   const description = activeForm?.description ?? "";
@@ -452,7 +452,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                               onChange={(e) => handleValueChange(field.id, e.target.value, e.isDefault)} missing={isMissing}
                               disableAutoFill={asksIdentity}
                               onUploadStateChange={(isUploading) => handleUploadStateChange(field.id, isUploading)}
-                              {...(field.type === "file" ? { fieldId: field.id } : {})}
+                              {...(field.type === "file" ? { fieldId: field.id, fileProblem: fileProblems[field.id] } : {})}
                             />
                           </motion.div>
                         );

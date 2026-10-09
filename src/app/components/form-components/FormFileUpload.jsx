@@ -10,7 +10,7 @@ import { RichText } from "@/app/components/rich-text/RichText";
 import { GuestUploadContext } from "@/app/components/form-displayer/GuestUploadContext";
 import { LoginConfirm, useLoginPrompt } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import { request, uploadWithProgress } from "@/lib/apiClient";
-import { ACCOUNT_MAX_BYTES, accountFileRules, fileMatchesGuestTypes, guestFileRules, guestReasonOf, scanResultCopy, waitCopy } from "@/lib/guest-uploads";
+import { ACCOUNT_MAX_BYTES, accountFileRules, fileMatchesGuestTypes, fileStatusOfReason, guestFileRules, guestReasonOf, scanResultCopy, waitCopy } from "@/lib/guest-uploads";
 import { useGuestUploadCapabilityQuery } from "@/lib/hooks/useGuestUploadCapability";
 import { POLL_LIMIT, pollDelay } from "@/app/components/form-displayer/hooks/useGuestUploads";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
@@ -136,7 +136,7 @@ function FileQuestionHeader({ question, questionNumber, description, required, m
   );
 }
 
-function AccountFileUpload({ question, questionNumber, description, required = false, acceptedFiles = "", maxSize = 0, onChange, missing = false, onUploadStateChange }) {
+function AccountFileUpload({ question, questionNumber, description, required = false, acceptedFiles = "", maxSize = 0, onChange, missing = false, onUploadStateChange, fileProblem = null }) {
   const rules = useMemo(() => accountFileRules(acceptedFiles, maxSize), [acceptedFiles, maxSize]);
 
   const [internalFile, setInternalFile] = useState(null);
@@ -153,8 +153,10 @@ function AccountFileUpload({ question, questionNumber, description, required = f
 
   const currentFile = internalFile;
   const scanning = scan?.status === "scanning";
-  const issue = !isUploading && currentFile && scan?.status === "rejected"
-    ? { security: true, title: currentFile.name, detail: scanResultCopy(scan.scanResult) } : null;
+  const issue = isUploading ? null
+    : currentFile && scan?.status === "rejected" ? { security: true, title: currentFile.name, detail: scanResultCopy(scan.scanResult) }
+      : fileProblem ? entryProblem({ status: fileStatusOfReason(fileProblem.reason), name: currentFile?.name ?? "Taslaktaki dosya", scanResult: fileProblem.scanResult }, rules)
+        : null;
 
   useEffect(() => {
     reportUploadingRef.current = onUploadStateChange;
@@ -341,7 +343,7 @@ function AccountFileUpload({ question, questionNumber, description, required = f
                   : "border-dashed border-white/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
             }`}
         >
-          {!currentFile && !isUploading && (
+          {!currentFile && !isUploading && !issue && (
             <div className="flex items-center gap-4 w-full animate-in fade-in duration-300">
               <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-skylab-500/20 text-skylab-400" : error ? "bg-red-500/20 text-red-400" : "bg-white/5 text-neutral-400"} transition-colors`}>
                 <Upload size={18} />
@@ -803,10 +805,10 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
   );
 }
 
-export function DisplayFormFileUpload({ fieldId, ...props }) {
+export function DisplayFormFileUpload({ fieldId, fileProblem, ...props }) {
   const guest = useContext(GuestUploadContext);
 
-  if (!guest || !fieldId) return <AccountFileUpload {...props} />;
+  if (!guest || !fieldId) return <AccountFileUpload {...props} fileProblem={fileProblem} />;
 
   if (guest.mode === "upload") {
     const rules = guestFileRules(props.acceptedFiles, props.maxSize, guest.capability);
