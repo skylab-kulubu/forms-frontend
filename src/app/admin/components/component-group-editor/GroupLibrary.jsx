@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { LibraryComponents } from "../form-editor/components/LibraryComponents";
 import { useGroupEditor } from "./GroupEditorContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { Trash, Trash2 } from "lucide-react";
 import { useDndContext, useDroppable } from "@dnd-kit/core";
-import { PanelTabs, PanelTextarea, SectionHeader, panelShellClass } from "@/app/admin/components/utils/SidePanel";
+import { PANEL_SECTION, PANEL_STACK, PanelTabs, PanelTextarea, SectionHeader, panelShellClass } from "@/app/admin/components/utils/SidePanel";
+import { OwnershipTransferSection } from "@/app/admin/components/OwnershipTransfer";
 
 const TABS = [
     { id: "components", label: "Bileşenler" },
@@ -19,6 +22,8 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect }) {
     const showTrash = from === "canvas";
 
     const { state, dispatch } = useGroupEditor();
+    const router = useRouter();
+    const { data: session } = useSession();
 
     return (
         <motion.div ref={setNodeRef} className={panelShellClass(layout)}
@@ -39,11 +44,22 @@ export function GroupLibrary({ layout = "grid", onLibrarySelect }) {
                             {activeTab === "components" ? (
                                 <LibraryComponents layout={layout} onSelect={onLibrarySelect} />
                             ) : (
-                                <div className="flex flex-col gap-4 p-4 text-sm text-neutral-200">
-                                    <SectionHeader title="Şablon açıklaması" description="Şablonlar listesinde şablon adının altında görünür." />
-                                    <PanelTextarea rows={6} value={state.description} aria-label="Şablon açıklaması" placeholder="Bu şablon hakkında kısa bir açıklama..."
-                                        onChange={(e) => dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })}
-                                    />
+                                <div className={`${PANEL_STACK} h-full overflow-y-auto overflow-x-hidden scrollbar`}>
+                                    <section className={PANEL_SECTION}>
+                                        <SectionHeader title="Şablon açıklaması" description="Şablonlar listesinde şablon adının altında görünür." />
+                                        <PanelTextarea rows={6} value={state.description} aria-label="Şablon açıklaması" placeholder="Bu şablon hakkında kısa bir açıklama..."
+                                            onChange={(e) => dispatch({ type: "SET_DESCRIPTION", payload: e.target.value })}
+                                        />
+                                    </section>
+
+                                    {state.id ? (
+                                        <OwnershipTransferSection kind="group" itemId={state.id} preset="transfer-group"
+                                            excludeIds={session?.user?.id ? [session.user.id] : []}
+                                            description="Şablonu kulüpten birine devredin; şablon listenizden çıkar."
+                                            blockedReason={state.isSaved ? null : "Devretmeden önce değişiklikleri kaydedin."}
+                                            onTransferred={() => router.push("/admin/templates")}
+                                        />
+                                    ) : null}
                                 </div>
                             )}
                         </motion.div>

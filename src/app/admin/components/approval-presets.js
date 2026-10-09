@@ -1,4 +1,4 @@
-import { Shredder, Workflow } from "lucide-react";
+import { ArrowRightLeft, Shredder, Workflow } from "lucide-react";
 
 export const APPROVAL_PRESETS = {
     "publish-workflow": {
@@ -68,6 +68,48 @@ export const APPROVAL_PRESETS = {
         ],
         approveLabel: (ctx) => ctx.isPending ? "Siliniyor..." : "Şablonu sil",
         rejectLabel: () => "İptal",
+    },
+
+    "transfer-form": {
+        variant: "phrase",
+        requiredPhrase: "Kabul ediyorum",
+        icon: ArrowRightLeft,
+        title: "Formun sahipliğini devret",
+        highlights: (ctx) => [
+            `Formun sahibi ${ctx.targetName} olur; siz editör olarak kalırsınız.`,
+            "Formu silmek ve düzenleme ekibini yönetmek yeni sahibe geçer.",
+            "Sahipliği yalnız yeni sahip geri devredebilir.",
+        ],
+        approveLabel: (ctx) => ctx.isPending ? "Devrediliyor..." : "Sahipliği devret",
+        rejectLabel: () => "Vazgeç",
+    },
+
+    "transfer-group": {
+        variant: "phrase",
+        requiredPhrase: "Kabul ediyorum",
+        icon: ArrowRightLeft,
+        title: "Şablonun sahipliğini devret",
+        highlights: (ctx) => [
+            `Şablonun sahibi ${ctx.targetName} olur ve şablon listenizden çıkar.`,
+            "Şablonun açık paylaşım bağlantısı iptal edilir.",
+            "Sahipliği yalnız yeni sahip geri devredebilir.",
+        ],
+        approveLabel: (ctx) => ctx.isPending ? "Devrediliyor..." : "Sahipliği devret",
+        rejectLabel: () => "Vazgeç",
+    },
+
+    "transfer-workflow": {
+        variant: "phrase",
+        requiredPhrase: "Kabul ediyorum",
+        icon: ArrowRightLeft,
+        title: "Akışın sahipliğini devret",
+        highlights: (ctx) => [
+            `Akışın sahibi ${ctx.targetName} olur ve akış listenizden çıkar.`,
+            "Akıştaki formlarınızın sahipliği de ona geçer; siz bu formlarda editör olarak kalırsınız.",
+            "Devam eden başvurular etkilenmez.",
+        ],
+        approveLabel: (ctx) => ctx.isPending ? "Devrediliyor..." : "Sahipliği devret",
+        rejectLabel: () => "Vazgeç",
     },
 
     default: {

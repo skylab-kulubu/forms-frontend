@@ -5,7 +5,9 @@ import { WorkflowLockMark, WorkflowManagedRow, WorkflowMembershipSection } from 
 import { TimingSection } from "./TimingSection";
 import { useFormEditor } from "../FormEditorContext";
 import { WORKFLOW_INTAKE, effectiveFormSettings } from "@/lib/form-settings";
+import { fetchFormById } from "@/lib/hooks/useFormAdmin";
 import { PANEL_SECTION, PANEL_STACK, PanelNotice, SectionHeader, ToggleRow } from "@/app/admin/components/utils/SidePanel";
+import { OwnershipTransferSection } from "@/app/admin/components/OwnershipTransfer";
 
 const alertVariants = {
     hidden: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" },
@@ -17,7 +19,7 @@ const PERSONAL_LOCK = "Kişisel süre açıkken kullanılamaz.";
 
 export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
     const { state, dispatch } = useFormEditor();
-    const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt } = state;
+    const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt, userRole, editors, isSaved } = state;
     const rootRef = useRef(null);
 
     const isWorkflowLocked = Boolean(workflow?.isPublished);
@@ -40,6 +42,15 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
         const section = rootRef.current?.querySelector('[data-anchor="timing"]');
         section?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, [focusTiming]);
+
+    const isOwner = Boolean(formId) && Number(userRole) === 3;
+    const ownerId = editors?.find((editor) => Number(editor.role) === 3)?.user?.id;
+
+    // Devirden sonra kişi editör olur; formu yeniden yüklemek sahip kontrollerini hemen kaldırır.
+    const reloadForm = async () => {
+        const response = await fetchFormById(formId);
+        if (response?.data) dispatch({ type: "LOAD_FORM", payload: response.data });
+    };
 
     const handleAnonymousToggle = () => {
         const nextValue = !allowAnonymousResponses;
@@ -120,6 +131,16 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
                     )}
                 </div>
             </section>
+
+            {isOwner ? (
+                <OwnershipTransferSection kind="form" itemId={formId} preset="transfer-form" excludeIds={ownerId ? [ownerId] : []}
+                    description="Formu ekibinden ya da kulüpten birine devredin; siz editör olarak kalırsınız."
+                    blockedReason={workflow
+                        ? `Bu form "${workflow.name || "Adsız akış"}" akışında; sahipliği akışla birlikte, akışın panelinden devredilir.`
+                        : !isSaved ? "Devretmeden önce değişiklikleri kaydedin." : null}
+                    onTransferred={reloadForm}
+                />
+            ) : null}
         </div>
     );
 }

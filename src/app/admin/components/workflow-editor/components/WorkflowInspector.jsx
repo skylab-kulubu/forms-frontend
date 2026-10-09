@@ -12,6 +12,7 @@ import {
   ROW, ROW_HOVER, SectionHeader, TILE, ToggleRow, actionClass, panelShellClass,
 } from "@/app/admin/components/utils/SidePanel";
 import AddStepPicker from "./AddStepPicker";
+import { OwnershipTransferSection } from "../../OwnershipTransfer";
 import { WorkflowManagedRow } from "../../form-editor/components/WorkflowMembership";
 import { InlineDateTime, TimingRow } from "../../form-editor/components/TimingSection";
 import { WORKFLOW_INTAKE } from "@/lib/form-settings";
@@ -533,7 +534,7 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
   );
 }
 
-function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versions, intakeControl, scheduleControl }) {
+function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versions, intakeControl, scheduleControl, ownershipControl }) {
   const depths = depthMap(state.nodes, state.transitions);
   const orderedNodes = flowOrder(state.nodes, state.transitions);
 
@@ -614,6 +615,14 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
           </div>
         )}
       </section>
+
+      {ownershipControl ? (
+        <OwnershipTransferSection kind="workflow" itemId={ownershipControl.workflowId} preset="transfer-workflow"
+          excludeIds={[ownershipControl.ownerId]}
+          description="Akışı kulüpten birine devredin; akıştaki formlarınızın sahipliği de ona geçer."
+          onTransferred={ownershipControl.onTransferred}
+        />
+      ) : null}
     </div>
   );
 }
@@ -629,7 +638,7 @@ function DescriptionPanel({ description, dispatch }) {
   );
 }
 
-export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, scheduleControl = null, layout = "grid" }) {
+export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, scheduleControl = null, ownershipControl = null, layout = "grid" }) {
   const { nodes, transitions, selectedKey, focus, panelTab } = state;
   const selectedNode = nodes.find((node) => node.nodeKey === selectedKey) ?? null;
   const view = selectedNode && panelTab === "step" ? "step" : panelTab === "description" ? "description" : "flow";
@@ -692,7 +701,7 @@ export default function WorkflowInspector({ state, dispatch, schemasByFormId, is
                 <DescriptionPanel description={state.description} dispatch={dispatch} />
               ) : (
                 <FlowPanel state={state} dispatch={dispatch} schemasByFormId={schemasByFormId} picker={picker} onRelayout={onRelayout}
-                  versions={versions} intakeControl={intakeControl} scheduleControl={scheduleControl}
+                  versions={versions} intakeControl={intakeControl} scheduleControl={scheduleControl} ownershipControl={ownershipControl}
                 />
               )}
             </motion.div>

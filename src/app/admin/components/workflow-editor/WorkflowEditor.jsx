@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useQueries } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { fetchFormById } from "@/lib/hooks/useFormAdmin";
@@ -52,8 +53,11 @@ function useMediaQuery(query) {
 
 function WorkflowEditorContent({ workflow, onRefresh }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const { state, dispatch } = useWorkflowEditor();
   const { setName: setGlobalName } = useWorkflowContext();
+  const ownerId = workflow?.owner?.id ?? null;
+  const isOwner = Boolean(ownerId) && ownerId === session?.user?.id;
   const isLgUp = useMediaQuery("(min-width: 1024px)");
 
   const [validation, setValidation] = useState(workflow?.validation ?? null);
@@ -514,6 +518,11 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
         isPending: scheduleMutation.isPending,
         isError: scheduleMutation.isError,
         onChange: changeClosesAt,
+      } : null}
+      ownershipControl={state.id && isOwner ? {
+        workflowId: state.id,
+        ownerId,
+        onTransferred: () => router.push("/admin/workflows"),
       } : null}
     />
   );
