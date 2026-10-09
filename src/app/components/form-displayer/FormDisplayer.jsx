@@ -6,7 +6,7 @@ import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
-import { AnonymousNotice, CopyEmailNote, DraftNotice, FormDisplayerHeader, GuestNoticeDock, HeaderNote, MissingFields, NextStepNote, RespondentLine } from "./components/FormDisplayerComponents";
+import { AnonymousNotice, CopyEmailNote, DraftNotice, FormDisplayerHeader, GuestNoticeDock, HeaderNote, MissingFields, NextStepNote, RespondentLine, SwapNote } from "./components/FormDisplayerComponents";
 import { GuestUploadContext } from "./GuestUploadContext";
 import WorkflowProgress, { TimerBar } from "./components/WorkflowProgress";
 import StepIntro from "./components/StepIntro";
@@ -366,31 +366,27 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
                 <motion.div variants={itemVariants}>
                   <FormDisplayerHeader title={title} description={description}>
-                    <AnimatePresence>
-                      {draftPromptVisible && (
-                        <DraftNotice savedAt={draft?.savedAt} onDiscard={handleDiscardDraft} />
+                    <AnimatePresence initial={false}>
+                      {draftPromptVisible && <DraftNotice key="draft" savedAt={draft?.savedAt} onDiscard={handleDiscardDraft} />}
+                      <ExtensionNotice key="extension" attempt={activeAttempt} />
+                      {isRunning && (
+                        <HeaderNote key="timer" icon={Timer}>
+                          Süre dolunca o ana kadarki cevaplarınız ekibe geçici cevap olarak iletilir.
+                        </HeaderNote>
+                      )}
+                      {!isTimed && activeClosesAt && (
+                        <SwapNote key="closing" swapKey={isAuthed ? "user" : "guest"} icon={CalendarClock}>
+                          <span className="whitespace-nowrap text-neutral-200">{formatLongDate(activeClosesAt)}</span> itibarıyla kapanır
+                          {isAuthed && <span className="text-neutral-500"> · gönderilmemiş taslaklar alınmaz</span>}
+                        </SwapNote>
+                      )}
+                      <AnonymousNotice key="identity" hasAnswers={hasAnswers} />
+                      {isGuest && turnstileBlocked && (
+                        <HeaderNote key="turnstile" icon={ShieldAlert}>
+                          Güvenlik doğrulaması yüklenemedi. Göndermek için bu sayfada reklam engelleyiciyi kapatın ya da giriş yapın.
+                        </HeaderNote>
                       )}
                     </AnimatePresence>
-                    <ExtensionNotice attempt={activeAttempt} />
-                    {isRunning && (
-                      <HeaderNote icon={Timer}>
-                        <span>Süre dolunca o ana kadarki cevaplarınız ekibe geçici cevap olarak iletilir.</span>
-                      </HeaderNote>
-                    )}
-                    {!isTimed && activeClosesAt && (
-                      <HeaderNote icon={CalendarClock}>
-                        <span>
-                          <span className="text-neutral-200">{formatLongDate(activeClosesAt)}</span> itibarıyla kapanır
-                          {isAuthed && <span className="text-neutral-500"> · gönderilmemiş taslaklar alınmaz</span>}
-                        </span>
-                      </HeaderNote>
-                    )}
-                    <AnonymousNotice hasAnswers={hasAnswers} />
-                    {isGuest && turnstileBlocked && (
-                      <HeaderNote icon={ShieldAlert}>
-                        <span className="min-w-0 flex-1">Güvenlik doğrulaması yüklenemedi. Göndermek için bu sayfada reklam engelleyiciyi kapatın ya da giriş yapın.</span>
-                      </HeaderNote>
-                    )}
                   </FormDisplayerHeader>
                 </motion.div>
 

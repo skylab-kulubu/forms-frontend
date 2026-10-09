@@ -2,7 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { useSession } from "next-auth/react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Clock, Mail, RotateCcw, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import NoticeDock from "@/app/components/utils/NoticeDock";
@@ -10,6 +10,9 @@ import LoginButton from "@/app/components/utils/LoginButton";
 import { loginWithKeycloak } from "@/lib/authActions";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors";
+const LINK_NEUTRAL = `${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`;
+const LINK_DANGER = `${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`;
+const NOTE_EASE = [0.22, 1, 0.36, 1];
 
 function formatDraftTime(savedAt) {
   if (!savedAt) return null;
@@ -18,6 +21,14 @@ function formatDraftTime(savedAt) {
   const day = date.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
   const time = date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
   return `${day}, ${time}`;
+}
+
+function NoteLink({ onClick, danger = false, children }) {
+  return (
+    <button type="button" onClick={onClick} className={`${danger ? LINK_DANGER : LINK_NEUTRAL} whitespace-nowrap`}>
+      {children}
+    </button>
+  );
 }
 
 export function FormDisplayerHeader({ title, description, children }) {
@@ -50,17 +61,31 @@ export function FormDisplayerHeader({ title, description, children }) {
         />
       )}
 
-      {children && <div className="mt-3.5 flex flex-col gap-1.5 empty:hidden">{children}</div>}
+      {children && <div className="mt-3.5 flex flex-col gap-2 empty:hidden">{children}</div>}
     </div>
   );
 }
 
 export function HeaderNote({ icon: Icon, children }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-neutral-400">
-      <Icon size={13} className="shrink-0 text-neutral-500" />
-      {children}
-    </div>
+    <motion.div className="flex items-start gap-2 text-xs leading-5 text-neutral-400"
+      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6, transition: { duration: 0.15, ease: NOTE_EASE } }}
+      transition={{ duration: 0.2, ease: NOTE_EASE }}
+    >
+      <span className="flex h-5 shrink-0 items-center text-neutral-500">
+        <Icon size={13} />
+      </span>
+      <p className="min-w-0 flex-1">{children}</p>
+    </motion.div>
+  );
+}
+
+export function SwapNote({ swapKey, icon, children }) {
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <HeaderNote key={swapKey} icon={icon}>{children}</HeaderNote>
+    </AnimatePresence>
   );
 }
 
@@ -79,13 +104,9 @@ export function useLoginPrompt(hasAnswers) {
 export function LoginConfirm({ prompt }) {
   return (
     <>
-      <span className="text-neutral-300">Girişe giderseniz yazdığınız cevaplar silinir.</span>
-      <button type="button" onClick={prompt.confirm} className={`${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`}>
-        Yine de giriş yap
-      </button>
-      <button type="button" onClick={prompt.cancel} className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}>
-        Vazgeç
-      </button>
+      <span className="text-neutral-300">Girişe giderseniz yazdığınız cevaplar silinir.</span>{" "}
+      <NoteLink onClick={prompt.confirm} danger>Yine de giriş yap</NoteLink>{" "}
+      <NoteLink onClick={prompt.cancel}>Vazgeç</NoteLink>
     </>
   );
 }
@@ -97,18 +118,11 @@ export function AnonymousNotice({ hasAnswers }) {
   if (status !== "unauthenticated") return null;
 
   return (
-    <HeaderNote icon={UserRoundX}>
+    <SwapNote swapKey={prompt.confirming ? "login" : "guest"} icon={UserRoundX}>
       {prompt.confirming ? <LoginConfirm prompt={prompt} /> : (
-        <>
-          <span>Anonim yanıtlıyorsunuz. Giriş yaparsanız cevaplarınız taslak olarak kaydedilir.</span>
-          <button type="button" onClick={prompt.request}
-            className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
-          >
-            Giriş yap
-          </button>
-        </>
+        <>Anonim yanıtlıyorsunuz. Giriş yaparsanız cevaplarınız taslak olarak kaydedilir. <NoteLink onClick={prompt.request}>Giriş yap</NoteLink></>
       )}
-    </HeaderNote>
+    </SwapNote>
   );
 }
 
@@ -117,38 +131,21 @@ export function DraftNotice({ savedAt, onDiscard }) {
   const time = formatDraftTime(savedAt);
 
   return (
-    <motion.div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-neutral-400"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <RotateCcw size={13} className="shrink-0 text-neutral-500" />
+    <HeaderNote icon={RotateCcw}>
       {confirming ? (
         <>
-          <span>Bütün cevaplarınız silinecek.</span>
-          <button type="button" onClick={() => { setConfirming(false); onDiscard(); }}
-            className={`${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`}
-          >
-            Sil
-          </button>
-          <button type="button" onClick={() => setConfirming(false)}
-            className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
-          >
-            Vazgeç
-          </button>
+          Bütün cevaplarınız silinecek.{" "}
+          <NoteLink onClick={() => { setConfirming(false); onDiscard(); }} danger>Sil</NoteLink>{" "}
+          <NoteLink onClick={() => setConfirming(false)}>Vazgeç</NoteLink>
         </>
       ) : (
         <>
-          <span>
-            Kaldığınız yerden devam ediyorsunuz
-            {time && <span className="text-neutral-500"> · taslak {time}</span>}
-          </span>
-          <button type="button" onClick={() => setConfirming(true)}
-            className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
-          >
-            Baştan başla
-          </button>
+          Kaldığınız yerden devam ediyorsunuz
+          {time && <span className="text-neutral-500"> · <span className="whitespace-nowrap">taslak {time}</span></span>}{" "}
+          <NoteLink onClick={() => setConfirming(true)}>Baştan başla</NoteLink>
         </>
       )}
-    </motion.div>
+    </HeaderNote>
   );
 }
 

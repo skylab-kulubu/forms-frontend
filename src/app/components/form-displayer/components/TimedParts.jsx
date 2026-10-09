@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronRight, CircleAlert, ClockPlus, Loader2, Timer } from "lucide-react";
 import { HOUR, MINUTE, clock, durationAdjective, durationText, formatLongDate, formatShortDate, leftText } from "@/lib/form-timing";
+import { HeaderNote } from "./FormDisplayerComponents";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors";
 
@@ -99,13 +100,10 @@ export function ExtensionNotice({ attempt }) {
   if (!extension || attempt?.state !== "running") return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-neutral-400">
-      <ClockPlus size={13} className="shrink-0 text-neutral-500" />
-      <span>
-        Ekip sürenize {durationText(extension.minutes)} ekledi
-        <span className="text-neutral-500"> · yeni bitiş {formatShortDate(attempt.deadlineAt)}</span>
-      </span>
-    </div>
+    <HeaderNote icon={ClockPlus}>
+      Ekip sürenize {durationText(extension.minutes)} ekledi
+      <span className="text-neutral-500"> · <span className="whitespace-nowrap">yeni bitiş {formatShortDate(attempt.deadlineAt)}</span></span>
+    </HeaderNote>
   );
 }
 
