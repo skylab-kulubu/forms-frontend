@@ -403,7 +403,8 @@ export function useFormDisplayer(form, draft, options = {}) {
     });
   }, [activeFormId, startMutation, reloadForm]);
 
-  const isAnyFileUploading = Object.values(state.uploadingFields).some(Boolean);
+  // A signed-in file field reports "scanning" after its upload; only true means a file is still uploading.
+  const isAnyFileUploading = Object.values(state.uploadingFields).some((value) => value === true);
 
   const handleValueChange = (fieldId, value, isDefault = false) => {
     const field = state.missingFieldIds.includes(fieldId) ? schema.find((item) => item.id === fieldId) : null;

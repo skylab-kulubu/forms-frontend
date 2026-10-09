@@ -9,9 +9,10 @@ import { useOptionalFormEditor } from "@/app/admin/components/form-editor/FormEd
 import { RichText } from "@/app/components/rich-text/RichText";
 import { GuestUploadContext } from "@/app/components/form-displayer/GuestUploadContext";
 import { LoginConfirm, useLoginPrompt } from "@/app/components/form-displayer/components/FormDisplayerComponents";
-import { uploadWithProgress } from "@/lib/apiClient";
+import { request, uploadWithProgress } from "@/lib/apiClient";
 import { fileMatchesGuestTypes, guestFileRules, guestReasonOf, scanResultCopy, waitCopy } from "@/lib/guest-uploads";
 import { useGuestUploadCapabilityQuery } from "@/lib/hooks/useGuestUploadCapability";
+import { POLL_LIMIT, pollDelay } from "@/app/components/form-displayer/hooks/useGuestUploads";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50";
@@ -156,18 +157,81 @@ function AccountFileUpload({ question, questionNumber, description, required = f
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [scan, setScan] = useState(null);
 
   const inputRef = useRef(null);
+  const pollRef = useRef({ mediaId: null, timer: null });
+  const reportUploadingRef = useRef(onUploadStateChange);
 
   const currentFile = internalFile;
+  const scanning = scan?.status === "scanning";
+  const issue = !isUploading && currentFile && scan?.status === "rejected"
+    ? { security: true, title: currentFile.name, detail: scanResultCopy(scan.scanResult) } : null;
+
+  useEffect(() => {
+    reportUploadingRef.current = onUploadStateChange;
+  });
+
+  useEffect(() => {
+    const poll = pollRef.current;
+    poll.unmounted = false;
+    return () => {
+      clearTimeout(poll.timer);
+      poll.mediaId = null;
+      poll.unmounted = true;
+      reportUploadingRef.current?.(false);
+    };
+  }, []);
+
+  const stopScan = () => {
+    clearTimeout(pollRef.current.timer);
+    pollRef.current.mediaId = null;
+    setScan(null);
+  };
+
+  const settleScan = (mediaId, status, scanResult = null) => {
+    if (pollRef.current.mediaId !== mediaId) return;
+    setScan(status ? { status, scanResult } : null);
+    reportUploadingRef.current?.(false);
+  };
+
+  const followScan = (mediaId, attempt = 0) => {
+    if (attempt >= POLL_LIMIT) {
+      settleScan(mediaId, null);
+      return;
+    }
+
+    pollRef.current.timer = setTimeout(async () => {
+      if (pollRef.current.mediaId !== mediaId) return;
+
+      try {
+        const media = await request(`/v1/media/${mediaId}`);
+        if (pollRef.current.mediaId !== mediaId) return;
+        if (media?.status === "scanning") {
+          followScan(mediaId, attempt + 1);
+          return;
+        }
+        settleScan(mediaId, media?.status === "rejected" ? "rejected" : "ready", media?.scanResult ?? null);
+      } catch (err) {
+        if (pollRef.current.mediaId !== mediaId) return;
+        if (err?.status === 404) {
+          settleScan(mediaId, null);
+          return;
+        }
+        followScan(mediaId, attempt + 1);
+      }
+    }, pollDelay(attempt));
+  };
 
   const handleUpload = async (file) => {
+    stopScan();
     setIsUploading(true);
     if (onUploadStateChange) onUploadStateChange(true);
     setUploadProgress(0);
     setError("");
     setInternalFile(file);
 
+    let status = null;
     try {
       const response = await uploadWithProgress("/v1/media", file, (percent) => {
         setUploadProgress(percent);
@@ -180,13 +244,19 @@ function AccountFileUpload({ question, questionNumber, description, required = f
       if (onChange) {
         onChange({ target: { value: String(uploadedId) } });
       }
+
+      if (pollRef.current.unmounted) return;
+      status = response.status === "scanning" ? "scanning" : response.status === "rejected" ? "rejected" : "ready";
+      pollRef.current.mediaId = uploadedId;
+      setScan({ status, scanResult: response.scanResult ?? null });
+      if (status === "scanning") followScan(uploadedId);
     } catch (err) {
       setError(err?.status === 413 ? "Dosya boyutu sınırı aşıldı." : err?.status === 415 ? "Bu dosya türüne izin verilmiyor." : "Dosya yüklenirken hata oluştu.");
       setInternalFile(null);
       if (onChange) onChange({ target: { value: null } });
     } finally {
       setIsUploading(false);
-      if (onUploadStateChange) onUploadStateChange(false);
+      if (onUploadStateChange) onUploadStateChange(status === "scanning" ? "scanning" : false);
     }
   };
 
@@ -240,8 +310,9 @@ function AccountFileUpload({ question, questionNumber, description, required = f
     setError("");
     setInternalFile(null);
     setUploadProgress(0);
+    stopScan();
     if (onChange) onChange({ target: { value: null } });
-    if (isUploading && onUploadStateChange) onUploadStateChange(false);
+    if ((isUploading || scanning) && onUploadStateChange) onUploadStateChange(false);
   };
 
   useEffect(() => {
@@ -264,7 +335,8 @@ function AccountFileUpload({ question, questionNumber, description, required = f
         <div role="button" tabIndex={0} onClick={() => !isUploading && inputRef.current?.click()}
           onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !isUploading) inputRef.current?.click(); }}
           onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
-          className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border h-16 px-4 py-3 transition-all duration-300 ${dragging ? "border-skylab-400/50 bg-skylab-500/10"
+          className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border px-4 py-3 transition-all duration-300 ${issue && !dragging ? "min-h-16" : "h-16"} ${dragging ? "border-skylab-400/50 bg-skylab-500/10"
+              : issue ? "border-solid border-red-400/30 bg-red-900/15 cursor-pointer hover:bg-red-900/25"
               : missing && !currentFile && !error ? "border-dashed border-red-400/60 bg-red-900/20"
                 : currentFile || isUploading ? "border-solid border-white/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
                   : "border-dashed border-white/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
@@ -287,12 +359,14 @@ function AccountFileUpload({ question, questionNumber, description, required = f
             </div>
           )}
 
-          {(currentFile || isUploading) && (
+          {issue && <IssueContent issue={issue} onClear={clear} />}
+
+          {(currentFile || isUploading) && !issue && (
             <div className="flex items-center justify-between w-full animate-in fade-in duration-300">
 
               <div className="flex items-center gap-4 overflow-hidden">
-                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${isUploading ? 'bg-skylab-500/10 text-skylab-400' : 'bg-white/10 text-neutral-300'}`}>
-                  {isUploading ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
+                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${isUploading || scanning ? 'bg-skylab-500/10 text-skylab-400' : 'bg-white/10 text-neutral-300'}`}>
+                  {isUploading || scanning ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
                 </div>
 
                 <div className="flex flex-col truncate text-left">
@@ -306,9 +380,20 @@ function AccountFileUpload({ question, questionNumber, description, required = f
                         <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
                         <span className="text-skylab-400/80">Yükleniyor... {uploadProgress}%</span>
                       </>
+                    ) : scanning ? (
+                      <>
+                        <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                        <span className="text-skylab-400/80">Virüs taraması yapılıyor</span>
+                      </>
                     ) : (
                       <>
                         <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                        {scan?.status === "ready" && (
+                          <>
+                            <span className="text-emerald-300/80">Tarandı</span>
+                            <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                          </>
+                        )}
                         <span className="text-neutral-400">Değiştirmek için tıkla</span>
                       </>
                     )}
@@ -683,8 +768,12 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
                         <span className="text-skylab-400/80">Virüs taraması yapılıyor</span>
                       ) : (
                         <>
-                          <span className="text-emerald-300/80">Tarandı</span>
-                          <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                          {entry?.status === "ready" && (
+                            <>
+                              <span className="text-emerald-300/80">Tarandı</span>
+                              <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
+                            </>
+                          )}
                           <span className="text-neutral-400">Değiştirmek için tıkla</span>
                         </>
                       )}
