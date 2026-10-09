@@ -2,7 +2,7 @@
 
 import { createContext, Fragment, useContext, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, LogOut, Mail, UserRound, UserRoundX } from "lucide-react";
+import { Clock, LogOut, Mail, TimerOff, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import NoticeDock from "@/app/components/utils/NoticeDock";
 import LoginButton from "@/app/components/utils/LoginButton";
@@ -18,6 +18,7 @@ export const WARNING_SECONDS = 30;
 const FALLBACK_AUTH = {
   respondent: "loading",
   user: null,
+  allowsAnonymous: true,
   hasGuestFiles: false,
   logoutConfirming: false,
   login: () => loginWithKeycloak(window.location.href),
@@ -163,6 +164,18 @@ function identityNoteOf(auth, prompt) {
     };
   }
   if (prompt.confirming) return { key: "login", icon: UserRoundX, content: <LoginConfirm prompt={prompt} /> };
+  if (auth.respondent === "expired" && auth.allowsAnonymous === false) {
+    return {
+      key: "expired-locked", icon: TimerOff,
+      content: <>Oturumunuzun süresi doldu. Göndermek için yeniden giriş yapın. <NoteLink onClick={prompt.request}>Yeniden giriş yap</NoteLink></>,
+    };
+  }
+  if (auth.respondent === "expired") {
+    return {
+      key: "expired", icon: UserRoundX,
+      content: <>Oturumunuzun süresi doldu, şu an anonim yanıtlıyorsunuz. <NoteLink onClick={prompt.request}>Yeniden giriş yap</NoteLink></>,
+    };
+  }
   return {
     key: "guest", icon: UserRoundX,
     content: <>Anonim yanıtlıyorsunuz. Giriş yaparsanız cevaplarınız taslak olarak kaydedilir. <NoteLink onClick={prompt.request}>Giriş yap</NoteLink></>,
@@ -270,7 +283,10 @@ export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
   if (auth.respondent === "loading") return null;
 
   const isAuthed = auth.respondent === "user";
+  const lockedOut = auth.respondent === "expired" && auth.allowsAnonymous === false;
+  const loginLabel = auth.respondent === "expired" ? "Yeniden giriş yap" : "Giriş yap";
   const fullName = displayName(auth.user);
+  const guestText = lockedOut ? "Oturumunuzun süresi doldu" : "Anonim olarak yanıtlıyorsunuz";
   const savedTime = savedAt ? savedAt.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : null;
 
   if (!isAuthed && prompt.confirming) {
@@ -289,13 +305,13 @@ export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
           {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
           {isAuthed
             ? <span className="min-w-0 truncate"><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
-            : <span className="min-w-0 truncate">Anonim olarak yanıtlıyorsunuz</span>}
+            : <span className="min-w-0 truncate">{guestText}</span>}
         </span>
         {!isAuthed && (
           <span className="inline-flex items-center gap-x-2 whitespace-nowrap">
             <span className="text-neutral-700">·</span>
             <button type="button" onClick={prompt.request} className={LINK_NEUTRAL}>
-              Giriş yap
+              {loginLabel}
             </button>
           </span>
         )}
@@ -319,14 +335,14 @@ export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
           {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
           {isAuthed
             ? <span><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
-            : <span>Anonim olarak yanıtlıyorsunuz</span>}
+            : <span>{guestText}</span>}
         </span>
         {!isAuthed && (
           <>
             <span className="text-neutral-700">·</span>
-            <span>Taslak kaydedilmiyor</span>
+            {!lockedOut && <span>Taslak kaydedilmiyor</span>}
             <button type="button" onClick={prompt.request} className={LINK_NEUTRAL}>
-              Giriş yap
+              {loginLabel}
             </button>
           </>
         )}

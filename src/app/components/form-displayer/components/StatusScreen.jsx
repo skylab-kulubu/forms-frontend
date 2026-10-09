@@ -157,6 +157,11 @@ function buildScreen({ state, message, stage, startFormId, workflow, formTitle, 
         Icon: FileLock2, tone: "brand", context: formTitle, title: "Giriş yapmanız gerekiyor", description: "Bu form E-Skylab hesabıyla dolduruluyor.",
         action: { label: "E-Skylab ile giriş yap", hoverIcon: "skylab", onClick: () => loginWithKeycloak(window.location.href) },
       };
+    case "sessionExpired":
+      return {
+        Icon: FileLock2, tone: "brand", context: formTitle, title: "Oturumunuzun süresi doldu", description: "Bu formu doldurmak için yeniden giriş yapın.",
+        action: { label: "Yeniden giriş yap", hoverIcon: "skylab", onClick: () => loginWithKeycloak(window.location.href) },
+      };
     case "notAuthorized":
       return { Icon: FileLock2, tone: "neutral", context: formTitle, title: "Bu forma erişiminiz yok", description: "Formu görüntüleme yetkiniz bulunmuyor." };
     default:

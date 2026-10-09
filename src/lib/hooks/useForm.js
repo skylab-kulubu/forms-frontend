@@ -2,13 +2,14 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { request } from "../apiClient";
 
 export const fetchDisplayFormById = async (formId) => {
-  return request(`/api/forms/${formId}`);
+  return request(`/api/forms/${formId}`, { auth: "optional" });
 };
 
-const postFormResponse = async (payload) => {
+const postFormResponse = async ({ body, asGuest = false }) => {
   return request("/api/forms/responses", {
     method: "POST",
-    body: payload,
+    body,
+    auth: asGuest ? "none" : "required",
   });
 };
 

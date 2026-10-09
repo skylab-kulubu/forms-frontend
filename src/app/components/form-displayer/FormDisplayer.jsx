@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
@@ -19,9 +18,10 @@ import { Countdown, DeliverablesHeader, ExtensionNotice, TaskGate, TaskMeta, use
 import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
 import Background from "../Background";
 import NoticeDock from "../utils/NoticeDock";
+import LoginButton from "../utils/LoginButton";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
 import { scanResultCopy, waitCopy } from "@/lib/guest-uploads";
-import { CalendarClock, CircleAlert, History, Hourglass, Loader2, LogIn, LogOut, RotateCcw, ShieldAlert, Timer } from "lucide-react";
+import { CalendarClock, CircleAlert, History, Hourglass, Loader2, LogIn, LogOut, RotateCcw, ShieldAlert, Timer, TimerOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -149,10 +149,9 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     now, isTimed, isRunning, startAttempt, isStarting, startError,
     isGuest, guest, guestNotice, showGuestNotice, clearGuestNotice, turnstileBlocked, verificationOutage, scanWait, startScanWait, stopScanWait,
     busyRetry, clearBusyRetry,
-    respondent, user, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout,
-    clearInfo, hideDraftPrompt,
+    respondent, user, allowsAnonymous, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout,
+    sessionLost, dismissSessionLost, clearInfo, hideDraftPrompt,
   } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt, guestUploads });
-  const { data: session } = useSession();
   const [dismissedLateFor, setDismissedLateFor] = useState(null);
   const [missingNotice, setMissingNotice] = useState(0);
   const [dismissedMissing, setDismissedMissing] = useState(-1);
@@ -173,11 +172,11 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const timer = isRunning && activeAttempt?.deadlineAt ? <Countdown deadlineAt={activeAttempt.deadlineAt} now={now} /> : null;
   const lateKey = isRunning ? activeAttempt?.deadlineAt ?? null : null;
   const isLate = useIsLate(lateKey, now);
-  const sessionExpired = session?.error === "RefreshAccessTokenError";
+  const lockedOut = respondent === "expired" && !allowsAnonymous;
 
   const authValue = useMemo(() => ({
-    respondent, user, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout,
-  }), [respondent, user, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout]);
+    respondent, user, allowsAnonymous, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout,
+  }), [respondent, user, allowsAnonymous, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout]);
 
   const questionNumbers = useMemo(() => {
     const numbers = new Map();
@@ -242,6 +241,10 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   };
 
   const onSubmit = (auto = false) => {
+    if (lockedOut) {
+      login();
+      return;
+    }
     clearGuestNotice();
     setTimeout(() => {
       const missing = visibleFields.filter((field) => isFieldMissing(field, formValues[field.id])).map((field) => field.id);
@@ -314,7 +317,18 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   }, [busyRetry]);
 
   const renderNotice = () => {
-    if (sessionExpired || isFinished || showIntro) return null;
+    if (isFinished || showIntro) return null;
+    if (sessionLost) {
+      return (
+        <NoticeDock key="session" icon={TimerOff} role="alert" duration={WARNING_SECONDS} onClose={dismissSessionLost}
+          action={<LoginButton onClick={login} label="Yeniden giriş yap" hoverIcon="arrow" className="shrink-0" />}
+        >
+          {allowsAnonymous
+            ? "Oturumunuzun süresi doldu, artık anonim yanıtlıyorsunuz. Yeniden giriş yaparsanız cevaplarınız korunur."
+            : "Oturumunuzun süresi doldu. Göndermek için yeniden giriş yapın, cevaplarınız korunur."}
+        </NoticeDock>
+      );
+    }
     if (shownGuestNotice) {
       const copy = guestNoticeCopy(shownGuestNotice, questionNumbers, turnstileBlocked);
       return (

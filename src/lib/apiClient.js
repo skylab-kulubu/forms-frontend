@@ -25,14 +25,17 @@ function announceSessionExpired() {
 
 export async function request(path, options = {}) {
 
-  const { token, ...otherOptions } = options;
+  const { token, auth = "required", ...otherOptions } = options;
   const hasAuthHeader = options.headers && ("Authorization" in options.headers || "authorization" in options.headers);
+  const anonymous = auth === "none";
 
-  let resolvedToken = token;
-  if (!resolvedToken && !hasAuthHeader) {
+  let resolvedToken = anonymous ? null : token;
+  let skippedDeadSession = false;
+  if (!anonymous && !resolvedToken && !hasAuthHeader) {
     try {
       const session = await getSharedSession();
-      resolvedToken = session?.accessToken;
+      skippedDeadSession = auth === "optional" && Boolean(session?.error);
+      resolvedToken = skippedDeadSession ? null : session?.accessToken;
     } catch { }
   }
 
@@ -63,7 +66,7 @@ export async function request(path, options = {}) {
   // client-cached token wasn't refreshed). Force a fresh session (which triggers the
   // server-side jwt refresh in auth.js) and retry once with the new token. Skipped when
   // the caller supplied its own Authorization header.
-  if (response.status === 401 && !hasAuthHeader) {
+  if (response.status === 401 && !hasAuthHeader && !anonymous && !skippedDeadSession) {
     let refreshed = false;
     try {
       const session = await getSharedSession();

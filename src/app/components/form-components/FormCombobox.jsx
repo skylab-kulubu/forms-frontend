@@ -9,7 +9,7 @@ import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { CompactField } from "./CompactField";
 import SearchPicker from "@/app/components/utils/SearchPicker";
-import { useSession } from "next-auth/react";
+import { useRespondent } from "@/lib/hooks/useRespondent";
 import { UNIVERSITIES } from "../../../data/presets/universities";
 import { DEPARTMENTS } from "../../../data/presets/departments";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
@@ -200,7 +200,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
 }
 
 export function DisplayFormCombobox({ question, questionNumber, description, required = false, choices = [], allowCustom = false, preset = null, disableAutoFill = false, compact = false, value, onChange, missing = false }) {
-  const { data: session, status } = useSession();
+  const { kind, user } = useRespondent();
   const [internalValue, setInternalValue] = useState(value ?? "");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -210,14 +210,14 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
   const currentValue = value !== undefined ? (value ?? "") : internalValue;
 
   const autoValue = useMemo(() => {
-    if (disableAutoFill || status !== "authenticated" || !preset) return null;
+    if (disableAutoFill || kind !== "user" || !preset) return null;
     const sessionKey = SESSION_PRESET_MAP[preset];
-    const sessionVal = session?.user?.[sessionKey];
+    const sessionVal = user?.[sessionKey];
     if (!sessionVal) return null;
     const found = normalized.find((o) => o.label === sessionVal);
     if (!found) return allowCustom ? sessionVal : null;
     return found.id;
-  }, [disableAutoFill, status, preset, session?.user, normalized, allowCustom]);
+  }, [disableAutoFill, kind, preset, user, normalized, allowCustom]);
 
   useEffect(() => {
     if (autoValue != null && onChange && value !== autoValue) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useRespondent } from "@/lib/hooks/useRespondent";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
@@ -84,13 +84,13 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
 }
 
 export function DisplayFormShortText({ question, questionNumber, description, required = false, inputType = "text", allowMultiple = false, disableAutoFill = false, identity, compact = false, value, onChange, missing = false }) {
-  const { data: session, status } = useSession();
-  const isAuthed = status === "authenticated";
+  const { kind, user } = useRespondent();
+  const isAuthed = kind === "user";
   const skipFill = disableAutoFill || Boolean(identity);
 
-  const autoFilled = !skipFill && isAuthed && inputType === "name" && session?.user?.fullName ? normalizeName(session.user.fullName) : null;
+  const autoFilled = !skipFill && isAuthed && inputType === "name" && user?.fullName ? normalizeName(user.fullName) : null;
 
-  const autoDefault = !skipFill && isAuthed && inputType === "email" && session?.user?.email ? session.user.email : null;
+  const autoDefault = !skipFill && isAuthed && inputType === "email" && user?.email ? user.email : null;
 
   const [internalValue, setInternalValue] = useState(value || "");
   const [wasAutoFilled, setWasAutoFilled] = useState(false);

@@ -297,9 +297,15 @@ export function useFormDisplayer(form, draft, options = {}) {
 
   const { kind: respondent, user } = useRespondent();
   const isAuthed = respondent === "user";
-  const isGuest = respondent === "guest";
+  const isGuest = respondent === "guest" || respondent === "expired";
   const queryClient = useQueryClient();
 
+  const [lastRespondent, setLastRespondent] = useState(respondent);
+  const [sessionLost, setSessionLost] = useState(false);
+  if (lastRespondent !== respondent) {
+    setLastRespondent(respondent);
+    setSessionLost(lastRespondent === "user" && respondent === "expired");
+  }
   const [logoutConfirming, setLogoutConfirming] = useState(false);
 
   const submitMutation = useSubmitFormMutation();
@@ -447,6 +453,7 @@ export function useFormDisplayer(form, draft, options = {}) {
   }, [answers.length, allowsAnonymous, signOut]);
 
   const cancelLogout = useCallback(() => setLogoutConfirming(false), []);
+  const dismissSessionLost = useCallback(() => setSessionLost(false), []);
   const clearInfo = useCallback(() => dispatch({ type: "CLEAR_INFO" }), []);
   const hideDraftPrompt = useCallback(() => dispatch({ type: "HIDE_DRAFT_PROMPT" }), []);
 
@@ -597,7 +604,7 @@ export function useFormDisplayer(form, draft, options = {}) {
   };
 
   const sendResponse = (payload, verifyRetried = false) => {
-    submitMutation.mutate(payload, {
+    submitMutation.mutate({ body: payload, asGuest: isGuest }, {
       onSuccess: (response) => {
         busyAttemptsRef.current = 0;
         clearAnswers(payload.formId);
@@ -676,6 +683,6 @@ export function useFormDisplayer(form, draft, options = {}) {
     isGuest, guest, guestNotice, showGuestNotice: setGuestNotice, clearGuestNotice, turnstileBlocked: scriptBlocked && !verificationOutage, verificationOutage,
     scanWait, startScanWait, stopScanWait, busyRetry, clearBusyRetry,
     respondent, user, allowsAnonymous, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout: signOut, cancelLogout,
-    clearInfo, hideDraftPrompt,
+    sessionLost, dismissSessionLost, clearInfo, hideDraftPrompt,
   };
 }

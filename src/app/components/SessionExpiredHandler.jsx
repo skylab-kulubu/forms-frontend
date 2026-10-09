@@ -12,6 +12,7 @@ import NoticeDock from "./utils/NoticeDock";
 
 const AUTO_RELOGIN_KEY = "sessionAutoReloginAt";
 const AUTO_RELOGIN_COOLDOWN_MS = 2 * 60 * 1000;
+const FORM_PAGE = /^\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i;
 
 // Pages where a hard redirect could throw away unsaved user input; these get the banner
 // instead of the automatic bounce through Keycloak.
@@ -59,6 +60,7 @@ export default function SessionExpiredHandler() {
   const sessionError = session?.error === "RefreshAccessTokenError";
   const expired = sessionError || eventExpired;
   const onAuthPage = pathname?.startsWith("/auth") ?? false;
+  const onFormPage = FORM_PAGE.test(pathname ?? "");
 
   useEffect(() => {
     const onExpired = () => setEventExpired(true);
@@ -81,10 +83,10 @@ export default function SessionExpiredHandler() {
   }, [eventExpired]);
 
   // The signin page already redirects to Keycloak on its own, so stand down there.
-  const showBanner = expired && !onAuthPage && (hasUnsavedInputRisk(pathname) || autoBlocked);
+  const showBanner = expired && !onAuthPage && !onFormPage && (hasUnsavedInputRisk(pathname) || autoBlocked);
 
   useEffect(() => {
-    if (!expired || onAuthPage || autoBlocked || hasUnsavedInputRisk(pathname)) return;
+    if (!expired || onAuthPage || onFormPage || autoBlocked || hasUnsavedInputRisk(pathname)) return;
     if (redirectingRef.current) return;
     redirectingRef.current = true;
     try { sessionStorage.setItem(AUTO_RELOGIN_KEY, String(Date.now())); } catch { }
@@ -93,7 +95,7 @@ export default function SessionExpiredHandler() {
       redirectingRef.current = false;
       setAutoBlocked(true);
     });
-  }, [expired, onAuthPage, autoBlocked, pathname]);
+  }, [expired, onAuthPage, onFormPage, autoBlocked, pathname]);
 
   const handleRelogin = () => loginWithKeycloak(window.location.href);
 
