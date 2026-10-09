@@ -204,8 +204,10 @@ function AccountFileUpload({ question, questionNumber, description, required = f
         settleScan(mediaId, media?.status === "rejected" ? "rejected" : "ready", media?.scanResult ?? null);
       } catch (err) {
         if (pollRef.current.mediaId !== mediaId) return;
+        // Core hides an answer file from its uploader once the draft links it and the scan ends clean;
+        // a rejected one stays visible, so a 404 here means the file passed.
         if (err?.status === 404) {
-          settleScan(mediaId, null);
+          settleScan(mediaId, "ready");
           return;
         }
         followScan(mediaId, attempt + 1);
