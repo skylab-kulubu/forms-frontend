@@ -633,7 +633,7 @@ export default function FormEditor({ initialForm = null, draft = null, onRefresh
         timeLimitMinutes: initialForm.timeLimitMinutes ?? null,
         editors: initialForm.collaborators || [],
         status: initialForm.status || 1,
-        userRole: initialForm.userRole || 3,
+        userRole: initialForm.userRole ?? 0,
         workflow: initialForm.workflow ?? null
     } : handoff?.eventLinked ? {
         title: handoff.title || "Yeni Form",

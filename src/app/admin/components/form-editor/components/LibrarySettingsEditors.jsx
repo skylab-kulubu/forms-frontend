@@ -47,7 +47,7 @@ export function LibrarySettingsEditors() {
     const [isAnimating, setIsAnimating] = useState(false);
     const userPickerRef = useRef(null);
 
-    const currentUserRole = Number(userRole || 3);
+    const currentUserRole = Number(userRole ?? 0);
     const canManageRoles = currentUserRole === 3;
     const canRemoveReadersOnly = currentUserRole === 2;
     const editorsList = useMemo(() => (Array.isArray(editors) ? editors : []), [editors]);
