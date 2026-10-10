@@ -201,9 +201,12 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     .map((id) => ({ id, number: questionNumbers.get(id) }))
     .sort((a, b) => a.number - b.number);
 
-  const identityEmailField = visibleFields.find((field) => field.props?.identity === "email");
-  const typedEmail = identityEmailField ? String(formValues[identityEmailField.id] ?? "").trim() : "";
   const asksIdentity = visibleFields.some((field) => field.props?.identity);
+  // Kimlik alanı olmayan formda misafirin mailleri e-posta tipli ilk geçerli cevaba gider.
+  const typedEmail = visibleFields
+    .filter((field) => (asksIdentity ? field.props?.identity === "email" : field.type === "short_text" && field.props?.inputType === "email"))
+    .map((field) => String(formValues[field.id] ?? "").trim())
+    .find((value) => EMAIL_PATTERN.test(value)) ?? "";
 
   const fileFieldIds = useMemo(() => visibleFields.filter((field) => field.type === "file").map((field) => field.id), [visibleFields]);
   const stillScanning = isGuest ? guest.isScanning(fileFieldIds) : fileFieldIds.some((id) => state.uploadingFields[id] === "scanning");
