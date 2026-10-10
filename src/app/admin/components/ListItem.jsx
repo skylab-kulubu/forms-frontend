@@ -268,7 +268,7 @@ export function ResponseListItem({ formId, response, className = "", onRemind, r
   const attempt = response.attempt;
   const isAttemptRow = response.status == null && attempt;
   const guest = response.guest;
-  const personName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}` : "");
+  const personName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}`.trim() : "");
   const userName = formatPersonName(personName) || "Anonim Kullanıcı";
   const isErased = isDeletedUser(response.user?.id);
   const userId = isErased ? "" : response.user?.id || "";
