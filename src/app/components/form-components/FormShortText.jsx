@@ -106,7 +106,8 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
 export function DisplayFormShortText({ question, questionNumber, description, required = false, inputType = "text", allowMultiple = false, disableAutoFill = false, identity, compact = false, value, onChange, missing = false }) {
   const { kind, user } = useRespondent();
   const isAuthed = kind === "user";
-  const skipFill = disableAutoFill || Boolean(identity);
+  // Etkinlik formunda doldurmayı FormDisplayer kapatır; tek başına "email" işareti girişli kişinin adresinin dolmasını engellemez.
+  const skipFill = disableAutoFill || (Boolean(identity) && identity !== "email");
 
   const autoFilled = !skipFill && isAuthed && inputType === "name" && user?.fullName ? normalizeName(user.fullName) : null;
 
