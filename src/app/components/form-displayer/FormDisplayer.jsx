@@ -21,6 +21,7 @@ import NoticeDock from "../utils/NoticeDock";
 import LoginButton from "../utils/LoginButton";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
 import { scanResultCopy, waitCopy } from "@/lib/guest-uploads";
+import { hasEventIdentity } from "@/lib/event-handoff";
 import { CalendarClock, CircleAlert, History, Hourglass, Loader2, LogIn, LogOut, RotateCcw, ShieldAlert, Timer, TimerOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -36,6 +37,7 @@ const itemVariants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } }
 };
 
+// forms-backend ResponseGuest.EmailPattern ile aynı: not hangi adresi gösterirse mail oraya gider.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SCAN_WAIT_MS = 180000;
 const FILE_PROBLEMS = new Set(["rejected", "expired", "invalid"]);
@@ -201,13 +203,11 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     .map((id) => ({ id, number: questionNumbers.get(id) }))
     .sort((a, b) => a.number - b.number);
 
-  const asksIdentity = visibleFields.some((field) => field.props?.identity);
-  // Kimlik alanı olmayan formda misafirin mailleri e-posta tipli ilk geçerli cevaba gider.
+  // Misafirin mailleri yalnız form sahibinin işaretlediği e-posta sorusuna gider.
   // Giriş isteyen formda oturumu düşen kişi misafir olarak gönderemez; ona adres notu çıkmaz.
-  const typedEmail = lockedOut ? "" : visibleFields
-    .filter((field) => (asksIdentity ? field.props?.identity === "email" : field.type === "short_text" && field.props?.inputType === "email"))
-    .map((field) => String(formValues[field.id] ?? "").trim())
-    .find((value) => EMAIL_PATTERN.test(value)) ?? "";
+  const identityEmailField = lockedOut ? null : visibleFields.find((field) => field.props?.identity === "email");
+  const typedEmail = identityEmailField ? String(formValues[identityEmailField.id] ?? "").trim() : "";
+  const asksIdentity = hasEventIdentity(visibleFields);
 
   const fileFieldIds = useMemo(() => visibleFields.filter((field) => field.type === "file").map((field) => field.id), [visibleFields]);
   const stillScanning = isGuest ? guest.isScanning(fileFieldIds) : fileFieldIds.some((id) => state.uploadingFields[id] === "scanning");

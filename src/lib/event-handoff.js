@@ -140,6 +140,11 @@ export function isIdentityField(field) {
   return Boolean(identityKeyOf(field));
 }
 
+// Ad ve soyad kimlik alanı yalnız etkinlik formunda olur; onlarsız "email" işareti misafirin cevap kopyasının gideceği soruyu seçer.
+export function hasEventIdentity(schema) {
+  return Array.isArray(schema) && schema.some((field) => [IDENTITY_FIRST_NAME, IDENTITY_LAST_NAME].includes(identityKeyOf(field)));
+}
+
 function guessIdentityKey(field, used) {
   const marked = identityKeyOf(field);
   if (marked && !used.has(marked)) return marked;
@@ -182,7 +187,8 @@ export function ensureEventIdentityFields(schema) {
   const used = new Set();
   const byKey = {};
   const claimed = new Set();
-  for (const field of source) {
+  // İşaretli alanlar tahminden önce gelir: cevap kopyası için işaretli e-posta sorusu etkinlikte kimlik e-postası olur.
+  for (const field of [...source.filter(isIdentityField), ...source.filter((field) => !isIdentityField(field))]) {
     const key = guessIdentityKey(field, used);
     if (!key) continue;
     used.add(key);

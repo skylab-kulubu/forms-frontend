@@ -197,7 +197,7 @@ export function ResponseActions({ response, readOnly = false }) {
   const reviewerPhotoUrl = response.reviewer?.profilePictureUrl || null;
 
   const guest = response.guest;
-  const submitterFullName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}` : "");
+  const submitterFullName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}`.trim() : "");
   const submitterName = formatPersonName(submitterFullName) || "Anonim Kullanıcı";
   const submitterEmail = response.user?.email || guest?.email || "";
   const submitterId = response.user?.id || null;

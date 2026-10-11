@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
 import { REGISTRY } from "@/app/components/form-registry";
 import { genFieldId } from "../fieldId";
+import { hasEventIdentity } from "@/lib/event-handoff";
 
 export function useFormDnD(schema, setSchema, libraryDropElRef, isProtected) {
     const [dragSource, setDragSource] = useState(null);
@@ -77,7 +78,7 @@ export function useFormDnD(schema, setSchema, libraryDropElRef, isProtected) {
         if (from === "canvas" && isOverLibrary) {
             const fieldId = active.data.current.id;
             const dragging = schema.find((field) => field.id === fieldId);
-            if (dragging?.props?.identity || isProtected?.(fieldId)) {
+            if ((dragging?.props?.identity && hasEventIdentity(schema)) || isProtected?.(fieldId)) {
                 resetDragState();
                 return;
             }

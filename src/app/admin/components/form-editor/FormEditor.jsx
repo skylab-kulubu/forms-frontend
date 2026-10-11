@@ -29,6 +29,8 @@ import {
     ensureEventIdentityFields,
     isIdentityField,
     identityKeyOf,
+    hasEventIdentity,
+    IDENTITY_EMAIL,
 } from "@/lib/event-handoff";
 import ApprovalOverlay from "../ApprovalOverlay";
 import FormShareDialog from "../share/FormShareDialog";
@@ -131,7 +133,7 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     );
 
     // Backend etkinliği bilmez; açılan etkinlik formu kimlik alanlarından tanınır.
-    const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id || state.schema.some(isIdentityField));
+    const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id || hasEventIdentity(state.schema));
 
     useEffect(() => {
         if (!eventLinked) return;
@@ -370,10 +372,12 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
     };
 
     const updateField = (id, updates) => {
+        // Etkinlik formu dışında cevap kopyasının adresi tek soruda işaretli kalır.
+        const marking = !eventLinked && updates.props?.identity === IDENTITY_EMAIL;
         const nextSchema = state.schema.map((field) => {
-            if (field.id !== id) return field;
+            if (field.id !== id) return marking && field.props?.identity ? { ...field, props: { ...field.props, identity: undefined } } : field;
             const next = { ...field, ...updates };
-            const key = identityKeyOf(field) || identityKeyOf(next);
+            const key = eventLinked && (identityKeyOf(field) || identityKeyOf(next));
             if (!key) return next;
             return {
                 ...next,
@@ -392,15 +396,15 @@ function FormEditorContent({ isNewForm, draft, onRefresh, handoff, formEvent }) 
         const index = state.schema.findIndex((field) => field.id === id);
         if (index === -1) return;
         const source = state.schema[index];
-        if (isIdentityField(source)) return;
-        const copy = { ...source, id: genFieldId(), props: structuredClone(source.props ?? {}) };
+        if (eventLinked && isIdentityField(source)) return;
+        const copy = { ...source, id: genFieldId(), props: { ...structuredClone(source.props ?? {}), identity: undefined } };
         const next = [...state.schema];
         next.splice(index + 1, 0, copy);
         dispatch({ type: "SET_SCHEMA", payload: next });
     };
 
     const deleteField = (id) => {
-        if (isIdentityField(state.schema.find((field) => field.id === id))) return;
+        if (eventLinked && isIdentityField(state.schema.find((field) => field.id === id))) return;
         if (lockedById.has(id)) return;
         // Silinen alana bağlı koşullar da temizlenir (sürükle-sil ile aynı davranış).
         const next = state.schema.filter((field) => field.id !== id).map((field) => {
