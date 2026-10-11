@@ -207,6 +207,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   // Giriş isteyen formda oturumu düşen kişi misafir olarak gönderemez; ona adres notu çıkmaz.
   const identityEmailField = lockedOut ? null : visibleFields.find((field) => field.props?.identity === "email");
   const typedEmail = identityEmailField ? String(formValues[identityEmailField.id] ?? "").trim() : "";
+  // Backend'deki kuralın aynısı: uzunluk sınırı regex'ten önce, yoksa uzun bir yapıştırmada desen sayfayı dondurur.
+  const copyEmail = typedEmail.length <= 254 && EMAIL_PATTERN.test(typedEmail) ? typedEmail : null;
   const asksIdentity = hasEventIdentity(visibleFields);
 
   const fileFieldIds = useMemo(() => visibleFields.filter((field) => field.type === "file").map((field) => field.id), [visibleFields]);
@@ -551,10 +553,10 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                       </div>
                       {nextCopy ? (
                         <RespondentLine savedAt={isAuthed ? lastSavedAt : null}
-                          copyEmail={EMAIL_PATTERN.test(typedEmail) ? typedEmail : null}
+                          copyEmail={copyEmail}
                         />
-                      ) : isGuest && EMAIL_PATTERN.test(typedEmail) ? (
-                        <CopyEmailNote email={typedEmail} className="mt-4" />
+                      ) : isGuest && copyEmail ? (
+                        <CopyEmailNote email={copyEmail} className="mt-4" />
                       ) : null}
                     </motion.div>
                   </GuestUploadContext.Provider>
