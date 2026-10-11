@@ -203,7 +203,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
   const asksIdentity = visibleFields.some((field) => field.props?.identity);
   // Kimlik alanı olmayan formda misafirin mailleri e-posta tipli ilk geçerli cevaba gider.
-  const typedEmail = visibleFields
+  // Giriş isteyen formda oturumu düşen kişi misafir olarak gönderemez; ona adres notu çıkmaz.
+  const typedEmail = lockedOut ? "" : visibleFields
     .filter((field) => (asksIdentity ? field.props?.identity === "email" : field.type === "short_text" && field.props?.inputType === "email"))
     .map((field) => String(formValues[field.id] ?? "").trim())
     .find((value) => EMAIL_PATTERN.test(value)) ?? "";
