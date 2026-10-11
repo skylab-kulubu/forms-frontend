@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowDown, ArrowUp, Copy, CopyPlus, PencilLine, Plus, Trash2 } from "lucide-react";
 
 import { REGISTRY, COMPONENTS } from "../../../../components/form-registry";
-import { isIdentityField } from "@/lib/event-handoff";
+import { hasEventIdentity, isIdentityField } from "@/lib/event-handoff";
 
 export function GhostComponent({ active, schema }) {
     if (!active) return null;
@@ -91,6 +91,8 @@ export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDupli
     const FormComponent = entry?.Create;
     const hasActions = Boolean(onDuplicate && onDelete && onMove);
 
+    const eventForm = hasEventIdentity(schema);
+    const identityLocked = eventForm && isIdentityField(field);
     const isSeparator = field.type === "separator";
     const questionNumber = isSeparator ? "—" : schema ? schema.slice(0, index).filter(f => f.type !== "separator").length : index;
 
@@ -125,12 +127,12 @@ export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDupli
                     <ItemActionButton label="Aşağı taşı" onClick={() => onMove(field.id, 1)} disabled={!canMoveDown}>
                         <ArrowDown size={13} />
                     </ItemActionButton>
-                    <ItemActionButton label="Çoğalt" onClick={() => onDuplicate(field.id)} disabled={isIdentityField(field)}>
+                    <ItemActionButton label="Çoğalt" onClick={() => onDuplicate(field.id)} disabled={identityLocked}>
                         <Copy size={13} />
                     </ItemActionButton>
                     <span className="mx-0.5 h-4 w-px bg-white/10" />
                     <ItemActionButton label={workflowLock ? "Akış koşulu bu soruyu okuyor; silinemez" : "Sil"} onClick={() => onDelete(field.id)} danger
-                        disabled={isIdentityField(field) || Boolean(workflowLock)}
+                        disabled={identityLocked || Boolean(workflowLock)}
                     >
                         <Trash2 size={13} />
                     </ItemActionButton>
@@ -143,6 +145,7 @@ export function CanvasItem({ field, index, onUpdate, schema, dragActive, onDupli
                     onConditionChange={(cond) => onUpdate(field.id, { condition: cond })}
                     availableFields={availableFields}
                     workflowLock={workflowLock}
+                    canMarkCopy={!eventForm}
                 />
             ) : null}
         </div>

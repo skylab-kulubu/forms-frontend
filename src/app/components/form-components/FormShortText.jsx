@@ -25,10 +25,12 @@ function normalizeName(name) {
   return name.trim().split(/\s+/).map(w => w.charAt(0).toLocaleUpperCase("tr-TR") + w.slice(1).toLocaleLowerCase("tr-TR")).join(" ");
 }
 
-export function CreateFormShortText({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
+export function CreateFormShortText({ questionNumber, props, onPropsChange, readOnly, compact = false, canMarkCopy = false, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
   const currentType = prop.inputType || "text";
-  const locked = Boolean(prop.identity);
+  // Etkinlik formu dışında "email" işareti soruyu kilitlemez; misafirin cevap kopyasının gideceği soruyu seçer.
+  const locked = Boolean(prop.identity) && !canMarkCopy;
+  const marksCopy = prop.identity === "email";
 
   return (
     <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => { if (!locked) toggle("required", v); }} hideRequired={locked} compact={compact} {...rest}>
@@ -51,7 +53,7 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
             const Icon = type.icon;
             const isActive = currentType === type.id;
             return (
-              <button key={type.id} type="button" disabled={locked} onClick={() => { if (!locked) patch({ inputType: type.id }); }}
+              <button key={type.id} type="button" disabled={locked} onClick={() => { if (!locked) patch({ inputType: type.id, identity: type.id === "email" ? prop.identity : undefined }); }}
                 className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${locked ? "opacity-60 cursor-not-allowed" : ""} ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
               >
                 <Icon size={14} />
@@ -61,6 +63,24 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
           })}
         </div>
       </div>
+
+      {canMarkCopy && currentType === "email" && (
+        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
+          <span className="text-xs text-neutral-300">Cevap kopyası bu adrese gider</span>
+          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+            <button type="button" aria-pressed={!marksCopy} onClick={() => toggle("identity", undefined)}
+              className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!marksCopy ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+            >
+              Hayır
+            </button>
+            <button type="button" aria-pressed={marksCopy} onClick={() => toggle("identity", "email")}
+              className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${marksCopy ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
+            >
+              Evet
+            </button>
+          </div>
+        </div>
+      )}
 
       {currentType === "link" && (
         <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
