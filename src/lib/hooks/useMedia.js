@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { request } from "../apiClient";
 
 const fetchMediaById = async (mediaId) => {
-  return request(`/api/media/${mediaId}`);
+  return request(`/v1/media/${mediaId}`);
 };
 
 export const useMediaQuery = (mediaId, options = {}) =>

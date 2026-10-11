@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { Bold, Heading1, Heading2, Italic, List, ListOrdered, Quote, Redo2, Underline as UnderlineIcon, Undo2, Strikethrough } from "lucide-react";
 import { useFormEditor } from "../FormEditorContext";
+import { PANEL_BOX } from "@/app/admin/components/utils/SidePanel";
 
 export function LibraryTipTap() {
     const { state, dispatch } = useFormEditor();
@@ -33,7 +34,7 @@ export function LibraryTipTap() {
         ],
         editorProps: {
             attributes: {
-                class: "min-h-[120px] rounded-xl bg-neutral-900/40 px-3 py-2 text-sm leading-relaxed text-neutral-100 focus:outline-none",
+                class: "min-h-full px-3 py-2.5 text-sm leading-relaxed text-neutral-100 focus:outline-none",
             },
         },
         content: description || "",
@@ -134,8 +135,8 @@ export function LibraryTipTap() {
     ];
 
     return (
-        <div className="flex h-full min-h-0 flex-col gap-3">
-            <div className="flex shrink-0 items-center gap-1 overflow-x-auto rounded-xl border border-white/10 bg-neutral-900/60 p-1 px-2 scrollbar-hidden">
+        <div className={`${PANEL_BOX} flex h-full min-h-0 flex-col overflow-hidden`}>
+            <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-white/5 px-1.5 py-1 scrollbar-hidden">
                 {buttons.map((item, index) => {
                     if (item.type === "divider") {
                         return <span key={`sep-${index}`} className="mx-1 h-5 w-px shrink-0 bg-neutral-800" />;
@@ -159,16 +160,16 @@ export function LibraryTipTap() {
                 })}
             </div>
 
-            <div className="relative flex-1 min-h-0 overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/50 p-1 shadow-inner shadow-black/30">
+            <div className="relative min-h-0 flex-1">
                 {isEditorEmpty && (
-                    <span className="pointer-events-none absolute inset-0 px-4 py-3 text-sm leading-relaxed text-neutral-600">
+                    <span className="pointer-events-none absolute inset-0 px-3 py-2.5 text-sm leading-relaxed text-neutral-600">
                         {placeholder}
                     </span>
                 )}
-                
-                <EditorContent 
-                    editor={editor} 
-                    className="h-full w-full overflow-y-auto pr-1 text-sm leading-relaxed text-neutral-100 scrollbar
+
+                <EditorContent
+                    editor={editor}
+                    className="h-full w-full overflow-y-auto text-sm leading-relaxed text-neutral-100 scrollbar
                         [&_a]:text-skylab-300 [&_a]:underline [&_a]:decoration-skylab-300/30 [&_a]:underline-offset-2 [&_a]:wrap-break-word
                         [&_blockquote]:border-l-2 [&_blockquote]:border-neutral-700 [&_blockquote]:pl-3 
                         [&_ol]:list-decimal [&_ol]:pl-5 

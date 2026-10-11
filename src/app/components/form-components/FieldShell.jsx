@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { GitBranch } from "lucide-react";
+import { GitBranch, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConditionSelector } from "../../admin/components/form-editor/components/ConditionSelector";
 
-export function FieldShell({ number, title, required, onRequiredChange, children, condition, onConditionChange, availableFields, hideRequired = false, compact = false }) {
+export const LOCKED_OPTION_HINT = "Akış koşulu bu seçeneği karşılaştırıyor; adı değiştirilemez ve silinemez.";
+
+const LOCKED_QUESTION_HINT = "Yayındaki bir akışın koşulu bu soruyu okuyor; soru silinemez.";
+
+export function FieldShell({ number, title, required, onRequiredChange, children, condition, onConditionChange, availableFields, hideRequired = false, compact = false, workflowLock = null }) {
   const [showLogic, setShowLogic] = useState(false);
 
   const hasActiveCondition = condition && condition.fieldId;
@@ -35,9 +39,19 @@ export function FieldShell({ number, title, required, onRequiredChange, children
           {number}
         </div>
 
-        <span className="text-sm font-medium text-neutral-200 truncate flex-1">
-          {title || <span className="text-neutral-500 italic font-normal">Sorunuzu yazın...</span>}
-        </span>
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="truncate text-sm font-medium text-neutral-200">
+            {title || <span className="text-neutral-500 italic font-normal">Sorunuzu yazın...</span>}
+          </span>
+          {workflowLock && (
+            <span title={LOCKED_QUESTION_HINT}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-3xs text-neutral-400"
+            >
+              <Lock size={10} />
+              <span className="hidden sm:inline">Akış koşulu</span>
+            </span>
+          )}
+        </div>
 
         <div className="ml-auto flex items-center">
           <button type="button" disabled={isFirst}

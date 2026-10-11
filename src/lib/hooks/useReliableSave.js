@@ -24,7 +24,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     const job = pendingRef.current;
     if (!job) return;
     runningRef.current = true;
-    onStatusChangeRef.current?.("saving");
+    onStatusChangeRef.current?.("saving", job.data);
 
     const release = (rerun) => {
       runningRef.current = false;
@@ -35,7 +35,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
       .then(() => {
         retriesRef.current = 0;
         job.onSaved?.();
-        onStatusChangeRef.current?.("saved");
+        onStatusChangeRef.current?.("saved", job.data);
         const superseded = pendingRef.current !== job;
         if (!superseded) pendingRef.current = null;
         release(superseded);
@@ -49,7 +49,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
           return;
         }
         retriesRef.current = 0;
-        onStatusChangeRef.current?.("failed");
+        onStatusChangeRef.current?.("failed", job.data);
         const superseded = pendingRef.current !== job;
         if (!superseded) pendingRef.current = null;
         release(superseded);
@@ -78,6 +78,18 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     try { saveRef.current(job.data, { keepalive: true }); } catch { }
   }, []);
 
+  const settle = useCallback(async () => {
+    clearTimeout(debounceTimer.current);
+    clearTimeout(retryTimer.current);
+    const job = pendingRef.current;
+    if (!job) return;
+    pendingRef.current = null;
+    try {
+      await saveRef.current(job.data, { keepalive: false });
+      job.onSaved?.();
+    } catch { }
+  }, []);
+
   useEffect(() => {
     const onHide = () => flush();
     window.addEventListener("pagehide", onHide);
@@ -89,5 +101,5 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     };
   }, [flush]);
 
-  return { schedule, cancel, flush };
+  return { schedule, cancel, flush, settle };
 }

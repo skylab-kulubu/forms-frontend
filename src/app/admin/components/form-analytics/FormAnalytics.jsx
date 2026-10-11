@@ -3,11 +3,17 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ListX, TextSearch } from "lucide-react";
+import { Activity, ListX, TextSearch } from "lucide-react";
 import StateCard from "@/app/components/StateCard";
+import Avatar from "@/app/components/utils/Avatar";
+import { durationText, shortDuration } from "@/lib/form-timing";
 
 const BAR_FILL = "#e0c8e5";
 const PIE_COLORS = ["#d8b4fe", "#6366f1", "#c084fc", "#7c3aed", "#9d84f0"];
+
+const PARTICIPATION_ID = "__participation";
+
+const BUCKET_STEPS = [5, 10, 15, 30, 60, 120, 180, 360, 720, 1440, 2880, 10080];
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -151,18 +157,18 @@ function MatrixView({ rows }) {
   );
 }
 
-function BucketTooltip({ active, payload, label }) {
+function BucketTooltip({ active, payload, label, unit = "yanıt" }) {
   if (!active || !payload?.length) return null;
   const bucket = payload[0].payload;
   return (
     <div className="rounded-md border border-white/10 bg-neutral-900/90 px-2.5 py-1.5 shadow-xl">
       <p className="text-3xs text-neutral-400">{label}</p>
-      <p className="text-2xs font-medium text-skylab-300">{bucket.count} yanıt · {formatPercent(bucket.percentage)}</p>
+      <p className="text-2xs font-medium text-skylab-300">{bucket.count} {unit} · {formatPercent(bucket.percentage)}</p>
     </div>
   );
 }
 
-function TimeSeriesChart({ buckets }) {
+function TimeSeriesChart({ buckets, unit }) {
   if (!buckets || buckets.length === 0) return <EmptyNote>Yanıt yok</EmptyNote>;
 
   return (
@@ -171,7 +177,7 @@ function TimeSeriesChart({ buckets }) {
         <BarChart data={buckets} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
           <XAxis dataKey="value" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(115,115,125)" }} interval="preserveStartEnd" />
           <YAxis hide domain={[0, "auto"]} />
-          <Tooltip cursor={{ fill: "rgba(224,200,229,0.08)" }} content={<BucketTooltip />} />
+          <Tooltip cursor={{ fill: "rgba(224,200,229,0.08)" }} content={<BucketTooltip unit={unit} />} />
           <Bar dataKey="count" fill={BAR_FILL} radius={[3, 3, 0, 0]} maxBarSize={44} animationDuration={500} animationEasing="ease-out" />
         </BarChart>
       </ResponsiveContainer>
@@ -262,7 +268,157 @@ function OpenQuestionBlock({ question }) {
   );
 }
 
-function AnalyticsPanel({ questions }) {
+function bucketLabel(from, to, step) {
+  if (step % 1440 === 0) return `${from / 1440}-${to / 1440} gün`;
+  if (step % 60 === 0) return `${from / 60}-${to / 60} sa`;
+  return `${from}-${to} dk`;
+}
+
+function durationBuckets(minutes, limitMinutes) {
+  if (minutes.length === 0) return [];
+  const top = Math.max(limitMinutes, minutes[minutes.length - 1], 1);
+  const step = BUCKET_STEPS.find((value) => top / value <= 8) ?? BUCKET_STEPS[BUCKET_STEPS.length - 1];
+  const count = Math.max(1, Math.ceil(top / step));
+  const counts = new Array(count).fill(0);
+  minutes.forEach((value) => { counts[Math.min(count - 1, Math.floor(value / step))] += 1; });
+
+  return counts.map((value, index) => ({
+    value: bucketLabel(index * step, (index + 1) * step, step),
+    count: value,
+    percentage: (value / minutes.length) * 100,
+  }));
+}
+
+function FunnelBars({ items, total }) {
+  return (
+    <div className="space-y-3">
+      {items.map(([label, count, extra]) => {
+        const pct = total > 0 ? (count / total) * 100 : 0;
+        return (
+          <div key={label}>
+            <div className="mb-1.5 flex items-baseline justify-between gap-3">
+              <span className="min-w-0 truncate text-2xs text-neutral-300">{label}</span>
+              <span className="shrink-0 text-2xs tabular-nums text-neutral-500">
+                <span className="text-neutral-300">{count}</span> · {formatPercent(pct)}{extra ? ` · ${extra}` : ""}
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+              <div className="h-full rounded-full bg-skylab-500 transition-[width] duration-500 ease-out" style={{ width: `${Math.min(pct, 100)}%` }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SubHeading({ children }) {
+  return (
+    <div className="mb-2.5 flex items-center gap-2">
+      <span className="text-2xs font-medium text-neutral-400">{children}</span>
+      <span className="h-px flex-1 bg-white/5" />
+    </div>
+  );
+}
+
+const personName = (name) =>
+  name?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map((word) => word.replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR"))).join(" ") || "";
+
+function ParticipationBlock({ data }) {
+  const durations = data.durationMinutes ?? [];
+  const middle = Math.floor(durations.length / 2);
+  const median = durations.length === 0 ? 0 : durations.length % 2 ? durations[middle] : (durations[middle - 1] + durations[middle]) / 2;
+  const average = durations.length === 0 ? 0 : durations.reduce((sum, value) => sum + value, 0) / durations.length;
+  const stats = [["Ort", average], ["Medyan", median], ["Min", durations[0] ?? 0], ["Maks", durations[durations.length - 1] ?? 0]];
+  const stalled = data.stalledQuestion;
+
+  return (
+    <div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <Activity size={12} className="shrink-0 text-neutral-600" />
+          <h3 className="truncate text-sm font-medium text-neutral-100">Katılım ve süre</h3>
+        </div>
+        <p className="mt-0.5 text-3xs text-neutral-500">
+          <span className="uppercase tracking-[0.18em]">Kişisel süre</span>
+          <span className="text-neutral-600"> · {durationText(data.timeLimitMinutes)} · {data.opened} kişi formu açtı</span>
+        </p>
+      </div>
+
+      <div className="space-y-7 pt-4">
+        <div>
+          <SubHeading>Huni</SubHeading>
+          <FunnelBars total={data.opened} items={[
+            ["Formu açtı", data.opened],
+            ["Görevi başlattı", data.started],
+            ["Teslim etti", data.submitted],
+            ["Geçici cevap", data.provisional, data.provisional > 0 ? "karar bekliyor" : null],
+            ["Devam ediyor", data.running],
+            ["Teslim yok", data.noSubmission],
+          ]} />
+        </div>
+
+        <div>
+          <SubHeading>Teslim süresi</SubHeading>
+          {durations.length === 0 ? (
+            <EmptyNote>Henüz teslim yok</EmptyNote>
+          ) : (
+            <>
+              <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1">
+                {stats.map(([label, value]) => (
+                  <span key={label} className="text-2xs text-neutral-500">
+                    {label} <span className="font-semibold tabular-nums text-neutral-200">{shortDuration(value * 60_000)}</span>
+                  </span>
+                ))}
+              </div>
+              <TimeSeriesChart buckets={durationBuckets(durations, data.timeLimitMinutes)} unit="kişi" />
+              <p className="mt-2 text-3xs text-neutral-600">Görevi başlatmadan teslime kadar geçen süre; ek süre alanlar dahil.</p>
+            </>
+          )}
+        </div>
+
+        <div>
+          <SubHeading>Süre verilenler</SubHeading>
+          {data.extendedPeople === 0 ? (
+            <EmptyNote>Henüz kimseye ek süre verilmedi</EmptyNote>
+          ) : (
+            <>
+              <p className="mb-3 text-2xs text-neutral-400">
+                <span className="tabular-nums text-neutral-200">{data.extendedPeople}</span> kişiye toplam <span className="tabular-nums text-neutral-200">{durationText(data.extendedMinutes)}</span> verildi.
+              </p>
+              <div className="divide-y divide-white/5">
+                {(data.extendedBy ?? []).map((item) => {
+                  const name = personName(item.actor?.fullName) || "Ekipten biri";
+                  return (
+                    <div key={item.actor?.id ?? name} className="flex items-center gap-3 py-2">
+                      <Avatar name={item.actor?.fullName ? name : ""} photoUrl={item.actor?.profilePictureUrl} size="sm" />
+                      <span className="min-w-0 flex-1 truncate text-2xs text-neutral-300">{name}</span>
+                      <span className="shrink-0 text-2xs tabular-nums text-neutral-500">
+                        {item.count} kez · <span className="text-neutral-300">{shortDuration(item.minutes * 60_000)}</span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+
+        {stalled && (
+          <div>
+            <SubHeading>Bırakılan soru</SubHeading>
+            <p className="text-2xs leading-relaxed text-neutral-400">
+              Süresi dolan taslakların <span className="tabular-nums text-neutral-200">{stalled.count}</span> tanesinde ilk boş soru{" "}
+              <span className="text-neutral-200">{stalled.number}. soru ({stalled.question || "metni yok"})</span>. {stalled.isRequired ? "Zorunlu soru." : "Opsiyonel soru."}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsPanel({ questions, participation }) {
   return (
     <div className="flex flex-col lg:h-full lg:overflow-hidden">
       <div>
@@ -273,12 +429,17 @@ function AnalyticsPanel({ questions }) {
       </div>
 
       <div className="pt-4 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-        {questions.length === 0 ? (
+        {questions.length === 0 && !participation ? (
           <div className="flex items-center justify-center py-16">
             <p className="text-center text-2xs text-neutral-600">Analiz için sağdan bir soru seçin.</p>
           </div>
         ) : (
           <div className="mx-auto w-full max-w-2xl divide-y divide-white/5">
+            {participation && (
+              <motion.div key={PARTICIPATION_ID} {...fadeIn} className="py-5 first:pt-0 last:pb-0">
+                <ParticipationBlock data={participation} />
+              </motion.div>
+            )}
             {questions.map((q) => (
               <motion.div key={q.questionId} {...fadeIn} className="py-5 first:pt-0 last:pb-0">
                 <OpenQuestionBlock question={q} />
@@ -328,7 +489,31 @@ function RateRow({ q, total, open, onToggle }) {
   );
 }
 
-function RatePanel({ questions, totalResponses, openIds, onToggle }) {
+function ParticipationRow({ data, open, onToggle }) {
+  const rate = data.opened > 0 ? (data.submitted / data.opened) * 100 : 0;
+
+  return (
+    <>
+      <button type="button" onClick={() => onToggle(PARTICIPATION_ID)} aria-pressed={open}
+        className={`w-full rounded-lg px-2.5 py-2 text-left transition-colors ${open ? "bg-skylab-500/10" : "hover:bg-white/5"}`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Activity size={11} className="shrink-0 text-neutral-500" />
+            <span className={`truncate text-2xs ${open ? "text-neutral-50" : "text-neutral-200"}`}>Katılım ve süre</span>
+          </span>
+          <span className="shrink-0 text-3xs tabular-nums text-neutral-500">{formatPercent(Math.round(rate))} teslim</span>
+        </div>
+        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+          <div className={`h-full rounded-full transition-[width] duration-500 ease-out ${open ? "bg-skylab-400" : "bg-skylab-500"}`} style={{ width: `${rate}%` }} />
+        </div>
+      </button>
+      <div className="mx-2.5 my-1.5 h-px bg-white/5" />
+    </>
+  );
+}
+
+function RatePanel({ questions, totalResponses, openIds, onToggle, participation }) {
   return (
     <div className="flex flex-col lg:h-full lg:overflow-hidden">
       <div>
@@ -339,6 +524,9 @@ function RatePanel({ questions, totalResponses, openIds, onToggle }) {
         <p className="mb-2 px-1 text-3xs text-neutral-600">Görüntülemek için sorulara tıklayın</p>
       </div>
       <div className="space-y-0.5 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+        {participation && (
+          <ParticipationRow data={participation} open={openIds.includes(PARTICIPATION_ID)} onToggle={onToggle} />
+        )}
         {questions.map((q) => (
           <RateRow key={q.questionId ?? q.ordinal} q={q} total={totalResponses} open={openIds.includes(q.questionId)} onToggle={onToggle} />
         ))}
@@ -384,7 +572,7 @@ function AnalyticsSkeleton() {
   );
 }
 
-export default function FormAnalytics({ analytics, isLoading, error }) {
+export default function FormAnalytics({ analytics, participation = null, isLoading, error }) {
   const [openIds, setOpenIds] = useState(null);
 
   if (isLoading) {
@@ -407,7 +595,7 @@ export default function FormAnalytics({ analytics, isLoading, error }) {
     .filter((q) => q.kind !== 0)
     .map((q, i) => ({ ...q, ordinal: i + 1 }));
 
-  if (questions.length === 0) {
+  if (questions.length === 0 && !(participation?.opened > 0)) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
         <StateCard title="Analitik için veri yok" Icon={TextSearch} description="Bu formda henüz analiz edilecek cevap bulunmuyor." />
@@ -416,7 +604,7 @@ export default function FormAnalytics({ analytics, isLoading, error }) {
   }
 
   const aggregatable = questions.filter((q) => q.aggregatable);
-  const defaultOpen = aggregatable[0] ? [aggregatable[0].questionId] : [];
+  const defaultOpen = participation ? [PARTICIPATION_ID] : aggregatable[0] ? [aggregatable[0].questionId] : [];
   const effectiveOpenIds = openIds ?? defaultOpen;
 
   const toggleOpen = (id) => {
@@ -432,10 +620,10 @@ export default function FormAnalytics({ analytics, isLoading, error }) {
     <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1 scrollbar lg:overflow-hidden lg:pr-0">
       <div className="grid grid-cols-1 gap-6 lg:h-full lg:grid-cols-12">
         <div className="order-2 lg:order-1 lg:col-span-7 lg:min-h-0">
-          <AnalyticsPanel questions={openQuestions} />
+          <AnalyticsPanel questions={openQuestions} participation={participation && effectiveOpenIds.includes(PARTICIPATION_ID) ? participation : null} />
         </div>
         <div className="order-1 lg:order-2 lg:col-span-5 lg:min-h-0">
-          <RatePanel questions={questions} totalResponses={analytics.totalResponses} openIds={effectiveOpenIds} onToggle={toggleOpen} />
+          <RatePanel questions={questions} totalResponses={analytics?.totalResponses ?? 0} openIds={effectiveOpenIds} onToggle={toggleOpen} participation={participation} />
         </div>
       </div>
     </div>

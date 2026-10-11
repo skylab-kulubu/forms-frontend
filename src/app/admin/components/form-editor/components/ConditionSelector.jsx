@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Trash2, AlertCircle, Calendar, Clock } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { Dropdown } from "@/app/components/utils/Dropdown";
@@ -103,6 +103,10 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
         );
     }
 
+    return <ConditionEditor condition={condition} onUpdate={onUpdate} availableFields={availableFields} />;
+}
+
+function ConditionEditor({ condition, onUpdate, availableFields }) {
     const current = condition || { fieldId: "", operator: "", value: "" };
 
     const selectedTarget = availableFields.find((f) => f.id === current.fieldId);
@@ -143,17 +147,18 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
     const dateRef = useRef(null);
     const timeRef = useRef(null);
 
-    const now = useMemo(() => new Date(), []);
-    const [tempHour, setTempHour] = useState(now.getHours());
-    const [tempMinute, setTempMinute] = useState(Math.round(now.getMinutes() / 5) * 5);
+    const [tempHour, setTempHour] = useState(0);
+    const [tempMinute, setTempMinute] = useState(0);
 
-    useEffect(() => {
-        if (timeOpen) {
+    const toggleTimePicker = () => {
+        if (!timeOpen) {
             const p = parseTime(current.value);
+            const now = new Date();
             setTempHour(p?.h ?? now.getHours());
             setTempMinute(p?.m ?? Math.round(now.getMinutes() / 5) * 5);
         }
-    }, [timeOpen]);
+        setTimeOpen(!timeOpen);
+    };
 
     const selectedDate = useMemo(() => parseYMD(current.value), [current.value]);
     const parsedTime = useMemo(() => parseTime(current.value), [current.value]);
@@ -229,7 +234,7 @@ export function ConditionSelector({ condition, onUpdate, availableFields }) {
                                 </div>
                             ) : isTime ? (
                                 <div className="relative" ref={timeRef}>
-                                    <button type="button" onClick={() => setTimeOpen((s) => !s)}
+                                    <button type="button" onClick={toggleTimePicker}
                                         className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                                     >
                                         <Clock size={13} className="text-neutral-400 shrink-0" />

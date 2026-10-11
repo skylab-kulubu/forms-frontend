@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useRespondent } from "@/lib/hooks/useRespondent";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
@@ -9,6 +9,7 @@ import { RichText } from "@/app/components/rich-text/RichText";
 import { Type, Mail, Phone, Hash, UserRound, Link as LinkIcon } from "lucide-react";
 import { LinkAnswerInput } from "./FormLink";
 import { CompactField } from "./CompactField";
+import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
 const INPUT_TYPES = [
   { id: "text", label: "Düz Metin", icon: Type, placeholder: "Yanıtınızı yazın." },
@@ -83,13 +84,13 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
 }
 
 export function DisplayFormShortText({ question, questionNumber, description, required = false, inputType = "text", allowMultiple = false, disableAutoFill = false, identity, compact = false, value, onChange, missing = false }) {
-  const { data: session, status } = useSession();
-  const isAuthed = status === "authenticated";
+  const { kind, user } = useRespondent();
+  const isAuthed = kind === "user";
   const skipFill = disableAutoFill || Boolean(identity);
 
-  const autoFilled = !skipFill && isAuthed && inputType === "name" && session?.user?.fullName ? normalizeName(session.user.fullName) : null;
+  const autoFilled = !skipFill && isAuthed && inputType === "name" && user?.fullName ? normalizeName(user.fullName) : null;
 
-  const autoDefault = !skipFill && isAuthed && inputType === "email" && session?.user?.email ? session.user.email : null;
+  const autoDefault = !skipFill && isAuthed && inputType === "email" && user?.email ? user.email : null;
 
   const [internalValue, setInternalValue] = useState(value || "");
   const [wasAutoFilled, setWasAutoFilled] = useState(false);
@@ -99,7 +100,7 @@ export function DisplayFormShortText({ question, questionNumber, description, re
   useEffect(() => {
     const initial = autoFilled || autoDefault;
     if (initial && onChange && value !== initial) {
-      onChange({ target: { value: initial } });
+      onChange({ target: { value: initial }, isDefault: true });
       if (autoDefault) setWasAutoFilled(true);
     }
   }, [autoFilled, autoDefault]);
@@ -144,11 +145,7 @@ export function DisplayFormShortText({ question, questionNumber, description, re
       <div className="flex flex-col p-2 md:p-4">
 
         <div className="flex gap-3">
-          {questionNumber != null && (
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
-              {questionNumber}
-            </div>
-          )}
+          <QuestionNumber number={questionNumber} missing={missing} />
           <div className="flex flex-col w-full">
             <p className="text-sm font-medium text-neutral-100">
               {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-200/70">*</span>}
@@ -168,7 +165,7 @@ export function DisplayFormShortText({ question, questionNumber, description, re
           </div>
         )}
 
-        {required && !isReadOnly && <span className="px-0.5 text-2xs text-neutral-500 mt-1.5">Zorunlu alan</span>}
+        {!isReadOnly && <QuestionHint required={required} missing={missing} className="mt-1.5" />}
       </div>
     </div>
   );

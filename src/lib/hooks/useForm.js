@@ -1,15 +1,20 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { request } from "../apiClient";
 
-const fetchDisplayFormById = async (formId) => {
-  return request(`/api/forms/${formId}`);
+export const fetchDisplayFormById = async (formId) => {
+  return request(`/api/forms/${formId}`, { auth: "optional" });
 };
 
-const postFormResponse = async (payload) => {
+const postFormResponse = async ({ body, asGuest = false }) => {
   return request("/api/forms/responses", {
     method: "POST",
-    body: payload,
+    body,
+    auth: asGuest ? "none" : "required",
   });
+};
+
+const postAttemptStart = async (formId) => {
+  return request(`/api/forms/${formId}/attempt`, { method: "POST" });
 };
 
 export const useDisplayFormQuery = (formId) =>
@@ -23,5 +28,11 @@ export const useDisplayFormQuery = (formId) =>
 export const useSubmitFormMutation = () => {
   return useMutation({
     mutationFn: postFormResponse,
+  });
+};
+
+export const useStartAttemptMutation = () => {
+  return useMutation({
+    mutationFn: postAttemptStart,
   });
 };

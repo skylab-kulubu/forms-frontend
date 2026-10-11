@@ -3,7 +3,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { REGISTRY } from "@/app/components/form-registry";
 import { genFieldId } from "../fieldId";
 
-export function useFormDnD(schema, setSchema, libraryDropElRef) {
+export function useFormDnD(schema, setSchema, libraryDropElRef, isProtected) {
     const [dragSource, setDragSource] = useState(null);
     const [activeDragItem, setActiveDragItem] = useState(null);
     const lastOverRef = useRef(null)
@@ -77,7 +77,7 @@ export function useFormDnD(schema, setSchema, libraryDropElRef) {
         if (from === "canvas" && isOverLibrary) {
             const fieldId = active.data.current.id;
             const dragging = schema.find((field) => field.id === fieldId);
-            if (dragging?.props?.identity) {
+            if (dragging?.props?.identity || isProtected?.(fieldId)) {
                 resetDragState();
                 return;
             }

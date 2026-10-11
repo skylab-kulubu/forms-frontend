@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowDown, ArrowUp, ClipboardCheck, CornerDownRight, Crown, Eye, PencilLine, Repeat2, UserX, Users } from "lucide-react";
+import { ArrowDown, ArrowUp, ClipboardCheck, Crown, Eye, PencilLine, Repeat2, UserX, Users } from "lucide-react";
 
 function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   const count = Math.max(options.length, 1);
@@ -68,7 +68,7 @@ const itemVariants = {
 
 export function DatabaseFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange,
   allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange,
-  hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange, className = "", align = "center"
+  requiresManualReview = null, onRequiresManualReviewChange, className = "", align = "center"
 }) {
   const panelRef = useRef(null);
 
@@ -114,7 +114,6 @@ export function DatabaseFilterShell({ open, anchorRef, onClose, sortValue = "des
                 <div className="flex items-center gap-2">
                   <TriStateIconButton value={allowAnonymous} onChange={onAllowAnonymousChange} icon={UserX} label="Anonim cevap" />
                   <TriStateIconButton value={allowMultiple} onChange={onAllowMultipleChange} icon={Repeat2} label="Çoklu cevap" />
-                  <TriStateIconButton value={hasLinkedForm} onChange={onHasLinkedFormChange} icon={CornerDownRight} label="Bağlı form" />
                   <TriStateIconButton value={requiresManualReview} onChange={onRequiresManualReviewChange} icon={ClipboardCheck} label="Manuel onay" />
                 </div>
               </div>
@@ -127,7 +126,7 @@ export function DatabaseFilterShell({ open, anchorRef, onClose, sortValue = "des
 }
 
 export default function FormsFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange,
-  allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange,
+  allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange,
   requiresManualReview = null, onRequiresManualReviewChange, className = "", align = "center"
 }) {
   const panelRef = useRef(null);
@@ -198,7 +197,6 @@ export default function FormsFilterShell({ open, anchorRef, onClose, sortValue =
                 <div className="flex items-center gap-2">
                   <TriStateIconButton value={allowAnonymous} onChange={onAllowAnonymousChange} icon={UserX} label="Anonim cevap" />
                   <TriStateIconButton value={allowMultiple} onChange={onAllowMultipleChange} icon={Repeat2} label="Coklu cevap" />
-                  <TriStateIconButton value={hasLinkedForm} onChange={onHasLinkedFormChange} icon={CornerDownRight} label="Bagli form" />
                   <TriStateIconButton value={requiresManualReview} onChange={onRequiresManualReviewChange} icon={ClipboardCheck} label="Manuel onay" />
                 </div>
               </div>

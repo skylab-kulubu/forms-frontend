@@ -11,6 +11,7 @@ import { useAllFormsQuery } from "@/lib/hooks/useFormAdmin";
 import StateCard from "@/app/components/StateCard";
 import { FileSearchCorner, FileXCorner } from "lucide-react";
 import { eventRefFromForm } from "@/lib/return-to";
+import { effectiveFormSettings } from "@/lib/form-settings";
 
 const formatDate = (value) => {
   if (!value) return "--";
@@ -39,8 +40,9 @@ function personDisplayName(user) {
 function AllFormItem({ form }) {
   const createdBy = form.createdBy ?? null;
   const ownerName = normalizeName(personDisplayName(createdBy));
-  const statusActive = form.status === 2;
   const event = eventRefFromForm(form);
+  const settings = effectiveFormSettings(form);
+  const statusActive = settings.isOpen;
 
   return (
     <div className="group/row relative flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/3">
@@ -86,13 +88,13 @@ function AllFormItem({ form }) {
           <ChartColumn size={11} />
           {form.responseCount ?? 0}
         </div>
-        <div title="Çoklu cevap" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.allowMultipleResponses ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
+        <div title={settings.managedByWorkflow ? "Tekrar başlatma (akış)" : "Çoklu cevap"} className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${settings.allowMultipleResponses ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
           <Repeat2 size={13} />
         </div>
-        <div title="Anonim cevap" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.allowAnonymousResponses ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
+        <div title="Anonim cevap" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${settings.allowAnonymousResponses ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
           <UserX size={13} />
         </div>
-        <div title="Manuel inceleme" className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${form.requiresManualReview ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
+        <div title={settings.managedByWorkflow ? "Manuel inceleme (akıştaki adım)" : "Manuel inceleme"} className={`inline-flex h-7 w-7 items-center justify-center rounded-md ${settings.requiresManualReview ? "text-skylab-500/80" : "text-neutral-600/40"}`}>
           <ClipboardCheck size={13} />
         </div>
         <Link href={`/admin/forms/${form.id}`} className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-neutral-500 hover:bg-white/5 hover:text-neutral-200 transition-colors">
@@ -109,7 +111,6 @@ export default function AllFormsPage() {
   const [sortValue, setSortValue] = useState("desc");
   const [allowAnonymous, setAllowAnonymous] = useState(null);
   const [allowMultiple, setAllowMultiple] = useState(null);
-  const [hasLinkedForm, setHasLinkedForm] = useState(null);
   const [requiresManualReview, setRequiresManualReview] = useState(null);
   const [page, setPage] = useState(1);
 
@@ -118,23 +119,23 @@ export default function AllFormsPage() {
     return () => clearTimeout(handle);
   }, [searchValue]);
 
-  useEffect(() => { setPage(1); }, [debouncedSearch, sortValue, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview]);
+  useEffect(() => { setPage(1); }, [debouncedSearch, sortValue, allowAnonymous, allowMultiple, requiresManualReview]);
 
   const sortDirection = sortValue === "asc" ? "ascending" : "descending";
 
-  const { data, isLoading, error, refetch } = useAllFormsQuery({ page, search: debouncedSearch || undefined, sortDirection, allowAnonymous, allowMultiple, hasLinkedForm, requiresManualReview });
+  const { data, isLoading, error, refetch } = useAllFormsQuery({ page, search: debouncedSearch || undefined, sortDirection, allowAnonymous, allowMultiple, requiresManualReview });
 
   const meta = data?.data ?? {};
   const forms = Array.isArray(meta.items) ? meta.items : Array.isArray(data) ? data : [];
   const totalCount = meta.totalCount ?? forms.length;
   const hasError = Boolean(error);
-  const contentKey = `${sortValue}-${allowAnonymous}-${allowMultiple}-${hasLinkedForm}-${requiresManualReview}-${debouncedSearch}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
+  const contentKey = `${sortValue}-${allowAnonymous}-${allowMultiple}-${requiresManualReview}-${debouncedSearch}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
 
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-4 lg:p-6">
       <DatabaseHeader searchValue={searchValue} onSearchChange={setSearchValue} sortValue={sortValue} onSortChange={setSortValue}
         allowAnonymous={allowAnonymous} onAllowAnonymousChange={setAllowAnonymous} allowMultiple={allowMultiple} onAllowMultipleChange={setAllowMultiple}
-        hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={setHasLinkedForm} requiresManualReview={requiresManualReview} onRequiresManualReviewChange={setRequiresManualReview}
+        requiresManualReview={requiresManualReview} onRequiresManualReviewChange={setRequiresManualReview}
         onRefresh={() => refetch()} stats={{ count: isLoading ? "--" : totalCount }}
       />
 

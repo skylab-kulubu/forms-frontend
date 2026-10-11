@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { TimerOff } from "lucide-react";
 import { loginWithKeycloak } from "@/lib/authActions";
 import { SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
 import LoginButton from "./utils/LoginButton";
+import NoticeDock from "./utils/NoticeDock";
 
 const AUTO_RELOGIN_KEY = "sessionAutoReloginAt";
 const AUTO_RELOGIN_COOLDOWN_MS = 2 * 60 * 1000;
+const FORM_PAGE = /^\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i;
 
 // Pages where a hard redirect could throw away unsaved user input; these get the banner
 // instead of the automatic bounce through Keycloak.
@@ -19,13 +21,13 @@ function hasUnsavedInputRisk(pathname) {
   if (pathname.startsWith("/admin")) {
     return (
       pathname === "/admin/forms/new-form" ||
-      pathname === "/admin/component-groups/new-group" ||
+      pathname === "/admin/templates/new-template" ||
       /^\/admin\/forms\/[^/]+\/edit$/.test(pathname) ||
-      /^\/admin\/component-groups\/[^/]+$/.test(pathname)
+      /^\/admin\/templates\/[^/]+$/.test(pathname)
     );
   }
   if (pathname === "/") return false;
-  if (pathname.startsWith("/responses") || pathname.startsWith("/component-groups")) return false;
+  if (pathname.startsWith("/responses") || pathname.startsWith("/templates")) return false;
   // Everything else at the root segment is (or may be) the public form-fill page (/[id]);
   // unknown pages also land here so a misclassification degrades to the safe option.
   return true;
@@ -73,6 +75,7 @@ export default function SessionExpiredHandler() {
   const eventExpired = rejectedToken !== null && !recovered;
   const expired = sessionError || eventExpired;
   const onAuthPage = pathname?.startsWith("/auth") ?? false;
+  const onFormPage = FORM_PAGE.test(pathname ?? "");
 
   useEffect(() => {
     const onExpired = (event) => {
@@ -95,10 +98,10 @@ export default function SessionExpiredHandler() {
   }, [rejectedToken]);
 
   // The signin page already redirects to Keycloak on its own, so stand down there.
-  const showBanner = expired && !onAuthPage && (hasUnsavedInputRisk(pathname) || autoBlocked);
+  const showBanner = expired && !onAuthPage && !onFormPage && (hasUnsavedInputRisk(pathname) || autoBlocked);
 
   useEffect(() => {
-    if (!expired || onAuthPage || autoBlocked || hasUnsavedInputRisk(pathname)) return;
+    if (!expired || onAuthPage || onFormPage || autoBlocked || hasUnsavedInputRisk(pathname)) return;
     if (redirectingRef.current) return;
     redirectingRef.current = true;
     try { sessionStorage.setItem(AUTO_RELOGIN_KEY, String(Date.now())); } catch { }
@@ -107,26 +110,16 @@ export default function SessionExpiredHandler() {
       redirectingRef.current = false;
       setAutoBlocked(true);
     });
-  }, [expired, onAuthPage, autoBlocked, pathname]);
+  }, [expired, onAuthPage, onFormPage, autoBlocked, pathname]);
 
   const handleRelogin = () => loginWithKeycloak(window.location.href);
 
   return (
     <AnimatePresence>
       {showBanner && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-x-0 bottom-4 z-50 flex justify-center px-4"
-        >
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-xl border border-white/10 bg-neutral-900/90 px-4 py-3 shadow-lg backdrop-blur">
-            <div className="flex items-center gap-2 text-xs text-neutral-200">
-              <TimerOff size={14} className="text-skylab-300" />
-              <span>Oturumunuzun süresi doldu. Kaldığınız yerden devam etmek için yeniden giriş yapın.</span>
-            </div>
-            <LoginButton onClick={handleRelogin} label="Yeniden giriş yap" hoverIcon="arrow" />
-          </div>
-        </motion.div>
+        <NoticeDock icon={TimerOff} role="alert" action={<LoginButton onClick={handleRelogin} label="Yeniden giriş yap" hoverIcon="arrow" className="shrink-0" />}>
+          Oturumunuzun süresi doldu. Kaldığınız yerden devam etmek için yeniden giriş yapın.
+        </NoticeDock>
       )}
     </AnimatePresence>
   );

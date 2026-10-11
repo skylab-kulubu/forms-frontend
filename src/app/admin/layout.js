@@ -1,4 +1,4 @@
-import { FormProvider } from "./providers";
+import { FormProvider, WorkflowProvider } from "./providers";
 import Sidebar from "./components/Sidebar";
 
 export const metadata = {
@@ -9,9 +9,11 @@ export const metadata = {
 export default function AdminLayout({ children }) {
     return (
         <FormProvider>
-            <Sidebar>
-                {children}
-            </Sidebar>
+            <WorkflowProvider>
+                <Sidebar>
+                    {children}
+                </Sidebar>
+            </WorkflowProvider>
         </FormProvider>
     );
 }

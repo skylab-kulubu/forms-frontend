@@ -27,18 +27,22 @@ function announceSessionExpired(rejectedToken) {
 
 export async function request(path, options = {}) {
 
-  const { token, ...otherOptions } = options;
+  const { token, auth = "required", ...otherOptions } = options;
   const hasAuthHeader = options.headers && ("Authorization" in options.headers || "authorization" in options.headers);
+  const anonymous = auth === "none";
 
-  let resolvedToken = token;
-  if (!resolvedToken && !hasAuthHeader) {
+  let resolvedToken = anonymous ? null : token;
+  let skippedDeadSession = false;
+  if (!anonymous && !resolvedToken && !hasAuthHeader) {
     try {
       const session = await getSharedSession();
-      resolvedToken = session?.accessToken;
+      skippedDeadSession = auth === "optional" && Boolean(session?.error);
+      resolvedToken = skippedDeadSession ? null : session?.accessToken;
     } catch { }
   }
 
   const buildOptions = (authToken) => ({
+    cache: "no-store",
     ...otherOptions,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -64,7 +68,7 @@ export async function request(path, options = {}) {
   // client-cached token wasn't refreshed). Force a fresh session (which triggers the
   // server-side jwt refresh in auth.js) and retry once with the new token. Skipped when
   // the caller supplied its own Authorization header.
-  if (response.status === 401 && !hasAuthHeader) {
+  if (response.status === 401 && !hasAuthHeader && !anonymous && !skippedDeadSession) {
     let refreshed = false;
     try {
       const session = await getSharedSession();
@@ -89,7 +93,7 @@ export async function request(path, options = {}) {
   return data;
 }
 
-export async function uploadWithProgress(path, file, onProgress) {
+export async function uploadWithProgress(path, file, onProgress, purpose) {
   const attempt = (authToken) =>
     new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -124,6 +128,7 @@ export async function uploadWithProgress(path, file, onProgress) {
       xhr.onerror = () => reject(new Error("Network hatası"));
 
       const formData = new FormData();
+      if (purpose) formData.append("purpose", purpose);
       formData.append("file", file);
 
       xhr.send(formData);

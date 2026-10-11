@@ -3,11 +3,12 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChartColumn, ChevronLeft, Download, Layers, List, PencilLine, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { ChartColumn, ChevronLeft, Download, LayoutTemplate, List, PencilLine, Plus, RefreshCw, Search, Share2, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import Tip from "./utils/Tip";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
 import FormsFilterShell, { DatabaseFilterShell } from "./utils/FormsFilterShell";
+import WorkflowsFilterShell from "./utils/WorkflowsFilterShell";
 
 const fadeIn = {
   initial: { opacity: 0, y: -6 },
@@ -91,11 +92,11 @@ function HeaderShell({ title, description, label, labelType = 1, actions, childr
 export default HeaderShell;
 
 function FormsToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange, allowAnonymous = null,
-  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange, onRefresh, onCreate
+  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange, onRefresh, onCreate
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, hasLinkedForm !== null, requiresManualReview !== null].filter(Boolean).length;
+  const activeFilters = [sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
   const buttonSize = compact ? "sm" : "md";
 
@@ -111,7 +112,6 @@ function FormsToolbar({ compact = false, searchValue = "", onSearchChange, sortV
             sortValue={sortValue} onSortChange={onSortChange} roleValue={roleValue} onRoleChange={onRoleChange}
             allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
             allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
-            hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={onHasLinkedFormChange}
             requiresManualReview={requiresManualReview} onRequiresManualReviewChange={onRequiresManualReviewChange}
           />
         </div>
@@ -136,11 +136,12 @@ export function FormsHeader(toolbarProps) {
 }
 
 function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", showArchived = false, onShowArchivedChange,
-  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, onOverview, onRefresh, onExport, exportLoading = false
+  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, timeValue = "all", onTimeChange, counts = null, timed = false,
+  onOverview, onRefresh, onExport, exportLoading = false
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", statusValue !== "all", respondentValue !== "all", showArchived !== false].filter(Boolean).length;
+  const activeFilters = [sortValue !== "desc", statusValue !== "all", respondentValue !== "all", showArchived !== false, timeValue !== "all"].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
   const buttonSize = compact ? "sm" : "md";
 
@@ -160,6 +161,7 @@ function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, s
           <ResponsesFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
             sortValue={sortValue} onSortChange={onSortChange} statusValue={statusValue} onStatusChange={onStatusChange}
             respondentValue={respondentValue} onRespondentChange={onRespondentChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange}
+            timeValue={timeValue} onTimeChange={onTimeChange} counts={counts} timed={timed}
           />
         </div>
         <Tip label="Yenile">
@@ -191,7 +193,7 @@ export function DashboardHeader({ onRefresh }) {
     <HeaderSlotPortal>
       <div className="hidden items-center gap-1.5 lg:flex">
         <ActionButton icon={RefreshCw} onClick={onRefresh} size="sm" tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Layers} href="/admin/component-groups" size="sm" tone="header" title="Bileşen grupları" aria-label="Bileşen grupları" />
+        <ActionButton icon={LayoutTemplate} href="/admin/templates" size="sm" tone="header" title="Şablonlar" aria-label="Şablonlar" />
         <ActionButton icon={Plus} variant="primary" href="/admin/forms/new-form" size="sm" tone="header" title="Yeni form ekle" aria-label="Yeni form ekle" />
       </div>
     </HeaderSlotPortal>
@@ -203,10 +205,10 @@ function GroupsToolbar({ compact = false, searchValue = "", onSearchChange, onRe
 
   return (
     <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
-      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Grup ara" />
+      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Şablon ara" />
       <div className="flex items-center gap-1.5 shrink-0">
         <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni grup ekle" aria-label="Yeni grup ekle" />
+        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni şablon ekle" aria-label="Yeni şablon ekle" />
       </div>
     </div>
   );
@@ -225,13 +227,54 @@ export function GroupsHeader(toolbarProps) {
   );
 }
 
+function WorkflowsToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", onSortChange,
+  showArchived = false, onShowArchivedChange, onRefresh, onCreate
+}) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterButtonRef = useRef(null);
+  const activeFilters = [sortValue !== "desc", showArchived !== false].filter(Boolean).length;
+  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
+  const buttonSize = compact ? "sm" : "md";
+
+  return (
+    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
+      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Akış ara" />
+      <div className="flex items-center gap-1.5 shrink-0">
+        <div ref={filterButtonRef} className="relative">
+          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
+            variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
+          />
+          <WorkflowsFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
+            sortValue={sortValue} onSortChange={onSortChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange}
+          />
+        </div>
+        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
+        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni akış ekle" aria-label="Yeni akış ekle" />
+      </div>
+    </div>
+  );
+}
+
+export function WorkflowsHeader(toolbarProps) {
+  return (
+    <>
+      <HeaderSlotPortal>
+        <WorkflowsToolbar compact {...toolbarProps} />
+      </HeaderSlotPortal>
+      <div className="md:hidden">
+        <WorkflowsToolbar {...toolbarProps} />
+      </div>
+    </>
+  );
+}
+
 export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "desc", onSortChange, allowAnonymous = null, onAllowAnonymousChange,
-  allowMultiple = null, onAllowMultipleChange, hasLinkedForm = null, onHasLinkedFormChange, requiresManualReview = null, onRequiresManualReviewChange,
+  allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange,
   onRefresh, stats = { count: 0 }
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", allowAnonymous !== null, allowMultiple !== null, hasLinkedForm !== null, requiresManualReview !== null].filter(Boolean).length;
+  const activeFilters = [sortValue !== "desc", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
 
   return (
@@ -246,7 +289,6 @@ export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "
             sortValue={sortValue} onSortChange={onSortChange}
             allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
             allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
-            hasLinkedForm={hasLinkedForm} onHasLinkedFormChange={onHasLinkedFormChange}
             requiresManualReview={requiresManualReview} onRequiresManualReviewChange={onRequiresManualReviewChange}
           />
         </div>
@@ -259,7 +301,7 @@ export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "
   );
 }
 
-function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit, onViewResponses, onAnalytics, onRefresh, userRole }) {
+function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole }) {
   const size = compact ? "sm" : "md";
   const canView = Number(userRole) >= 1;
   const canEdit = Number(userRole) >= 2;
@@ -281,6 +323,9 @@ function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit,
         <Tip label="Cevaplar">
           <ActionButton icon={List} onClick={onViewResponses} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Cevaplar" />
         </Tip>
+        <Tip label="Paylaş">
+          <ActionButton icon={Share2} onClick={onShare} disabled={!canView || !onShare} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Formu paylaş" />
+        </Tip>
         <Tip label="Düzenle">
           <ActionButton icon={PencilLine} variant={canEdit ? "primary" : "ghost"} disabled={!canEdit} className={!canEdit ? "opacity-30 pointer-events-none" : ""} onClick={onEdit} size={size} tone="header" aria-label="Düzenle" />
         </Tip>
@@ -289,9 +334,9 @@ function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit,
   );
 }
 
-export function OverviewHeader({ formStatus, onEdit, onViewResponses, onAnalytics, onRefresh, userRole }) {
+export function OverviewHeader({ formStatus, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole }) {
   const isActive = formStatus === 2;
-  const toolbarProps = { statusLabel: isActive ? "Aktif" : "Pasif", statusType: isActive ? 1 : 2, onEdit, onViewResponses, onAnalytics, onRefresh, userRole };
+  const toolbarProps = { statusLabel: isActive ? "Aktif" : "Pasif", statusType: isActive ? 1 : 2, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole };
 
   return (
     <>

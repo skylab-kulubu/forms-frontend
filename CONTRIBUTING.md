@@ -30,7 +30,7 @@ src/
 │   │   ├── page.jsx                   # Dynamic metadata + SSR
 │   │   └── FormClient.jsx             # Client-side form renderer
 │   │
-│   ├── component-groups/[groupId]/    # Public shared group preview (tokenized)
+│   ├── templates/[groupId]/           # Public shared template preview (tokenized)
 │   ├── responses/[responseId]/        # Public shared response preview (tokenized)
 │   │
 │   ├── admin/                         # Protected admin panel
@@ -43,20 +43,20 @@ src/
 │   │   │   ├── new-form/              # Create form
 │   │   │   └── [formId]/              # Form detail, edit, responses
 │   │   │
-│   │   ├── component-groups/          # Reusable component management
-│   │   │   ├── page.jsx               # Groups list
-│   │   │   ├── new-group/             # Create group
-│   │   │   └── [groupId]/             # Group detail
+│   │   ├── templates/                 # Reusable template management
+│   │   │   ├── page.jsx               # Templates list
+│   │   │   ├── new-template/          # Create template
+│   │   │   └── [groupId]/             # Template detail
 │   │   │
 │   │   ├── how-to-use/                # Built-in documentation
 │   │   │
 │   │   └── components/                # Admin UI components
-│   │       ├── ShareOverlay.jsx       # Reusable share-link modal (group/response/form)
+│   │       ├── ShareOverlay.jsx       # Reusable share-link modal (template/response/form)
 │   │       ├── form-editor/           # Form builder
 │   │       │   └── hooks/             # Editor-specific hooks
 │   │       ├── form-overview/         # Form analytics
 │   │       ├── response-displayer/    # Response viewer
-│   │       └── component-group-editor/# Group builder (incl. SharedGroupPreview, GroupEditorContext)
+│   │       └── component-group-editor/# Template builder (incl. SharedGroupPreview, GroupEditorContext)
 │   │
 │   ├── components/                    # Shared components
 │   │   ├── AuthLanding.jsx            # Sign-in gate for shared resources
@@ -81,8 +81,8 @@ src/
 │       ├── useFormAdmin.js            # Form CRUD mutations
 │       ├── useResponse.js             # Response management
 │       ├── useResponseShare.js        # Response share token create/revoke/preview
-│       ├── useGroupAdmin.js           # Component group operations
-│       ├── useGroupShare.js           # Group share token create + preview + clone
+│       ├── useGroupAdmin.js           # Template operations
+│       ├── useGroupShare.js           # Template share token create + preview + clone
 │       ├── useForm.js                 # Public form display & submission
 │       ├── useFormContext.js          # Form editor context helper
 │       ├── useDraft.js                # Draft queries & mutations
@@ -95,6 +95,8 @@ src/
 ```
 
 > Outside `src/`, the repository root also holds [`mail-templates/`](mail-templates/): standalone transactional email templates that are **not imported by the app**; they are rendered by a separate notification service and kept here for version control and design consistency (see the README's *Email Templates* section).
+
+> **Templates are still "component groups" in code.** The UI and page routes say *template*, but identifiers (`GroupEditor`, `useGroupAdmin`), the `[groupId]` route param and the backend API (`/api/admin/forms/component-groups`) keep the old name until the backend entity is renamed. The old `/component-groups` and `/admin/component-groups` URLs redirect to the new routes through `next.config.mjs`.
 
 ---
 
@@ -114,10 +116,10 @@ User ──▶ Next.js (App Router) ──▶ React Query ──▶ apiClient.js
 - **Server Components** for initial page loads and SEO metadata
 - **Client Components** for interactive features (form editor, responses)
 - **React Query** for all server state: caching, background refetching, optimistic updates
-- **Context Providers** for form editor and group editor local state
+- **Context Providers** for form editor and template editor local state
 - **Custom Hooks** (`useFormAdmin`, `useResponse`, `useGroupAdmin`, `useGroupShare`, `useResponseShare`) encapsulate all API logic
 - **Component Registry** pattern for extensible field types
-- **Tokenized share links** for component groups and responses: the public preview pages (`/component-groups/[groupId]`, `/responses/[responseId]`) read the `?token=` query param, fetch metadata server-side for SEO, and fall back to `AuthLanding` when the token is missing or expired
+- **Tokenized share links** for templates and responses: the public preview pages (`/templates/[groupId]`, `/responses/[responseId]`) read the `?token=` query param, fetch metadata server-side for SEO, and fall back to `AuthLanding` when the token is missing or expired
 - **Reliable auto-save**: both the form editor and respondent drafts share `useReliableSave`, a debounced primitive that serializes in-flight requests (no out-of-order writes), retries transient failures, and flushes the latest pending change on unmount / tab close via a `keepalive` request
 
 ---
@@ -172,6 +174,21 @@ All design tokens live in [`src/app/globals.css`](src/app/globals.css) under `@t
 - **Buttons**: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40`
 - **Text inputs**: `focus:border-skylab-400/50`, plus a soft `focus:ring-skylab-400/20` where the input already renders a ring
 
+### Side panels
+
+The right-hand panels of the form, template and workflow editors share one layout, built from the atoms in [`SidePanel.jsx`](src/app/admin/components/utils/SidePanel.jsx). Compose new panel content from those atoms instead of restyling a copy.
+
+- **Header row**: a 40px `PanelTabs` row whose tabs spread across the full width. A selected child (a workflow step) gets its own tab right after its parent (`Akış · Adım · Açıklama`) instead of replacing the row, so the sibling tabs stay one click away. Actions never live here; save, undo, share and delete render in the page header through the `admin-header-slot` portal, like `EditorHeaderActions`.
+- **Sections**: `PANEL_STACK` separates each `PANEL_SECTION` with a `divide-neutral-800/60` hairline. A section opens with `SectionHeader` (14px title, 11px description, optional status pill on the right) and is never boxed.
+- **Rows**: every row uses the same `ROW` box (`rounded-lg border-white/10`, no fill, no shadow). A clickable row adds `ROW_HOVER`; an open row switches to `border-skylab-400/30`. A leading tile is always `TILE` (36px), the same size as `Avatar size="md"`.
+- **Row trail**: a `Switch` (via `ToggleRow`), a `MenuPill`, a chevron or a link pill. Role and route-target menus are both `MenuPill`, a floating menu, because an attached dropdown gets clipped by the panel's scroll container.
+- **Buttons**: `PanelButton` is 28px (`h-7`). A button that opens a picker carries a trailing chevron (`chevron`); a direct action carries only its leading icon. The primary button (`Kaydet`, `Yayınla`) belongs to the page header, not the panel.
+- **Text boxes**: `PanelInput` (32px, leading icon) for search and lookup fields; `PanelTextarea` or `PANEL_BOX` for multi-line text. A rich-text toolbar sits inside the same box as its top strip.
+- **Two text sizes**: 14px for titles and row names; 11px (`text-2xs`) for descriptions, subtitles, buttons and menu items. 10px uppercase is reserved for status pills, and a pill appears only for a state that can change (`Yayında`, `Taslak`, `Kapalı`), never for a constant label or a count.
+- **One left edge**: header text, sections, rows and boxes start 24px inside the panel edge (the shell's `p-2` plus the content's `px-4`), so scroll bodies carry no extra padding.
+
+> **Radius note:** panel controls are shorter than `h-9` but keep `rounded-lg` so their corners match the rows beside them.
+
 ### Shared primitives
 
 Reach for these before hand-rolling a new variant:
@@ -181,6 +198,7 @@ Reach for these before hand-rolling a new variant:
 | `Avatar`       | `src/app/components/utils/Avatar.jsx`         | Any user photo/initials box (`sm`/`md`/`lg`)       |
 | `ActionButton` | `src/app/admin/components/utils/ActionButton.jsx` | Admin icon buttons; `primary` is the accent reference |
 | `ROLE_BADGE`   | `src/app/admin/components/ListItem.jsx`       | Role chip labels and styles                        |
+| `SidePanel`    | `src/app/admin/components/utils/SidePanel.jsx` | Editor side panels: tabs, sections, rows, pills, buttons, inputs |
 | `StateCard`    | `src/app/components/StateCard.jsx`            | Empty/error states in lists                        |
 
 > **Exempt on purpose:** the landing family (`components/landing/`, `Landing.jsx`, `Headers.jsx`, `Footer.jsx`) and miniature demo mockups (`admin/how-to-use/components/Demo.jsx`) keep their own sizes, colors and choreography (`Magnetic` + `Spotlight` helpers, scroll reveals). Do not normalize them.
