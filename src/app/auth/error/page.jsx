@@ -8,7 +8,7 @@ import { loginWithKeycloak, getPostLoginRedirect } from "@/lib/authActions";
 import { inSilentFrame, reportAuthResult } from "@/lib/session-recovery";
 
 // Errors where retrying the login would just loop — send the user home after cleanup.
-const NON_RECOVERABLE = new Set(["AccessDenied", "Configuration"]);
+const NON_RECOVERABLE = new Set(["AccessDenied"]);
 
 // Only auto-retry once within this window, so a genuinely failing flow can't loop.
 const RETRY_GUARD_KEY = "authErrorRetryAt";

@@ -10,6 +10,8 @@ const AUTH_RESULT = "skyforms:auth-result";
 const AUTH_CHANNEL = "skyforms-auth";
 const SILENT_TIMEOUT_MS = 12 * 1000;
 const SILENT_COOLDOWN_MS = 20 * 1000;
+const RETRY_GUARD_KEY = "authErrorRetryAt";
+const RETRY_GUARD_MS = 20 * 1000;
 
 let status = "idle";
 let attempt = null;
@@ -140,4 +142,17 @@ export function popupReauth() {
     });
   }
   return popupWait;
+}
+
+export function claimAuthRetry() {
+  try {
+    const last = Number(sessionStorage.getItem(RETRY_GUARD_KEY)) || 0;
+    if (Date.now() - last < RETRY_GUARD_MS) return false;
+    sessionStorage.setItem(RETRY_GUARD_KEY, String(Date.now()));
+  } catch { }
+  return true;
+}
+
+export function releaseAuthRetry() {
+  try { sessionStorage.removeItem(RETRY_GUARD_KEY); } catch { }
 }
