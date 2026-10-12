@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { SESSION_RESTORED_EVENT } from "@/lib/session-recovery";
 
 const RETRY_DELAY_MS = 1500;
 const DEFAULT_MAX_RETRIES = 2;
@@ -14,6 +15,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
   onStatusChangeRef.current = onStatusChange;
 
   const pendingRef = useRef(null);
+  const failedRef = useRef(null);
   const runningRef = useRef(false);
   const retriesRef = useRef(0);
   const debounceTimer = useRef(null);
@@ -34,6 +36,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     saveRef.current(job.data, { keepalive: false })
       .then(() => {
         retriesRef.current = 0;
+        if (failedRef.current === job) failedRef.current = null;
         job.onSaved?.();
         onStatusChangeRef.current?.("saved", job.data);
         const superseded = pendingRef.current !== job;
@@ -51,12 +54,16 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
         retriesRef.current = 0;
         onStatusChangeRef.current?.("failed", job.data);
         const superseded = pendingRef.current !== job;
-        if (!superseded) pendingRef.current = null;
+        if (!superseded) {
+          pendingRef.current = null;
+          failedRef.current = job;
+        }
         release(superseded);
       });
   }, []);
 
   const schedule = useCallback((data, onSaved) => {
+    failedRef.current = null;
     pendingRef.current = { data, onSaved };
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(run, debounceMsRef.current);
@@ -66,6 +73,7 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
     clearTimeout(debounceTimer.current);
     clearTimeout(retryTimer.current);
     pendingRef.current = null;
+    failedRef.current = null;
     retriesRef.current = 0;
   }, []);
 
@@ -89,6 +97,18 @@ export function useReliableSave({ save, debounceMs, maxRetries = DEFAULT_MAX_RET
       job.onSaved?.();
     } catch { }
   }, []);
+
+  useEffect(() => {
+    const retryFailed = () => {
+      const job = failedRef.current;
+      if (!job || pendingRef.current) return;
+      failedRef.current = null;
+      pendingRef.current = job;
+      run();
+    };
+    window.addEventListener(SESSION_RESTORED_EVENT, retryFailed);
+    return () => window.removeEventListener(SESSION_RESTORED_EVENT, retryFailed);
+  }, [run]);
 
   useEffect(() => {
     const onHide = () => flush();

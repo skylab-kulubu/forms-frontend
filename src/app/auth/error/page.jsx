@@ -5,6 +5,7 @@ import { signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SkylabLoader from "@/app/components/SkylabLoader";
 import { loginWithKeycloak, getPostLoginRedirect } from "@/lib/authActions";
+import { inSilentFrame, reportAuthResult } from "@/lib/session-recovery";
 
 // Errors where retrying the login would just loop — send the user home after cleanup.
 const NON_RECOVERABLE = new Set(["AccessDenied", "Configuration"]);
@@ -30,6 +31,11 @@ function AuthErrorLogic() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+
+    if (inSilentFrame()) {
+      reportAuthResult(false);
+      return;
+    }
 
     (async () => {
       // Full cleanup first: drop the (possibly broken) session cookie and end the

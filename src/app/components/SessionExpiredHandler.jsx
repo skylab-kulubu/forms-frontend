@@ -2,43 +2,51 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import { AnimatePresence } from "framer-motion";
 import { TimerOff } from "lucide-react";
-import { loginWithKeycloak } from "@/lib/authActions";
+import { loginWithKeycloak, logout } from "@/lib/authActions";
 import { SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
+import { SESSION_RESTORED_EVENT, popupReauth, settleRecovery, silentReauth, useRecoveryStatus } from "@/lib/session-recovery";
 import LoginButton from "./utils/LoginButton";
 import NoticeDock from "./utils/NoticeDock";
 
 const AUTO_RELOGIN_KEY = "sessionAutoReloginAt";
 const AUTO_RELOGIN_COOLDOWN_MS = 2 * 60 * 1000;
-const FORM_PAGE = /^\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?$/i;
+const PUBLIC_PAGE = /^\/(?:$|new-home(?:\/|$)|templates\/|responses\/)/;
 
 // Pages where a hard redirect could throw away unsaved user input; these get the banner
 // instead of the automatic bounce through Keycloak.
 function hasUnsavedInputRisk(pathname) {
-  if (!pathname) return true;
-  if (pathname.startsWith("/admin")) {
-    return (
-      pathname === "/admin/forms/new-form" ||
-      pathname === "/admin/templates/new-template" ||
-      /^\/admin\/forms\/[^/]+\/edit$/.test(pathname) ||
-      /^\/admin\/templates\/[^/]+$/.test(pathname)
-    );
-  }
-  if (pathname === "/") return false;
-  if (pathname.startsWith("/responses") || pathname.startsWith("/templates")) return false;
-  // Everything else at the root segment is (or may be) the public form-fill page (/[id]);
-  // unknown pages also land here so a misclassification degrades to the safe option.
-  return true;
+  return (
+    pathname === "/admin/forms/new-form" ||
+    pathname === "/admin/templates/new-template" ||
+    pathname === "/admin/workflows/new-workflow" ||
+    /^\/admin\/forms\/[^/]+\/edit$/.test(pathname) ||
+    /^\/admin\/forms\/[^/]+\/responses\/[^/]+$/.test(pathname) ||
+    /^\/admin\/templates\/[^/]+$/.test(pathname) ||
+    /^\/admin\/workflows\/[^/]+$/.test(pathname)
+  );
 }
 
-// Watches for a dead session (RefreshAccessTokenError on the session, or the apiClient
-// announcing an unrecoverable 401) and recovers it: on read-only pages by bouncing through
-// Keycloak (invisible while the SSO session is alive), on input-heavy pages via a banner.
+function areaOf(pathname) {
+  if (!pathname) return "form";
+  if (pathname.startsWith("/auth")) return "auth";
+  if (pathname.startsWith("/admin")) return hasUnsavedInputRisk(pathname) ? "editor" : "admin";
+  if (PUBLIC_PAGE.test(pathname)) return "public";
+  // Everything else at the root segment is (or may be) the public form-fill page (/[id]);
+  // unknown pages also land here so a misclassification degrades to the safe option.
+  return "form";
+}
+
+async function freshSession(update) {
+  return (await update?.()) ?? (await getSession());
+}
+
 export default function SessionExpiredHandler() {
   const { data: session, update } = useSession();
   const pathname = usePathname();
+  const recovery = useRecoveryStatus();
 
   const [eventExpired, setEventExpired] = useState(false);
   // Loop guard: if this page load itself came from an auto re-login that still yielded a
@@ -51,6 +59,7 @@ export default function SessionExpiredHandler() {
     }
   });
   const redirectingRef = useRef(false);
+  const episodeRef = useRef(false);
 
   // update's identity changes with the session; keep it in a ref so the re-sync effect
   // below runs once per expiry event instead of once per session change.
@@ -59,8 +68,8 @@ export default function SessionExpiredHandler() {
 
   const sessionError = session?.error === "RefreshAccessTokenError";
   const expired = sessionError || eventExpired;
-  const onAuthPage = pathname?.startsWith("/auth") ?? false;
-  const onFormPage = FORM_PAGE.test(pathname ?? "");
+  const signedIn = Boolean(session?.user);
+  const area = areaOf(pathname);
 
   useEffect(() => {
     const onExpired = () => setEventExpired(true);
@@ -82,12 +91,32 @@ export default function SessionExpiredHandler() {
     return () => { cancelled = true; };
   }, [eventExpired]);
 
-  // The signin page already redirects to Keycloak on its own, so stand down there.
-  const showBanner = expired && !onAuthPage && !onFormPage && (hasUnsavedInputRisk(pathname) || autoBlocked);
+  useEffect(() => {
+    if (expired) return;
+    settleRecovery("idle");
+    if (!episodeRef.current) return;
+    episodeRef.current = false;
+    if (signedIn) window.dispatchEvent(new Event(SESSION_RESTORED_EVENT));
+  }, [expired, signedIn]);
 
   useEffect(() => {
-    if (!expired || onAuthPage || onFormPage || autoBlocked || hasUnsavedInputRisk(pathname)) return;
-    if (redirectingRef.current) return;
+    if (!expired || area === "auth" || episodeRef.current) return;
+    episodeRef.current = true;
+    silentReauth().then(async (ok) => {
+      if (!ok) return;
+      const fresh = await freshSession(updateRef.current).catch(() => null);
+      if (fresh?.user && !fresh.error) setEventExpired(false);
+      else settleRecovery("failed");
+    });
+  }, [expired, area]);
+
+  useEffect(() => {
+    if (!expired || recovery !== "failed") return;
+    if (area === "public") {
+      logout({ redirect: false }).catch(() => { });
+      return;
+    }
+    if (area !== "admin" || autoBlocked || redirectingRef.current) return;
     redirectingRef.current = true;
     try { sessionStorage.setItem(AUTO_RELOGIN_KEY, String(Date.now())); } catch { }
     loginWithKeycloak(window.location.href).catch(() => {
@@ -95,9 +124,21 @@ export default function SessionExpiredHandler() {
       redirectingRef.current = false;
       setAutoBlocked(true);
     });
-  }, [expired, onAuthPage, onFormPage, autoBlocked, pathname]);
+  }, [expired, recovery, area, autoBlocked]);
 
-  const handleRelogin = () => loginWithKeycloak(window.location.href);
+  const showBanner = expired && recovery === "failed" && (area === "editor" || (area === "admin" && autoBlocked));
+
+  const handleRelogin = () => {
+    const signedInElsewhere = popupReauth();
+    if (!signedInElsewhere) {
+      loginWithKeycloak(window.location.href);
+      return;
+    }
+    signedInElsewhere.then(async () => {
+      const fresh = await freshSession(updateRef.current).catch(() => null);
+      if (fresh?.user && !fresh.error) setEventExpired(false);
+    });
+  };
 
   return (
     <AnimatePresence>

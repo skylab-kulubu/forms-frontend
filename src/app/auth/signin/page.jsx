@@ -4,12 +4,17 @@ import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import SkylabLoader from "@/app/components/SkylabLoader";
 import { loginWithKeycloak } from "@/lib/authActions";
+import { inSilentFrame, reportAuthResult } from "@/lib/session-recovery";
 
 function SignInLogic() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get("callbackUrl") || "/admin";
 
   useEffect(() => {
+    if (inSilentFrame()) {
+      reportAuthResult(false);
+      return;
+    }
     loginWithKeycloak(callbackUrl);
   }, [callbackUrl]);
 
