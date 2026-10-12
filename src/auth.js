@@ -14,9 +14,19 @@ function skyformsRolesFrom(jwtPayload) {
     return jwtPayload.resource_access?.forms?.roles ?? [];
 }
 
-const EXPIRY_BUFFER_MS = 60 * 1000;
+function refreshExpiryOf(refreshToken) {
+    const exp = decodeJwtPayload(refreshToken ?? "").exp;
+    return exp ? exp * 1000 : undefined;
+}
 
-async function refreshAccessToken(token) {
+const EXPIRY_BUFFER_MS = 60 * 1000;
+const REFRESH_REUSE_MS = 60 * 1000;
+const TRANSIENT_RETRY_MS = 10 * 1000;
+const REFRESH_TIMEOUT_MS = 10 * 1000;
+
+const refreshes = globalThis.__skyformsRefreshes ??= new Map();
+
+async function requestRefresh(refreshToken) {
     try {
         const response = await fetch(`${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/token`, {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -24,31 +34,75 @@ async function refreshAccessToken(token) {
                 client_id: process.env.KEYCLOAK_CLIENT_ID,
                 client_secret: process.env.KEYCLOAK_CLIENT_SECRET,
                 grant_type: "refresh_token",
-                refresh_token: token.refreshToken,
+                refresh_token: refreshToken,
             }),
             method: "POST",
+            cache: "no-store",
+            signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),
         })
 
-        const refreshedTokens = await response.json()
+        const body = await response.json().catch(() => ({}))
 
-        if (!response.ok) { throw refreshedTokens; }
-
-        const jwtPayload = decodeJwtPayload(refreshedTokens.access_token);
-        const skyformsRoles = skyformsRolesFrom(jwtPayload);
-
-        return {
-            ...token,
-            accessToken: refreshedTokens.access_token,
-            idToken: refreshedTokens.id_token ?? token.idToken,
-            expiresAt: Date.now() + refreshedTokens.expires_in * 1000,
-            refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
-            skyformsRoles: skyformsRoles.length ? skyformsRoles : (token.skyformsRoles ?? []),
-            realmRoles: jwtPayload.realm_access?.roles ?? token.realmRoles ?? [],
-            error: undefined,
-        }
+        if (response.ok) return { ok: true, tokens: body }
+        return { ok: false, dead: response.status === 400 || response.status === 401, status: response.status, reason: body.error, description: body.error_description }
     } catch (error) {
-        return { ...token, error: "RefreshAccessTokenError" }
+        return { ok: false, dead: false, reason: error.name, description: error.message }
     }
+}
+
+function refreshOnce(refreshToken) {
+    const now = Date.now();
+    for (const [key, entry] of refreshes) {
+        if (entry.until < now) refreshes.delete(key);
+    }
+
+    const existing = refreshes.get(refreshToken);
+    if (existing) return existing.promise;
+
+    const entry = { until: Number.POSITIVE_INFINITY };
+    entry.promise = requestRefresh(refreshToken).then((result) => {
+        entry.until = Date.now() + (result.ok || result.dead ? REFRESH_REUSE_MS : TRANSIENT_RETRY_MS);
+        return result;
+    });
+    refreshes.set(refreshToken, entry);
+    return entry.promise;
+}
+
+function withRefreshedTokens(token, tokens) {
+    const jwtPayload = decodeJwtPayload(tokens.access_token);
+    const skyformsRoles = skyformsRolesFrom(jwtPayload);
+    const refreshToken = tokens.refresh_token ?? token.refreshToken;
+
+    return {
+        ...token,
+        accessToken: tokens.access_token,
+        idToken: tokens.id_token ?? token.idToken,
+        expiresAt: Date.now() + tokens.expires_in * 1000,
+        refreshToken,
+        refreshExpiresAt: refreshExpiryOf(refreshToken),
+        skyformsRoles: skyformsRoles.length ? skyformsRoles : (token.skyformsRoles ?? []),
+        realmRoles: jwtPayload.realm_access?.roles ?? token.realmRoles ?? [],
+        error: undefined,
+    }
+}
+
+function expired(token, reason) {
+    console.warn(`[auth] session ended: ${reason}`);
+    return { ...token, error: "RefreshAccessTokenError" }
+}
+
+async function refreshAccessToken(token) {
+    if (!token.refreshToken) return expired(token, "no refresh token");
+    if (token.refreshExpiresAt && Date.now() >= token.refreshExpiresAt) return expired(token, "refresh token expired");
+
+    const result = await refreshOnce(token.refreshToken);
+    if (result.ok) return withRefreshedTokens(token, result.tokens);
+
+    const reason = [result.status, result.reason, result.description].filter(Boolean).join(" ");
+    if (result.dead) return expired(token, `Keycloak refused the refresh (${reason})`);
+
+    console.warn(`[auth] token refresh failed, will retry: ${reason}`);
+    return token
 }
 
 async function endKeycloakSession(idToken) {
@@ -80,6 +134,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     idToken: account.id_token,
                     expiresAt: account.expires_at ? account.expires_at * 1000 : Date.now() + (account.expires_in ?? 300) * 1000,
                     refreshToken: account.refresh_token,
+                    refreshExpiresAt: refreshExpiryOf(account.refresh_token),
                     skyformsRoles: skyformsRolesFrom(jwtPayload),
                     realmRoles: jwtPayload.realm_access?.roles ?? [],
                     user: {
@@ -96,12 +151,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }
             }
 
+            if (token.error) return token;
             if (Date.now() < token.expiresAt - EXPIRY_BUFFER_MS) return token;
+            if (process.env.NEXT_RUNTIME === "edge") return token;
 
-            // A failed refresh is retried on every session read on purpose: a transient
-            // failure (network blip, concurrent-refresh race on a rotated refresh token)
-            // must not brick the session permanently. If the refresh token is truly dead,
-            // Keycloak keeps answering invalid_grant and the error persists until re-login.
             return await refreshAccessToken(token)
         },
         async session({ session, token }) {
@@ -123,6 +176,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     events: {
         async signOut(message) {
             const token = "token" in message ? message.token : null;
+            if (token?.error) return;
             await endKeycloakSession(token?.idToken);
         },
     },
