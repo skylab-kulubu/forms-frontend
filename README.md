@@ -208,6 +208,36 @@ Create a `.env.local` file in the project root:
 | `AUTH_SECRET`                    | NextAuth encryption secret               |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key of the Invisible widget. Empty turns guest verification and guest uploads off in the browser. For local work use the test key `1x00000000000000000000BB` |
 
+### Keycloak Client Requirements
+
+`KEYCLOAK_CLIENT_ID` is the login client (production: `skyforms`). The backend is a
+separate Keycloak client (`forms`) and rejects every access token whose `aud` does not
+contain `forms`, so the login client must carry an **Audience** mapper for it:
+
+- Client scope `skyforms-forms-audience` with an `oidc-audience-mapper` named
+  `forms-audience`: *Included Client Audience* `forms`, *Add to access token* on,
+  *Add to ID token* off.
+- Attached to the `skyforms` client as a **Default** client scope.
+
+Without the mapper only users who hold `forms` client roles (`skyforms:*`) get `forms`
+into `aud` through Keycloak's built-in *audience resolve* mapper. Admins keep working,
+plain members get `401` on every API call and the app shows the session-expired banner.
+Every realm that runs this app (production, sandbox) needs the mapper.
+
+### Session Expiry Handling
+
+`src/lib/apiClient.js` retries a `401` once with a freshly read session. If the session
+still hands back the same access token, it announces `skyforms:session-expired` with that
+token; `SessionExpiredHandler` then re-syncs the `SessionProvider` **once per rejected
+token** and counts the session as recovered only when a *different* token arrives (refresh
+rotation, silent sign-in or re-login). Until then admin list pages go through Keycloak once
+and editors show the re-login banner. A session object without an error flag is not treated
+as recovery: clearing the expired state on that used to re-enable session-gated queries,
+which were rejected again, in a loop.
+
+A refresh that Keycloak refuses is handled first by a silent sign-in; the full flow is in
+[CONTRIBUTING.md](CONTRIBUTING.md#authentication-flow).
+
 ### Running the App
 
 ```bash
