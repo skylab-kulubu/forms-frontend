@@ -77,6 +77,7 @@ src/
 │
 ├── lib/
 │   ├── apiClient.js                   # Authenticated HTTP client
+│   ├── session-recovery.js            # Silent sign-in iframe, re-login popup, recovery status
 │   └── hooks/                         # React Query hooks
 │       ├── useFormAdmin.js            # Form CRUD mutations
 │       ├── useResponse.js             # Response management
@@ -86,12 +87,12 @@ src/
 │       ├── useForm.js                 # Public form display & submission
 │       ├── useFormContext.js          # Form editor context helper
 │       ├── useDraft.js                # Draft queries & mutations
-│       ├── useReliableSave.js         # Debounced auto-save primitive (in-flight ordering, retry, unload flush)
+│       ├── useReliableSave.js         # Debounced auto-save primitive (in-flight ordering, retry, unload flush, retry after session restore)
 │       ├── useUser.js                 # User session
 │       └── useMedia.js                # Responsive breakpoints
 │
-├── auth.js                            # NextAuth Keycloak config (buffered token refresh, federated logout)
-└── middleware.js                      # Route protection & role checks
+├── auth.js                            # NextAuth Keycloak config (buffered single-flight token refresh, federated logout)
+└── middleware.js                      # Route protection & role checks (reads the session, never refreshes it)
 ```
 
 > Outside `src/`, the repository root also holds [`mail-templates/`](mail-templates/): standalone transactional email templates that are **not imported by the app**; they are rendered by a separate notification service and kept here for version control and design consistency (see the README's *Email Templates* section).
@@ -213,10 +214,16 @@ The platform uses **Keycloak** as an identity provider through **NextAuth.js v5*
 
 1. User clicks "Sign In" and is redirected to the Keycloak login page
 2. After successful authentication, Keycloak returns an access token, refresh token and ID token (all stored in the encrypted JWT session)
-3. NextAuth refreshes the access token **ahead of expiry** (60s buffer) so requests never go out with a just-expired token; a failed refresh flags the session with `RefreshAccessTokenError` but is retried on every session read, so a transient failure cannot permanently brick the session
-4. The API client attaches the Bearer token to all backend requests, coalesces concurrent session reads into one fetch (avoids refresh races) and retries a 401 once with a freshly refreshed token
-5. When the refresh token itself is dead, `middleware.js` redirects `/admin` navigations to re-authenticate and `SessionExpiredHandler` (mounted in `providers.js`) covers the client side: a silent re-login bounce through Keycloak on read-only pages, a re-login banner on pages with unsaved input (form fill, editors)
-6. **Logout is federated**: the `events.signOut` handler in `auth.js` calls Keycloak's end-session endpoint server-side with the stored `id_token_hint`, terminating the SSO session (the `id_token` never leaves the server)
+3. NextAuth refreshes the access token **ahead of expiry** (60s buffer) so requests never go out with a just-expired token. Only the Node.js server refreshes: `middleware.js` reads the session cookie with `getToken` and **never refreshes or rewrites it**, because a cookie written by the middleware could overwrite a fresher one
+4. Refreshes are **single-flight**: concurrent session reads that carry the same refresh token share one Keycloak call, and its result is reused for a minute so a late request with the old cookie gets the new tokens instead of spending the old refresh token again
+5. A refresh that Keycloak refuses (`invalid_grant`, or the refresh token's own expiry has passed) ends the session for good with `RefreshAccessTokenError` and logs the reason (`[auth] session ended: ...`); a network or 5xx failure keeps the session and retries after 10 seconds
+6. The API client attaches the Bearer token to all backend requests and retries a 401 once with a freshly refreshed token
+7. When the session ends, `SessionExpiredHandler` (mounted in `providers.js`) first tries a **silent sign-in**: a hidden iframe opens `/auth/silent`, which asks Keycloak with `prompt=none`. While the Keycloak SSO session is alive this restores the session without touching the page, and failed draft saves are retried. Until the attempt fails, `useRespondent` keeps reporting the signed-in person, so the form page never flickers into its expired state
+8. If the SSO session is gone too, the outcome depends on the page: public pages sign out locally and show the sign-in button, admin read-only pages go to Keycloak and come back to the same URL, editors keep the page and offer a re-login in a popup window (falling back to a full redirect when popups are blocked), and the form page shows its own expired state
+9. Signing in always returns to the page it started from: the middleware passes the requested path as `callbackUrl`, the signin page falls back to the destination stashed by `loginWithKeycloak`, and a callback that fails because the PKCE cookie expired (`Configuration`) is retried once before giving up
+10. **Logout is federated**: the `events.signOut` handler in `auth.js` calls Keycloak's end-session endpoint server-side with the stored `id_token_hint`, terminating the SSO session (the `id_token` never leaves the server). A session that already ended skips this call, so the local sign-out on public pages never logs the user out of other apps
+
+> **Session lifetime is Keycloak's call.** A refresh token dies after the realm's SSO idle timeout (30 minutes without any refresh) and at its maximum lifespan. Nothing on the client can revive it; only a new sign-in can.
 
 ### Role-Based Access Control
 
