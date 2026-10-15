@@ -12,6 +12,7 @@ import { migrateSchema } from "@/app/components/form-migrate";
 import { isRepeaterComplete, serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { readAttribution } from "@/lib/attribution";
+import { valuesFromAnswers } from "@/lib/revision-answers";
 import { hasJourney, hasSeenIntro } from "@/lib/workflow-journey";
 import { useServerNow } from "@/lib/form-timing";
 import { useTurnstile } from "@/lib/hooks/useTurnstile";
@@ -97,6 +98,7 @@ const initialState = {
   attempt: null,
   serverNow: null,
   closesAt: null,
+  revision: null,
   intro: null,
   nextFormId: null,
   nextStage: null,
@@ -246,6 +248,7 @@ function reducer(state, action) {
         values,
         savedDraft: answers.length ? JSON.stringify(answers) : null,
         draftPromptVisible: answers.length > 0,
+        info: state.info?.kind === "revision" ? null : state.info,
       };
     }
 
@@ -275,7 +278,14 @@ function submitFailureAction(error) {
 function initState({ form, options }) {
   const journey = options.journey ?? null;
   const instanceId = options.instanceId ?? null;
-  const showIntro = Boolean(options.isWorkflow) && hasJourney(journey) && Boolean(form?.id) && !hasSeenIntro(form.id, instanceId);
+  const revision = options.revision ?? null;
+  const showIntro = Boolean(options.isWorkflow) && hasJourney(journey) && Boolean(form?.id) && !hasSeenIntro(form.id, instanceId, revision?.round);
+
+  // Düzeltme istenen gönderimin cevaplarıyla açılır. Kaydedilmiş taslak sayılır ki değişmeden otomatik kaydedilmesin;
+  // aday bu turda taslak bıraktıysa taslak sonradan bunların üstüne yazılır.
+  const schema = migrateSchema(form?.schema);
+  const values = revision?.answers ? valuesFromAnswers(schema, revision.answers) : {};
+  const prefilled = draftAnswers(values, {}, schema);
 
   return {
     ...initialState,
@@ -288,6 +298,10 @@ function initState({ form, options }) {
     attempt: options.attempt ?? null,
     serverNow: options.serverNow ?? null,
     closesAt: options.closesAt ?? null,
+    revision,
+    values,
+    savedDraft: prefilled.length ? JSON.stringify(prefilled) : initialState.savedDraft,
+    info: prefilled.length ? { kind: "revision" } : null,
     intro: showIntro ? { arrivedTitle: null } : null,
   };
 }

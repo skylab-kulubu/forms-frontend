@@ -14,6 +14,7 @@ export const ATTEMPT_EVENT = {
 
 export const RESPONSE_STATUS_PROVISIONAL = 4;
 export const RESPONSE_STATUS_FLAGGED = 5;
+export const RESPONSE_STATUS_RETURNED = 6;
 
 export const ROW_STATUS = {
   submitted: { label: "Durumsuz", dot: "bg-neutral-600", text: "text-neutral-500" },
@@ -21,6 +22,7 @@ export const ROW_STATUS = {
   approved: { label: "Onaylandı", dot: "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40", text: "text-emerald-300" },
   declined: { label: "Reddedildi", dot: "bg-red-400 shadow-[0_0_6px] shadow-red-400/40", text: "text-red-300" },
   flagged: { label: "Doğrulanmadı", dot: "bg-orange-400 shadow-[0_0_6px] shadow-orange-400/40", text: "text-orange-300" },
+  returned: { label: "Düzeltme istendi", dot: "bg-sky-400 shadow-[0_0_6px] shadow-sky-400/40", text: "text-sky-300" },
   provisional: { label: "Geçici", dot: "border border-amber-400 bg-transparent", text: "text-amber-200" },
   running: { label: "Devam ediyor", dot: "bg-skylab-400 shadow-[0_0_6px] shadow-skylab-400/40", text: "text-skylab-300" },
   opened: { label: "Başlatmadı", dot: "border border-neutral-600 bg-transparent", text: "text-neutral-500" },
@@ -42,6 +44,7 @@ export function rowKindOf(row) {
     case 3: return "declined";
     case RESPONSE_STATUS_PROVISIONAL: return "provisional";
     case RESPONSE_STATUS_FLAGGED: return "flagged";
+    case RESPONSE_STATUS_RETURNED: return "returned";
     default: return "submitted";
   }
 }
@@ -62,6 +65,7 @@ export const STATUS_FILTERS = [
   { value: "approved", label: "Onaylandı", dot: "bg-emerald-400", count: (counts) => counts?.approved, param: { status: 2 } },
   { value: "rejected", label: "Reddedildi", dot: "bg-red-400", count: (counts) => counts?.declined, param: { status: 3 } },
   { value: "flagged", label: "Doğrulanmadı", dot: "bg-orange-400", count: (counts) => counts?.flagged ?? 0, param: { status: RESPONSE_STATUS_FLAGGED }, whenPresent: true },
+  { value: "returned", label: "Düzeltme istendi", dot: "bg-sky-400", count: (counts) => counts?.returned ?? 0, param: { status: RESPONSE_STATUS_RETURNED }, whenPresent: true },
   { value: "provisional", label: "Geçici", dot: "border border-amber-400", count: (counts) => counts?.provisional, param: { status: RESPONSE_STATUS_PROVISIONAL }, timed: true },
   { value: "running", label: "Devam ediyor", dot: "bg-skylab-400", count: (counts) => counts?.running, param: { attemptStatus: ATTEMPT_STATUS.STARTED }, timed: true },
   { value: "opened", label: "Başlatmadı", dot: "border border-neutral-600", count: (counts) => counts?.opened, param: { attemptStatus: ATTEMPT_STATUS.OPENED }, timed: true },

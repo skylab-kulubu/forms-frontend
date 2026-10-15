@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Clock, Eye, FileClock, FileX, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldAlert, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { ArrowRight, Check, Clock, Eye, FileClock, FilePenLine, FileX, Flag, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldAlert, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { useResponseStatusMutation, useResponseArchiveMutation, useAttemptActionMutation } from "@/lib/hooks/useResponse";
 import { DecisionSection, ReminderSection, TimeHistory, TimeSection, attemptTimeValue, formatPersonName } from "./AttemptPanels";
@@ -28,6 +28,7 @@ const STATUS_META = {
   closed: { label: "Teslim yok", style: "border-white/10 bg-white/5 text-neutral-300", Icon: FileX, color: "text-red-300" },
   4: { label: "Geçici", style: "border-amber-500/40 bg-amber-500/10 text-amber-200", Icon: FileClock, color: "text-amber-300" },
   5: { label: "Doğrulanmadı", style: "border-orange-500/40 bg-orange-500/10 text-orange-200", Icon: ShieldAlert, color: "text-orange-300" },
+  6: { label: "Düzeltme istendi", style: "border-sky-500/40 bg-sky-500/10 text-sky-200", Icon: FilePenLine, color: "text-sky-300" },
   default: { label: "Beklemede", style: "border-white/10 bg-white/5 text-neutral-300", Icon: ShieldQuestion, color: "text-neutral-400" },
 };
 
@@ -36,6 +37,19 @@ const REVIEW_NOTE_MAX_LENGTH = 500;
 
 const PROVISIONAL = 4;
 const FLAGGED = 5;
+const RETURNED = 6;
+
+const DECISION_TONE = {
+  2: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20",
+  3: "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20",
+  [RETURNED]: "border-sky-400/40 bg-sky-400/10 text-sky-100 hover:bg-sky-400/20",
+};
+
+const DECISION_COPY = {
+  2: { title: "Cevabı onayla", button: "Onayla", note: "Bu karar başvurunun yönünü belirler ve geri alınamaz." },
+  3: { title: "Cevabı reddet", button: "Reddet", note: "Bu karar başvurunun yönünü belirler ve geri alınamaz." },
+  [RETURNED]: { title: "Düzeltme iste", button: "Düzeltme iste", note: "Aday gönderince cevap yeniden incelemenize düşer. Aday e-postayla bilgilendirilir." },
+};
 
 const ATTEMPT_ICON = { running: Timer, opened: Eye, none: FileX };
 
@@ -103,13 +117,50 @@ function UserCard({ name, email, userId, photoUrl, hasUser, size = "normal" }) {
   );
 }
 
-export function ResponseActions({ response, readOnly = false }) {
+function RevisionRequest({ request }) {
+  const reviewerName = formatPersonName(request.reviewer?.fullName) || "Ekipten biri";
+  const flagCount = request.returnedQuestionIds?.length ?? 0;
+
+  return (
+    <div className="px-1 py-4 first:pt-0">
+      <div className="mb-3 flex items-center justify-between">
+        <SectionTitle>Düzeltme isteği</SectionTitle>
+        <div className="flex items-center gap-1 text-3xs text-neutral-400">
+          <Clock size={11} className="shrink-0" />
+          <span className="truncate">{formatDateTime(request.reviewedAt)}</span>
+        </div>
+      </div>
+      <p className="text-2xs leading-relaxed text-neutral-400">
+        <span className="text-neutral-200">{reviewerName}</span> {request.workflow?.round ?? 1}. gönderimde düzeltme istedi.
+      </p>
+      {request.reviewerNote && (
+        <div className="mt-3 rounded-lg border border-white/10 bg-white/3 p-3">
+          <p className="mb-1 text-3xs font-medium text-neutral-500">Not</p>
+          <p className="whitespace-pre-wrap text-2xs leading-relaxed text-neutral-200">{request.reviewerNote}</p>
+        </div>
+      )}
+      {flagCount > 0 && (
+        <p className="mt-2 flex items-center gap-1.5 text-3xs text-sky-200/80">
+          <Flag size={11} className="shrink-0" />
+          {flagCount} soru işaretlenmişti
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * @param returnFlags  Düzeltme isterken işaretlenen sorular; null ise işaretleme kapalı.
+ * @param previousRound  Bu gönderimden önce düzeltme istenen gönderim; isteğin notu panelde gösterilir.
+ */
+export function ResponseActions({ response, readOnly = false, returnFlags = null, onReturnFlagsChange = null, previousRound = null }) {
   const reviewedAt = response?.reviewedAt;
   const reviewDescription = response?.reviewDescription || response?.reviewerNote || "";
   const statusValue = Number(response?.status ?? 0);
   const closedProvisional = statusValue === PROVISIONAL && response?.attempt?.status === ATTEMPT_STATUS.NO_SUBMISSION;
   const statusInfo = closedProvisional ? STATUS_META.closed : STATUS_META[statusValue] ?? STATUS_META.default;
   const isProvisional = statusValue === PROVISIONAL;
+  const isReturned = statusValue === RETURNED;
   const canReview = statusValue !== 0 && !isProvisional;
   const archivedAt = response?.archivedAt;
   const isArchived = Boolean(response?.isArchived);
@@ -117,7 +168,13 @@ export function ResponseActions({ response, readOnly = false }) {
   const isWorkflowStep = Boolean(workflow);
   const isRouteOpen = !isWorkflowStep || Boolean(workflow.onApprove || workflow.onDecline);
   const canEditReview = !readOnly && canReview && !isArchived && isRouteOpen;
-  const isArchiveBlocked = (isWorkflowStep && statusValue === 1) || isProvisional;
+  const canReturn = canEditReview && isWorkflowStep && Boolean(workflow.canReturn);
+  const isArchiveBlocked = (isWorkflowStep && statusValue === 1) || isProvisional || isReturned;
+  const round = workflow?.round ?? 1;
+  const ownStep = workflow?.steps?.find((step) => step.stage === workflow.stage && (step.round ?? 1) === round) ?? null;
+  const nextRoundAnswered = Boolean(workflow?.steps?.some((step) => step.stage === workflow.stage && step.round === round + 1 && step.responseId));
+  const returnOutcome = canReturn ? `${ownStep?.formTitle || "Bu adım"} yeniden açılır` : null;
+  const flagCount = returnFlags?.length ?? 0;
   const attempt = readOnly ? null : response?.attempt ?? null;
   const attemptTime = attemptTimeValue(attempt);
   const searchParams = useSearchParams();
@@ -136,6 +193,7 @@ export function ResponseActions({ response, readOnly = false }) {
   const [pendingDecision, setPendingDecision] = useState(null);
   const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
   const actionTimerRef = useRef(null);
+  const noteRef = useRef(null);
   const responseId = response?.id;
   const { mutate, isPending } = useResponseStatusMutation();
   const { mutate: archiveMutate, isPending: isArchivePending, isSuccess, isError, error, reset } = useResponseArchiveMutation();
@@ -218,16 +276,19 @@ export function ResponseActions({ response, readOnly = false }) {
         responseId: response.id,
         newStatus: nextStatus,
         note: note?.trim() ? note.trim() : null,
+        questionIds: nextStatus === RETURNED ? returnFlags ?? [] : null,
       },
       {
         onSuccess: () => {
           setIsEditing(false);
           setActionState("success");
+          onReturnFlagsChange?.(null);
         },
         onError: (error) => {
           // HTTP hatası backend mesajını taşır; ağ/CORS hatasında status yoktur.
           setActionError(error?.status ? error.message : "Durum güncellenemedi; bağlantıyı kontrol edip tekrar deneyin.");
           setActionState("error");
+          onReturnFlagsChange?.(null);
         },
       }
     );
@@ -236,9 +297,18 @@ export function ResponseActions({ response, readOnly = false }) {
   const requestDecision = (nextStatus) => {
     if (isWorkflowStep) {
       setPendingDecision(nextStatus);
+      if (nextStatus === RETURNED) {
+        onReturnFlagsChange?.([]);
+        if (!note?.trim()) setTimeout(() => noteRef.current?.focus(), 0);
+      }
       return;
     }
     submitStatus(nextStatus);
+  };
+
+  const cancelDecision = () => {
+    setPendingDecision(null);
+    onReturnFlagsChange?.(null);
   };
 
   const confirmDecision = () => {
@@ -246,6 +316,14 @@ export function ResponseActions({ response, readOnly = false }) {
     setPendingDecision(null);
     submitStatus(nextStatus);
   };
+
+  const noteMissing = pendingDecision === RETURNED && !note?.trim();
+  const decisionCopy = pendingDecision ? DECISION_COPY[pendingDecision] : null;
+  const decisionOutcome = pendingDecision === 2
+    ? approveOutcome && `${approveOutcome}.`
+    : pendingDecision === RETURNED
+      ? `${ownStep?.formTitle || "Form"}, adayın önceki cevaplarıyla yeniden açılır.`
+      : declineOutcome && `${declineOutcome}.`;
 
   const showReviewDetails = canReview && Boolean(reviewedAt) && (!isEditing || readOnly) && actionState === "idle";
   const actionTone = actionState === "error" ? "border-red-500/30 bg-red-500/10 text-red-200" : actionState === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5 text-neutral-200";
@@ -271,7 +349,7 @@ export function ResponseActions({ response, readOnly = false }) {
             </button>
             <Popover open={isError} error={error} variant="error" align="bottom-right">
               <button type="button" aria-label="Cevabı sil"
-                title={isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin." : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce onaylayın ya da reddedin." : "Cevabı sil"}
+                title={isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin." : isReturned ? "Düzeltme istenen cevap başvurunun geçmişinde kalır; arşivlenmez." : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce karar verin." : "Cevabı sil"}
                 disabled={isArchivePending || isError || isSuccess || isArchived || isArchiveBlocked} onClick={() => archiveMutate(responseId)}
                 className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-white/5"}`}
               >
@@ -341,6 +419,12 @@ export function ResponseActions({ response, readOnly = false }) {
               </motion.div>
             )}
 
+            {previousRound && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.08 }}>
+                <RevisionRequest request={previousRound} />
+              </motion.div>
+            )}
+
             {canReview && (
               <AnimatePresence mode="wait" initial={false}>
                 {showReviewDetails ? (
@@ -359,6 +443,22 @@ export function ResponseActions({ response, readOnly = false }) {
                       <div className="mt-3 rounded-lg border border-white/10 bg-white/3 p-3">
                         <p className="text-3xs font-medium text-neutral-500 mb-1">Not</p>
                         <p className="text-2xs text-neutral-200 whitespace-pre-wrap leading-relaxed">{reviewDescription}</p>
+                      </div>
+                    )}
+
+                    {isReturned && (
+                      <div className="mt-3 rounded-lg border border-sky-400/20 bg-sky-400/5 p-3">
+                        <p className="text-2xs leading-relaxed text-neutral-300">
+                          {nextRoundAnswered
+                            ? `Aday düzeltip ${round + 1}. gönderimi yaptı; adım şeridinden açabilirsiniz.`
+                            : `${ownStep?.formTitle || "Form"} adayın önceki cevaplarıyla yeniden açıldı. Aday gönderince ${round + 1}. gönderim olarak incelemenize düşer.`}
+                        </p>
+                        {(response.returnedQuestionIds?.length ?? 0) > 0 && (
+                          <p className="mt-1.5 flex items-center gap-1.5 text-3xs text-sky-200/80">
+                            <Flag size={11} className="shrink-0" />
+                            {response.returnedQuestionIds.length} soru işaretlendi
+                          </p>
+                        )}
                       </div>
                     )}
 
@@ -394,21 +494,31 @@ export function ResponseActions({ response, readOnly = false }) {
                         <motion.div layout key="confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="rounded-xl border border-white/10 bg-white/3 p-3"
                         >
-                          <p className="text-xs font-medium text-neutral-100">{pendingDecision === 2 ? "Cevabı onayla" : "Cevabı reddet"}</p>
-                          {(pendingDecision === 2 ? approveOutcome : declineOutcome) && (
-                            <p className="mt-1 text-2xs text-neutral-300">{pendingDecision === 2 ? approveOutcome : declineOutcome}.</p>
+                          <p className="text-xs font-medium text-neutral-100">{decisionCopy.title}</p>
+                          {decisionOutcome && <p className="mt-1 text-2xs text-neutral-300">{decisionOutcome}</p>}
+                          <p className="mt-1 text-3xs leading-relaxed text-neutral-500">{decisionCopy.note}</p>
+                          {pendingDecision === RETURNED && (
+                            <div className="mt-2.5 space-y-1.5 border-t border-white/5 pt-2.5">
+                              <p className={`flex gap-1.5 text-3xs leading-relaxed ${noteMissing ? "text-sky-200" : "text-neutral-500"}`}>
+                                <PencilLine size={11} className="mt-0.5 shrink-0" />
+                                {noteMissing ? "Adayın neyi düzelteceğini Açıklama alanına yazın; not ona e-postayla gider." : "Açıklama adaya not olarak gider."}
+                              </p>
+                              <p className="flex gap-1.5 text-3xs leading-relaxed text-neutral-500">
+                                <Flag size={11} className="mt-0.5 shrink-0" />
+                                {flagCount > 0 ? `${flagCount} soru işaretli; adayın formunda vurgulanır.` : "İsterseniz düzeltilecek soruları cevapların yanından işaretleyin."}
+                              </p>
+                            </div>
                           )}
-                          <p className="mt-1 text-3xs leading-relaxed text-neutral-500">Bu karar başvurunun yönünü belirler ve geri alınamaz.</p>
                           <div className="mt-3 flex items-center gap-2">
-                            <button type="button" onClick={() => setPendingDecision(null)}
+                            <button type="button" onClick={cancelDecision}
                               className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
                             >
                               Vazgeç
                             </button>
-                            <button type="button" onClick={confirmDecision} disabled={isPending}
-                              className={`flex-1 rounded-lg border px-3 py-1.5 text-2xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-50 ${pendingDecision === 2 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20" : "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20"}`}
+                            <button type="button" onClick={confirmDecision} disabled={isPending || noteMissing}
+                              className={`flex-1 rounded-lg border px-3 py-1.5 text-2xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:cursor-not-allowed disabled:opacity-50 ${DECISION_TONE[pendingDecision]}`}
                             >
-                              {pendingDecision === 2 ? "Onayla" : "Reddet"}
+                              {decisionCopy.button}
                             </button>
                           </div>
                         </motion.div>
@@ -422,6 +532,13 @@ export function ResponseActions({ response, readOnly = false }) {
                             >
                               <Check size={16} className="mx-auto" />
                             </button>
+                            {canReturn && (
+                              <button type="button" onClick={() => requestDecision(RETURNED)} disabled={isPending} aria-label="Düzeltme iste" title="Düzeltme iste"
+                                className="flex-1 rounded-xl border border-sky-400/40 bg-sky-400/10 px-3 py-2.5 text-xs font-semibold text-sky-100 transition hover:bg-sky-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <FilePenLine size={16} className="mx-auto" />
+                              </button>
+                            )}
                             <button type="button" onClick={() => requestDecision(3)} disabled={isPending} aria-label="Reddet" title="Reddet"
                               className="flex-1 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -431,6 +548,7 @@ export function ResponseActions({ response, readOnly = false }) {
                           {isWorkflowStep && (approveOutcome || declineOutcome) && (
                             <div className="mt-3 space-y-1">
                               <RouteHint label="Onaylanırsa" dot="bg-emerald-400/70" text={approveOutcome} />
+                              <RouteHint label="Düzeltme istenirse" dot="bg-sky-400/70" text={returnOutcome} />
                               <RouteHint label="Reddedilirse" dot="bg-red-400/70" text={declineOutcome} />
                             </div>
                           )}
@@ -460,11 +578,12 @@ export function ResponseActions({ response, readOnly = false }) {
                     </AnimatePresence>
 
                     <motion.div layout className="mt-4">
-                      <label className="text-3xs font-medium text-neutral-500 mb-1.5 block">
-                        Açıklama
+                      <label htmlFor="review-note" className="text-3xs font-medium text-neutral-500 mb-1.5 block">
+                        Açıklama{pendingDecision === RETURNED && <span className="text-sky-200/80"> · adaya gider</span>}
                       </label>
-                      <textarea rows={3} placeholder="Açıklama ekle..." value={note} onChange={(event) => setNote(event.target.value)} maxLength={REVIEW_NOTE_MAX_LENGTH}
-                        className="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
+                      <textarea id="review-note" ref={noteRef} rows={3} value={note} onChange={(event) => setNote(event.target.value)} maxLength={REVIEW_NOTE_MAX_LENGTH}
+                        placeholder={pendingDecision === RETURNED ? "Neyi düzeltmesi gerektiğini yazın..." : "Açıklama ekle..."}
+                        className={`w-full rounded-lg border bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 ${noteMissing ? "border-sky-400/40" : "border-white/10"}`}
                       />
                       <p className="mt-1 text-right text-3xs tabular-nums text-neutral-600">{note?.length ?? 0}/{REVIEW_NOTE_MAX_LENGTH}</p>
                       {actionError && (

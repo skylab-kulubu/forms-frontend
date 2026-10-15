@@ -1,7 +1,10 @@
 "use client";
 
+import { Flag } from "lucide-react";
 import { FilePreview } from "./FilePreview";
 import { RichText } from "@/app/components/rich-text/RichText";
+
+const PLAIN_TYPES = new Set(["file", "matrix", "repeater"]);
 
 const formatAnswer = (answer) => {
   if (answer == null) return "";
@@ -16,7 +19,33 @@ const formatAnswer = (answer) => {
   return String(answer).trim();
 };
 
-export function ResponseListItem({ questionNumber, question, answer, type, responseId = null, token = null, className = "" }) {
+function RevisionMarker({ requested, flag }) {
+  if (flag) {
+    return (
+      <button type="button" onClick={flag.onToggle} aria-pressed={flag.selected} title={flag.selected ? "İşareti kaldır" : "Düzeltilecek olarak işaretle"}
+        className={`flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 text-3xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${flag.selected ? "border-sky-400/40 bg-sky-400/15 text-sky-200" : "border-white/10 text-neutral-500 hover:border-sky-400/30 hover:text-sky-200"}`}
+      >
+        <Flag size={11} />
+        {flag.selected ? "İşaretli" : "İşaretle"}
+      </button>
+    );
+  }
+
+  if (!requested) return null;
+
+  return (
+    <span className="flex h-6 shrink-0 items-center gap-1 text-3xs font-medium text-sky-300/80" title="Bu soruda düzeltme istendi">
+      <Flag size={11} />
+      İstendi
+    </span>
+  );
+}
+
+/**
+ * @param changed  Önceki gönderimden farklıysa önceki cevap `before` ile altında gösterilir.
+ * @param flag     Düzeltme isterken soru işaretleme: { selected, onToggle }.
+ */
+export function ResponseListItem({ questionNumber, question, answer, type, responseId = null, token = null, className = "", changed = false, before = null, beforeLabel = null, requested = false, flag = null }) {
   const hasNumber = Number.isFinite(Number(questionNumber));
   const questionText = typeof question === "string" ? question.trim() : "";
 
@@ -47,8 +76,13 @@ export function ResponseListItem({ questionNumber, question, answer, type, respo
       ? groupColumns.length > 0
       : answerText.length > 0;
 
+  const beforeText = formatAnswer(before);
+  const accent = changed || flag?.selected
+    ? "relative before:absolute before:-left-3 before:top-5 before:bottom-5 first:before:top-0 last:before:bottom-0 before:w-0.5 before:rounded-full before:bg-sky-400/50"
+    : "";
+
   return (
-    <li className={`py-5 first:pt-0 last:pb-0 ${className}`}>
+    <li className={`py-5 first:pt-0 last:pb-0 ${accent} ${className}`}>
       <div className="flex gap-3">
         {hasNumber && (
           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-neutral-700 bg-neutral-900 text-xs font-semibold text-neutral-300">
@@ -60,11 +94,13 @@ export function ResponseListItem({ questionNumber, question, answer, type, respo
             {questionText ? <RichText text={questionText} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}
           </p>
         </div>
+        <RevisionMarker requested={requested} flag={flag} />
       </div>
 
       <div className="mt-3 pl-9">
-        <p className="mb-1.5 text-3xs font-medium text-neutral-500">
+        <p className="mb-1.5 flex items-center gap-1.5 text-3xs font-medium text-neutral-500">
           Cevap{type === "repeater" && groupRows && groupRows.length > 0 ? ` · ${groupRows.length} kayıt` : ""}
+          {changed && <span className="rounded-full border border-sky-400/30 bg-sky-400/10 px-1.5 leading-4 text-sky-200">değişti</span>}
         </p>
 
         {type === "file" && answerText ? (
@@ -114,6 +150,15 @@ export function ResponseListItem({ questionNumber, question, answer, type, respo
           <p className={`text-sm wrap-break-word whitespace-pre-wrap ${hasAnswer ? "text-neutral-100" : "italic text-neutral-500"}`}>
             {hasAnswer ? answerText : "Cevap yok"}
           </p>
+        )}
+
+        {changed && (
+          <div className="relative mt-3 pl-3 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-full before:bg-neutral-700">
+            <p className="text-3xs text-neutral-500">{beforeLabel ?? "Önceki gönderimde"}</p>
+            <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-neutral-400 wrap-break-word">
+              {PLAIN_TYPES.has(type) ? "Farklı bir cevap vardı." : beforeText || "Cevap yok"}
+            </p>
+          </div>
         )}
       </div>
     </li>

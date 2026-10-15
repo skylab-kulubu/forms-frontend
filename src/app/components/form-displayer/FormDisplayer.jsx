@@ -7,7 +7,7 @@ import { serializeRepeater } from "@/app/components/form-components/FormRepeater
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
 import {
   CopyEmailNote, FormAuthContext, FormDisplayerHeader, GuestNoticeDock, HeaderNote, IdentityNote, MissingFields, NextStepNote, RespondentLine,
-  RestoreNoticeDock, SwapNote, WARNING_SECONDS, formatDraftTime,
+  RestoreNoticeDock, RevisionFlag, RevisionNote, SwapNote, WARNING_SECONDS, formatDraftTime,
 } from "./components/FormDisplayerComponents";
 import { GuestUploadContext } from "./GuestUploadContext";
 import WorkflowProgress, { TimerBar } from "./components/WorkflowProgress";
@@ -141,7 +141,7 @@ function PageFooter() {
   );
 }
 
-export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null, journey = null, instanceId = null, attempt = null, serverNow = null, closesAt = null, guestUploads = null }) {
+export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null, journey = null, instanceId = null, attempt = null, serverNow = null, closesAt = null, guestUploads = null, revision = null }) {
   const scrollRef = useRef(null);
   const submitRef = useRef(null);
   const {
@@ -153,14 +153,14 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     busyRetry, clearBusyRetry,
     respondent, user, allowsAnonymous, hasGuestFiles, login, logoutConfirming, requestLogout, confirmLogout, cancelLogout,
     sessionLost, dismissSessionLost, clearInfo, hideDraftPrompt,
-  } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt, guestUploads });
+  } = useFormDisplayer(form, draft, { stage, isWorkflow, startFormId, journey, instanceId, attempt, serverNow, closesAt, guestUploads, revision });
   const [dismissedLateFor, setDismissedLateFor] = useState(null);
   const [missingNotice, setMissingNotice] = useState(0);
   const [dismissedMissing, setDismissedMissing] = useState(-1);
 
   const { form: activeForm, stage: activeStage, isWorkflow: activeIsWorkflow, startFormId: activeStartFormId, workflow: activeJourney,
     instanceId: activeInstanceId, intro, values: formValues, submissionState, submissionMessage, submittedAt, errorMessage, missingFieldIds,
-    fileProblems, draftPromptVisible, info, attempt: activeAttempt, closesAt: activeClosesAt } = state;
+    fileProblems, draftPromptVisible, info, attempt: activeAttempt, closesAt: activeClosesAt, revision: activeRevision } = state;
 
   const title = activeForm?.title ?? "";
   const description = activeForm?.description ?? "";
@@ -233,9 +233,11 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     isAuthed,
   });
 
+  const revisionRound = activeRevision?.round;
+
   useEffect(() => {
-    if (showIntro && activeFormId) markIntroSeen(activeFormId, activeInstanceId);
-  }, [showIntro, activeFormId, activeInstanceId]);
+    if (showIntro && activeFormId) markIntroSeen(activeFormId, activeInstanceId, revisionRound);
+  }, [showIntro, activeFormId, activeInstanceId, revisionRound]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
@@ -380,6 +382,13 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
         </NoticeDock>
       );
     }
+    if (info?.kind === "revision") {
+      return (
+        <RestoreNoticeDock key="revision" icon={History} duration={LINKED_INFO_SECONDS} onClose={clearInfo} onDiscard={handleDiscardDraft}>
+          Önceki gönderiminizdeki cevaplar dolduruldu.
+        </RestoreNoticeDock>
+      );
+    }
     if (info?.kind === "restored") {
       return (
         <RestoreNoticeDock key="restored" icon={History} duration={LINKED_INFO_SECONDS} onClose={clearInfo} onDiscard={handleDiscardDraft}>
@@ -416,7 +425,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
       <AnimatePresence mode="wait">
         {showIntro ? (
           <StepIntro key={`intro-${activeFormId}`} workflow={activeJourney} stage={activeStage} formTitle={title}
-            arrivedTitle={intro.arrivedTitle} onDone={endIntro}
+            arrivedTitle={intro.arrivedTitle} revision={activeRevision} onDone={endIntro}
           />
         ) : isFinished ? (
           <StatusScreen key="status" state={submissionState ?? settledScreen} message={submissionMessage} stage={activeStage} startFormId={activeStartFormId}
@@ -444,6 +453,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                 <motion.div variants={itemVariants}>
                   <FormDisplayerHeader title={title} description={description}>
                     <AnimatePresence initial={false}>
+                      {activeRevision && <RevisionNote key="revision" revision={activeRevision} />}
                       <ExtensionNotice key="extension" attempt={activeAttempt} />
                       {isRunning && (
                         <HeaderNote key="timer" icon={Timer}>
@@ -497,6 +507,10 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                         const isSeparator = field.type === "separator";
                         const isLast = index === visibleFields.length - 1;
                         const isMissing = missingFieldIds.includes(field.id);
+                        const isRequested = Boolean(activeRevision?.questionIds?.includes(field.id));
+                        const requestedAccent = isRequested
+                          ? `before:absolute before:-left-3 before:top-2 before:w-0.5 before:rounded-full before:bg-sky-400/50 sm:before:-left-5 ${isLast ? "before:bottom-2" : "before:bottom-8"}`
+                          : "";
 
                         return (
                           <motion.div key={field.id} id={field.id} layout="position"
@@ -518,8 +532,9 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                               if (el) el.style.overflow = "visible";
                             }}
                             style={{ zIndex: visibleFields.length - index }}
-                            className={`relative ${isLast || isSeparator ? "" : "border-b border-white/5 pb-6"}`}
+                            className={`relative ${isLast || isSeparator ? "" : "border-b border-white/5 pb-6"} ${requestedAccent}`}
                           >
+                            {isRequested && <RevisionFlag />}
                             <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionNumbers.get(field.id)} value={formValues[field.id]}
                               onChange={(e) => handleValueChange(field.id, e.target.value, e.isDefault)} missing={isMissing}
                               disableAutoFill={asksIdentity}

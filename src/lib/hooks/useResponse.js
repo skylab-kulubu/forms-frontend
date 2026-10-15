@@ -25,7 +25,7 @@ const postResponseArchive = async (responseId) => {
   });
 }
 
-const patchResponseStatus = async ({ responseId, newStatus, note }) => {
+const patchResponseStatus = async ({ responseId, newStatus, note, questionIds = null }) => {
   if (!responseId) throw new Error("responseId is required");
   return request(`/api/admin/forms/responses/${responseId}/status`, {
     method: "PATCH",
@@ -33,6 +33,7 @@ const patchResponseStatus = async ({ responseId, newStatus, note }) => {
       responseId,
       newStatus,
       note,
+      ...(questionIds?.length ? { questionIds } : {}),
     },
   });
 };
@@ -115,10 +116,10 @@ export const useResponseStatusMutation = () => {
 
   return useMutation({
     mutationFn: patchResponseStatus,
-    onSuccess: (_data, variables) => {
-      if (variables?.responseId) {
-        queryClient.invalidateQueries({ queryKey: ["response", variables.responseId] });
-      }
+    onSuccess: () => {
+      // Karar başvurunun diğer adımlarını da değiştirir: düzeltme istenince yeni bir gönderim açılır.
+      queryClient.invalidateQueries({ queryKey: ["response"] });
+      queryClient.invalidateQueries({ queryKey: ["form-responses"] });
     },
   });
 };

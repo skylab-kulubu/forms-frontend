@@ -1,4 +1,4 @@
-import { Check, Clock, Pause, X } from "lucide-react";
+import { Check, Clock, Pause, PencilLine, X } from "lucide-react";
 
 const MARK_TONE = {
   done: "border-emerald-400/30 bg-emerald-400/10 text-emerald-400",
@@ -6,6 +6,7 @@ const MARK_TONE = {
   declined: "border-red-400/30 bg-red-400/10 text-red-300",
   paused: "border-white/15 bg-white/5 text-neutral-400",
   current: "border-skylab-400/40 bg-skylab-500/10 text-skylab-300",
+  returned: "border-sky-400/30 bg-sky-400/10 text-sky-300",
   future: "border-dashed border-neutral-700 bg-transparent",
 };
 
@@ -16,6 +17,7 @@ function Mark({ tone, number }) {
       {tone === "review" && <Clock size={13} strokeWidth={2.2} />}
       {tone === "declined" && <X size={13} strokeWidth={2.5} />}
       {tone === "paused" && <Pause size={11} strokeWidth={2.2} />}
+      {tone === "returned" && <PencilLine size={12} strokeWidth={2.2} />}
       {tone === "current" && number}
     </span>
   );
@@ -52,7 +54,7 @@ export default function JourneyTimeline({ items, className = "" }) {
                 <span className={`text-sm ${isFuture ? "text-neutral-400" : "font-medium text-neutral-100"}`}>{item.title}</span>
                 {item.date && <span className="shrink-0 text-2xs tabular-nums text-neutral-500">{item.date}</span>}
               </div>
-              {item.detail && <p className="mt-px text-xs leading-5 text-neutral-400">{item.detail}</p>}
+              {item.detail && <p className={`mt-px text-xs leading-5 ${item.tone === "returned" ? "text-sky-200/80" : "text-neutral-400"}`}>{item.detail}</p>}
               {item.note && <ReviewNote note={item.note} className="-ml-6.25 mt-2.5 pl-6.25" />}
             </div>
           </li>

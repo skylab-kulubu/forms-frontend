@@ -2,11 +2,12 @@
 
 import { createContext, Fragment, useContext, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, LogOut, Mail, TimerOff, UserRound, UserRoundX } from "lucide-react";
+import { Clock, FilePenLine, Flag, LogOut, Mail, TimerOff, UserRound, UserRoundX } from "lucide-react";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import NoticeDock from "@/app/components/utils/NoticeDock";
 import LoginButton from "@/app/components/utils/LoginButton";
 import { loginWithKeycloak } from "@/lib/authActions";
+import { formatJourneyDate } from "@/lib/workflow-journey";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors";
 const LINK_NEUTRAL = `${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`;
@@ -101,6 +102,38 @@ export function HeaderNote({ icon: Icon, children }) {
       </span>
       <p className="min-w-0 flex-1">{children}</p>
     </motion.div>
+  );
+}
+
+// Dock'lar kendiliğinden kapanır; ekibin düzeltme notu form doldurulurken görünür kalsın diye başlıkta durur.
+export function RevisionNote({ revision }) {
+  const date = formatJourneyDate(revision.returnedAt, { withTime: true });
+  const count = revision.questionIds?.length ?? 0;
+
+  return (
+    <motion.div className="rounded-xl border border-sky-400/20 bg-sky-400/5 px-3.5 py-3"
+      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6, transition: { duration: 0.15, ease: NOTE_EASE } }}
+      transition={{ duration: 0.2, ease: NOTE_EASE }}
+    >
+      <p className="flex items-center gap-1.5 text-2xs font-medium text-sky-300">
+        <FilePenLine size={12} className="shrink-0" />
+        {date ? `Ekip düzeltme istedi · ${date}` : "Ekip düzeltme istedi"}
+      </p>
+      {revision.note && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-neutral-200">{revision.note}</p>}
+      <p className="mt-2 text-2xs leading-relaxed text-neutral-400">
+        {count > 0 ? `İşaretli ${count} soru aşağıda vurgulandı. ` : ""}Önceki cevaplarınız dolu; yalnız gerekenleri değiştirip gönderin.
+      </p>
+    </motion.div>
+  );
+}
+
+export function RevisionFlag() {
+  return (
+    <p className="flex items-center gap-1.5 px-2 pt-2 text-2xs font-medium text-sky-300 md:px-4">
+      <Flag size={11} className="shrink-0" />
+      Ekip bu soruda düzeltme istedi
+    </p>
   );
 }
 
