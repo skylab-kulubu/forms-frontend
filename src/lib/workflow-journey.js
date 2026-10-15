@@ -6,6 +6,7 @@ export const JOURNEY_STATUS = {
   CURRENT: "current",
   UPCOMING: "upcoming",
   TIMED_OUT: "timedOut",
+  STOPPED: "stopped",
 };
 
 export function journeyRoute(workflow) {
@@ -120,6 +121,8 @@ export function journeyTimeline(workflow, { phase = "status", arrived = false, c
         return { key: item.stage, tone: "review", title, date, detail: item.revision ? "Düzeltildi · yeniden inceleniyor" : "Gönderildi · inceleniyor" };
       case JOURNEY_STATUS.TIMED_OUT:
         return { key: item.stage, tone: "declined", title, detail: "Süre doldu · teslim yok" };
+      case JOURNEY_STATUS.STOPPED:
+        return { key: item.stage, tone: "paused", title, detail: "Başvuru kapatıldı" };
       case JOURNEY_STATUS.CURRENT:
         if (current) return { key: item.stage, title, ...current };
         if (phase === "intro" && item.revision) {

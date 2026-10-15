@@ -38,6 +38,14 @@ const patchResponseStatus = async ({ responseId, newStatus, note, questionIds = 
   });
 };
 
+const postRunVoid = async ({ instanceId, note }) => {
+  if (!instanceId) throw new Error("instanceId is required");
+  return request(`/api/admin/workflows/runs/${instanceId}/void`, {
+    method: "POST",
+    body: { note: note || null },
+  });
+};
+
 const postAttemptAction = async ({ attemptId, action, body }) => {
   if (!attemptId) throw new Error("attemptId is required");
   return request(`/api/admin/forms/attempts/${attemptId}/${action}`, {
@@ -118,6 +126,18 @@ export const useResponseStatusMutation = () => {
     mutationFn: patchResponseStatus,
     onSuccess: () => {
       // Karar başvurunun diğer adımlarını da değiştirir: düzeltme istenince yeni bir gönderim açılır.
+      queryClient.invalidateQueries({ queryKey: ["response"] });
+      queryClient.invalidateQueries({ queryKey: ["form-responses"] });
+    },
+  });
+};
+
+export const useRunVoidMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: postRunVoid,
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["response"] });
       queryClient.invalidateQueries({ queryKey: ["form-responses"] });
     },

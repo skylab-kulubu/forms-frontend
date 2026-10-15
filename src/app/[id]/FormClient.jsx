@@ -14,6 +14,7 @@ import FormSkeleton from "@/app/components/form-displayer/components/FormSkeleto
 const LAST_RUN_SCREEN = {
   [WORKFLOW_STATE.COMPLETED]: "fullyCompleted",
   [WORKFLOW_STATE.DECLINED]: "declined",
+  [WORKFLOW_STATE.REOPENED]: "reopened",
 };
 
 export default function FormClient() {

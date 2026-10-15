@@ -7,6 +7,7 @@ import { ArrowRight, Check, Clock, Eye, FileClock, FilePenLine, FileX, Flag, Loa
 import Avatar from "@/app/components/utils/Avatar";
 import { useResponseStatusMutation, useResponseArchiveMutation, useAttemptActionMutation } from "@/lib/hooks/useResponse";
 import { DecisionSection, ReminderSection, TimeHistory, TimeSection, attemptTimeValue, formatPersonName } from "./AttemptPanels";
+import RunSection from "./RunSection";
 import { ATTEMPT_STATUS, ROW_STATUS, attemptKindOf } from "@/lib/attempt-status";
 import { formatDay, useTicker } from "@/lib/form-timing";
 import { useCreateResponseShareMutation, useRevokeResponseTokenMutation } from "@/lib/hooks/useResponseShare";
@@ -600,6 +601,12 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                   </motion.div>
                 ) : null}
               </AnimatePresence>
+            )}
+
+            {workflow?.run && (
+              <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.12 }}>
+                <RunSection key={workflow.instanceId} run={workflow.run} instanceId={workflow.instanceId} readOnly={readOnly} />
+              </motion.div>
             )}
 
             {attempt && (

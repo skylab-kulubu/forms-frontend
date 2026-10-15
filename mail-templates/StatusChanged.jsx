@@ -4,12 +4,13 @@ import { Layout, Context, Title, Paragraph, Rows, RowItem, RowsEnd, Note, Cta, S
 const approved = (node) => when('eq .status `approved`', node);
 const declined = (node) => when('eq .status `declined`', node);
 const returned = (node) => when('eq .status `returned`', node);
+const reopened = (node) => when('eq .status `reopened`', node);
 
 export default function StatusChangedEmail() {
   return (
     <Layout
-      preview="{{.formTitle}} {{if eq .status `approved`}}cevabınızı onayladık{{else if eq .status `returned`}}cevabınızda düzeltme istedik{{else}}cevabınızı inceledik{{end}}."
-      reason="Bu e-postayı {{.formTitle}} formunu doldurduğunuz için aldınız."
+      preview="{{.formTitle}} {{if eq .status `approved`}}cevabınızı onayladık{{else if eq .status `returned`}}cevabınızda düzeltme istedik{{else if eq .status `reopened`}}için yeniden başvurabilirsiniz{{else}}cevabınızı inceledik{{end}}."
+      reason="Bu e-postayı {{.formTitle}} {{if eq .status `reopened`}}başvurunuz{{else}}formunu doldurduğunuz{{end}} için aldınız."
     >
       {'{{$next := or .nextFormId .linkedFormId}}'}
       {approved(
@@ -38,10 +39,17 @@ export default function StatusChangedEmail() {
           </Paragraph>
         </>
       )}
+      {reopened(
+        <>
+          <Context tone="brand">{'{{.formTitle}}'}</Context>
+          <Title>Yeniden başvurabilirsiniz</Title>
+          <Paragraph>{greeting} ekip önceki başvurunuzu kapattı ve yeniden başvurmanıza izin verdi. Yeni başvurunuz ilk adımdan başlar.</Paragraph>
+        </>
+      )}
 
       {when('.reviewedAt', (
         <Rows>
-          <RowItem label="İnceleme tarihi">{'{{.reviewedAt}}'}</RowItem>
+          <RowItem label="{{if eq .status `reopened`}}Tarih{{else}}İnceleme tarihi{{end}}">{'{{.reviewedAt}}'}</RowItem>
           {when('.questionCount', <RowItem label="Düzeltilecek">{'{{.questionCount}} soru'}</RowItem>)}
           <RowsEnd />
         </Rows>
@@ -55,6 +63,7 @@ export default function StatusChangedEmail() {
 
       {approved(when('$next', <Cta href={SITE + '/{{$next}}'}>Sonraki adıma geç</Cta>))}
       {returned(when('$next', <Cta href={SITE + '/{{$next}}'}>Düzeltmeye git</Cta>))}
+      {reopened(when('$next', <Cta href={SITE + '/{{$next}}'}>Başvuruya başla</Cta>))}
     </Layout>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { FileCheck, FileClock, FileLock2, FilePenLine, FileSearchCorner, FileX, FileXCorner } from "lucide-react";
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, FileCheck, FileClock, FileLock2, FilePenLine, FileSearchCorner, FileX, FileXCorner, RotateCcw } from "lucide-react";
 import { loginWithKeycloak } from "@/lib/authActions";
 import { formatJourneyDate, hasJourney, journeyTimeline, singleResponseTimeline } from "@/lib/workflow-journey";
 import { formatLongDate } from "@/lib/form-timing";
@@ -113,6 +114,14 @@ function buildScreen({ state, message, stage, startFormId, workflow, formTitle, 
         };
       }
       return { Icon: FileX, tone: "neutral", context: formTitle, title: "Cevabınız kabul edilmedi", timeline: singleResponseTimeline(single) };
+    case "reopened":
+      return {
+        Icon: RotateCcw, tone: "brand", context: workflow?.title ?? formTitle, title: "Yeniden başvurabilirsiniz",
+        description: "Ekip önceki başvurunuzu kapattı ve yeniden başvurmanıza izin verdi.",
+        note: reviewNote ? { note: reviewNote, date: reviewDate } : null,
+        past: journey ? journeyTimeline(workflow) : null,
+        rerunLabel: "Başvuruya başla",
+      };
     case "fullyCompleted":
       return {
         Icon: FileCheck, tone: "ok", context: workflowContext, title: isLastRun ? "Son başvurunuz tamamlandı" : "Başvurunuz tamamlandı",
@@ -173,9 +182,33 @@ function buildScreen({ state, message, stage, startFormId, workflow, formTitle, 
   }
 }
 
+function PastRun({ items }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open}
+        className="mt-6 inline-flex items-center gap-1.5 text-xs text-neutral-400 transition-colors hover:text-neutral-200"
+      >
+        Önceki başvurunuz
+        <ChevronDown size={13} className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div className="flex w-full justify-center overflow-hidden" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <JourneyTimeline items={items} className="mt-4" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
 export default function StatusScreen({ onRerun = null, ...props }) {
   const base = buildScreen({ ...props, isLastRun: Boolean(onRerun) });
-  const screen = onRerun ? { ...base, action: { label: "Yeniden başvur", onClick: onRerun }, hint: "Yeni başvuru ilk adımdan başlar." } : base;
+  const screen = onRerun ? { ...base, action: { label: base.rerunLabel ?? "Yeniden başvur", onClick: onRerun }, hint: "Yeni başvuru ilk adımdan başlar." } : base;
   const { Icon } = screen;
 
   return (
@@ -191,6 +224,7 @@ export default function StatusScreen({ onRerun = null, ...props }) {
           {screen.description && <p className="mt-2 max-w-96 text-balance text-sm leading-relaxed text-neutral-400">{screen.description}</p>}
           <JourneyTimeline items={screen.timeline} className="mt-7" />
           {screen.note && <ReviewNote note={screen.note.note} date={screen.note.date} className="mt-5.5 w-full max-w-88 pl-3" />}
+          {screen.past && <PastRun items={screen.past} />}
           {(screen.action || screen.link) && (
             <div className="mt-7 flex flex-wrap items-center justify-center gap-x-4.5 gap-y-2.5">
               {screen.action && <LoginButton onClick={screen.action.onClick} label={screen.action.label} hoverIcon={screen.action.hoverIcon ?? "arrow"} />}

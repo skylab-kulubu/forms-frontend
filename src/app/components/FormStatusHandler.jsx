@@ -31,6 +31,7 @@ export const WORKFLOW_STATE = {
     FAULTED: 5,
     REQUIRES_PREVIOUS_STEP: 6,
     CLOSED: 7,
+    REOPENED: 8,
 };
 
 const REPORT_MAILTO = "mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi";
