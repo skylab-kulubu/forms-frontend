@@ -101,11 +101,12 @@ function WorkflowSteps({ steps, viewStage, ownStage, onSelect }) {
   );
 }
 
-export default function ResponseDisplayer({ response = null, attemptView = null, token = null, readOnly = false }) {
+export default function ResponseDisplayer({ response = null, attemptView = null, token = null, readOnly = false, writeFormId = null }) {
   const owner = attemptView ?? response;
   const schema = Array.isArray(response?.schema) ? response.schema : [];
   const isSharedView = Boolean(response?.sharedBy);
   const isReadOnly = readOnly || isSharedView;
+  const isReadOnlyForm = (payload) => isReadOnly || (writeFormId !== null && payload?.formId !== writeFormId);
   const steps = Array.isArray(owner?.workflow?.steps) ? owner.workflow.steps : [];
   const ownStage = owner?.workflow?.stage ?? null;
 
@@ -147,7 +148,7 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
     const intro = (
       <>
         {Number(owner?.status) === RESPONSE_STATUS_PROVISIONAL && (
-          <ProvisionalNotice actionable={!isReadOnly && Boolean(owner?.attempt?.canDecide)} closed={owner?.attempt?.status === ATTEMPT_STATUS.NO_SUBMISSION} />
+          <ProvisionalNotice actionable={!isReadOnlyForm(owner) && Boolean(owner?.attempt?.canDecide)} closed={owner?.attempt?.status === ATTEMPT_STATUS.NO_SUBMISSION} />
         )}
         <TaskRow key={owner?.id} task={owner?.task} />
       </>
@@ -267,8 +268,8 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
   const drawerContent = (
      <div className="h-full w-full overflow-y-auto p-4 scrollbar lg:overflow-visible lg:p-0">
         {isOwnAttempt
-          ? <AttemptActions view={attemptView} readOnly={isReadOnly} />
-          : <ResponseActions response={activeResponse} isLoading={actionsLoading} readOnly={isReadOnly} />}
+          ? <AttemptActions view={attemptView} readOnly={isReadOnlyForm(attemptView)} />
+          : <ResponseActions response={activeResponse} isLoading={actionsLoading} readOnly={isReadOnlyForm(activeResponse)} />}
      </div>
   );
 

@@ -26,9 +26,11 @@ export default function ResponsePage() {
   const attemptQuery = useAttemptQuery(responseId, { enabled: isAttempt });
   const { data, isLoading, error } = isAttempt ? attemptQuery : responseQuery;
   const payloadFormId = (data?.data ?? data)?.formId;
-  const readOnly = Boolean(session?.skyformsRoles?.includes("skyforms:read-all"))
-    && !session?.skyformsRoles?.includes("skyforms:*")
+  const isGlobalReader = Boolean(session?.skyformsRoles?.includes("skyforms:read-all"))
+    && !session?.skyformsRoles?.includes("skyforms:*");
+  const readOnly = isGlobalReader
     && (!payloadFormId || form?.id !== payloadFormId || !(Number(form?.userRole) >= 1));
+  const writeFormId = isGlobalReader ? form?.id ?? "" : null;
 
   const attemptView = isAttempt ? data?.data ?? null : null;
   const attemptStatus = attemptView?.attempt?.status;
@@ -44,9 +46,9 @@ export default function ResponsePage() {
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
       <FormStatusHandler isLoading={isLoading || Boolean(linkedResponseId)} error={error} data={data} variant="response"
         renderForm={(payload) => isAttempt ? (
-          <ResponseDisplayer attemptView={payload?.data ?? null} readOnly={readOnly} />
+          <ResponseDisplayer attemptView={payload?.data ?? null} readOnly={readOnly} writeFormId={writeFormId} />
         ) : (
-          <ResponseDisplayer response={payload?.data ?? payload ?? null} token={token} readOnly={readOnly} />
+          <ResponseDisplayer response={payload?.data ?? payload ?? null} token={token} readOnly={readOnly} writeFormId={writeFormId} />
         )}
       />
     </div>
