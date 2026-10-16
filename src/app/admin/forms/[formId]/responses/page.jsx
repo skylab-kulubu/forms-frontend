@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getSession, useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ListX, TextSearch, X } from "lucide-react";
@@ -13,6 +14,8 @@ import { useFormContext } from "../../../providers";
 import StateCard from "@/app/components/StateCard";
 import { STATUS_FILTERS, statusFilterParams } from "@/lib/attempt-status";
 import { shortDuration } from "@/lib/form-timing";
+import { request, SESSION_EXPIRED_EVENT } from "@/lib/apiClient";
+import { clubSwitcherLinks } from "@/lib/club-switcher";
 
 const formatTimeSpent = (totalSeconds) => {
   if (totalSeconds === null || totalSeconds === undefined) return "--";
@@ -39,6 +42,21 @@ export default function ResponsesPage() {
   const params = useParams();
   const formId = params?.formId;
   const router = useRouter();
+  const { data: session } = useSession();
+  const mailTransfer = useRef(null);
+  const [mailLoading, setMailLoading] = useState(false);
+  const [mailMessage, setMailMessage] = useState("");
+
+  useEffect(() => {
+    const cancel = () => mailTransfer.current?.();
+    window.addEventListener("pagehide", cancel);
+    window.addEventListener(SESSION_EXPIRED_EVENT, cancel);
+    return () => {
+      cancel();
+      window.removeEventListener("pagehide", cancel);
+      window.removeEventListener(SESSION_EXPIRED_EVENT, cancel);
+    };
+  }, [formId, session?.user?.id, session?.error]);
 
   const [searchValue, setSearchValue] = useState("");
   const [sortValue, setSortValue] = useState(FILTER_DEFAULTS.sort);
@@ -115,6 +133,120 @@ export default function ResponsesPage() {
     });
   };
 
+  const handleMail = () => {
+    mailTransfer.current?.();
+    const subject = session?.user?.id;
+    if (!formId || !subject || session.error) {
+      setMailMessage("Alıcıları hazırlamak için yeniden giriş yap.");
+      return;
+    }
+
+    let target;
+    try {
+      target = new URL("/mail-tasks/create", clubSwitcherLinks("forms").find((app) => app.id === "mail").href);
+      if (!["https:", "http:"].includes(target.protocol)) throw new Error("Invalid mail URL");
+    } catch {
+      setMailMessage("SkyMail adresi geçersiz. Yöneticine haber ver.");
+      return;
+    }
+    const nonce = crypto.randomUUID();
+    const expires = Date.now() + 5 * 60 * 1000;
+    const sourceFormId = formId.toLowerCase();
+    target.search = new URLSearchParams({ source: "forms", form_id: sourceFormId, forms_handoff: nonce, expires: String(expires) }).toString();
+    const binding = { nonce, formId: sourceFormId, expires };
+    const controller = new AbortController();
+    let popup = null;
+    let active = true;
+    let ready = false;
+    let sent = false;
+    let payload = null;
+    let timer;
+    let closed;
+
+    const stop = (code = "cancelled") => {
+      if (!active) return;
+      active = false;
+      if (code && popup && !popup.closed) popup.postMessage({ type: "skyforms:mail:error", ...binding, code }, target.origin);
+      if (!sent && (code === "failed" || code === "empty")) popup?.close();
+      controller.abort();
+      window.removeEventListener("message", receive);
+      clearTimeout(timer);
+      clearInterval(closed);
+      payload = null;
+      mailTransfer.current = null;
+      setMailLoading(false);
+    };
+    const fail = (message, code) => {
+      stop(code);
+      setMailMessage(message);
+    };
+    const deliver = async () => {
+      if (!active || !ready || !payload || sent) return;
+      sent = true;
+      const current = await getSession().catch(() => null);
+      if (!active) return;
+      if (Date.now() >= expires || current?.error || current?.user?.id !== subject || payload.preparedByUserId !== subject) {
+        fail("Oturum değişti veya aktarımın süresi doldu. Yeniden başlat.", "session");
+        return;
+      }
+      popup.postMessage({ type: "skyforms:mail:recipients", ...binding,
+        preparedByUserId: payload.preparedByUserId, formTitle: payload.formTitle, recipients: payload.recipients,
+        responseCount: payload.responseCount, skippedCount: payload.skippedCount, duplicateCount: payload.duplicateCount,
+      }, target.origin);
+    };
+    const receive = (event) => {
+      if (!active || event.origin !== target.origin || event.source !== popup || Date.now() >= expires) return;
+      const message = event.data;
+      if (!message || message.nonce !== nonce || message.formId !== sourceFormId || message.expires !== expires) return;
+      if (message.type === "skyforms:mail:ready") {
+        if (message.subject !== subject) {
+          fail("Forms ve SkyMail'de aynı hesapla giriş yap, sonra yeniden dene.", "session");
+          return;
+        }
+        ready = true;
+        void deliver();
+      } else if (message.type === "skyforms:mail:accepted" && message.subject === subject && sent) {
+        stop(null);
+        setMailMessage("Alıcılar SkyMail'e aktarıldı. Mailini orada hazırlayıp onaya sunabilir veya yetkin varsa gönderebilirsin.");
+      }
+    };
+
+    mailTransfer.current = stop;
+    window.addEventListener("message", receive);
+    popup = window.open(target.href, "_blank");
+    if (!popup) {
+      fail("SkyMail penceresi açılamadı. Açılır pencerelere izin verip yeniden dene.", "blocked");
+      return;
+    }
+    setMailLoading(true);
+    setMailMessage("SkyMail'de girişini tamamla; uygun tüm yanıtlayanların alıcıları otomatik dolacak. Bu sayfayı açık tut.");
+    timer = setTimeout(() => fail("Aktarımın süresi doldu. Forms'tan yeniden başlat.", "timeout"), expires - Date.now());
+    closed = setInterval(() => {
+      if (popup.closed) fail("SkyMail penceresi kapandı. Yeniden başlatabilirsin.", "closed");
+    }, 1000);
+    request(`/api/admin/forms/${sourceFormId}/mail-recipients`, { signal: controller.signal })
+      .then((result) => {
+        if (!active) return;
+        payload = result?.data;
+        if (payload?.formId !== sourceFormId || payload.preparedByUserId !== subject || typeof payload.formTitle !== "string"
+          || !Array.isArray(payload.recipients)
+          || payload.recipients.some((row) => typeof row?.name !== "string" || typeof row?.email !== "string")
+          || [payload.responseCount, payload.skippedCount, payload.duplicateCount].some((count) => !Number.isSafeInteger(count) || count < 0)
+          || payload.responseCount !== payload.recipients.length + payload.skippedCount + payload.duplicateCount) {
+          fail("Alıcılar hazırlanamadı. Yeniden dene.", "failed");
+          return;
+        }
+        if (payload.recipients.length === 0) {
+          fail("Bu formda e-posta adresi kullanılabilen yanıtlayan yok.", "empty");
+          return;
+        }
+        void deliver();
+      })
+      .catch(() => {
+        if (active) fail("Alıcılar hazırlanamadı. Yanıtları görüntüleme yetkini ve bağlantını kontrol edip yeniden dene.", "failed");
+      });
+  };
+
   const hasError = Boolean(error);
   const contentKey = `${sortValue}-${statusValue}-${respondentValue}-${timeValue}-${showArchived}-${searchValue}-${page}-${isLoading ? "loading" : "ready"}-${hasError ? "error" : "ok"}`;
 
@@ -124,7 +256,10 @@ export default function ResponsesPage() {
         sortValue={sortValue} onSortChange={setSortValue} statusValue={statusValue} onStatusChange={setStatusValue} showArchived={showArchived} onShowArchivedChange={setShowArchived}
         respondentValue={respondentValue} onRespondentChange={setRespondentValue} timeValue={timeValue} onTimeChange={setTimeValue} counts={counts} timed={timed}
         onOverview={() => router.push(`/admin/forms/${formId}`)} onRefresh={() => refetch()} onExport={exportToExcel} exportLoading={exportLoading}
+        onMail={!isLoading && !hasError ? handleMail : undefined} mailLoading={mailLoading}
       />
+
+      {mailMessage && <p role="status" className="text-xs text-neutral-300">{mailMessage}</p>}
 
       {chips.length > 0 && (
         <div className="-mb-2 flex flex-wrap items-center gap-1.5">
