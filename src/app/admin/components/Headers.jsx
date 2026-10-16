@@ -146,7 +146,7 @@ function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, s
   const buttonSize = compact ? "sm" : "md";
 
   return (
-    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
+    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full flex-wrap gap-2"}`}>
       <Tip label="Genel Bakış">
         <ActionButton icon={ChevronLeft} onClick={onOverview} size={buttonSize} tone="header" aria-label="Genel Bakış" />
       </Tip>
