@@ -3,7 +3,7 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChartColumn, ChevronLeft, Download, LayoutTemplate, List, PencilLine, Plus, RefreshCw, Search, Share2, SlidersHorizontal } from "lucide-react";
+import { ChartColumn, ChevronLeft, Download, LayoutTemplate, List, Mail, PencilLine, Plus, RefreshCw, Search, Share2, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
 import Tip from "./utils/Tip";
 import ResponsesFilterShell from "./utils/ResponsesFilterShell";
@@ -137,7 +137,7 @@ export function FormsHeader(toolbarProps) {
 
 function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", showArchived = false, onShowArchivedChange,
   onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, timeValue = "all", onTimeChange, counts = null, timed = false,
-  onOverview, onRefresh, onExport, exportLoading = false
+  onOverview, onRefresh, onExport, exportLoading = false, onMail, mailLoading = false
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
@@ -146,7 +146,7 @@ function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, s
   const buttonSize = compact ? "sm" : "md";
 
   return (
-    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
+    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full flex-wrap gap-2"}`}>
       <Tip label="Genel Bakış">
         <ActionButton icon={ChevronLeft} onClick={onOverview} size={buttonSize} tone="header" aria-label="Genel Bakış" />
       </Tip>
@@ -170,6 +170,11 @@ function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, s
         <Tip label="Excel İndir">
           <ActionButton icon={Download} variant="primary" onClick={onExport} disabled={exportLoading} size={buttonSize} tone="header" aria-label="Excel İndir" />
         </Tip>
+        {onMail && (
+          <Tip label="Yanıtlayanlara mail gönder">
+            <ActionButton icon={Mail} onClick={onMail} disabled={mailLoading} size={buttonSize} tone="header" aria-label="Yanıtlayanlara mail gönder" />
+          </Tip>
+        )}
       </div>
     </div>
   );
