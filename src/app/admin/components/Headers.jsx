@@ -2,6 +2,7 @@
 
 import { useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { ChartColumn, ChevronLeft, Download, LayoutTemplate, List, PencilLine, Plus, RefreshCw, Search, Share2, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
@@ -301,9 +302,10 @@ export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "
   );
 }
 
-function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole }) {
+function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole, canReadAll = false }) {
   const size = compact ? "sm" : "md";
-  const canView = Number(userRole) >= 1;
+  const canShare = Number(userRole) >= 1;
+  const canView = canReadAll || canShare;
   const canEdit = Number(userRole) >= 2;
 
   return (
@@ -324,7 +326,7 @@ function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit,
           <ActionButton icon={List} onClick={onViewResponses} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Cevaplar" />
         </Tip>
         <Tip label="Paylaş">
-          <ActionButton icon={Share2} onClick={onShare} disabled={!canView || !onShare} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Formu paylaş" />
+          <ActionButton icon={Share2} onClick={onShare} disabled={!canShare || !onShare} className={!canShare ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Formu paylaş" />
         </Tip>
         <Tip label="Düzenle">
           <ActionButton icon={PencilLine} variant={canEdit ? "primary" : "ghost"} disabled={!canEdit} className={!canEdit ? "opacity-30 pointer-events-none" : ""} onClick={onEdit} size={size} tone="header" aria-label="Düzenle" />
@@ -335,8 +337,10 @@ function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit,
 }
 
 export function OverviewHeader({ formStatus, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole }) {
+  const { data: session } = useSession();
+  const canReadAll = session?.skyformsRoles?.some((role) => role === "skyforms:*" || role === "skyforms:read-all") ?? false;
   const isActive = formStatus === 2;
-  const toolbarProps = { statusLabel: isActive ? "Aktif" : "Pasif", statusType: isActive ? 1 : 2, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole };
+  const toolbarProps = { statusLabel: isActive ? "Aktif" : "Pasif", statusType: isActive ? 1 : 2, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole, canReadAll };
 
   return (
     <>

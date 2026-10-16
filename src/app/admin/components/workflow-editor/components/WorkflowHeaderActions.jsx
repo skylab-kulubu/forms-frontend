@@ -13,7 +13,7 @@ const ICON_BUTTON = "rounded-lg p-1.5 transition-colors hover:bg-neutral-800/70 
 
 export default function WorkflowHeaderActions({
   saveStatus, intake = 0, onShowIntake, issueCount, onShowIssues, onUndo, canUndo, onArchive, isArchiveDisabled,
-  onPublish, isPublishing, isError, error, canPublish,
+  onPublish, isPublishing, isError, error, canPublish, readOnly = false,
 }) {
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
@@ -23,7 +23,7 @@ export default function WorkflowHeaderActions({
 
   const content = (
     <div className="flex items-center gap-1 text-neutral-500">
-      {saveStatus && <div className="mr-2 hidden sm:block">{saveStatus}</div>}
+      {readOnly ? <span className="mr-2 text-2xs">Salt okunur</span> : saveStatus && <div className="mr-2 hidden sm:block">{saveStatus}</div>}
 
       {intake !== 0 && (
         <Tip label="Başvuru durumunu göster">
@@ -38,17 +38,17 @@ export default function WorkflowHeaderActions({
         </Tip>
       )}
 
-      <Tip label="Geri al">
+      {!readOnly && <Tip label="Geri al">
         <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo} className={ICON_BUTTON}>
           <Undo2 size={16} />
         </button>
-      </Tip>
+      </Tip>}
 
-      <Tip label="Akışı arşivle">
+      {!readOnly && <Tip label="Akışı arşivle">
         <button type="button" aria-label="Akışı arşivle" onClick={onArchive} disabled={isArchiveDisabled} className={ICON_BUTTON}>
           <Archive size={16} />
         </button>
-      </Tip>
+      </Tip>}
 
       {issueCount > 0 && (
         <Tip label="Yayınlamayı engelleyen sorunlar">
@@ -61,7 +61,7 @@ export default function WorkflowHeaderActions({
         </Tip>
       )}
 
-      <Popover open={isError} error={error} variant="error" align="bottom-right">
+      {!readOnly && <Popover open={isError} error={error} variant="error" align="bottom-right">
         <button type="button" onClick={onPublish} disabled={isPublishing || !canPublish} aria-label="Akışı yayınla"
           title={canPublish ? undefined : "Yayınlanacak değişiklik yok"}
           className="ml-1 flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-50"
@@ -69,7 +69,7 @@ export default function WorkflowHeaderActions({
           {isPublishing ? <CircleGauge size={14} className="animate-spin" /> : isError ? <CircleAlert size={14} className="text-red-400" /> : null}
           Yayınla
         </button>
-      </Popover>
+      </Popover>}
     </div>
   );
 

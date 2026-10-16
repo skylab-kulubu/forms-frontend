@@ -364,7 +364,7 @@ export default function AdminDashboard() {
     return Array.isArray(meta.items) ? meta.items : Array.isArray(formsData) ? formsData : [];
   }, [formsData]);
 
-  const isSuperAdmin = Boolean(session?.skyformsRoles?.includes("skyforms:*"));
+  const isSuperAdmin = Boolean(session?.skyformsRoles?.some((role) => role === "skyforms:*" || role === "skyforms:read-all"));
   const [randomNote] = useState(() => GREETING_NOTES[Math.floor(Math.random() * GREETING_NOTES.length)]);
   const greetingProps = {
     greeting: getGreeting(),

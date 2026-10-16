@@ -54,10 +54,15 @@ function useMediaQuery(query) {
 function WorkflowEditorContent({ workflow, onRefresh }) {
   const router = useRouter();
   const { data: session } = useSession();
-  const { state, dispatch } = useWorkflowEditor();
+  const { state, dispatch: dispatchState } = useWorkflowEditor();
   const { setName: setGlobalName } = useWorkflowContext();
   const ownerId = workflow?.owner?.id ?? null;
   const isOwner = Boolean(ownerId) && ownerId === session?.user?.id;
+  const readOnly = Boolean(workflow) && !isOwner && !session?.skyformsRoles?.includes("skyforms:*");
+  const dispatch = useCallback((action) => {
+    if (readOnly && !["SELECT", "SET_PANEL_TAB", "FOCUS_ROUTE", "FOCUS_PORT", "CLEAR_FOCUS"].includes(action.type)) return;
+    dispatchState(action);
+  }, [readOnly, dispatchState]);
   const isLgUp = useMediaQuery("(min-width: 1024px)");
 
   const [validation, setValidation] = useState(workflow?.validation ?? null);
@@ -125,6 +130,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
 
   const creatingRef = useRef(null);
   const ensureWorkflow = useCallback(() => {
+    if (readOnly) return Promise.reject(new Error("Bu akış salt okunur."));
     const current = stateRef.current;
     if (current.id) return Promise.resolve(current.id);
     if (creatingRef.current) return creatingRef.current;
@@ -149,7 +155,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
       .finally(() => { creatingRef.current = null; });
 
     return creatingRef.current;
-  }, [createMutation, dispatch]);
+  }, [createMutation, dispatch, readOnly]);
 
   const ensureRef = useRef(ensureWorkflow);
   useEffect(() => {
@@ -190,14 +196,14 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   }, [schemasByFormId, dispatch]);
 
   useEffect(() => {
-    if (state.id || state.isSaved) return undefined;
+    if (readOnly || state.id || state.isSaved) return undefined;
 
     const timer = setTimeout(() => { ensureRef.current().catch(() => {}); }, DEFINITION_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [state.id, state.isSaved, state.name, state.description, state.allowMultipleRuns, state.nodes, state.transitions]);
+  }, [readOnly, state.id, state.isSaved, state.name, state.description, state.allowMultipleRuns, state.nodes, state.transitions]);
 
   useEffect(() => {
-    if (!state.id || state.isSaved) return undefined;
+    if (readOnly || !state.id || state.isSaved) return undefined;
 
     definitionTimer.current = setTimeout(() => {
       const definition = toDefinitionPayload(state.nodes, state.transitions);
@@ -224,10 +230,10 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
     }, DEFINITION_DEBOUNCE_MS);
 
     return () => clearTimeout(definitionTimer.current);
-  }, [state.id, state.isSaved, state.nodes, state.transitions]);
+  }, [readOnly, state.id, state.isSaved, state.nodes, state.transitions]);
 
   useEffect(() => {
-    if (!state.id || !metaRef.current) return undefined;
+    if (readOnly || !state.id || !metaRef.current) return undefined;
 
     const current = { name: state.name, description: state.description, allowMultipleRuns: state.allowMultipleRuns };
     const previous = metaRef.current;
@@ -242,7 +248,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
     }, META_DEBOUNCE_MS);
 
     return () => clearTimeout(metaTimer.current);
-  }, [state.id, state.name, state.description, state.allowMultipleRuns]);
+  }, [readOnly, state.id, state.name, state.description, state.allowMultipleRuns]);
 
   useEffect(() => {
     if (!publishedFlash) return undefined;
@@ -251,11 +257,11 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   }, [publishedFlash]);
 
   useEffect(() => {
-    if (state.isSaved) return undefined;
+    if (readOnly || state.isSaved) return undefined;
     const warn = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [state.isSaved]);
+  }, [readOnly, state.isSaved]);
 
   const issues = useMemo(() => (Array.isArray(validation?.errors) ? validation.errors : []), [validation]);
 
@@ -342,6 +348,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   }, [state.transitions, state.nodes, schemasByFormId]);
 
   const handlePublish = () => {
+    if (readOnly) return;
     publishMutation.mutate(state.id, {
       onSuccess: (response) => {
         const next = response?.data?.validation ?? response?.data;
@@ -361,6 +368,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   };
 
   const handleArchive = () => {
+    if (readOnly) return;
     archiveMutation.mutate(state.id, {
       onSuccess: () => router.push("/admin/workflows"),
       onError: () => setDeleteOpen(false),
@@ -377,7 +385,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   const isLive = Boolean(workflow?.published) || versions.some((version) => Number(version.status) === 1);
 
   const changeIntake = (next, onDone) => {
-    if (!state.id) return;
+    if (readOnly || !state.id) return;
     const previous = intake;
     setIntake(next);
     intakeMutation.mutate({ workflowId: state.id, intake: next }, {
@@ -394,7 +402,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   };
 
   const changeClosesAt = (next) => {
-    if (!state.id) return;
+    if (readOnly || !state.id) return;
     const previous = intakeClosesAt;
     setIntakeClosesAt(next);
     scheduleMutation.mutate({ workflowId: state.id, closesAt: next }, {
@@ -488,6 +496,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   };
 
   const openPicker = () => {
+    if (readOnly) return;
     dispatch({ type: "SET_PANEL_TAB", tab: "flow" });
     if (!isLgUp) setDrawerOpen(true);
     ensureRef.current()
@@ -496,7 +505,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   };
 
   const inspector = (
-    <WorkflowInspector state={state} dispatch={dispatch} schemasByFormId={schemasByFormId}
+    <WorkflowInspector state={state} dispatch={dispatch} schemasByFormId={schemasByFormId} readOnly={readOnly}
       issuesByNode={issuesByNode} versions={versions} layout={isLgUp ? "grid" : "drawer"}
       picker={{
         open: pickerOpen, forms: availableForms, usedFormIds, isLoading: isFormsLoading,
@@ -530,6 +539,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   const gridContent = (
     <div className="grid grid-cols-12 gap-4">
       <WorkflowCanvas
+        readOnly={readOnly}
         nodes={state.nodes} transitions={state.transitions} selectedKey={state.selectedKey}
         issuesByNode={issuesByNode} questionCounts={questionCounts} loadingFormIds={loadingFormIds}
         name={state.name} onNameChange={(value) => dispatch({ type: "SET_META", key: "name", value })}
@@ -552,6 +562,7 @@ function WorkflowEditorContent({ workflow, onRefresh }) {
   return (
     <>
       <WorkflowHeaderActions
+        readOnly={readOnly}
         saveStatus={<HeaderStatusPill dirty={!state.isSaved} isSaving={saveDefinitionMutation.isPending || createMutation.isPending}
           isFailed={saveDefinitionMutation.isError || createMutation.isError} lastSavedAt={savedAt} publishedFlash={publishedFlash} />}
         intake={isLive ? effectiveIntake : WORKFLOW_INTAKE.OPEN}

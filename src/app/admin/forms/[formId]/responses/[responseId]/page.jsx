@@ -7,9 +7,15 @@ import { useResponsePreviewQuery } from "@/lib/hooks/useResponseShare";
 import { useAttemptQuery } from "@/lib/hooks/useResponse";
 import { ATTEMPT_STATUS } from "@/lib/attempt-status";
 import { FormStatusHandler } from "@/app/components/FormStatusHandler";
+import { useSession } from "next-auth/react";
+import { useFormContext } from "../../../../providers";
 
 export default function ResponsePage() {
   const params = useParams();
+  const { data: session } = useSession();
+  const { form } = useFormContext();
+  const readOnly = Boolean(session?.skyformsRoles?.includes("skyforms:read-all"))
+    && !session?.skyformsRoles?.includes("skyforms:*") && !(Number(form?.userRole) >= 1);
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawId = params?.responseId;
@@ -36,9 +42,9 @@ export default function ResponsePage() {
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden">
       <FormStatusHandler isLoading={isLoading || Boolean(linkedResponseId)} error={error} data={data} variant="response"
         renderForm={(payload) => isAttempt ? (
-          <ResponseDisplayer attemptView={payload?.data ?? null} />
+          <ResponseDisplayer attemptView={payload?.data ?? null} readOnly={readOnly} />
         ) : (
-          <ResponseDisplayer response={payload?.data ?? payload ?? null} token={token} />
+          <ResponseDisplayer response={payload?.data ?? payload ?? null} token={token} readOnly={readOnly} />
         )}
       />
     </div>

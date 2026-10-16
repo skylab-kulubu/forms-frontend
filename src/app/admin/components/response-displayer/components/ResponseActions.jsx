@@ -118,7 +118,7 @@ export function ResponseActions({ response, readOnly = false }) {
   const isRouteOpen = !isWorkflowStep || Boolean(workflow.onApprove || workflow.onDecline);
   const canEditReview = !readOnly && canReview && !isArchived && isRouteOpen;
   const isArchiveBlocked = (isWorkflowStep && statusValue === 1) || isProvisional;
-  const attempt = readOnly ? null : response?.attempt ?? null;
+  const attempt = response?.attempt ?? null;
   const attemptTime = attemptTimeValue(attempt);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -260,7 +260,7 @@ export function ResponseActions({ response, readOnly = false }) {
   return (
     <div className="flex h-full flex-col text-neutral-200">
       <div className="flex items-center gap-2 px-1 lg:h-7">
-        <span className="text-2xs font-medium text-neutral-500">{readOnly ? "Paylaşılan Cevap" : "İşlemler"}</span>
+        <span className="text-2xs font-medium text-neutral-500">{readOnly ? sharedBy ? "Paylaşılan Cevap" : "Salt Okunur" : "İşlemler"}</span>
         <span className="h-px flex-1 bg-white/5" />
         {!readOnly && (
           <div className="flex items-center gap-1 text-neutral-500">
@@ -333,7 +333,7 @@ export function ResponseActions({ response, readOnly = false }) {
               <UserCard name={submitterName} email={submitterEmail} userId={submitterId} photoUrl={submitterPhotoUrl} hasUser={Boolean(submitterFullName)}/>
             </motion.div>
 
-            {attempt?.canDecide && isProvisional && !isArchived && (
+            {!readOnly && attempt?.canDecide && isProvisional && !isArchived && (
               <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
                 <DecisionSection key={attempt.id} attempt={attempt} mutation={attemptMutation} initialFlow={searchParams?.get("flow")}
                   onExtended={() => router.replace(`/admin/forms/${routeParams?.formId ?? response.formId}/responses/${attempt.id}?attempt=1`)}
@@ -507,7 +507,7 @@ export function ResponseActions({ response, readOnly = false }) {
   );
 }
 
-export function AttemptActions({ view }) {
+export function AttemptActions({ view, readOnly = false }) {
   const attempt = view?.attempt ?? null;
   const searchParams = useSearchParams();
   const mutation = useAttemptActionMutation();
@@ -527,7 +527,7 @@ export function AttemptActions({ view }) {
   return (
     <div className="flex h-full flex-col text-neutral-200">
       <div className="flex items-center gap-2 px-1 lg:h-7">
-        <span className="text-2xs font-medium text-neutral-500">İşlemler</span>
+        <span className="text-2xs font-medium text-neutral-500">{readOnly ? "Salt Okunur" : "İşlemler"}</span>
         <span className="h-px flex-1 bg-white/5" />
       </div>
 
@@ -550,11 +550,11 @@ export function AttemptActions({ view }) {
               />
             </motion.div>
 
-            {kind === "opened" ? (
+            {!readOnly && kind === "opened" ? (
               <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
                 <ReminderSection key={attempt.id} attempt={attempt} mutation={mutation} />
               </motion.div>
-            ) : showTime ? (
+            ) : !readOnly && showTime ? (
               <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.09 }}>
                 <TimeSection key={attempt.id} attempt={attempt} mutation={mutation} initialFlow={searchParams?.get("flow")} />
               </motion.div>

@@ -101,10 +101,11 @@ function WorkflowSteps({ steps, viewStage, ownStage, onSelect }) {
   );
 }
 
-export default function ResponseDisplayer({ response = null, attemptView = null, token = null }) {
+export default function ResponseDisplayer({ response = null, attemptView = null, token = null, readOnly = false }) {
   const owner = attemptView ?? response;
   const schema = Array.isArray(response?.schema) ? response.schema : [];
   const isSharedView = Boolean(response?.sharedBy);
+  const isReadOnly = readOnly || isSharedView;
   const steps = Array.isArray(owner?.workflow?.steps) ? owner.workflow.steps : [];
   const ownStage = owner?.workflow?.stage ?? null;
 
@@ -146,7 +147,7 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
     const intro = (
       <>
         {Number(owner?.status) === RESPONSE_STATUS_PROVISIONAL && (
-          <ProvisionalNotice actionable={!isSharedView && Boolean(owner?.attempt?.canDecide)} closed={owner?.attempt?.status === ATTEMPT_STATUS.NO_SUBMISSION} />
+          <ProvisionalNotice actionable={!isReadOnly && Boolean(owner?.attempt?.canDecide)} closed={owner?.attempt?.status === ATTEMPT_STATUS.NO_SUBMISSION} />
         )}
         <TaskRow key={owner?.id} task={owner?.task} />
       </>
@@ -266,8 +267,8 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
   const drawerContent = (
      <div className="h-full w-full overflow-y-auto p-4 scrollbar lg:overflow-visible lg:p-0">
         {isOwnAttempt
-          ? <AttemptActions view={attemptView} />
-          : <ResponseActions response={activeResponse} isLoading={actionsLoading} readOnly={isSharedView} />}
+          ? <AttemptActions view={attemptView} readOnly={isReadOnly} />
+          : <ResponseActions response={activeResponse} isLoading={actionsLoading} readOnly={isReadOnly} />}
      </div>
   );
 

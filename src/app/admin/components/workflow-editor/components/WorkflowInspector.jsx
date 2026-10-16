@@ -638,7 +638,7 @@ function DescriptionPanel({ description, dispatch }) {
   );
 }
 
-export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, scheduleControl = null, ownershipControl = null, layout = "grid" }) {
+export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, scheduleControl = null, ownershipControl = null, layout = "grid", readOnly = false }) {
   const { nodes, transitions, selectedKey, focus, panelTab } = state;
   const selectedNode = nodes.find((node) => node.nodeKey === selectedKey) ?? null;
   const view = selectedNode && panelTab === "step" ? "step" : panelTab === "description" ? "description" : "flow";
@@ -693,6 +693,7 @@ export default function WorkflowInspector({ state, dispatch, schemasByFormId, is
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="h-full"
             >
+              <fieldset disabled={readOnly} className="min-w-0">
               {view === "step" ? (
                 <StepPanel selectedNode={selectedNode} state={state} dispatch={dispatch} schemasByFormId={schemasByFormId}
                   issuesByNode={issuesByNode} openKey={openKey} setOpenKey={setOpenKey} flashKey={flash?.key ?? null}
@@ -704,6 +705,7 @@ export default function WorkflowInspector({ state, dispatch, schemasByFormId, is
                   versions={versions} intakeControl={intakeControl} scheduleControl={scheduleControl} ownershipControl={ownershipControl}
                 />
               )}
+              </fieldset>
             </motion.div>
           </AnimatePresence>
         </div>

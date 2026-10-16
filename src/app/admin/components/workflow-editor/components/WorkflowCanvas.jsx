@@ -82,7 +82,7 @@ function terminalLabel(group, ending, labelForTransition) {
 export default function WorkflowCanvas({
   nodes, transitions, selectedKey, issuesByNode = {}, questionCounts = {}, loadingFormIds = null, name, onNameChange,
   onSelect, onMove, onAddStep, onConnect, onFocusRoute, onFocusPort, highlightedRouteId = null, labelForTransition,
-  span = 8, isLgUp = true, overlay = null,
+  span = 8, isLgUp = true, overlay = null, readOnly = false,
 }) {
   const contentRef = useRef(null);
   const dragRef = useRef(null);
@@ -124,6 +124,7 @@ export default function WorkflowCanvas({
   const contentHeight = liveNodes.reduce((max, node) => Math.max(max, positionOf(node).y + nodeHeight(node, transitions)), 0) + 80;
 
   const handlePointerDown = (event, nodeKey) => {
+    if (readOnly) { onSelect?.(nodeKey); return; }
     const element = event.currentTarget;
     const port = event.target.closest("[data-port]");
 
@@ -194,6 +195,10 @@ export default function WorkflowCanvas({
   };
 
   const handleKeyDown = (event, nodeKey) => {
+    if (readOnly) {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect?.(nodeKey); }
+      return;
+    }
     const deltas = { ArrowLeft: [-8, 0], ArrowRight: [8, 0], ArrowUp: [0, -8], ArrowDown: [0, 8] };
     const delta = deltas[event.key];
     if (!delta) return;
@@ -276,11 +281,11 @@ export default function WorkflowCanvas({
     >
       <div className="mx-auto flex h-10 w-full max-w-3xl items-center gap-2 border-b border-white/10 px-4">
         <div className="relative min-w-0 flex-1">
-          <input id="workflow-title" type="text" placeholder="Yeni Akış" value={name ?? ""}
+          <input id="workflow-title" type="text" placeholder="Yeni Akış" value={name ?? ""} readOnly={readOnly}
             onChange={(event) => onNameChange?.(event.target.value)}
             className="w-full bg-transparent pr-5 text-sm font-semibold leading-none tracking-wide text-neutral-200 outline-none placeholder-neutral-600"
           />
-          {name?.trim() && (
+          {!readOnly && name?.trim() && (
             <PencilLine size={12} className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-neutral-500" />
           )}
         </div>
@@ -369,7 +374,7 @@ export default function WorkflowCanvas({
                   <span className="absolute -left-1.25 top-5.25 size-2.25 -translate-y-1/2 rounded-full border-[1.5px] border-neutral-600 bg-neutral-900" />
                 )}
 
-                <div data-drag-handle className="flex h-10.5 cursor-grab items-center gap-2.5 border-b border-white/5 px-3 active:cursor-grabbing">
+                <div data-drag-handle className={`flex h-10.5 items-center gap-2.5 border-b border-white/5 px-3 ${readOnly ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"}`}>
                   <span title={node.isStart ? "Başlangıç adımı" : depth ? undefined : "Başlangıçtan ulaşılamıyor"}
                     className={`grid size-6 shrink-0 place-items-center rounded-md border text-xs font-semibold ${
                       node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"
@@ -398,7 +403,7 @@ export default function WorkflowCanvas({
                     <div key={trigger} className={`relative flex h-7.5 items-center gap-1.5 px-3 text-2xs ${style.text ?? "text-neutral-400"} ${index > 0 ? "border-t border-dashed border-white/5" : ""}`}>
                       <Icon size={11} className={`shrink-0 ${style.icon}`} />
                       {style.label}
-                      <span data-port data-trigger={trigger} title="Sürükleyip bir adıma bağla"
+                      <span data-port={!readOnly || undefined} data-trigger={trigger} title={readOnly ? undefined : "Sürükleyip bir adıma bağla"}
                         className={`absolute -right-1.5 top-1/2 size-2.75 -translate-y-1/2 cursor-crosshair rounded-full border-[1.5px] transition-[transform,opacity] hover:scale-125 ${style.port} ${
                           isRouted ? style.portFill : "bg-neutral-900 opacity-45 hover:opacity-100"
                         }`}
@@ -410,7 +415,7 @@ export default function WorkflowCanvas({
             );
           })}
 
-          {liveNodes.length === 0 && (
+          {liveNodes.length === 0 && !readOnly && (
             <div className="absolute inset-0 grid place-items-center">
               <button type="button" onClick={onAddStep}
                 className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-white/10 px-8 py-7 text-center transition-colors hover:border-skylab-400/40 hover:bg-white/3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"

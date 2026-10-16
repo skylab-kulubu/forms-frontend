@@ -135,6 +135,7 @@ function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
 
 function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, onItemClick, status, formId, form, formLoading, workflowId, workflow, workflowLoading }) {
   const isSuperAdmin = skyformsRoles.includes("skyforms:*");
+  const canReadAll = isSuperAdmin || skyformsRoles.includes("skyforms:read-all");
   const subtitle = user?.email?.trim() || user?.username?.trim() || "--";
   const imageUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
   const roles = realmRoles.filter(Boolean);
@@ -155,8 +156,8 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
       icon: FileText,
       label: activeFormLabel,
       children: [
-        ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
-        ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
+        ...(canReadAll || Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
+        ...(canReadAll || Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
         ...(Number(form?.userRole) >= 2 ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
       ],
     }
@@ -218,7 +219,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
               icon: List,
               label: "Formları Görüntüle"
             },
-            ...(isSuperAdmin ? [{ href: "/admin/forms/all", icon: Database, label: "Veritabanı" }] : []),
+            ...(canReadAll ? [{ href: "/admin/forms/all", icon: Database, label: "Veritabanı" }] : []),
             ...(activeFormItem ? [activeFormItem] : []),
           ]}
         />
