@@ -14,8 +14,6 @@ export default function ResponsePage() {
   const params = useParams();
   const { data: session } = useSession();
   const { form } = useFormContext();
-  const readOnly = Boolean(session?.skyformsRoles?.includes("skyforms:read-all"))
-    && !session?.skyformsRoles?.includes("skyforms:*") && !(Number(form?.userRole) >= 1);
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawId = params?.responseId;
@@ -27,6 +25,10 @@ export default function ResponsePage() {
   const responseQuery = useResponsePreviewQuery(responseId, token, { enabled: !isAttempt });
   const attemptQuery = useAttemptQuery(responseId, { enabled: isAttempt });
   const { data, isLoading, error } = isAttempt ? attemptQuery : responseQuery;
+  const payloadFormId = (data?.data ?? data)?.formId;
+  const readOnly = Boolean(session?.skyformsRoles?.includes("skyforms:read-all"))
+    && !session?.skyformsRoles?.includes("skyforms:*")
+    && (!payloadFormId || form?.id !== payloadFormId || !(Number(form?.userRole) >= 1));
 
   const attemptView = isAttempt ? data?.data ?? null : null;
   const attemptStatus = attemptView?.attempt?.status;
