@@ -189,10 +189,12 @@ export default function ResponsesPage() {
         fail("Oturum değişti veya aktarımın süresi doldu. Yeniden başlat.", "session");
         return;
       }
-      popup.postMessage({ type: "skyforms:mail:recipients", ...binding,
-        preparedByUserId: payload.preparedByUserId, formTitle: payload.formTitle, recipients: payload.recipients,
-        responseCount: payload.responseCount, skippedCount: payload.skippedCount, duplicateCount: payload.duplicateCount,
-      }, target.origin);
+      popup.postMessage(payload.sourceId
+        ? { type: "skyforms:mail:source", ...binding, sourceId: payload.sourceId, preparedByUserId: payload.preparedByUserId }
+        : { type: "skyforms:mail:recipients", ...binding,
+          preparedByUserId: payload.preparedByUserId, formTitle: payload.formTitle, recipients: payload.recipients,
+          responseCount: payload.responseCount, skippedCount: payload.skippedCount, duplicateCount: payload.duplicateCount,
+        }, target.origin);
     };
     const receive = (event) => {
       if (!active || event.origin !== target.origin || event.source !== popup || Date.now() >= expires) return;
@@ -206,8 +208,11 @@ export default function ResponsesPage() {
         ready = true;
         void deliver();
       } else if (message.type === "skyforms:mail:accepted" && message.subject === subject && sent) {
+        const linked = Boolean(payload?.sourceId);
         stop(null);
-        setMailMessage("Alıcılar SkyMail'e aktarıldı. Mailini orada hazırlayıp onaya sunabilir veya yetkin varsa gönderebilirsin.");
+        setMailMessage(linked
+          ? "Formun sabit alıcı kaynağı SkyMail'e bağlandı. Mailini orada hazırlayıp onaya sunabilir veya yetkin varsa gönderebilirsin."
+          : "Eski aktarım: kişiler SkyMail'e eklendi; bu gönderimde kalıcı Forms bağlantısı tutulmaz.");
       }
     };
 
@@ -219,24 +224,34 @@ export default function ResponsesPage() {
       return;
     }
     setMailLoading(true);
-    setMailMessage("SkyMail'de girişini tamamla; uygun tüm yanıtlayanların alıcıları otomatik dolacak. Bu sayfayı açık tut.");
+    setMailMessage("SkyMail'de girişini tamamla; formun uygun yanıtlayanları sabit bir alıcı kaynağı olarak hazırlanıyor. Bu sayfayı açık tut.");
     timer = setTimeout(() => fail("Aktarımın süresi doldu. Forms'tan yeniden başlat.", "timeout"), expires - Date.now());
     closed = setInterval(() => {
       if (popup.closed) fail("SkyMail penceresi kapandı. Yeniden başlatabilirsin.", "closed");
     }, 1000);
-    request(`/api/admin/forms/${sourceFormId}/mail-recipients`, { signal: controller.signal })
+    request(`/api/admin/forms/${sourceFormId}/mail-source`, { method: "POST", signal: controller.signal })
+      .catch((error) => {
+        if (!active || ![404, 503].includes(error.status)) throw error;
+        setMailMessage("Kalıcı Forms bağlantısı şu an kullanılamıyor. Eski aktarım ile kişiler ekleniyor; form bağlantısı tutulmayacak.");
+        return request(`/api/admin/forms/${sourceFormId}/mail-recipients`, { signal: controller.signal });
+      })
       .then((result) => {
         if (!active) return;
         payload = result?.data;
         if (payload?.formId !== sourceFormId || payload.preparedByUserId !== subject || typeof payload.formTitle !== "string"
-          || !Array.isArray(payload.recipients)
-          || payload.recipients.some((row) => typeof row?.name !== "string" || typeof row?.email !== "string")
+          || (payload.sourceId
+            ? !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(payload.sourceId)
+              || !Number.isSafeInteger(payload.recipientCount) || payload.recipientCount < 1
+              || !Number.isFinite(Date.parse(payload.preparedAt)) || Date.parse(payload.expiresAt) <= Date.now()
+              || !Number.isFinite(Date.parse(payload.expiresAt)) || Date.parse(payload.preparedAt) >= Date.parse(payload.expiresAt)
+            : !Array.isArray(payload.recipients)
+              || payload.recipients.some((row) => typeof row?.name !== "string" || typeof row?.email !== "string"))
           || [payload.responseCount, payload.skippedCount, payload.duplicateCount].some((count) => !Number.isSafeInteger(count) || count < 0)
-          || payload.responseCount !== payload.recipients.length + payload.skippedCount + payload.duplicateCount) {
+          || payload.responseCount !== (payload.sourceId ? payload.recipientCount : payload.recipients.length) + payload.skippedCount + payload.duplicateCount) {
           fail("Alıcılar hazırlanamadı. Yeniden dene.", "failed");
           return;
         }
-        if (payload.recipients.length === 0) {
+        if (!payload.sourceId && payload.recipients.length === 0) {
           fail("Bu formda e-posta adresi kullanılabilen yanıtlayan yok.", "empty");
           return;
         }
