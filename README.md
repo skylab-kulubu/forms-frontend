@@ -75,12 +75,12 @@
 - Publish / unpublish forms on demand
 - SEO metadata (title & description) for shared form links
 
-### Landing Page
-- Rebuilt from scratch with a unified design language and an animated background layer
-- **Hero** - Side-by-side YAML schema preview and the rendered form it produces, with a magnetic background logo that tracks the cursor
-- **Features** - Six interactive feature rows, each paired with a live in-page demo (form builder, conditional logic, response management, templates, dashboard, drafts)
-- **Flow** - Scroll-driven five-step pipeline showing the admin / respondent journey
-- Subtle spotlight, scroll-reveal, and reduced-motion-aware Framer Motion animations throughout
+### Home Pages
+Two public pages share one shell (header, footer, section pager, step rail on the left):
+- **`/` (for applicants)**: a wall of sample posters; the **Forms'u deneyin** poster opens a real trial form (inside a phone frame on desktop, inline on mobile), followed by an auto-playing walkthrough of the copy and decision emails and an embedded interest form
+- **`/topluluklar` (for other clubs)**: an annotated recruitment poster whose pins map to review, timed tasks, workflow steps and the applicant's status page, then interactive demos of review, workflows and the form editor, a comparison with Google Forms and an embedded access request form
+- The three embedded forms are real Forms forms rendered with the product's own `FormClient`; their ids come from the `NEXT_PUBLIC_HOME_*` variables (see [Environment Variables](#environment-variables)), and an empty id shows a placeholder instead of the form
+- Sections reveal once as they scroll in and the hero has an entrance animation; with **reduced motion** everything renders in place
 
 ### Documentation
 - Built-in **"How to Use"** guide with 12 interactive tutorial sections
@@ -112,7 +112,8 @@
 
 | Route                              | Description                                       |
 | ---------------------------------- | ------------------------------------------------- |
-| `/`                                | Landing page                                      |
+| `/`                                | Home page for applicants                          |
+| `/topluluklar`                     | Home page for other clubs and communities         |
 | `/[id]`                            | Fill out a published form                         |
 | `/templates/[groupId]`             | Tokenized template preview (clone-to-library)     |
 | `/responses/[responseId]`          | Tokenized read-only response preview              |
@@ -207,6 +208,11 @@ Create a `.env.local` file in the project root:
 | `KEYCLOAK_ISSUER`                | Keycloak realm URL (server-side)         |
 | `AUTH_SECRET`                    | NextAuth encryption secret               |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key of the Invisible widget. Empty turns guest verification and guest uploads off in the browser. For local work use the test key `1x00000000000000000000BB` |
+| `NEXT_PUBLIC_HOME_TRIAL_FORM`    | Id of the trial form behind the **Forms'u deneyin** poster on `/` |
+| `NEXT_PUBLIC_HOME_INTEREST_FORM` | Id of the interest form embedded on `/` |
+| `NEXT_PUBLIC_HOME_ACCESS_FORM`   | Id of the access request form embedded on `/topluluklar` |
+
+The `NEXT_PUBLIC_*` values are inlined at **build time**, so deployed images take them from the GitHub Actions build arguments rather than a runtime `.env`: the workflow reads the repository variables `HOME_TRIAL_FORM_PRODUCTION`, `HOME_INTEREST_FORM_PRODUCTION`, `HOME_ACCESS_FORM_PRODUCTION` and their `_SANDBOX` counterparts. The home forms must be published, and a form a visitor may fill without signing in must allow anonymous responses.
 
 ### Keycloak Client Requirements
 

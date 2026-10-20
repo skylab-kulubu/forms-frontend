@@ -43,6 +43,9 @@ jobs:
             echo "short_origin=https://skyl.app" >> "$GITHUB_OUTPUT"
             echo "arge_url=https://arge.yildizskylab.com" >> "$GITHUB_OUTPUT"
             echo "turnstile_site_key=${{ vars.TURNSTILE_SITE_KEY_PRODUCTION }}" >> "$GITHUB_OUTPUT"
+            echo "home_trial_form=${{ vars.HOME_TRIAL_FORM_PRODUCTION }}" >> "$GITHUB_OUTPUT"
+            echo "home_interest_form=${{ vars.HOME_INTEREST_FORM_PRODUCTION }}" >> "$GITHUB_OUTPUT"
+            echo "home_access_form=${{ vars.HOME_ACCESS_FORM_PRODUCTION }}" >> "$GITHUB_OUTPUT"
           else
             echo "api_url=https://sandbox-api.yildizskylab.com" >> "$GITHUB_OUTPUT"
             echo "site_url=https://sandbox-forms.yildizskylab.com" >> "$GITHUB_OUTPUT"
@@ -52,6 +55,9 @@ jobs:
             echo "short_origin=https://sandbox-api.yildizskylab.com/v1/go" >> "$GITHUB_OUTPUT"
             echo "arge_url=https://sandbox-arge.yildizskylab.com" >> "$GITHUB_OUTPUT"
             echo "turnstile_site_key=${{ vars.TURNSTILE_SITE_KEY_SANDBOX }}" >> "$GITHUB_OUTPUT"
+            echo "home_trial_form=${{ vars.HOME_TRIAL_FORM_SANDBOX }}" >> "$GITHUB_OUTPUT"
+            echo "home_interest_form=${{ vars.HOME_INTEREST_FORM_SANDBOX }}" >> "$GITHUB_OUTPUT"
+            echo "home_access_form=${{ vars.HOME_ACCESS_FORM_SANDBOX }}" >> "$GITHUB_OUTPUT"
           fi
       - uses: docker/build-push-action@v6
         with:
@@ -69,6 +75,9 @@ jobs:
             NEXT_PUBLIC_SHORT_ORIGIN=${{ steps.environment.outputs.short_origin }}
             NEXT_PUBLIC_ARGE_URL=${{ steps.environment.outputs.arge_url }}
             NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ steps.environment.outputs.turnstile_site_key }}
+            NEXT_PUBLIC_HOME_TRIAL_FORM=${{ steps.environment.outputs.home_trial_form }}
+            NEXT_PUBLIC_HOME_INTEREST_FORM=${{ steps.environment.outputs.home_interest_form }}
+            NEXT_PUBLIC_HOME_ACCESS_FORM=${{ steps.environment.outputs.home_access_form }}
       - name: Notify Dokploy
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
         env:

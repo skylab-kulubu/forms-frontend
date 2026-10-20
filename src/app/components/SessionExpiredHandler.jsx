@@ -13,7 +13,7 @@ import NoticeDock from "./utils/NoticeDock";
 
 const AUTO_RELOGIN_KEY = "sessionAutoReloginAt";
 const AUTO_RELOGIN_COOLDOWN_MS = 2 * 60 * 1000;
-const PUBLIC_PAGE = /^\/(?:$|new-home(?:\/|$)|templates\/|responses\/)/;
+const PUBLIC_PAGE = /^\/(?:$|topluluklar(?:\/|$)|templates\/|responses\/)/;
 
 // Pages where a hard redirect could throw away unsaved user input; these get the banner
 // instead of the automatic bounce through Keycloak.
