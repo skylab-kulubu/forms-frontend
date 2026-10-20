@@ -163,7 +163,7 @@ export default function AfterApply() {
                 <div className="f-next">
                   <p className="f-next-k">Gönderdikten sonra</p>
                   <p className="f-next-v">
-                    Ekip cevaplarınızı inceleyecek. Onaylanırsa sıradaki adımın bağlantısı e-postanıza gelir.
+                    Ekip cevaplarınızı inceleyecek. Sonucu e-postayla bildireceğiz, onaylanırsa sıradaki adımın bağlantısı da gelir.
                   </p>
                 </div>
                 <span className="f-submit aa-send">Gönder</span>

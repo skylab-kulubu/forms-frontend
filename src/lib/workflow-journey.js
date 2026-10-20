@@ -58,7 +58,7 @@ export function nextStepCopy({ workflow, isWorkflow, requiresManualReview, isAut
     const reviews = current.revision ? "Ekip düzeltmenizi inceleyecek" : "Ekip cevaplarınızı inceleyecek";
     if (!mayContinue) return `${reviews}. Bu, başvurunun son adımı; sonucu e-postayla bildireceğiz.`;
     if (!next?.certain) return `${reviews}; sonucu e-postayla bildireceğiz.`;
-    return `${reviews}. Onaylanırsa sıradaki adımın bağlantısı e-postanıza gelir.`;
+    return `${reviews}. Sonucu e-postayla bildireceğiz, onaylanırsa sıradaki adımın bağlantısı da gelir.`;
   }
 
   if (!mayContinue) return "Bu, başvurunun son adımı.";
