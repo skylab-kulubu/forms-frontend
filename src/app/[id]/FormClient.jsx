@@ -11,14 +11,18 @@ import FormDisplayer from "@/app/components/form-displayer/FormDisplayer";
 import StatusScreen from "@/app/components/form-displayer/components/StatusScreen";
 import FormSkeleton from "@/app/components/form-displayer/components/FormSkeleton";
 
+const PAGE_SHELL = "relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar";
+const EMBEDDED_SHELL = "relative w-full font-sans text-neutral-200";
+
 const LAST_RUN_SCREEN = {
   [WORKFLOW_STATE.COMPLETED]: "fullyCompleted",
   [WORKFLOW_STATE.DECLINED]: "declined",
   [WORKFLOW_STATE.REOPENED]: "reopened",
 };
 
-export default function FormClient() {
-  const { id } = useParams();
+export default function FormClient({ formId = null, embedded = false }) {
+  const params = useParams();
+  const id = formId ?? params?.id;
   const { kind: respondent } = useRespondent();
   const isAuthed = respondent === "user";
   const sessionLoading = respondent === "loading";
@@ -39,7 +43,7 @@ export default function FormClient() {
   }, [respondent, rejectedSignIn, refetch]);
 
   return (
-    <FormStatusHandler withBackground
+    <FormStatusHandler withBackground={!embedded}
       isLoading={sessionLoading || isLoading || (isAuthed && draftLoading)} error={error} data={data}
       renderForm={(responseData) => {
         const lastRun = rerunFormId === id ? null : responseData.data.lastRun ?? null;
@@ -47,7 +51,7 @@ export default function FormClient() {
 
         if (lastRunScreen) {
           return (
-            <div className="relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
+            <div className={embedded ? EMBEDDED_SHELL : PAGE_SHELL}>
               <StatusScreen state={lastRunScreen} isWorkflow workflow={lastRun.workflow ?? null} reviewNote={lastRun.reviewNote ?? null}
                 reviewedAt={lastRun.reviewedAt ?? null} isAuthed={isAuthed} onRerun={() => setRerunFormId(id)}
               />
@@ -60,12 +64,12 @@ export default function FormClient() {
             startFormId={responseData.data.startFormId ?? null} draft={isAuthed ? (draftData?.data ?? null) : null}
             journey={responseData.data.workflow ?? null} instanceId={responseData.data.instanceId ?? null}
             attempt={responseData.data.attempt ?? null} serverNow={responseData.data.serverNow ?? null} closesAt={responseData.data.closesAt ?? null}
-            guestUploads={responseData.data.guestUploads ?? null} revision={responseData.data.revision ?? null}
+            guestUploads={responseData.data.guestUploads ?? null} revision={responseData.data.revision ?? null} embedded={embedded}
           />
         );
       }}
       renderState={({ state, message, stage, startFormId, isWorkflow, reviewNote, reviewedAt, payload }) => (
-        <div className="relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
+        <div className={embedded ? EMBEDDED_SHELL : PAGE_SHELL}>
           {state === "loading" ? <FormSkeleton /> : (
             <StatusScreen state={state === "unAuthorized" && respondent === "expired" ? "sessionExpired" : state} message={message} stage={stage} startFormId={startFormId} isWorkflow={isWorkflow}
               workflow={payload?.workflow ?? null} formTitle={payload?.formTitle ?? null} submittedAt={payload?.submittedAt ?? null}

@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useState, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
+
+export const NoticeDockPlacement = createContext("fixed");
 
 const LINE_TONE = { "text-red-300": "bg-red-300/70", "text-amber-300": "bg-amber-300/70" };
 const COARSE_POINTER = "(pointer: coarse)";
@@ -29,6 +31,7 @@ function usePageHidden() {
 export default function NoticeDock({ icon: Icon, tone = "text-skylab-300", action = null, onClose, duration = null, paused = false, role = "status", children }) {
   const swipe = useMatches(COARSE_POINTER) && Boolean(onClose);
   const hidden = usePageHidden();
+  const placement = useContext(NoticeDockPlacement);
   const [dragging, setDragging] = useState(false);
   const halted = paused || hidden || dragging;
 
@@ -36,7 +39,7 @@ export default function NoticeDock({ icon: Icon, tone = "text-skylab-300", actio
     <motion.div
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 pb-[env(safe-area-inset-bottom)]"
+      className={`pointer-events-none ${placement === "contained" ? "sticky" : "fixed"} inset-x-0 bottom-4 z-50 flex justify-center px-4 pb-[env(safe-area-inset-bottom)]`}
     >
       <motion.div role={role}
         drag={swipe ? "y" : false} dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0, bottom: 0.6 }} dragSnapToOrigin

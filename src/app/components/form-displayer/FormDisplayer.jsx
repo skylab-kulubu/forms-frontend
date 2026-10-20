@@ -17,7 +17,7 @@ import TaskBlock from "./components/TaskBlock";
 import { Countdown, DeliverablesHeader, ExtensionNotice, TaskGate, TaskMeta, useIsLate } from "./components/TimedParts";
 import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
 import Background from "../Background";
-import NoticeDock from "../utils/NoticeDock";
+import NoticeDock, { NoticeDockPlacement } from "../utils/NoticeDock";
 import LoginButton from "../utils/LoginButton";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
 import { scanResultCopy, waitCopy } from "@/lib/guest-uploads";
@@ -141,7 +141,7 @@ function PageFooter() {
   );
 }
 
-export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null, journey = null, instanceId = null, attempt = null, serverNow = null, closesAt = null, guestUploads = null, revision = null }) {
+export default function FormDisplayer({ form, stage = 0, isWorkflow = false, startFormId = null, draft = null, journey = null, instanceId = null, attempt = null, serverNow = null, closesAt = null, guestUploads = null, revision = null, embedded = false }) {
   const scrollRef = useRef(null);
   const submitRef = useRef(null);
   const {
@@ -242,6 +242,10 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
   }, [activeFormId, showIntro]);
+
+  useEffect(() => {
+    if (embedded && isFinished) scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [embedded, isFinished]);
 
   const jumpToField = (fieldId) => {
     const element = document.getElementById(fieldId);
@@ -410,10 +414,10 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
   const notice = renderNotice();
 
   const page = (
-    <div ref={scrollRef} className="relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar">
+    <div ref={scrollRef} className={embedded ? "relative w-full font-sans text-neutral-200" : "relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar"}>
 
       <AnimatePresence>
-        {!isFinished && (
+        {!isFinished && !embedded && (
           <motion.div key="background-layer" className="fixed inset-0 z-0 pointer-events-none"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
           >
@@ -433,11 +437,11 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
             attempt={activeAttempt} closesAt={activeAttempt?.startClosesAt ?? activeClosesAt}
           />
         ) : (
-          <motion.div key={`form-${activeFormId}`} className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6"
+          <motion.div key={`form-${activeFormId}`} className={embedded ? "relative z-10 flex min-h-full w-full flex-col items-center" : "relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6"}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
-            <div className="h-12 w-full shrink-0" />
+            {!embedded && <div className="h-12 w-full shrink-0" />}
 
             <div className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
               <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
@@ -583,8 +587,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
               </motion.div>
             </div>
 
-            <PageFooter />
-            {notice && <div className="h-12 w-full shrink-0" />}
+            {!embedded && <PageFooter />}
+            {notice && !embedded && <div className="h-12 w-full shrink-0" />}
           </motion.div>
         )}
       </AnimatePresence>
@@ -593,5 +597,9 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
     </div>
   );
 
-  return <FormAuthContext.Provider value={authValue}>{page}</FormAuthContext.Provider>;
+  return (
+    <FormAuthContext.Provider value={authValue}>
+      {embedded ? <NoticeDockPlacement.Provider value="contained">{page}</NoticeDockPlacement.Provider> : page}
+    </FormAuthContext.Provider>
+  );
 }
