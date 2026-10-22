@@ -10,7 +10,6 @@ import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow, UserX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ClubSwitcher from "./ClubSwitcher";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
@@ -248,9 +247,8 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         </div>
       ) : null}
 
-      <div className="mt-auto space-y-2">
+      <div className="mt-auto">
         <NavItem href="/admin/how-to-use" icon={BookOpen} label="Nasıl Kullanılır" active={pathname === "/admin/how-to-use"} onClick={onItemClick} />
-        <ClubSwitcher />
       </div>
     </div>
   );
