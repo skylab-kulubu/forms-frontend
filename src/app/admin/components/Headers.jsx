@@ -167,14 +167,14 @@ function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, s
         <Tip label="Yenile">
           <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" aria-label="Yenile" />
         </Tip>
-        <Tip label="Excel İndir">
-          <ActionButton icon={Download} variant="primary" onClick={onExport} disabled={exportLoading} size={buttonSize} tone="header" aria-label="Excel İndir" />
-        </Tip>
         {onMail && (
           <Tip label="Yanıtlayanlara mail gönder">
             <ActionButton icon={Mail} onClick={onMail} disabled={mailLoading} size={buttonSize} tone="header" aria-label="Yanıtlayanlara mail gönder" />
           </Tip>
         )}
+        <Tip label="Excel İndir">
+          <ActionButton icon={Download} variant="primary" onClick={onExport} disabled={exportLoading} size={buttonSize} tone="header" aria-label="Excel İndir" />
+        </Tip>
       </div>
     </div>
   );
