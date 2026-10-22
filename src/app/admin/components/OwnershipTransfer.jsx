@@ -2,16 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { ArrowRightLeft, X } from "lucide-react";
+import { ArrowRightLeft } from "lucide-react";
 import SearchPicker from "@/app/components/utils/SearchPicker";
 import Avatar from "@/app/components/utils/Avatar";
 import ApprovalOverlay from "./ApprovalOverlay";
 import { useUserByMailQuery } from "@/lib/hooks/useUser";
 import { useTransferOwnershipMutation } from "@/lib/hooks/useOwnership";
 import { DELETED_USER_ID } from "@/lib/deleted-user";
-import { FOCUS_RING, PANEL_SECTION, PILL_TONE, PanelInput, PanelNotice, ROW, SectionHeader } from "./utils/SidePanel";
+import { FOCUS_RING, PANEL_SECTION, PanelButton, PanelInput, PanelNotice, PillBadge, ROW, SectionHeader } from "./utils/SidePanel";
 
-const DANGER_ACTION = `group flex h-7 w-full items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 text-2xs font-medium text-red-300 transition-colors hover:bg-red-500/20 hover:text-red-200 ${FOCUS_RING} disabled:pointer-events-none disabled:opacity-40`;
+const DANGER_ACTION = `group flex h-7 flex-1 items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 text-2xs font-medium text-red-300 transition-colors hover:bg-red-500/20 hover:text-red-200 ${FOCUS_RING} disabled:pointer-events-none disabled:opacity-40`;
 
 function personName(user) {
     const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.fullName;
@@ -84,28 +84,30 @@ export function OwnershipTransferControls({ kind, itemId, excludeIds = [], prese
     };
 
     return (
-        <div className="space-y-3 rounded-lg border border-red-500/20 bg-red-500/5 p-3">
+        <div className="space-y-3">
             {target ? (
-                <div className={`${ROW} flex items-center gap-3 border-white/10 px-3 py-2.5`}>
-                    <Avatar name={personName(target)} email={target.email} photoUrl={target.profilePictureUrl} size="md" />
-                    <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-neutral-100">{personName(target)}</p>
-                        <p className="truncate text-2xs text-neutral-500">{target.email}</p>
+                <>
+                    <div className={`${ROW} flex items-center justify-between gap-3 border-white/10 px-3 py-2.5`}>
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                            <Avatar name={personName(target)} email={target.email} photoUrl={target.profilePictureUrl} size="md" />
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-neutral-100">{personName(target)}</p>
+                                <p className="truncate text-2xs text-neutral-500">{target.email}</p>
+                            </div>
+                        </div>
+                        <PillBadge>Yeni sahip</PillBadge>
                     </div>
-                    <button type="button" onClick={() => setTarget(null)} aria-label="Seçimi kaldır"
-                        className={`rounded-md p-1 text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200 ${FOCUS_RING}`}
-                    >
-                        <X size={14} />
-                    </button>
-                </div>
+                    <div className="flex gap-2">
+                        <PanelButton onClick={() => setTarget(null)} disabled={transferMutation.isPending} className="flex-1">Vazgeç</PanelButton>
+                        <button type="button" disabled={transferMutation.isPending} onClick={() => setConfirmOpen(true)} className={DANGER_ACTION}>
+                            <ArrowRightLeft size={13} className="shrink-0" />
+                            Devret
+                        </button>
+                    </div>
+                </>
             ) : (
                 <OwnerPicker excludeIds={[DELETED_USER_ID, ...excludeIds]} onSelect={(user) => { setTarget(user); transferMutation.reset(); }} />
             )}
-
-            <button type="button" disabled={!target || transferMutation.isPending} onClick={() => setConfirmOpen(true)} className={DANGER_ACTION}>
-                <ArrowRightLeft size={13} className="shrink-0" />
-                Sahipliği devret
-            </button>
 
             {transferMutation.isError ? (
                 <PanelNotice tone="red">{transferMutation.error?.message || "Sahiplik devredilemedi."}</PanelNotice>
@@ -120,11 +122,11 @@ export function OwnershipTransferControls({ kind, itemId, excludeIds = [], prese
 }
 
 /** Ayar panellerinin en altındaki kırmızı devir bölümü; engel varsa yalnız nedenini gösterir. */
-export function OwnershipTransferSection({ description, blockedReason, ...controls }) {
+export function OwnershipTransferSection({ description, blockedReason, blockedContent, ...controls }) {
     return (
         <section className={PANEL_SECTION}>
-            <SectionHeader title="Sahipliği devret" dot={PILL_TONE.red} description={description} />
-            {blockedReason ? <PanelNotice tone="red">{blockedReason}</PanelNotice> : <OwnershipTransferControls {...controls} />}
+            <SectionHeader title="Sahipliği devret" description={description} />
+            {blockedContent ?? (blockedReason ? <PanelNotice tone="neutral">{blockedReason}</PanelNotice> : <OwnershipTransferControls {...controls} />)}
         </section>
     );
 }

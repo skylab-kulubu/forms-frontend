@@ -135,9 +135,10 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
             {isOwner ? (
                 <OwnershipTransferSection kind="form" itemId={formId} preset="transfer-form" excludeIds={ownerId ? [ownerId] : []}
                     description="Formu ekibinden ya da kulüpten birine devredin; siz editör olarak kalırsınız."
-                    blockedReason={workflow
-                        ? `Bu form "${workflow.name || "Adsız akış"}" akışında; sahipliği akışla birlikte, akışın panelinden devredilir.`
-                        : !isSaved ? "Devretmeden önce değişiklikleri kaydedin." : null}
+                    blockedContent={workflow
+                        ? <WorkflowManagedRow title="Sahiplik" description="Akış yönetiyor · akışla birlikte devredilir" href={`/admin/workflows/${workflow.id}`} />
+                        : null}
+                    blockedReason={!isSaved ? "Devretmeden önce değişiklikleri kaydedin." : null}
                     onTransferred={reloadForm}
                 />
             ) : null}
