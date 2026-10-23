@@ -1,10 +1,10 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { ArrowRight, LogOut } from "lucide-react";
+import { ArrowRight, LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import { loginWithKeycloak, logout } from "@/lib/authActions";
 import HoverCard from "../utils/HoverCard";
 import Avatar from "../utils/Avatar";
@@ -13,8 +13,12 @@ import { useOpenTrial, useScrollTo } from "./HomeContext";
 
 let lastPage = null;
 
+function titled(text) {
+  return text?.trim().toLocaleLowerCase("tr-TR").replace(/(^|[\s-])\p{L}/gu, (c) => c.toLocaleUpperCase("tr-TR"));
+}
+
 function displayName(user) {
-  return user?.firstName?.trim().toLocaleLowerCase("tr-TR").replace(/(^|[\s-])\p{L}/gu, (c) => c.toLocaleUpperCase("tr-TR")) || "Kullanıcı";
+  return titled(user?.firstName) || "Kullanıcı";
 }
 
 function Account({ status, user, isAdmin }) {
@@ -22,7 +26,7 @@ function Account({ status, user, isAdmin }) {
 
   if (status !== "authenticated") {
     return (
-      <button type="button" className="f-quiet hm-lg" onClick={() => loginWithKeycloak(window.location.href)}>
+      <button type="button" className="f-quiet" onClick={() => loginWithKeycloak(window.location.href)}>
         Giriş yapın
       </button>
     );
@@ -47,6 +51,87 @@ function Account({ status, user, isAdmin }) {
         </button>
       </div>
     </HoverCard>
+  );
+}
+
+function AccountMenu({ status, user, isAdmin, action }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const buttonRef = useRef(null);
+  const popId = useId();
+  const signedIn = status === "authenticated";
+  const photo = user?.profilePictureUrl?.trim() || "";
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDown = (e) => {
+      if (!rootRef.current?.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const closeOnPick = (e) => {
+    if (e.target.closest("a, button")) setOpen(false);
+  };
+
+  return (
+    <div className="hm-acc" ref={rootRef}>
+      <button
+        ref={buttonRef}
+        type="button"
+        className="hm-acc-btn"
+        aria-expanded={open}
+        aria-controls={popId}
+        aria-label="Hesap"
+        disabled={status === "loading"}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Avatar name={signedIn ? user?.name : ""} email={signedIn ? user?.email : ""} photoUrl={signedIn ? photo : ""} size="sm" />
+      </button>
+      {open && (
+        <div className="hm-acc-pop" id={popId} onClick={closeOnPick}>
+          {signedIn && (
+            <div className="hm-acc-me">
+              <Avatar name={user?.name} email={user?.email} photoUrl={photo} size="md" />
+              <div>
+                <p>{titled(user?.fullName || user?.name) || displayName(user)}</p>
+                <small>{user?.email || ""}</small>
+              </div>
+            </div>
+          )}
+          {!signedIn && (
+            <button type="button" className="hm-acc-a" onClick={() => loginWithKeycloak(window.location.href)}>
+              <LogIn size={15} aria-hidden="true" />
+              Giriş yapın
+            </button>
+          )}
+          {isAdmin && (
+            <Link className="hm-acc-a" href="/admin">
+              <LayoutDashboard size={15} aria-hidden="true" />
+              Admin paneli
+              <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          )}
+          {signedIn && (
+            <button type="button" className="hm-acc-a" onClick={() => logout({ callbackUrl: window.location.href })}>
+              <LogOut size={15} aria-hidden="true" />
+              Çıkış yap
+            </button>
+          )}
+          {action && <div className="hm-acc-cta">{action}</div>}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -102,6 +187,20 @@ export default function HomeHeader({ page }) {
     scrollTo(SECTIONS.topluluklar.access);
   };
 
+  const action = isT ? (
+    !isAdmin && (
+      <a className="f-act" href={`#${SECTIONS.topluluklar.access}`} onClick={toAccess}>
+        Erişim isteyin
+        <ArrowRight size={13} aria-hidden="true" />
+      </a>
+    )
+  ) : (
+    <button type="button" className="f-act" onClick={openTrial}>
+      Forms&apos;u deneyin
+      <ArrowRight size={13} aria-hidden="true" />
+    </button>
+  );
+
   return (
     <header className={"f-hdr" + (from === null ? " is-intro" : "")}>
       <div className="f-hdr-in">
@@ -119,21 +218,10 @@ export default function HomeHeader({ page }) {
             Topluluklar için
           </Link>
         </nav>
-        <div className="f-hdr-r">
+        <div className={action ? "f-hdr-r has-act" : "f-hdr-r"}>
           <Account status={status} user={session?.user} isAdmin={isAdmin} />
-          {isT ? (
-            !isAdmin && (
-              <a className="f-act" href={`#${SECTIONS.topluluklar.access}`} onClick={toAccess}>
-                Erişim isteyin
-                <ArrowRight size={13} aria-hidden="true" />
-              </a>
-            )
-          ) : (
-            <button type="button" className="f-act" onClick={openTrial}>
-              Forms&apos;u deneyin
-              <ArrowRight size={13} aria-hidden="true" />
-            </button>
-          )}
+          {action}
+          <AccountMenu status={status} user={session?.user} isAdmin={isAdmin} action={action} />
         </div>
       </div>
     </header>
