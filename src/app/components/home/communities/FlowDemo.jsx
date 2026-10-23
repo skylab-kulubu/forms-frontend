@@ -565,7 +565,7 @@ export default function FlowDemo() {
   );
 
   return (
-    <div className="fd" ref={rootRef}>
+    <div className={auto ? "fd is-auto" : "fd"} ref={rootRef}>
       <div className="fd-top">
         <p className="f-hint" key={`h${pos}${phase}${out || ""}${ans}`}>
           <i></i>

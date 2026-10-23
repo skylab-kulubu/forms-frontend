@@ -16,6 +16,7 @@
 .sl-status span { display: flex; align-items: center; gap: 5px; }
 .sl-scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 46px 8px 24px; scrollbar-width: none; }
 .sl-scroll::-webkit-scrollbar { display: none; }
+.sl.is-auto .sl-scroll, .sl.is-auto .rl-list, .sl.is-auto .rl-det { overflow-y: hidden; }
 .sl-scr .f-card { border-radius: 22px; }
 .sl-scr .f-card-in { gap: 20px; padding: 18px 12px; }
 .sl-scr .f-fhead { padding: 0 4px; }

@@ -767,7 +767,7 @@ export default function ReviewLoop() {
   );
 
   return (
-    <div className="sl" ref={rootRef} onClickCapture={takeOver}>
+    <div className={run ? "sl is-auto" : "sl"} ref={rootRef} onClickCapture={takeOver}>
       <div className="sl-bar">
         <p className="sl-hint" key={`h${s.stage}${s.view}${s.ask || ""}${s.dec || ""}${run}`}>
           <i />

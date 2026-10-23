@@ -505,7 +505,7 @@ export default function EditorDemo() {
   );
 
   return (
-    <div className="el" ref={rootRef}>
+    <div className={cls("el", run && "is-auto")} ref={rootRef}>
       <div className="el-top">
         <p className="f-hint" key={`h${s.act}`}>
           <i />

@@ -40,6 +40,7 @@
 .f-phone-scr .fd-leg { display: none; }
 .f-phone-scr .fd-canvas { justify-content: flex-start; overflow-y: auto; scrollbar-width: none; padding: 8px; }
 .f-phone-scr .fd-canvas::-webkit-scrollbar { display: none; }
+.fd.is-auto .f-phone-sc, .fd.is-auto .fd-canvas { overflow-y: hidden; }
 .f-phone-scr .fd-li { padding: 10px; }
 .f-phone-scr .fd-ctl { gap: 10px; padding: 12px 12px 16px; }
 .f-phone-scr .fd-rts { padding-left: 0; }
