@@ -1,6 +1,7 @@
 .sl { container-type: inline-size; container-name: sl; width: 100%; text-align: left; }
 .sl svg { display: block; }
-.sl-bar { display: flex; min-height: 40px; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.sl-bar { display: flex; min-height: 40px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 18px; }
+.sl-tools { display: flex; flex-shrink: 0; align-items: center; gap: 4px; }
 .sl-hint { display: flex; min-width: 0; align-items: center; gap: 10px; font-size: 13.5px; line-height: 1.5; color: var(--n300); animation: f-in .3s var(--ease) both; }
 .sl-hint i { position: relative; width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: var(--s400); }
 .sl-hint i::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid rgba(235, 213, 238, .55); animation: sl-ring 1.6s ease-out infinite; }
@@ -140,6 +141,9 @@
 .rl-rv-n small { display: block; margin-bottom: 4px; font-size: 11px; font-weight: 500; color: var(--n500); }
 .rl-rv-n p { font-size: 12px; line-height: 1.6; color: var(--n200); white-space: pre-wrap; }
 @media (prefers-reduced-motion: reduce) { .rl-row.is-ping::after, .rl-btns.is-ping button::after { animation: none !important; } }
+.rl-btns button, .rl-cf-b button { position: relative; }
+.sl .is-tap::before { content: ""; position: absolute; left: 50%; top: 50%; z-index: 2; width: 38px; height: 38px; margin: -19px 0 0 -19px; border-radius: 50%; background: rgba(243, 232, 245, .42); box-shadow: 0 0 0 1px rgba(255, 255, 255, .28); pointer-events: none; animation: sl-tap .6s ease-out both; }
+.sl .f-submit.is-tap, .sl .rl-btns .is-tap, .sl .rl-cf-b .is-tap { transform: scale(.97); }
 
 @keyframes sl-ring { 0% { opacity: .9; transform: scale(.6); } 100% { opacity: 0; transform: scale(1.6); } }
 @keyframes sl-pulse { 50% { opacity: 1; } }
@@ -148,4 +152,5 @@
 @keyframes sl-rowin { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes sl-slide { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
 @keyframes sl-spin { to { transform: rotate(360deg); } }
+@keyframes sl-tap { 0% { opacity: 0; transform: scale(.4); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.6); } }
 @media (prefers-reduced-motion: reduce) { .sl-hint i::after, .sl-send.is-pulse::after { animation: none !important; } }
