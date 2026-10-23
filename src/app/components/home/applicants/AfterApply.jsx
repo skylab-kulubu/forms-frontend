@@ -3,7 +3,8 @@
 import { useEffect, useReducer, useRef } from "react";
 import Image from "next/image";
 import { ChevronsUpDown, Clock, FileClock, Lock, Mail } from "lucide-react";
-import { useInView, useReducedMotion } from "../useInView";
+import { useInView, useNarrow, useReducedMotion } from "../useInView";
+import Slides from "../Slides";
 import { formatDay } from "../dates";
 import "./after-apply.css";
 
@@ -11,9 +12,18 @@ const LAST_STEP = 3;
 const FIRST_DELAY = 700;
 const STEP_DELAY = 2300;
 const HOLD_DELAY = 3600;
+const NARROW_STEP_DELAY = 3400;
+const NARROW_HOLD_DELAY = 4200;
 
 const INITIAL = { step: -1, out: "ok" };
 const MAIL_DATE = { day: "2-digit", month: "long", year: "numeric" };
+
+const HEADS = [
+  { title: "Form gönderilir", caption: "Formun sonunda gönderince ne olacağı yazar." },
+  { title: "Geri bildirim", caption: "Cevaplarınızın bir kopyasıyla birlikte e-posta gelir." },
+  { title: "Ekip inceler", caption: "Cevabınızın durumunu aynı bağlantıda görürsünüz." },
+  { title: "Sonuç gelir", caption: "Ekibin notunu hem e-postada hem de formun sayfasında görürsünüz." },
+];
 
 const OUTCOME = {
   ok: {
@@ -108,8 +118,11 @@ export default function AfterApply() {
   const rootRef = useRef(null);
   const inView = useInView(rootRef, { threshold: 0.25 });
   const reduce = useReducedMotion();
+  const narrow = useNarrow(rootRef);
   const [{ step, out }, dispatch] = useReducer(reducer, INITIAL);
   const running = inView && !reduce;
+  const stepDelay = narrow ? NARROW_STEP_DELAY : STEP_DELAY;
+  const holdDelay = narrow ? NARROW_HOLD_DELAY : HOLD_DELAY;
   const ok = out === "ok";
   const mail = OUTCOME[out];
 
@@ -117,62 +130,201 @@ export default function AfterApply() {
     if (!running) return;
     const next = step + 1;
     const finished = next > LAST_STEP;
-    const delay = finished ? HOLD_DELAY : next === 0 ? FIRST_DELAY : STEP_DELAY;
+    const delay = finished ? holdDelay : next === 0 ? FIRST_DELAY : stepDelay;
     const id = setTimeout(() => dispatch(finished ? { type: "restart" } : { type: "step", step: next }), delay);
     return () => clearTimeout(id);
-  }, [running, step]);
+  }, [running, step, stepDelay, holdDelay]);
+
+  const cards = [
+    (
+      <div key="form" className="aa-card is-tight">
+        <div className="aa-form">
+          <div className="f-wp">
+            <div className="f-wp-top">
+              <span className="f-wp-title">Takım seçmeleri</span>
+              <span className="f-wp-step">Adım 1<span> / 2</span></span>
+            </div>
+            <div className="f-wp-segs">
+              <span className="f-seg"><span className="f-seg-fill" style={{ width: "100%" }} /></span>
+              <span className="f-seg is-next" />
+            </div>
+          </div>
+          <h3 className="f-ftitle">Seçme başvurusu</h3>
+          <div style={{ marginTop: 12 }}>
+            <div className="f-q f-qsep">
+              <div className="f-q-in">
+                <div className="f-qhead">
+                  <div className="f-qnum">2</div>
+                  <p className="f-qtext">
+                    Hangi takıma başvuruyorsunuz?
+                    <span className="f-req">*</span>
+                  </p>
+                </div>
+                <div className="f-qctl">
+                  <span className="f-dd-btn">
+                    <span>Frontend</span>
+                    <ChevronsUpDown size={14} aria-hidden="true" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="f-ffoot">
+            <div className="f-next">
+              <p className="f-next-k">Gönderdikten sonra</p>
+              <p className="f-next-v">
+                Ekip cevaplarınızı inceleyecek. Sonucu e-postayla bildireceğiz, onaylanırsa sıradaki adımın bağlantısı da gelir.
+              </p>
+            </div>
+            <span className="f-submit aa-send">Gönder</span>
+            <p className="aa-who">
+              <b>Ayşe Yılmaz</b> olarak yanıtlıyorsunuz
+            </p>
+          </div>
+        </div>
+      </div>
+    ),
+    (
+      <div key="copy" className="aa-card">
+        <MailHead time="14:32" subject="Cevabınızı aldık · Seçme başvurusu" />
+        <div className="aa-mb">
+          <MailBrand />
+          <Context tone="ok" />
+          <h4 className="aa-t">Cevabınızı aldık</h4>
+          <p className="aa-p">
+            Merhaba Ayşe, cevabınız bize ulaştı. Gönderdiklerinizin bir kopyasını aşağıya ekledik.
+          </p>
+          <p className="aa-row">
+            <span>Gönderim tarihi</span>
+            <b>{formatDay(0, MAIL_DATE)}, 14:32</b>
+          </p>
+          <p className="aa-lh">
+            <b>Cevaplarınız</b>
+            <span>3 soru</span>
+          </p>
+          <div className="aa-ans">
+            <p><em>01</em>Adınız ve soyadınız</p>
+            <div>Ayşe Yılmaz</div>
+            <p><em>02</em>Hangi takıma başvuruyorsunuz?</p>
+            <div>Frontend</div>
+            <p><em>03</em>Web geliştirme deneyiminiz var mı?</p>
+            <div>Evet</div>
+          </div>
+        </div>
+      </div>
+    ),
+    (
+      <div key="status" className="aa-card is-tight">
+        <p className="aa-url">
+          <Lock size={10} aria-hidden="true" />
+          forms.yildizskylab.com
+        </p>
+        <div className="aa-stc">
+          <div className="f-st">
+            <span className="f-st-ic is-wait">
+              <FileClock size={28} strokeWidth={1.5} aria-hidden="true" />
+            </span>
+            <p className="f-st-ctx">
+              Takım seçmeleri · <em>1. adım</em>
+            </p>
+            <h3 className="f-st-title">Başvurunuz inceleniyor</h3>
+            <div className="f-st-body">
+              <ol className="f-jr">
+                <li className="f-jr-li">
+                  <span className="f-jr-line" />
+                  <span className="f-mark is-review">
+                    <Clock size={12} strokeWidth={2.2} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <div className="f-jr-row">
+                      <span className="f-jr-title">Seçme başvurusu</span>
+                      <span className="f-jr-date">Bugün</span>
+                    </div>
+                    <p className="f-jr-detail">Gönderildi · inceleniyor</p>
+                  </div>
+                </li>
+                <li className="f-jr-li">
+                  <span className="f-mark is-future" />
+                  <div>
+                    <div className="f-jr-row">
+                      <span className="f-jr-title is-future">Teknik görüşme</span>
+                    </div>
+                    <p className="f-jr-detail">Onaylanırsa bağlantısı e-postanıza gelir</p>
+                  </div>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+    (
+      <div key="result" className="aa-card">
+        <MailHead time="16:05" subject={mail.subject} />
+        <div className="aa-mb" key={out}>
+          <MailBrand />
+          <Context tone={ok ? "ok" : "neutral"} />
+          <h4 className="aa-t">{mail.title}</h4>
+          <p className="aa-p">{mail.body}</p>
+          <p className="aa-row">
+            <span>İnceleme tarihi</span>
+            <b>{formatDay(0, MAIL_DATE)}, 16:05</b>
+          </p>
+          <div className="aa-note">
+            <small>Ekibin notu</small>
+            <p>{mail.note}</p>
+          </div>
+          {ok && (
+            <p className="aa-cta">
+              <b>Sonraki adıma geç</b>
+              <span>→</span>
+            </p>
+          )}
+        </div>
+      </div>
+    ),
+  ];
+
+  if (narrow) {
+    const cur = Math.max(0, step);
+    const go = (i) => dispatch({ type: "step", step: i });
+    return (
+      <div className="aa" ref={rootRef}>
+        <div className="aa-prog" role="group" aria-label="Adımlar">
+          {HEADS.map((h, i) => (
+            <button
+              key={h.title}
+              type="button"
+              className={i < step ? "is-done" : i === step ? (running ? "is-run" : "is-on") : undefined}
+              style={{ "--t": `${i === LAST_STEP ? holdDelay : stepDelay}ms` }}
+              aria-pressed={i === cur}
+              aria-label={`${i + 1}. ${h.title}`}
+              onClick={() => go(i)}
+            >
+              <i />
+            </button>
+          ))}
+        </div>
+        <div className="aa-step is-on aa-now" key={cur}>
+          <StepHead n={cur + 1} title={HEADS[cur].title} caption={HEADS[cur].caption} />
+        </div>
+        <Slides index={cur} onIndex={go} className="aa-track">
+          {cards.map((card, i) => (
+            <div key={i} className={stepClass(step, i)}>
+              {card}
+            </div>
+          ))}
+        </Slides>
+      </div>
+    );
+  }
 
   return (
     <div className="aa" ref={rootRef}>
       <div className="aa-flow">
         <div className={stepClass(step, 0)}>
-          <StepHead n={1} title="Form gönderilir" caption="Formun sonunda gönderince ne olacağı yazar." />
-          <div className="aa-card is-tight">
-            <div className="aa-form">
-              <div className="f-wp">
-                <div className="f-wp-top">
-                  <span className="f-wp-title">Takım seçmeleri</span>
-                  <span className="f-wp-step">Adım 1<span> / 2</span></span>
-                </div>
-                <div className="f-wp-segs">
-                  <span className="f-seg"><span className="f-seg-fill" style={{ width: "100%" }} /></span>
-                  <span className="f-seg is-next" />
-                </div>
-              </div>
-              <h3 className="f-ftitle">Seçme başvurusu</h3>
-              <div style={{ marginTop: 12 }}>
-                <div className="f-q f-qsep">
-                  <div className="f-q-in">
-                    <div className="f-qhead">
-                      <div className="f-qnum">2</div>
-                      <p className="f-qtext">
-                        Hangi takıma başvuruyorsunuz?
-                        <span className="f-req">*</span>
-                      </p>
-                    </div>
-                    <div className="f-qctl">
-                      <span className="f-dd-btn">
-                        <span>Frontend</span>
-                        <ChevronsUpDown size={14} aria-hidden="true" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="f-ffoot">
-                <div className="f-next">
-                  <p className="f-next-k">Gönderdikten sonra</p>
-                  <p className="f-next-v">
-                    Ekip cevaplarınızı inceleyecek. Sonucu e-postayla bildireceğiz, onaylanırsa sıradaki adımın bağlantısı da gelir.
-                  </p>
-                </div>
-                <span className="f-submit aa-send">Gönder</span>
-                <p className="aa-who">
-                  <b>Ayşe Yılmaz</b> olarak yanıtlıyorsunuz
-                </p>
-              </div>
-            </div>
-          </div>
+          <StepHead n={1} title={HEADS[0].title} caption={HEADS[0].caption} />
+          {cards[0]}
         </div>
 
         <Connector className={linkClass(step, 1)}>
@@ -180,34 +332,8 @@ export default function AfterApply() {
         </Connector>
 
         <div className={stepClass(step, 1)}>
-          <StepHead n={2} title="Geri bildirim" caption="Cevaplarınızın bir kopyasıyla birlikte e-posta gelir." />
-          <div className="aa-card">
-            <MailHead time="14:32" subject="Cevabınızı aldık · Seçme başvurusu" />
-            <div className="aa-mb">
-              <MailBrand />
-              <Context tone="ok" />
-              <h4 className="aa-t">Cevabınızı aldık</h4>
-              <p className="aa-p">
-                Merhaba Ayşe, cevabınız bize ulaştı. Gönderdiklerinizin bir kopyasını aşağıya ekledik.
-              </p>
-              <p className="aa-row">
-                <span>Gönderim tarihi</span>
-                <b>{formatDay(0, MAIL_DATE)}, 14:32</b>
-              </p>
-              <p className="aa-lh">
-                <b>Cevaplarınız</b>
-                <span>3 soru</span>
-              </p>
-              <div className="aa-ans">
-                <p><em>01</em>Adınız ve soyadınız</p>
-                <div>Ayşe Yılmaz</div>
-                <p><em>02</em>Hangi takıma başvuruyorsunuz?</p>
-                <div>Frontend</div>
-                <p><em>03</em>Web geliştirme deneyiminiz var mı?</p>
-                <div>Evet</div>
-              </div>
-            </div>
-          </div>
+          <StepHead n={2} title={HEADS[1].title} caption={HEADS[1].caption} />
+          {cards[1]}
         </div>
 
         <Connector className={linkClass(step, 2)}>
@@ -215,50 +341,8 @@ export default function AfterApply() {
         </Connector>
 
         <div className={stepClass(step, 2)}>
-          <StepHead n={3} title="Ekip inceler" caption="Cevabınızın durumunu aynı bağlantıda görürsünüz." />
-          <div className="aa-card is-tight">
-            <p className="aa-url">
-              <Lock size={10} aria-hidden="true" />
-              forms.yildizskylab.com
-            </p>
-            <div className="aa-stc">
-              <div className="f-st">
-                <span className="f-st-ic is-wait">
-                  <FileClock size={28} strokeWidth={1.5} aria-hidden="true" />
-                </span>
-                <p className="f-st-ctx">
-                  Takım seçmeleri · <em>1. adım</em>
-                </p>
-                <h3 className="f-st-title">Başvurunuz inceleniyor</h3>
-                <div className="f-st-body">
-                  <ol className="f-jr">
-                    <li className="f-jr-li">
-                      <span className="f-jr-line" />
-                      <span className="f-mark is-review">
-                        <Clock size={12} strokeWidth={2.2} aria-hidden="true" />
-                      </span>
-                      <div>
-                        <div className="f-jr-row">
-                          <span className="f-jr-title">Seçme başvurusu</span>
-                          <span className="f-jr-date">Bugün</span>
-                        </div>
-                        <p className="f-jr-detail">Gönderildi · inceleniyor</p>
-                      </div>
-                    </li>
-                    <li className="f-jr-li">
-                      <span className="f-mark is-future" />
-                      <div>
-                        <div className="f-jr-row">
-                          <span className="f-jr-title is-future">Teknik görüşme</span>
-                        </div>
-                        <p className="f-jr-detail">Onaylanırsa bağlantısı e-postanıza gelir</p>
-                      </div>
-                    </li>
-                  </ol>
-                </div>
-              </div>
-            </div>
-          </div>
+          <StepHead n={3} title={HEADS[2].title} caption={HEADS[2].caption} />
+          {cards[2]}
         </div>
 
         <Connector className={linkClass(step, 3)}>
@@ -266,30 +350,8 @@ export default function AfterApply() {
         </Connector>
 
         <div className={stepClass(step, 3)}>
-          <StepHead n={4} title="Sonuç gelir" caption="Ekibin notunu hem e-postada hem de formun sayfasında görürsünüz." />
-          <div className="aa-card">
-            <MailHead time="16:05" subject={mail.subject} />
-            <div className="aa-mb" key={out}>
-              <MailBrand />
-              <Context tone={ok ? "ok" : "neutral"} />
-              <h4 className="aa-t">{mail.title}</h4>
-              <p className="aa-p">{mail.body}</p>
-              <p className="aa-row">
-                <span>İnceleme tarihi</span>
-                <b>{formatDay(0, MAIL_DATE)}, 16:05</b>
-              </p>
-              <div className="aa-note">
-                <small>Ekibin notu</small>
-                <p>{mail.note}</p>
-              </div>
-              {ok && (
-                <p className="aa-cta">
-                  <b>Sonraki adıma geç</b>
-                  <span>→</span>
-                </p>
-              )}
-            </div>
-          </div>
+          <StepHead n={4} title={HEADS[3].title} caption={HEADS[3].caption} />
+          {cards[3]}
         </div>
       </div>
     </div>

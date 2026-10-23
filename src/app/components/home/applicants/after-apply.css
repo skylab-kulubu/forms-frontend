@@ -14,6 +14,20 @@
 .aa-card::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 44px; background: linear-gradient(rgba(11, 10, 14, 0), #0b0a0e); pointer-events: none; }
 .aa-card.is-tight::after { display: none; }
 @container aa (max-width: 999px) { .aa-card { height: auto; } .aa-card::after { display: none; } }
+.aa-prog { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: -10px; }
+.aa-prog button { display: block; padding: 10px 0; border-radius: 4px; }
+.aa-prog i { position: relative; display: block; height: 4px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .08); }
+.aa-prog i::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--s500); transform: scaleX(0); transform-origin: left; }
+.aa-prog .is-done i::after { transform: none; background: var(--s600); }
+.aa-prog .is-on i::after { transform: none; }
+.aa-prog .is-run i::after { animation: f-grow-x var(--t) linear both; }
+.aa .aa-now { max-width: none; margin-top: 4px; animation: f-in .3s var(--ease) both; }
+.aa .aa-now .aa-sh { min-height: 58px; }
+.aa .aa-track { --slide: min(420px, calc(100cqw - 36px)); gap: 10px; margin-top: 14px; }
+.aa .aa-track .hm-slide { transition: opacity .35s ease; }
+.aa .aa-track .hm-slide:not(.is-on) { opacity: .35; }
+.aa .aa-track .aa-step { height: 100%; max-width: none; }
+.aa .aa-track .aa-card { height: 100%; margin-top: 0; }
 
 .aa-cx { position: relative; display: grid; width: 100%; height: 44px; place-items: center; color: var(--n600); }
 @container aa (min-width: 1000px) { .aa-cx { height: auto; align-self: stretch; } }
