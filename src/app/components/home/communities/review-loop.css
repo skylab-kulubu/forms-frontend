@@ -53,16 +53,11 @@
 .sl-bead { position: absolute; left: 0; top: 0; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--s300); box-shadow: 0 0 12px rgba(243, 232, 245, .9); opacity: 0; offset-rotate: 0deg; }
 .sl-bead.go { offset-path: path("M0 548 C 28 548, 28 150, 56 150"); animation: sl-run .9s var(--ease) forwards; }
 .sl-bead.back { offset-path: path("M56 360 C 28 360, 28 300, 0 300"); animation: sl-run .9s var(--ease) forwards; }
-.sl-vlink { position: relative; width: 1px; height: 44px; margin: 6px 0; background: repeating-linear-gradient(180deg, rgba(224, 200, 229, .35) 0 3px, transparent 3px 8px); }
-@container sl (min-width: 1000px) { .sl-vlink { display: none; } }
-.sl-vlink i { position: absolute; left: -4px; width: 9px; height: 9px; border-radius: 50%; background: var(--s300); box-shadow: 0 0 10px rgba(243, 232, 245, .9); opacity: 0; }
-.sl-vlink i.go { animation: sl-down .8s var(--ease) forwards; }
-.sl-vlink i.back { animation: sl-up .8s var(--ease) forwards; }
 
 .rl-app { display: flex; width: 100%; min-width: 0; height: 640px; flex-direction: column; }
 .rl-back { display: grid; width: 28px; height: 28px; margin-left: -6px; place-items: center; border-radius: 6px; color: var(--n400); transition: background-color .15s, color .15s; }
 .rl-back:hover { background: rgba(255, 255, 255, .05); color: var(--n100); }
-.rl-body { position: relative; min-height: 0; flex: 1; overflow: hidden; }
+.rl-body { position: relative; min-height: 0; flex: 1; overflow: hidden; container: rlb / inline-size; }
 .rl-list, .rl-det { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--n800) transparent; animation: sl-slide .3s var(--ease) both; }
 .rl-list { padding: 8px; }
 .rl-list > li + li { border-top: 1px solid var(--l1); }
@@ -89,8 +84,10 @@
 .rl-row.is-click:hover .rl-go { color: var(--s300); transform: translateX(2px); }
 
 .rl-det { display: grid; align-content: start; gap: 18px; padding: 18px 16px 20px; }
-@container sl (min-width: 640px) { .rl-det { grid-template-columns: minmax(0, 1fr) 252px; align-items: start; gap: 24px; padding: 20px; } }
-@container sl (max-width: 999px) { .rl-app { height: auto; } .rl-body { flex: none; overflow: visible; } .rl-list, .rl-det { position: relative; inset: auto; overflow: visible; } }
+@container rlb (min-width: 560px) { .rl-det { grid-template-columns: minmax(0, 1fr) 252px; align-items: start; gap: 24px; padding: 20px; } }
+.sl-scr > .rl-app { position: absolute; inset: 0; height: auto; border: 0; border-radius: 0; background: transparent; box-shadow: none; padding-top: 44px; }
+.sl-scr > .rl-app .rl-list { padding: 6px; }
+.sl-scr > .rl-app .rl-row { gap: 10px; padding: 10px 8px; }
 .rl-head { display: flex; align-items: center; gap: 12px; }
 .rl-hm { min-width: 0; flex: 1; }
 .rl-hm p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--n100); }
@@ -148,8 +145,6 @@
 @keyframes sl-pulse { 50% { opacity: 1; } }
 @keyframes sl-box { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
 @keyframes sl-run { 0% { offset-distance: 0%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
-@keyframes sl-down { 0% { top: -4px; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 40px; opacity: 0; } }
-@keyframes sl-up { 0% { top: 40px; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: -4px; opacity: 0; } }
 @keyframes sl-rowin { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes sl-slide { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
 @keyframes sl-spin { to { transform: rotate(360deg); } }

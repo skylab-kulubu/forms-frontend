@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { useScrollContainer } from "./scroll";
 
 export function useInView(ref, { margin = "0px", once = false, threshold = 0 } = {}) {
@@ -38,4 +38,20 @@ export function useMedia(query) {
 
 export function useReducedMotion() {
   return useMedia("(prefers-reduced-motion: reduce)");
+}
+
+export function useNarrow(ref, below = 1000) {
+  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.innerWidth < below + 80);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const read = () => setNarrow(el.clientWidth < below);
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, below]);
+
+  return narrow;
 }

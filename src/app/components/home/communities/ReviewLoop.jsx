@@ -18,7 +18,8 @@ import {
   X,
 } from "lucide-react";
 import { formatDay } from "../dates";
-import { useInView } from "../useInView";
+import { useInView, useNarrow } from "../useInView";
+import Duo from "../Duo";
 import "./review-loop.css";
 
 const TEAMS = ["Frontend", "Backend", "DevOps"];
@@ -607,8 +608,23 @@ export default function ReviewLoop() {
   const scrollerRef = useRef(null);
   const noteId = useId();
   const inView = useInView(rootRef);
+  const narrow = useNarrow(rootRef);
   const [closeLong] = useState(() => `${formatDay(12, { day: "numeric", month: "long", weekday: "long" })}, 23:59`);
   const [s, dispatch] = useReducer(reducer, INITIAL);
+  const [side, setSide] = useState(0);
+
+  useEffect(() => {
+    if (!narrow) return undefined;
+    const to = s.stage === 1 ? 1 : 0;
+    const id = setTimeout(() => setSide(to), s.stage === 0 ? 0 : s.stage === 1 ? 1100 : 900);
+    return () => clearTimeout(id);
+  }, [narrow, s.stage]);
+
+  useEffect(() => {
+    if (!narrow || !s.ask) return;
+    const det = rootRef.current?.querySelector(".duo .rl-det");
+    det?.scrollTo({ top: det.scrollHeight, behavior: "smooth" });
+  }, [narrow, s.ask]);
 
   useEffect(() => {
     if (!inView || !s.busy) return undefined;
@@ -646,6 +662,37 @@ export default function ReviewLoop() {
   const noteShown = (s.note || "").trim();
   const rows = s.stage >= 1 ? [{ av: "AY", name: "Ayşe Yılmaz", outcome: s.dec ?? "wait", at: s.sentAt, mine: true }, ...BASE_ROWS] : BASE_ROWS;
 
+  const resetButton = (
+    <button type="button" className="f-reset" onClick={reset} disabled={s.stage === 0}>
+      <RotateCcw size={13} aria-hidden="true" />
+      Baştan
+    </button>
+  );
+
+  const applicant = (
+    <div className="sl-phone">
+      <div className="sl-scr">
+        <StatusBar />
+        <div className="sl-scroll" ref={scrollerRef}>
+          <PhoneScreen s={s} set={set} closeLong={closeLong} next={next} noteShown={noteShown} onSend={send} />
+        </div>
+      </div>
+    </div>
+  );
+
+  const panel = (
+    <ReviewPanel
+      s={s}
+      set={set}
+      dispatch={dispatch}
+      rows={rows}
+      next={next}
+      noteId={noteId}
+      noteText={noteText}
+      noteShown={noteShown}
+    />
+  );
+
   return (
     <div className="sl" ref={rootRef}>
       <div className="sl-bar">
@@ -653,45 +700,34 @@ export default function ReviewLoop() {
           <i />
           <span>{hintFor(s)}</span>
         </p>
-        <button type="button" className="f-reset" onClick={reset} disabled={s.stage === 0}>
-          <RotateCcw size={13} aria-hidden="true" />
-          Baştan
-        </button>
+        {!narrow && resetButton}
       </div>
-      <div className="sl-stage">
-        <div className="sl-phone">
-          <div className="sl-scr">
-            <StatusBar />
-            <div className="sl-scroll" ref={scrollerRef}>
-              <PhoneScreen s={s} set={set} closeLong={closeLong} next={next} noteShown={noteShown} onSend={send} />
+      {narrow ? (
+        <Duo labels={["Başvuran", "Ekip"]} side={side} onSide={setSide} tools={resetButton}>
+          {applicant}
+          <div className="sl-phone">
+            <div className="sl-scr">
+              <StatusBar />
+              {panel}
             </div>
           </div>
-        </div>
+        </Duo>
+      ) : (
+        <div className="sl-stage">
+          {applicant}
 
-        <div className="sl-link" aria-hidden="true">
-          <svg viewBox="0 0 56 640" preserveAspectRatio="none">
-            <path className={s.showGo ? "is-on" : undefined} d="M0 548 C 28 548, 28 150, 56 150" />
-            <path className={s.showBack ? "is-on" : undefined} d="M56 360 C 28 360, 28 300, 0 300" />
-          </svg>
-          {s.beadGo > 0 && <span className="sl-bead go" key={`g${s.beadGo}`} />}
-          {s.beadBack > 0 && <span className="sl-bead back" key={`b${s.beadBack}`} />}
-        </div>
-        <div className="sl-vlink" aria-hidden="true">
-          {s.beadGo > 0 && <i className="go" key={`g${s.beadGo}`} />}
-          {s.beadBack > 0 && <i className="back" key={`b${s.beadBack}`} />}
-        </div>
+          <div className="sl-link" aria-hidden="true">
+            <svg viewBox="0 0 56 640" preserveAspectRatio="none">
+              <path className={s.showGo ? "is-on" : undefined} d="M0 548 C 28 548, 28 150, 56 150" />
+              <path className={s.showBack ? "is-on" : undefined} d="M56 360 C 28 360, 28 300, 0 300" />
+            </svg>
+            {s.beadGo > 0 && <span className="sl-bead go" key={`g${s.beadGo}`} />}
+            {s.beadBack > 0 && <span className="sl-bead back" key={`b${s.beadBack}`} />}
+          </div>
 
-        <ReviewPanel
-          s={s}
-          set={set}
-          dispatch={dispatch}
-          rows={rows}
-          next={next}
-          noteId={noteId}
-          noteText={noteText}
-          noteShown={noteShown}
-        />
-      </div>
+          {panel}
+        </div>
+      )}
     </div>
   );
 }

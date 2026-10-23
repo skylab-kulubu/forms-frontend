@@ -44,7 +44,7 @@
 .hm-demo-after { --ph: 520px; }
 .hm-demo-review, .hm-demo-flow { --ph: 720px; }
 .hm-demo-editor { --ph: 660px; }
-@media (max-width: 1023px) { .hm-demo-review, .hm-demo-flow, .hm-demo-editor { --ph: 1100px; } }
+@media (max-width: 1079px) { .hm-demo-review, .hm-demo-flow, .hm-demo-editor { --ph: calc(clamp(500px, 100svh - 250px, 640px) + 150px); } }
 
 .sf { position: relative; z-index: 1; overflow: hidden; padding-top: 72px; text-align: left; }
 @media (min-width: 1024px) { .sf { padding-top: 96px; } }

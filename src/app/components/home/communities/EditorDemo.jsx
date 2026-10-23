@@ -3,7 +3,8 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { ChevronsUpDown, Eye, RotateCcw } from "lucide-react";
 import Phone from "../Phone";
-import { useInView, useReducedMotion } from "../useInView";
+import Duo from "../Duo";
+import { useInView, useNarrow, useReducedMotion } from "../useInView";
 import "./editor-demo.css";
 
 const TYPES = {
@@ -31,12 +32,17 @@ const SUB = { name: "İsim", email: "E-Posta", phone: "Telefon" };
 const PH = { name: "Adınızı yazın.", email: "ornek@mail.com", phone: "+90 512 345 67 89" };
 const FIELD_IC = { name: "user", email: "mail", phone: "phone" };
 
+const SIDES = { editor: 0, preview: 1 };
+
 const SCRIPT = [
+  ["show", "editor", 0],
   ["wait", 900],
   ["hot", "short_text", 700],
   ["add", { type: "short_text", input: "name" }, 260],
   ["type", "Adınız ve soyadınız", 380],
   ["req", 0, 700],
+  ["show", "preview", 1700],
+  ["show", "editor", 400],
   ["hot", "combobox", 700],
   ["add", { type: "combobox" }, 260],
   ["type", "Hangi takıma başvuruyorsunuz?", 300],
@@ -44,6 +50,8 @@ const SCRIPT = [
   ["opt", "Backend", 300],
   ["opt", "DevOps", 420],
   ["req", 1, 700],
+  ["show", "preview", 1700],
+  ["show", "editor", 400],
   ["hot", "toggle", 700],
   ["add", { type: "toggle" }, 260],
   ["type", "Web geliştirme deneyiminiz var mı?", 700],
@@ -52,9 +60,12 @@ const SCRIPT = [
   ["type", "Hangi projelerde yer aldınız?", 420],
   ["condHot", 3, 700],
   ["cond", 3, 1300],
+  ["show", "preview", 900],
   ["tap", 2, 1700],
+  ["show", "editor", 400],
   ["tplHot", null, 800],
   ["tpl", null, 1100],
+  ["show", "preview", 400],
   ["save", null, 4200],
   ["reset", null, 0],
 ];
@@ -106,7 +117,7 @@ function hintFor(act) {
   return "Form kaydedildi. Başvuran formu açtığında telefondaki hâlini görür.";
 }
 
-function createTimeline(clock, setView) {
+function createTimeline(clock, setView, setSide) {
   let timer = 0;
 
   const later = (fn, ms) => {
@@ -140,6 +151,10 @@ function createTimeline(clock, setView) {
     switch (kind) {
       case "wait":
         after(arg);
+        return;
+      case "show":
+        if (clock.narrow) setSide(SIDES[arg]);
+        after(clock.narrow ? ms : 0);
         return;
       case "hot":
         commit({ hot: arg, act: "hot" });
@@ -387,23 +402,29 @@ export default function EditorDemo() {
   const rootRef = useRef(null);
   const canvasRef = useRef(null);
   const phoneRef = useRef(null);
-  const clockRef = useRef({ i: 0, seq: 0, tick: 0, view: FIRST });
+  const clockRef = useRef({ i: 0, seq: 0, tick: 0, view: FIRST, narrow: false });
   const [view, setView] = useState(FIRST);
+  const [side, setSide] = useState(SIDES.editor);
   const [paused, setPaused] = useState(false);
   const [tick, setTick] = useState(0);
   const reduce = useReducedMotion();
   const inView = useInView(rootRef, { threshold: 0.2 });
+  const narrow = useNarrow(rootRef);
 
   const live = !reduce || tick > 0;
   const run = live && !paused && inView;
   const s = live ? view : DONE;
 
   useEffect(() => {
+    clockRef.current.narrow = narrow;
+  }, [narrow]);
+
+  useEffect(() => {
     if (!run) return undefined;
     const clock = clockRef.current;
     const delay = clock.tick === tick ? 60 : 300;
     clock.tick = tick;
-    const timeline = createTimeline(clock, setView);
+    const timeline = createTimeline(clock, setView, setSide);
     timeline.start(delay);
     return timeline.stop;
   }, [run, tick]);
@@ -431,6 +452,58 @@ export default function EditorDemo() {
     else restart();
   };
 
+  const tools = (
+    <>
+      <button type="button" className={cls("f-auto", run && "is-on")} aria-pressed={run} onClick={toggle}>
+        {run ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="6" y="4" width="4" height="16" rx="1" />
+            <rect x="14" y="4" width="4" height="16" rx="1" />
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M7 4.5v15a1 1 0 0 0 1.52.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z" />
+          </svg>
+        )}
+        {run ? "Durdur" : "Oynat"}
+      </button>
+      <button type="button" className="f-reset" onClick={restart}>
+        <RotateCcw size={13} aria-hidden="true" />
+        Baştan
+      </button>
+    </>
+  );
+
+  const phone = (
+    <Phone className="el-phone" scrollRef={phoneRef}>
+      <Preview cards={s.cards} exp={s.exp} fresh={s.fresh} tap={s.tap} />
+    </Phone>
+  );
+
+  const panel = (
+    <div className="f-dm el-pan">
+      <div className="f-dm-bar">
+        <span className="f-dm-t">Seçme başvurusu</span>
+        <span className={cls("el-save", s.saved && "is-ok")}>
+          <i />
+          {s.saved ? "Kaydedildi" : "Düzenleniyor"}
+        </span>
+        <span className="f-dm-grow" />
+        <span className="el-pv">
+          <Eye size={13} aria-hidden="true" />
+          Önizleme
+        </span>
+      </div>
+      <div className="el-body">
+        <Library hot={s.hot} tplHot={s.tplHot} />
+        <div className="el-cv f-dots" ref={canvasRef}>
+          {s.cards.length === 0 && <p className="el-empty">Formunuzu oluşturmaya başlayın</p>}
+          <CardList cards={s.cards} fresh={s.fresh} typing={s.typing} condHot={s.condHot} />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="el" ref={rootRef}>
       <div className="el-top">
@@ -438,65 +511,28 @@ export default function EditorDemo() {
           <i />
           <span>{hintFor(s.act)}</span>
         </p>
-        <div className="el-top-r">
-          <button type="button" className={cls("f-auto", run && "is-on")} aria-pressed={run} onClick={toggle}>
-            {run ? (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <rect x="6" y="4" width="4" height="16" rx="1" />
-                <rect x="14" y="4" width="4" height="16" rx="1" />
-              </svg>
-            ) : (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M7 4.5v15a1 1 0 0 0 1.52.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z" />
-              </svg>
-            )}
-            {run ? "Durdur" : "Oynat"}
-          </button>
-          <button type="button" className="f-reset" onClick={restart}>
-            <RotateCcw size={13} aria-hidden="true" />
-            Baştan
-          </button>
-        </div>
+        {!narrow && <div className="el-top-r">{tools}</div>}
       </div>
 
-      <div className="el-stage">
-        <div className="el-phw">
-          <Phone className="el-phone" scrollRef={phoneRef}>
-            <Preview cards={s.cards} exp={s.exp} fresh={s.fresh} tap={s.tap} />
-          </Phone>
-        </div>
+      {narrow ? (
+        <Duo labels={["Editör", "Önizleme"]} side={side} onSide={setSide} tools={tools}>
+          <Phone scroll={false}>{panel}</Phone>
+          {phone}
+        </Duo>
+      ) : (
+        <div className="el-stage">
+          <div className="el-phw">{phone}</div>
 
-        <div className="el-link" aria-hidden="true">
-          <svg viewBox="0 0 56 640" preserveAspectRatio="none">
-            <path d="M56 320 C 28 320, 28 300, 0 300" />
-          </svg>
-          {s.beadN > 0 && <span className="el-bead" key={`b${s.beadN}`} />}
-        </div>
-
-        <div className="el-panw">
-          <div className="f-dm el-pan">
-            <div className="f-dm-bar">
-              <span className="f-dm-t">Seçme başvurusu</span>
-              <span className={cls("el-save", s.saved && "is-ok")}>
-                <i />
-                {s.saved ? "Kaydedildi" : "Düzenleniyor"}
-              </span>
-              <span className="f-dm-grow" />
-              <span className="el-pv">
-                <Eye size={13} aria-hidden="true" />
-                Önizleme
-              </span>
-            </div>
-            <div className="el-body">
-              <Library hot={s.hot} tplHot={s.tplHot} />
-              <div className="el-cv f-dots" ref={canvasRef}>
-                {s.cards.length === 0 && <p className="el-empty">Formunuzu oluşturmaya başlayın</p>}
-                <CardList cards={s.cards} fresh={s.fresh} typing={s.typing} condHot={s.condHot} />
-              </div>
-            </div>
+          <div className="el-link" aria-hidden="true">
+            <svg viewBox="0 0 56 640" preserveAspectRatio="none">
+              <path d="M56 320 C 28 320, 28 300, 0 300" />
+            </svg>
+            {s.beadN > 0 && <span className="el-bead" key={`b${s.beadN}`} />}
           </div>
+
+          <div className="el-panw">{panel}</div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
