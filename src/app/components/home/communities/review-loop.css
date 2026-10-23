@@ -4,9 +4,6 @@
 .sl-hint { display: flex; min-width: 0; align-items: center; gap: 10px; font-size: 13.5px; line-height: 1.5; color: var(--n300); animation: f-in .3s var(--ease) both; }
 .sl-hint i { position: relative; width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: var(--s400); }
 .sl-hint i::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid rgba(235, 213, 238, .55); animation: sl-ring 1.6s ease-out infinite; }
-.sl-reset { display: inline-flex; height: 32px; flex-shrink: 0; align-items: center; gap: 6px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: var(--n400); transition: color .15s, background-color .15s; }
-.sl-reset:hover:not(:disabled) { background: rgba(255, 255, 255, .05); color: var(--n100); }
-.sl-reset:disabled { opacity: .35; }
 
 .sl-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 0; }
 @container sl (min-width: 1000px) { .sl-stage { grid-template-columns: 300px 56px minmax(0, 1fr); justify-items: stretch; align-items: start; } }

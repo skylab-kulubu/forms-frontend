@@ -653,7 +653,7 @@ export default function ReviewLoop() {
           <i />
           <span>{hintFor(s)}</span>
         </p>
-        <button type="button" className="sl-reset" onClick={reset} disabled={s.stage === 0}>
+        <button type="button" className="f-reset" onClick={reset} disabled={s.stage === 0}>
           <RotateCcw size={13} aria-hidden="true" />
           Baştan
         </button>

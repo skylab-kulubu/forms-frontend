@@ -21,9 +21,6 @@
 .f-fic .ed-ic { width: 16px; height: 16px; }
 .el-top { display: flex; min-height: 40px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 18px; }
 .el-top-r { display: flex; flex-shrink: 0; align-items: center; gap: 4px; }
-.el-auto { display: inline-flex; height: 32px; align-items: center; gap: 7px; border-radius: 8px; border: 1px solid var(--l3); padding: 0 11px; font-size: 12.5px; color: var(--n300); white-space: nowrap; transition: border-color .15s, background-color .15s, color .15s; }
-.el-auto:hover { color: var(--n100); background: rgba(255, 255, 255, .04); }
-.el-auto.is-on { border-color: rgba(235, 213, 238, .35); background: rgba(224, 200, 229, .08); color: var(--s300); }
 
 .el-stage { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 24px; }
 @container el (min-width: 1000px) { .el-stage { grid-template-columns: 300px 56px minmax(0, 1fr); justify-items: stretch; align-items: center; gap: 0; } }

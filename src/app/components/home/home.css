@@ -3,7 +3,7 @@
 .hm svg:where(:not(.hm-embed *)) { flex-shrink: 0; }
 :is(.hm-body, .sf) :is(h1, h2, h3, h4, p, figure):where(:not(.a2-h1, .a2-p, .a2-go-n, .a2-try-h, .a2-try-p, .a2-try-m, .a2-txt, .at-p, .at-p2, .at-note-p, .at-frag, .at-txt, .at-fine, .at-kick, .hm-embed *)) { margin: 0; }
 :is(.hm-body, .sf) :is(ol, ul):where(:not(.hm-embed *)) { margin: 0; padding: 0; list-style: none; }
-:is(.hm-body, .sf) button:where(:not([class^="f-"], [class*=" f-"], .at-ppin, .a2-try-x, .a2-try-xm, .a2-go-b, .fd-auto, .el-auto, .sl-reset, .hm-embed *)) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; }
+:is(.hm-body, .sf) button:where(:not([class^="f-"], [class*=" f-"], .at-ppin, .a2-try-x, .a2-try-xm, .a2-go-b, .hm-embed *)) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; text-align: inherit; }
 :is(.hm-body, .sf) button:where(:not(:disabled, .hm-embed *)) { cursor: pointer; }
 :is(.hm-body, .sf) button:disabled:where(:not(.hm-embed *)) { cursor: default; }
 :is(.hm-body, .sf) a:where(:not([class^="f-"], [class*=" f-"], .hm-embed *)) { color: inherit; text-decoration: none; }
@@ -250,6 +250,9 @@
 .f-reset { display: inline-flex; height: 32px; flex-shrink: 0; align-items: center; gap: 6px; border-radius: 8px; padding: 0 10px; font-size: 13px; color: var(--n400); white-space: nowrap; transition: color .15s, background-color .15s; }
 .f-reset:hover:not(:disabled) { background: rgba(255, 255, 255, .05); color: var(--n100); }
 .f-reset:disabled { cursor: default; opacity: .35; }
+.f-auto { display: inline-flex; height: 32px; align-items: center; gap: 7px; border-radius: 8px; border: 1px solid var(--l3); padding: 0 11px; font-size: 12.5px; color: var(--n300); white-space: nowrap; transition: border-color .15s, background-color .15s, color .15s; }
+.f-auto:hover { color: var(--n100); background: rgba(255, 255, 255, .04); }
+.f-auto.is-on { border-color: rgba(235, 213, 238, .35); background: rgba(224, 200, 229, .08); color: var(--s300); }
 @keyframes f-ring { 0% { opacity: .9; transform: scale(.6); } 100% { opacity: 0; transform: scale(1.6); } }
 .f-phone { position: relative; width: 300px; height: 640px; flex-shrink: 0; border-radius: 46px; background: #121115; padding: 9px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 40px 70px -30px rgba(0, 0, 0, .95); }
 .f-phone::before { content: ""; position: absolute; left: 50%; top: 18px; z-index: 6; width: 88px; height: 24px; border-radius: 99px; background: #000; transform: translateX(-50%); }

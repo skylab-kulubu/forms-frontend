@@ -439,7 +439,7 @@ export default function EditorDemo() {
           <span>{hintFor(s.act)}</span>
         </p>
         <div className="el-top-r">
-          <button type="button" className={cls("el-auto", run && "is-on")} aria-pressed={run} onClick={toggle}>
+          <button type="button" className={cls("f-auto", run && "is-on")} aria-pressed={run} onClick={toggle}>
             {run ? (
               <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <rect x="6" y="4" width="4" height="16" rx="1" />

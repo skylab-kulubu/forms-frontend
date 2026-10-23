@@ -464,7 +464,7 @@ export default function FlowDemo() {
           <span>{hint(s)}</span>
         </p>
         <div className="fd-top-r">
-          <button type="button" className={auto ? "fd-auto is-on" : "fd-auto"} aria-pressed={auto} onClick={() => dispatch({ type: "toggle" })}>
+          <button type="button" className={auto ? "f-auto is-on" : "f-auto"} aria-pressed={auto} onClick={() => dispatch({ type: "toggle" })}>
             {auto ? PAUSE : PLAY}
             {auto ? "Durdur" : "Otomatik oynat"}
           </button>
