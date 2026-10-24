@@ -17,7 +17,7 @@ const alertVariants = {
 
 const PERSONAL_LOCK = "Kişisel süre açıkken kullanılamaz.";
 
-export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
+export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMembership = false, managedActions = {} }) {
     const { state, dispatch } = useFormEditor();
     const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt, userRole, editors, isSaved } = state;
     const rootRef = useRef(null);
@@ -69,7 +69,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
                 onClosesAtChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "closesAt", value } })}
             />
 
-            {workflow ? <WorkflowMembershipSection workflow={workflow} /> : null}
+            {workflow && !hideMembership ? <WorkflowMembershipSection workflow={workflow} /> : null}
 
             <section className={PANEL_SECTION}>
                 <SectionHeader title="Form durumu" pill={isAccepting ? "Yayında" : "Duraklatıldı"} pillTone={isAccepting ? "emerald" : "neutral"}
@@ -78,7 +78,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
 
                 <div className="space-y-3">
                     {isWorkflowLocked ? (
-                        <WorkflowManagedRow title="Cevap kabulü" href={`/admin/workflows/${workflow.id}`}
+                        <WorkflowManagedRow title="Cevap kabulü" href={`/admin/workflows/${workflow.id}`} onClick={managedActions.acceptance}
                             description={workflow.isStart
                                 ? `Akış yönetiyor · yeni başvurular ${intake === WORKFLOW_INTAKE.OPEN ? "açık" : "kapalı"}`
                                 : `Akış yönetiyor · başvuru kabulü ${intake === WORKFLOW_INTAKE.CLOSED ? "kapalı" : "açık"}`}
@@ -107,12 +107,12 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
 
                     {isWorkflowLocked ? (
                         <>
-                            <WorkflowManagedRow title="Birden çok cevap izni" href={`/admin/workflows/${workflow.id}`}
+                            <WorkflowManagedRow title="Birden çok cevap izni" href={`/admin/workflows/${workflow.id}`} onClick={managedActions.multiple}
                                 description={typeof workflow.allowMultipleRuns === "boolean"
                                     ? `Akış yönetiyor · tekrar başlatma ${workflow.allowMultipleRuns ? "açık" : "kapalı"}`
                                     : "Akış yönetiyor · akıştaki tekrar başlatma ayarı geçerli"}
                             />
-                            <WorkflowManagedRow title="Cevap kontrolü" href={`/admin/workflows/${workflow.id}?form=${formId}`}
+                            <WorkflowManagedRow title="Cevap kontrolü" href={`/admin/workflows/${workflow.id}`} onClick={managedActions.review}
                                 description={`Akış yönetiyor · bu adımda manuel onay ${(workflow.requiresManualReview ?? requiresManualReview) ? "açık" : "kapalı"}`}
                             />
                         </>
@@ -136,7 +136,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false }) {
                 <OwnershipTransferSection kind="form" itemId={formId} preset="transfer-form" excludeIds={ownerId ? [ownerId] : []}
                     description="Formu ekibinden ya da kulüpten birine devredin; siz editör olarak kalırsınız."
                     blockedContent={workflow
-                        ? <WorkflowManagedRow title="Sahiplik" description="Akış yönetiyor · akışla birlikte devredilir" href={`/admin/workflows/${workflow.id}`} />
+                        ? <WorkflowManagedRow title="Sahiplik" description="Akış yönetiyor · akışla birlikte devredilir" href={`/admin/workflows/${workflow.id}`} onClick={managedActions.ownership} />
                         : null}
                     blockedReason={!isSaved ? "Devretmeden önce değişiklikleri kaydedin." : null}
                     onTransferred={reloadForm}

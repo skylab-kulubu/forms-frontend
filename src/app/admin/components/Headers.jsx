@@ -254,7 +254,7 @@ function WorkflowsToolbar({ compact = false, searchValue = "", onSearchChange, s
           />
         </div>
         <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni akış ekle" aria-label="Yeni akış ekle" />
+        {onCreate ? <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni akış ekle" aria-label="Yeni akış ekle" /> : null}
       </div>
     </div>
   );

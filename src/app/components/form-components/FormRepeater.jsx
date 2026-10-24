@@ -122,19 +122,6 @@ function ChildPicker({ onAdd }) {
 
 export function CreateFormRepeater({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
-  const fields = Array.isArray(prop.fields) ? prop.fields : [];
-
-  const updateChild = (id, changes) => patch({ fields: fields.map((f) => (f.id === id ? { ...f, ...changes } : f)) });
-  const addChild = (type) => patch({ fields: [...fields, { id: genId(), type, props: structuredClone(REGISTRY[type]?.defaults ?? {}) }] });
-  const removeChild = (id) => patch({ fields: fields.filter((f) => f.id !== id) });
-  const moveChild = (id, dir) => {
-    const i = fields.findIndex((f) => f.id === id);
-    const j = i + dir;
-    if (i < 0 || j < 0 || j >= fields.length) return;
-    const next = [...fields];
-    [next[i], next[j]] = [next[j], next[i]];
-    patch({ fields: next });
-  };
 
   return (
     <FieldShell number={questionNumber} title="Tekrarlanan Grup" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
@@ -148,55 +135,77 @@ export function CreateFormRepeater({ questionNumber, props, onPropsChange, readO
         <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20" placeholder="Açıklamanızı buraya yazın." />
       </div>
 
-      <div className="flex flex-col gap-2 pt-1">
+      <RepeaterFieldsEditor fields={prop.fields} onChange={(next) => patch({ fields: next })} />
+    </FieldShell>
+  );
+}
+
+export function RepeaterFieldsEditor({ fields: value, onChange, heading = true }) {
+  const fields = Array.isArray(value) ? value : [];
+
+  const updateChild = (id, changes) => onChange(fields.map((f) => (f.id === id ? { ...f, ...changes } : f)));
+  const addChild = (type) => onChange([...fields, { id: genId(), type, props: structuredClone(REGISTRY[type]?.defaults ?? {}) }]);
+  const removeChild = (id) => onChange(fields.filter((f) => f.id !== id));
+  const moveChild = (id, dir) => {
+    const i = fields.findIndex((f) => f.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= fields.length) return;
+    const next = [...fields];
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange(next);
+  };
+
+  return (
+    <div className="flex flex-col gap-2 pt-1">
+      {heading && (
         <div className="flex items-center gap-2 px-0.5">
           <label className="text-2xs font-medium uppercase tracking-wide text-neutral-400">Her Kayıtta Tekrar Eden Alanlar</label>
           <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-3xs font-semibold text-neutral-300">{fields.length}</span>
           <span className="h-px flex-1 bg-white/5" />
         </div>
+      )}
 
-        {fields.length === 0 && (
-          <p className="px-0.5 text-2xs italic text-neutral-500">Aşağıdan bileşen ekleyin; her kayıt bu alanların bir kopyası olur.</p>
-        )}
+      {fields.length === 0 && (
+        <p className="px-0.5 text-2xs italic text-neutral-500">Aşağıdan bileşen ekleyin; her kayıt bu alanların bir kopyası olur.</p>
+      )}
 
-        {fields.map((child, idx) => {
-          const entry = REGISTRY[child.type];
-          const ChildCreate = entry?.Create;
-          return (
-            <div key={child.id} className="flex flex-col gap-1.5 rounded-lg border border-white/10 bg-white/2 p-2">
-              <div className="flex items-center justify-between px-0.5">
-                <span className="text-3xs font-medium text-neutral-500">Alan {idx + 1} &middot; {entry?.label ?? child.type}</span>
-                <div className="flex items-center gap-0.5">
-                  <button type="button" onClick={() => moveChild(child.id, -1)} disabled={idx === 0} aria-label="Yukarı taşı"
-                    className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
-                  >
-                    <ArrowUp size={13} />
-                  </button>
-                  <button type="button" onClick={() => moveChild(child.id, 1)} disabled={idx === fields.length - 1} aria-label="Aşağı taşı"
-                    className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
-                  >
-                    <ArrowDown size={13} />
-                  </button>
-                  <button type="button" onClick={() => removeChild(child.id)} aria-label="Alanı kaldır"
-                    className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
-                  >
-                    <X size={13} />
-                  </button>
-                </div>
+      {fields.map((child, idx) => {
+        const entry = REGISTRY[child.type];
+        const ChildCreate = entry?.Create;
+        return (
+          <div key={child.id} className="flex flex-col gap-1.5 rounded-lg border border-white/10 bg-white/2 p-2">
+            <div className="flex items-center justify-between px-0.5">
+              <span className="text-3xs font-medium text-neutral-500">Alan {idx + 1} &middot; {entry?.label ?? child.type}</span>
+              <div className="flex items-center gap-0.5">
+                <button type="button" onClick={() => moveChild(child.id, -1)} disabled={idx === 0} aria-label="Yukarı taşı"
+                  className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
+                >
+                  <ArrowUp size={13} />
+                </button>
+                <button type="button" onClick={() => moveChild(child.id, 1)} disabled={idx === fields.length - 1} aria-label="Aşağı taşı"
+                  className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
+                >
+                  <ArrowDown size={13} />
+                </button>
+                <button type="button" onClick={() => removeChild(child.id)} aria-label="Alanı kaldır"
+                  className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                >
+                  <X size={13} />
+                </button>
               </div>
-              {ChildCreate ? (
-                <ChildCreate questionNumber={idx + 1} props={child.props}
-                  onPropsChange={(next) => updateChild(child.id, { props: next })}
-                  compact
-                />
-              ) : null}
             </div>
-          );
-        })}
+            {ChildCreate ? (
+              <ChildCreate questionNumber={idx + 1} props={child.props}
+                onPropsChange={(next) => updateChild(child.id, { props: next })}
+                compact
+              />
+            ) : null}
+          </div>
+        );
+      })}
 
-        <ChildPicker onAdd={addChild} />
-      </div>
-    </FieldShell>
+      <ChildPicker onAdd={addChild} />
+    </div>
   );
 }
 

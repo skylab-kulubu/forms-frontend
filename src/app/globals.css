@@ -178,6 +178,54 @@ body {
     outline-offset: 2px;
   }
 
+  .studio-editable { outline: none; white-space: pre-wrap; overflow-wrap: anywhere; caret-color: var(--color-skylab-400); border-radius: 3px; cursor: text; }
+  .studio-editable:empty::before { content: attr(data-placeholder); color: var(--color-neutral-500); font-weight: 400; pointer-events: none; }
+  .studio-editable:focus { background: rgba(235, 213, 238, 0.06); box-shadow: 0 0 0 3px rgba(235, 213, 238, 0.06); }
+  .studio-editable[contenteditable="false"] { cursor: default; }
+
+  .studio-card {
+    background:
+      radial-gradient(620px 380px at 86% -8%, rgba(224, 200, 229, 0.1), transparent 62%),
+      radial-gradient(520px 360px at 2% 108%, rgba(170, 140, 200, 0.065), transparent 60%),
+      #1a1a1a;
+  }
+
+  @media (width >= 64rem) {
+    .studio-fade {
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent), linear-gradient(to bottom, transparent, #000 16px);
+      -webkit-mask-composite: source-in;
+      mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent), linear-gradient(to bottom, transparent, #000 16px);
+      mask-composite: intersect;
+    }
+  }
+
+  :root.studio-swap::view-transition-old(root),
+  :root.studio-swap::view-transition-new(root) {
+    animation-duration: var(--studio-swap-ms, 180ms);
+    animation-timing-function: ease-out;
+  }
+
+  :root.studio-morph-out [data-studio-page] .studio-card,
+  :root.studio-morph-out [data-flow-step][data-active],
+  :root.studio-morph-in [data-studio-page] .studio-card {
+    view-transition-name: studio-step;
+  }
+
+  :root.studio-swap::view-transition-group(studio-step) {
+    animation-duration: var(--studio-swap-ms, 180ms);
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  :root.studio-swap::view-transition-image-pair(studio-step) {
+    overflow: hidden;
+    border-radius: 1rem;
+  }
+
+  :root.studio-swap::view-transition-old(studio-step),
+  :root.studio-swap::view-transition-new(studio-step) {
+    animation-duration: var(--studio-swap-ms, 180ms);
+  }
+
   .task-prose { font-size: 0.875rem; line-height: 1.625; color: var(--color-neutral-300); overflow-wrap: break-word; }
   .task-prose > :first-child { margin-top: 0; }
   .task-prose > :last-child { margin-bottom: 0; }

@@ -20,7 +20,6 @@ const breadcrumbLabels = {
   "/admin/templates": "Şablonlar",
   "/admin/templates/new-template": "Yeni Şablon",
   "/admin/workflows": "Akışlar",
-  "/admin/workflows/new-workflow": "Yeni Akış",
   "/admin/ownership": "Sahipsiz içerikler",
 };
 
@@ -224,7 +223,6 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         <NavGroup icon={Workflow} label="Akışlar"
           pathname={pathname} onItemClick={onItemClick}
           items={[
-            { href: "/admin/workflows/new-workflow", icon: Plus, label: "Yeni Akış" },
             { href: "/admin/workflows", icon: List, label: "Akışları Görüntüle" },
             ...(activeWorkflowItem ? [activeWorkflowItem] : []),
           ]}

@@ -51,6 +51,8 @@ const savedFields = (state) => ({
 export const hasDraftChanges = (state) =>
     JSON.stringify(draftFields(state)) !== JSON.stringify(draftFields(state._saved));
 
+export const markStateSaved = (state) => withSnapshot(state);
+
 const withSavedFlag = (state) => ({
     ...state,
     isSaved: JSON.stringify(savedFields(state)) === JSON.stringify(state._saved),
@@ -140,15 +142,16 @@ function formReducer(state, action) {
     return next === state ? state : withSavedFlag({ ...next, _history: state._history });
 }
 
-function initEditorState({ initialData, initialDraft }) {
+function initEditorState({ initialData, initialDraft, initialState }) {
+    if (initialState) return { ...initialState, _history: [] };
     const state = withSnapshot(initialData ? { ...initialFormState, ...initialData, _history: [] } : initialFormState);
     return initialDraft ? formReducer(state, { type: "LOAD_DRAFT", payload: initialDraft }) : state;
 }
 
 const FormEditorContext = createContext(null);
 
-export function FormEditorProvider({ children, initialData, initialDraft = null }) {
-    const [state, rawDispatch] = useReducer(formReducer, { initialData, initialDraft }, initEditorState);
+export function FormEditorProvider({ children, initialData, initialDraft = null, initialState = null }) {
+    const [state, rawDispatch] = useReducer(formReducer, { initialData, initialDraft, initialState }, initEditorState);
 
     const stateRef = useRef(state);
     useEffect(() => {
