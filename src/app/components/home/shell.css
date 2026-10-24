@@ -22,6 +22,14 @@
 .hm-acc-a:hover { background: rgba(255, 255, 255, .05); color: var(--n100); }
 .hm-acc-a > svg { color: var(--n500); }
 .hm-acc-a > svg:last-child:not(:first-child) { margin-left: auto; }
+.hm-acc-a[aria-current="page"] { background: rgba(224, 200, 229, .08); color: var(--s300); }
+.hm-acc-a[aria-current="page"] > svg { color: var(--s300); }
+.hm-pg { display: none; }
+.hm-pg-btn { cursor: pointer; }
+.hm-pg-btn > svg { margin: 0 0 0 4px; color: var(--n500); transition: transform .2s var(--ease); }
+.hm-pg-btn[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.hm-pg-pop { left: 0; right: auto; width: min(250px, 100%); }
+@media (max-width: 819px) { .hm-brand { display: none; } .hm-pg { display: block; } }
 .hm-acc-cta { display: none; margin-top: 6px; border-top: 1px solid var(--l1); padding-top: 8px; }
 .hm-acc-cta .f-act { width: 100%; height: 36px; justify-content: center; }
 @media (max-width: 639px) {
@@ -29,10 +37,14 @@
   .f-hdr-r { gap: 6px; }
   .f-hdr-r > :not(.f-act, .hm-acc) { display: none; }
   .hm-acc { display: block; }
+  .hm-pg-btn img { width: 26px; height: 26px; }
+  .hm-pg-btn .f-brand-a { margin-left: 8px; font-size: 15px; }
+  .hm-pg-btn .f-brand-b { margin-left: 5px; font-size: 15px; }
+  .hm-pg-btn > svg { width: 12px; height: 12px; margin-left: 3px; }
 }
-@media (max-width: 399px) { .f-hdr-r > .f-act svg { display: none; } }
-@media (min-width: 350px) and (max-width: 389px) { .f-hdr-r.has-act > .hm-acc { display: none; } }
-@media (max-width: 349px) { .f-hdr-r > .f-act { display: none; } .hm-acc-cta { display: block; } }
+@media (max-width: 419px) { .f-hdr-r > .f-act svg { display: none; } }
+@media (min-width: 352px) and (max-width: 399px) { .f-hdr-r.has-act > .hm-acc { display: none; } }
+@media (max-width: 351px) { .f-hdr-r > .f-act { display: none; } .hm-acc-cta { display: block; } }
 .hm-me button { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 6px; color: var(--n400); cursor: pointer; transition: color .15s; }
 .hm-me button:hover { color: var(--s500); }
 

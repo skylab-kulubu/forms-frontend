@@ -4,7 +4,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { ArrowRight, LayoutDashboard, LogIn, LogOut } from "lucide-react";
+import { ArrowRight, ChevronDown, LayoutDashboard, LogIn, LogOut, UserRound, Users } from "lucide-react";
 import { loginWithKeycloak, logout } from "@/lib/authActions";
 import HoverCard from "../utils/HoverCard";
 import Avatar from "../utils/Avatar";
@@ -82,6 +82,42 @@ function usePopover() {
   };
 
   return { open, setOpen, rootRef, buttonRef, closeOnPick };
+}
+
+function PageMenu({ isT, toTop }) {
+  const { open, setOpen, rootRef, buttonRef, closeOnPick } = usePopover();
+  const popId = useId();
+
+  return (
+    <div className="hm-pg" ref={rootRef}>
+      <button
+        ref={buttonRef}
+        type="button"
+        className="f-brand hm-pg-btn"
+        aria-expanded={open}
+        aria-controls={popId}
+        aria-label="SKY LAB Forms, sayfalar"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Image src="/skylab.svg" alt="" width={28} height={28} unoptimized />
+        <span className="f-brand-a">SKY LAB</span>
+        <span className="f-brand-b">Forms</span>
+        <ChevronDown size={14} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="hm-acc-pop hm-pg-pop" id={popId} onClick={closeOnPick}>
+          <Link className="hm-acc-a" href={HOME_PATHS.kisiler} aria-current={isT ? undefined : "page"} onClick={isT ? undefined : toTop}>
+            <UserRound size={15} aria-hidden="true" />
+            Başvuranlar için
+          </Link>
+          <Link className="hm-acc-a" href={HOME_PATHS.topluluklar} aria-current={isT ? "page" : undefined} onClick={isT ? toTop : undefined}>
+            <Users size={15} aria-hidden="true" />
+            Topluluklar için
+          </Link>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function AccountMenu({ status, user, isAdmin, action }) {
@@ -210,11 +246,12 @@ export default function HomeHeader({ page }) {
   return (
     <header className={"f-hdr" + (from === null ? " is-intro" : "")}>
       <div className="f-hdr-in">
-        <Link className="f-brand" href={HOME_PATHS.kisiler} onClick={isT ? undefined : toTop} aria-label="SKY LAB Forms">
+        <Link className="f-brand hm-brand" href={HOME_PATHS.kisiler} onClick={isT ? undefined : toTop} aria-label="SKY LAB Forms">
           <Image src="/skylab.svg" alt="" width={28} height={28} unoptimized />
           <span className="f-brand-a">SKY LAB</span>
           <span className="f-brand-b">Forms</span>
         </Link>
+        <PageMenu isT={isT} toTop={toTop} />
         <nav className="f-hdr-pg" aria-label="Sayfalar" ref={tabsRef}>
           <span className="f-hdr-pill" ref={pillRef} aria-hidden="true" />
           <Link href={HOME_PATHS.kisiler} data-key="kisiler" aria-current={isT ? undefined : "page"} onClick={isT ? undefined : toTop}>
