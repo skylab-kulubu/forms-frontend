@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../apiClient";
 
 const fetchWorkflows = async ({ page = 1, pageSize, search, sortDirection, showArchived = false } = {}) => {
@@ -14,7 +14,19 @@ const fetchWorkflows = async ({ page = 1, pageSize, search, sortDirection, showA
 
 const fetchWorkflow = async (workflowId) => request(`/api/admin/workflows/${workflowId}`);
 
-const fetchAvailableForms = async (workflowId) => request(`/api/admin/workflows/${workflowId}/available-forms`);
+const fetchAvailableForms = async (workflowId) =>
+  request(workflowId ? `/api/admin/workflows/${workflowId}/available-forms` : "/api/admin/workflows/available-forms");
+
+const fetchRunsOverview = async (workflowId) => request(`/api/admin/workflows/${workflowId}/runs/overview`);
+
+const fetchRuns = async ({ workflowId, page = 1, pageSize = 20, filter = 0, nodeKey }) => {
+  const params = new URLSearchParams();
+  params.set("Page", page);
+  params.set("PageSize", pageSize);
+  params.set("Filter", filter);
+  if (nodeKey) params.set("NodeKey", nodeKey);
+  return request(`/api/admin/workflows/${workflowId}/runs?${params.toString()}`);
+};
 
 const fetchWorkflowVersions = async (workflowId) => request(`/api/admin/workflows/${workflowId}/versions`);
 
@@ -64,6 +76,35 @@ export const useAvailableFormsQuery = (workflowId, options = {}) =>
     retry: options.retry ?? false,
     ...options,
   });
+
+export const useCandidateFormsQuery = (options = {}) =>
+  useQuery({
+    queryKey: ["workflow-candidate-forms"],
+    queryFn: () => fetchAvailableForms(null),
+    retry: options.retry ?? false,
+    ...options,
+  });
+
+export const useWorkflowRunsOverviewQuery = (workflowId, options = {}) =>
+  useQuery({
+    queryKey: ["workflow-runs-overview", workflowId],
+    queryFn: () => fetchRunsOverview(workflowId),
+    enabled: options.enabled ?? !!workflowId,
+    retry: options.retry ?? false,
+    ...options,
+  });
+
+export const useWorkflowRunsQuery = (workflowId, options = {}) => {
+  const { page = 1, pageSize = 20, filter = 0, nodeKey = null, ...queryOptions } = options;
+  return useQuery({
+    queryKey: ["workflow-runs", workflowId, page, pageSize, filter, nodeKey],
+    queryFn: () => fetchRuns({ workflowId, page, pageSize, filter, nodeKey }),
+    enabled: queryOptions.enabled ?? !!workflowId,
+    retry: queryOptions.retry ?? false,
+    placeholderData: keepPreviousData,
+    ...queryOptions,
+  });
+};
 
 export const useWorkflowVersionsQuery = (workflowId, options = {}) =>
   useQuery({

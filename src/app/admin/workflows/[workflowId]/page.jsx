@@ -1,22 +1,34 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { FileXCorner } from "lucide-react";
-import WorkflowEditor from "../../components/workflow-editor/WorkflowEditor";
-import WorkflowEditorSkeleton from "../../components/workflow-editor/components/WorkflowEditorSkeleton";
 import StateCard from "@/app/components/StateCard";
 import { useWorkflowQuery } from "@/lib/hooks/useWorkflowAdmin";
+import WorkflowFlowPage from "../../components/workflow-page/WorkflowFlowPage";
 
-export default function WorkflowEditorPage() {
+function FlowPageSkeleton() {
+  return (
+    <div className="flex flex-col gap-6 p-4 lg:p-6" aria-busy="true">
+      <div className="grid grid-cols-4 gap-3">
+        {Array.from({ length: 4 }, (_, index) => <div key={index} className="shimmer h-28 rounded-lg" />)}
+      </div>
+      <div className="grid grid-cols-12 gap-8">
+        <div className="col-span-12 space-y-2 lg:col-span-8">{Array.from({ length: 6 }, (_, index) => <div key={index} className="shimmer h-12 rounded-lg" />)}</div>
+        <div className="col-span-12 space-y-3 lg:col-span-4">{Array.from({ length: 3 }, (_, index) => <div key={index} className="shimmer h-16 rounded-lg" />)}</div>
+      </div>
+    </div>
+  );
+}
+
+export default function WorkflowPage() {
   const params = useParams();
   const rawId = params?.workflowId;
   const workflowId = Array.isArray(rawId) ? rawId[0] : rawId;
-  const initialFormId = useSearchParams().get("form");
 
-  const { data, isLoading, error, refetch } = useWorkflowQuery(workflowId);
+  const { data, isLoading, error } = useWorkflowQuery(workflowId);
   const workflow = data?.data ?? data ?? null;
 
-  if (isLoading) return <WorkflowEditorSkeleton />;
+  if (isLoading) return <FlowPageSkeleton />;
 
   if (error || !workflow) {
     return (
@@ -26,5 +38,5 @@ export default function WorkflowEditorPage() {
     );
   }
 
-  return <WorkflowEditor workflow={workflow} onRefresh={refetch} initialFormId={initialFormId} />;
+  return <WorkflowFlowPage workflow={workflow} />;
 }
