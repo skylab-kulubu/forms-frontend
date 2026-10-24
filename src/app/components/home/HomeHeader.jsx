@@ -54,13 +54,10 @@ function Account({ status, user, isAdmin }) {
   );
 }
 
-function AccountMenu({ status, user, isAdmin, action }) {
+function usePopover() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const buttonRef = useRef(null);
-  const popId = useId();
-  const signedIn = status === "authenticated";
-  const photo = user?.profilePictureUrl?.trim() || "";
 
   useEffect(() => {
     if (!open) return undefined;
@@ -83,6 +80,15 @@ function AccountMenu({ status, user, isAdmin, action }) {
   const closeOnPick = (e) => {
     if (e.target.closest("a, button")) setOpen(false);
   };
+
+  return { open, setOpen, rootRef, buttonRef, closeOnPick };
+}
+
+function AccountMenu({ status, user, isAdmin, action }) {
+  const { open, setOpen, rootRef, buttonRef, closeOnPick } = usePopover();
+  const popId = useId();
+  const signedIn = status === "authenticated";
+  const photo = user?.profilePictureUrl?.trim() || "";
 
   return (
     <div className="hm-acc" ref={rootRef}>
