@@ -95,8 +95,8 @@ export default function Breadcrumbs({ segments, labels = {}, includeRoot = true,
       {items?.length > 1 && (
         <div className="flex items-center gap-1.5 min-w-0 md:hidden">
           {prev && (
-            <Link href={prev.href} className="inline-flex items-center gap-1 rounded-md py-1 text-neutral-400 transition-colors hover:text-neutral-100">
-              <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+            <Link href={prev.href} className="inline-flex min-w-0 items-center gap-1 rounded-md py-1 text-neutral-400 transition-colors hover:text-neutral-100">
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 rotate-180" />
               <span className="truncate max-w-[120px] text-xs">{prev.label}</span>
             </Link>
           )}
