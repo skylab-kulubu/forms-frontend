@@ -10,7 +10,6 @@ import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow, UserX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ClubSwitcher from "./ClubSwitcher";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
@@ -21,7 +20,6 @@ const breadcrumbLabels = {
   "/admin/templates": "Şablonlar",
   "/admin/templates/new-template": "Yeni Şablon",
   "/admin/workflows": "Akışlar",
-  "/admin/workflows/new-workflow": "Yeni Akış",
   "/admin/ownership": "Sahipsiz içerikler",
 };
 
@@ -225,7 +223,6 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         <NavGroup icon={Workflow} label="Akışlar"
           pathname={pathname} onItemClick={onItemClick}
           items={[
-            { href: "/admin/workflows/new-workflow", icon: Plus, label: "Yeni Akış" },
             { href: "/admin/workflows", icon: List, label: "Akışları Görüntüle" },
             ...(activeWorkflowItem ? [activeWorkflowItem] : []),
           ]}
@@ -248,9 +245,8 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         </div>
       ) : null}
 
-      <div className="mt-auto space-y-2">
+      <div className="mt-auto">
         <NavItem href="/admin/how-to-use" icon={BookOpen} label="Nasıl Kullanılır" active={pathname === "/admin/how-to-use"} onClick={onItemClick} />
-        <ClubSwitcher />
       </div>
     </div>
   );
@@ -277,6 +273,7 @@ export default function Sidebar({ user, children }) {
         [`/admin/forms/${formId}/edit`]: "Düzenleme",
         [`/admin/forms/${formId}/responses`]: "Cevaplar",
         [`/admin/forms/${formId}/analytics`]: "Analitik",
+        [`/admin/forms/${formId}/responses/:responseId`]: "Cevap",
       };
     }
 

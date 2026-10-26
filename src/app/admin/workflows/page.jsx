@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { FileSearchCorner, FileXCorner } from "lucide-react";
+import { FilePlus, FileSearchCorner, FileXCorner } from "lucide-react";
 import { WorkflowsHeader } from "../components/Headers";
 import WorkflowListItem, { WorkflowListHeader, WorkflowListItemSkeleton } from "../components/WorkflowListItem";
 import Pagination from "../components/utils/Pagination";
 import StateCard from "@/app/components/StateCard";
+import { actionClass } from "../components/utils/SidePanel";
 import { useWorkflowsQuery } from "@/lib/hooks/useWorkflowAdmin";
 
 export default function WorkflowsPage() {
-  const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -49,7 +49,7 @@ export default function WorkflowsPage() {
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-hidden p-4 lg:p-6">
       <WorkflowsHeader searchValue={searchValue} onSearchChange={setSearchValue}
         sortValue={sortValue} onSortChange={setSortValue} showArchived={showArchived} onShowArchivedChange={setShowArchived}
-        onRefresh={() => refetch()} onCreate={() => router.push("/admin/workflows/new-workflow")}
+        onRefresh={() => refetch()}
       />
 
       <AnimatePresence mode="wait">
@@ -63,9 +63,18 @@ export default function WorkflowsPage() {
             ) : hasError ? (
               <StateCard title="Akışlar yüklenemedi" Icon={FileXCorner} description="Akış verileri yüklenirken hata oluştu." />
             ) : workflows.length === 0 ? (
-              <StateCard title="Akış bulunamadı" Icon={FileSearchCorner}
-                description={debouncedSearch ? "Aranılan kelimede akış bulunamadı." : showArchived ? "Henüz bir akış oluşturmadınız." : "Gösterilecek akış yok. Arşivlenen akışlar filtrelerden açılabilir."}
-              />
+              debouncedSearch ? (
+                <StateCard title="Akış bulunamadı" Icon={FileSearchCorner} description="Aranılan kelimede akış bulunamadı." />
+              ) : (
+                <StateCard title="Henüz akış yok" Icon={FileSearchCorner}
+                  description={`Akış oluşturmak için bir formu düzenlerken altındaki "Sonraki adım ekle" düğmesini kullanın. İkinci adım eklenince akış burada görünür.${showArchived ? "" : " Arşivlenen akışlar filtrelerden açılabilir."}`}
+                >
+                  <Link href="/admin/forms/new-form" className={`${actionClass()} mt-4`}>
+                    <FilePlus size={13} className="opacity-70" />
+                    Yeni form
+                  </Link>
+                </StateCard>
+              )
             ) : (
               <div className="divide-y divide-white/5">
                 {workflows.map((workflow) => (

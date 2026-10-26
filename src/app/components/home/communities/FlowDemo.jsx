@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { ArrowRight, Check, Clock, Mail, RotateCcw, Route, X } from "lucide-react";
 import Phone from "../Phone";
-import { useInView, useReducedMotion } from "../useInView";
+import Duo from "../Duo";
+import { useInView, useNarrow, useReducedMotion } from "../useInView";
 import "./flow-demo.css";
 
 const NODES = {
@@ -420,22 +421,40 @@ export default function FlowDemo() {
   const rootRef = useRef(null);
   const inView = useInView(rootRef, { threshold: 0.2 });
   const reduce = useReducedMotion();
+  const narrow = useNarrow(rootRef);
   const [s, dispatch] = useReducer(reducer, START);
+  const [side, setSide] = useState(0);
   const { auto, press, ans, pos, phase, out, mail, mailN, decN } = s;
 
   if (s.seen !== inView) dispatch({ type: "view", visible: inView, reduce });
+
+  useEffect(() => {
+    if (!narrow) return undefined;
+    const review = phase === "review" && !out;
+    const id = setTimeout(() => setSide(review ? 1 : 0), review ? 1300 : 250);
+    return () => clearTimeout(id);
+  }, [narrow, phase, out, pos, mailN]);
+
+  useEffect(() => {
+    if (!narrow) return;
+    const canvas = rootRef.current?.querySelector(".duo .fd-canvas");
+    const cur = canvas?.querySelector(".fd-li.is-cur, .fd-li.is-out");
+    if (!cur) return;
+    const top = canvas.scrollTop + cur.getBoundingClientRect().top - canvas.getBoundingClientRect().top - 12;
+    canvas.scrollTo({ top, behavior: "smooth" });
+  }, [narrow, pos, out]);
 
   useEffect(() => {
     if (!auto) return;
     let autoT;
     if (phase === "review" && !out) {
       const no = ans !== "Backend" && pos !== "basvuru";
-      autoT = setTimeout(() => dispatch({ type: "press", kind: no ? "no" : "ok" }), pos === "basvuru" ? 2800 : 2400);
+      autoT = setTimeout(() => dispatch({ type: "press", kind: no ? "no" : "ok" }), (pos === "basvuru" ? 2800 : 2400) + (narrow ? 1300 : 0));
     } else if (out || phase === "done") {
       autoT = setTimeout(() => dispatch({ type: "restart", ans: ans === "Backend" ? "Frontend" : "Backend" }), 4600);
     }
     return () => clearTimeout(autoT);
-  }, [auto, ans, pos, phase, out, mailN]);
+  }, [auto, ans, pos, phase, out, mailN, narrow]);
 
   useEffect(() => {
     if (!press) return;
@@ -445,9 +464,9 @@ export default function FlowDemo() {
 
   useEffect(() => {
     if (!inView || phase !== "fill") return;
-    const later = setTimeout(() => dispatch({ type: "advance", to: pos }), 1800);
+    const later = setTimeout(() => dispatch({ type: "advance", to: pos }), narrow ? 2600 : 1800);
     return () => clearTimeout(later);
-  }, [inView, phase, pos]);
+  }, [inView, phase, pos, narrow]);
 
   const isLocked = locked(s);
   const isIntro = phase === "fill";
@@ -456,109 +475,124 @@ export default function FlowDemo() {
   const j = journey(s);
   const screenKey = `s${pos}${phase}${out || ""}`;
 
+  const tools = (
+    <>
+      <button type="button" className={auto ? "f-auto is-on" : "f-auto"} aria-pressed={auto} onClick={() => dispatch({ type: "toggle" })}>
+        {auto ? PAUSE : PLAY}
+        {auto ? "Durdur" : narrow ? "Oynat" : "Otomatik oynat"}
+      </button>
+      <button
+        type="button"
+        className="f-reset"
+        onClick={() => dispatch({ type: "restart", ans: "Backend" })}
+        disabled={!isLocked && ans === "Backend" && !auto}
+      >
+        <RotateCcw size={13} aria-hidden="true" />
+        Baştan
+      </button>
+    </>
+  );
+
+  const phone = (
+    <Phone scroll={false}>
+      <div className="fd-push" key={`p${mailN}`} role="status">
+        <span className="fd-push-ic">
+          <Mail size={15} aria-hidden="true" />
+        </span>
+        <div className="fd-push-m">
+          <p>
+            <b>E-posta</b>
+            <span>şimdi</span>
+          </p>
+          <p>{mail}</p>
+        </div>
+      </div>
+      <div className="f-phone-sc">
+        {isIntro ? (
+          <Intro key={screenKey} stage={j.stage} title={NODES[pos] ? NODES[pos].title : ""} items={j.items} />
+        ) : (
+          <Status key={screenKey} kind={kind} stage={j.stage} items={j.items} />
+        )}
+      </div>
+    </Phone>
+  );
+
+  const panel = (
+    <div className="f-dm fd-panel">
+      <div className="f-dm-bar">
+        <span className="f-dm-t">Takım seçmeleri</span>
+        <span className="f-dm-m">Akış · 4 adım</span>
+        <span className="f-dm-grow"></span>
+        <span className="fd-leg" aria-hidden="true">
+          <span>
+            <i style={SWATCH.sent}></i>
+            gönderilince
+          </span>
+          <span>
+            <i style={SWATCH.ok}></i>
+            onaylanınca
+          </span>
+          <span>
+            <i style={SWATCH.no}></i>
+            reddedilince
+          </span>
+        </span>
+      </div>
+      <FlowMap s={s} />
+      <div className="fd-ctl">
+        <div className="fd-ans">
+          <span className="f-dm-k">Ayşe&apos;nin takım cevabı</span>
+          <div className="f-seg2" role="group" aria-label="Ayşe'nin takım cevabı">
+            {TEAMS.map((t) => (
+              <button type="button" key={t} aria-pressed={ans === t} onClick={() => dispatch({ type: "pick", team: t })} disabled={isLocked}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="fd-acts">
+          <button type="button" className={press === "ok" ? "f-ok is-press" : "f-ok"} onClick={() => dispatch({ type: "approve" })} disabled={cantDecide}>
+            <Check size={15} aria-hidden="true" />
+            Onayla
+          </button>
+          <button type="button" className={press === "no" ? "f-no is-press" : "f-no"} onClick={() => dispatch({ type: "decline" })} disabled={cantDecide}>
+            <X size={15} aria-hidden="true" />
+            Reddet
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="fd" ref={rootRef}>
+    <div className={auto ? "fd is-auto" : "fd"} ref={rootRef}>
       <div className="fd-top">
         <p className="f-hint" key={`h${pos}${phase}${out || ""}${ans}`}>
           <i></i>
           <span>{hint(s)}</span>
         </p>
-        <div className="fd-top-r">
-          <button type="button" className={auto ? "fd-auto is-on" : "fd-auto"} aria-pressed={auto} onClick={() => dispatch({ type: "toggle" })}>
-            {auto ? PAUSE : PLAY}
-            {auto ? "Durdur" : "Otomatik oynat"}
-          </button>
-          <button
-            type="button"
-            className="f-reset"
-            onClick={() => dispatch({ type: "restart", ans: "Backend" })}
-            disabled={!isLocked && ans === "Backend" && !auto}
-          >
-            <RotateCcw size={13} aria-hidden="true" />
-            Baştan
-          </button>
-        </div>
+        {!narrow && <div className="fd-top-r">{tools}</div>}
       </div>
 
-      <div className="fd-stage2">
-        <div className="fd-phw">
-          <Phone scroll={false}>
-            <div className="fd-push" key={`p${mailN}`} role="status">
-              <span className="fd-push-ic">
-                <Mail size={15} aria-hidden="true" />
-              </span>
-              <div className="fd-push-m">
-                <p>
-                  <b>E-posta</b>
-                  <span>şimdi</span>
-                </p>
-                <p>{mail}</p>
-              </div>
-            </div>
-            <div className="f-phone-sc">
-              {isIntro ? (
-                <Intro key={screenKey} stage={j.stage} title={NODES[pos] ? NODES[pos].title : ""} items={j.items} />
-              ) : (
-                <Status key={screenKey} kind={kind} stage={j.stage} items={j.items} />
-              )}
-            </div>
-          </Phone>
-        </div>
+      {narrow ? (
+        <Duo labels={["Başvuran", "Ekip"]} side={side} onSide={setSide} tools={tools}>
+          {phone}
+          <Phone scroll={false}>{panel}</Phone>
+        </Duo>
+      ) : (
+        <div className="fd-stage2">
+          <div className="fd-phw">{phone}</div>
 
-        <div className="fd-link" aria-hidden="true">
-          <svg viewBox="0 0 56 640" preserveAspectRatio="none">
-            <path d="M56 320 C 28 320, 28 300, 0 300" />
-          </svg>
-          {decN > 0 && <span className="fd-bead" key={`b${decN}`}></span>}
-        </div>
-
-        <div className="fd-mapw">
-          <div className="f-dm">
-            <div className="f-dm-bar">
-              <span className="f-dm-t">Takım seçmeleri</span>
-              <span className="f-dm-m">Akış · 4 adım</span>
-              <span className="f-dm-grow"></span>
-              <span className="fd-leg" aria-hidden="true">
-                <span>
-                  <i style={SWATCH.sent}></i>
-                  gönderilince
-                </span>
-                <span>
-                  <i style={SWATCH.ok}></i>
-                  onaylanınca
-                </span>
-                <span>
-                  <i style={SWATCH.no}></i>
-                  reddedilince
-                </span>
-              </span>
-            </div>
-            <FlowMap s={s} />
-            <div className="fd-ctl">
-              <div className="fd-ans">
-                <span className="f-dm-k">Ayşe&apos;nin takım cevabı</span>
-                <div className="f-seg2" role="group" aria-label="Ayşe'nin takım cevabı">
-                  {TEAMS.map((t) => (
-                    <button type="button" key={t} aria-pressed={ans === t} onClick={() => dispatch({ type: "pick", team: t })} disabled={isLocked}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="fd-acts">
-                <button type="button" className={press === "ok" ? "f-ok is-press" : "f-ok"} onClick={() => dispatch({ type: "approve" })} disabled={cantDecide}>
-                  <Check size={15} aria-hidden="true" />
-                  Onayla
-                </button>
-                <button type="button" className={press === "no" ? "f-no is-press" : "f-no"} onClick={() => dispatch({ type: "decline" })} disabled={cantDecide}>
-                  <X size={15} aria-hidden="true" />
-                  Reddet
-                </button>
-              </div>
-            </div>
+          <div className="fd-link" aria-hidden="true">
+            <svg viewBox="0 0 56 640" preserveAspectRatio="none">
+              <path d="M56 320 C 28 320, 28 300, 0 300" />
+            </svg>
+            {decN > 0 && <span className="fd-bead" key={`b${decN}`}></span>}
           </div>
+
+          <div className="fd-mapw">{panel}</div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

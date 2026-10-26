@@ -161,7 +161,17 @@ function reducer(state, action) {
         timeLimitMinutes: form.timeLimitMinutes ?? null,
       };
 
-      return touched(state, { nodes: [...state.nodes, node], selectedKey: nodeKey, panelTab: "step" });
+      const source = action.from ? state.nodes.find((item) => item.nodeKey === action.from.sourceNodeKey) : null;
+      if (!source) return touched(state, { nodes: [...state.nodes, node], selectedKey: nodeKey, panelTab: "step" });
+
+      const group = state.transitions.filter((transition) => transition.sourceNodeKey === source.nodeKey && transition.trigger === action.from.trigger);
+      const transitions = group.length === 1 && !group[0].condition
+        ? state.transitions.map((transition) => (transition.localId === group[0].localId ? { ...transition, targetNodeKey: nodeKey } : transition))
+        : group.length === 0
+          ? [...state.transitions, { localId: nextTransitionId(), sourceNodeKey: source.nodeKey, targetNodeKey: nodeKey, trigger: action.from.trigger, priority: 0, condition: null }]
+          : state.transitions;
+
+      return touched(state, { nodes: [...state.nodes, node], transitions: renumber(transitions), selectedKey: nodeKey, panelTab: "step" });
     }
 
     case "REMOVE_NODE": {

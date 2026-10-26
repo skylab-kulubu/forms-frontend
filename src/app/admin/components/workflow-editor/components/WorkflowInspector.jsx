@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 import { Dropdown } from "@/app/components/utils/Dropdown";
 import {
-  ACTION_ICON, FOCUS_RING, MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTabs, PanelTextarea,
-  ROW, ROW_HOVER, SectionHeader, TILE, ToggleRow, actionClass, panelShellClass,
+  ACTION_ICON, FOCUS_RING, MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTextarea,
+  ROW, ROW_HOVER, SectionHeader, TILE, ToggleRow, actionClass,
 } from "@/app/admin/components/utils/SidePanel";
 import AddStepPicker from "./AddStepPicker";
 import { OwnershipTransferSection } from "../../OwnershipTransfer";
@@ -26,9 +26,6 @@ import {
 
 const END_VALUE = "__end";
 const FLASH_MS = 1200;
-
-const FLOW_TAB = { id: "flow", label: "Akış" };
-const DESCRIPTION_TAB = { id: "description", label: "Açıklama" };
 
 const TRIGGER_SECTION = {
   [TRIGGER.SUBMITTED]: { label: "Gönderildiğinde", description: "Cevap gönderilince başvuru nereye gider?", dot: "bg-neutral-500" },
@@ -475,7 +472,7 @@ function TriggerSection({ trigger, sourceNode, nodes, transitions, schemasByForm
   );
 }
 
-function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNode, openKey, setOpenKey, flashKey }) {
+export function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNode, openKey, setOpenKey, flashKey, onOpenForm = null, settings = true }) {
   const { nodes, transitions } = state;
   const schema = schemasByFormId[selectedNode.formId]?.schema;
   const questionCount = (schema ?? []).filter((field) => field?.type !== "separator").length;
@@ -484,46 +481,75 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
 
   return (
     <div className={PANEL_STACK}>
-      <section className={PANEL_SECTION}>
-        <SectionHeader title="Adım ayarları" description={schema ? `${questionCount} soru` : "Sorular yükleniyor"} />
+      {settings || nodeIssues.length > 0 ? (
+        <section className={PANEL_SECTION}>
+          {settings ? <SectionHeader title="Adım ayarları" description={schema ? `${questionCount} soru` : "Sorular yükleniyor"} /> : null}
 
-        {nodeIssues.map((issue, index) => (
-          <PanelNotice key={`${issue.code}-${index}`} tone="red">
-            {validationMessage(issue)}
-            {validationAction(issue) === "openForm" && (
-              <Link href={formHref} target="_blank" className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-white">
-                Formu düzenle
-              </Link>
-            )}
-          </PanelNotice>
-        ))}
+          {nodeIssues.map((issue, index) => (
+            <PanelNotice key={`${issue.code}-${index}`} tone="red">
+              {validationMessage(issue)}
+              {validationAction(issue) === "openForm" && (onOpenForm ? (
+                <button type="button" onClick={() => onOpenForm(selectedNode.formId)} className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-white">
+                  Formu düzenle
+                </button>
+              ) : (
+                <Link href={formHref} target="_blank" className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-white">
+                  Formu düzenle
+                </Link>
+              ))}
+            </PanelNotice>
+          ))}
 
-        <ToggleRow title="Manuel onay" checked={selectedNode.requiresManualReview}
-          description={selectedNode.requiresManualReview
-            ? "Cevap yetkili onayını bekler; onaylanınca ve reddedilince ayrı yönlendirilir."
-            : "Cevap gönderilince onay beklemeden sonraki adıma geçer."}
-          onChange={() => dispatch({ type: "SET_NODE_REVIEW", nodeKey: selectedNode.nodeKey, value: !selectedNode.requiresManualReview })}
-        />
+          {settings ? (
+            <>
+              <ToggleRow title="Manuel onay" checked={selectedNode.requiresManualReview}
+                description={selectedNode.requiresManualReview
+                  ? "Cevap yetkili onayını bekler; onaylanınca ve reddedilince ayrı yönlendirilir."
+                  : "Cevap gönderilince onay beklemeden sonraki adıma geçer."}
+                onChange={() => dispatch({ type: "SET_NODE_REVIEW", nodeKey: selectedNode.nodeKey, value: !selectedNode.requiresManualReview })}
+              />
 
-        <WorkflowManagedRow title="Kişisel süre" linkLabel="Formda" newTab href={`${formHref}?panel=timing`}
-          description={isTimedNode(selectedNode) ? `Form yönetiyor · başlatınca ${durationText(selectedNode.timeLimitMinutes)}` : "Form yönetiyor · kapalı"}
-        />
+              {onOpenForm ? (
+                <div className={`${ROW} flex items-center justify-between gap-3 border-white/10 px-3 py-2.5`}>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-neutral-100">Kişisel süre</p>
+                    <p className="text-2xs text-neutral-500">{isTimedNode(selectedNode) ? `Form yönetiyor · başlatınca ${durationText(selectedNode.timeLimitMinutes)}` : "Form yönetiyor · kapalı"}</p>
+                  </div>
+                  <button type="button" onClick={() => onOpenForm(selectedNode.formId, { panel: "timing" })}
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-2xs text-neutral-300 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-neutral-50 ${FOCUS_RING}`}
+                  >
+                    Formda
+                    <ChevronRight size={12} className="opacity-70" />
+                  </button>
+                </div>
+              ) : (
+                <WorkflowManagedRow title="Kişisel süre" linkLabel="Formda" newTab href={`${formHref}?panel=timing`}
+                  description={isTimedNode(selectedNode) ? `Form yönetiyor · başlatınca ${durationText(selectedNode.timeLimitMinutes)}` : "Form yönetiyor · kapalı"}
+                />
+              )}
 
-        <div className="flex flex-wrap gap-2">
-          <Link href={formHref} target="_blank" className={`${actionClass()} min-w-fit flex-1`}>
-            <ExternalLink size={13} className={ACTION_ICON} />
-            Formu aç
-          </Link>
-          <PanelButton icon={Flag} disabled={selectedNode.isStart} onClick={() => dispatch({ type: "SET_START", nodeKey: selectedNode.nodeKey })}
-            className="min-w-fit flex-1"
-          >
-            Başlangıç yap
-          </PanelButton>
-          <PanelButton icon={Trash2} danger onClick={() => dispatch({ type: "REMOVE_NODE", nodeKey: selectedNode.nodeKey })} className="min-w-fit flex-1">
-            Adımı çıkar
-          </PanelButton>
-        </div>
-      </section>
+              <div className="flex flex-wrap gap-2">
+                {onOpenForm ? (
+                  <PanelButton icon={ExternalLink} onClick={() => onOpenForm(selectedNode.formId)} className="min-w-fit flex-1">Formu aç</PanelButton>
+                ) : (
+                  <Link href={formHref} target="_blank" className={`${actionClass()} min-w-fit flex-1`}>
+                    <ExternalLink size={13} className={ACTION_ICON} />
+                    Formu aç
+                  </Link>
+                )}
+                <PanelButton icon={Flag} disabled={selectedNode.isStart} onClick={() => dispatch({ type: "SET_START", nodeKey: selectedNode.nodeKey })}
+                  className="min-w-fit flex-1"
+                >
+                  Başlangıç yap
+                </PanelButton>
+                <PanelButton icon={Trash2} danger onClick={() => dispatch({ type: "REMOVE_NODE", nodeKey: selectedNode.nodeKey })} className="min-w-fit flex-1">
+                  Adımı çıkar
+                </PanelButton>
+              </div>
+            </>
+          ) : null}
+        </section>
+      ) : null}
 
       {triggersForNode(selectedNode, transitions).map((trigger) => (
         <TriggerSection key={`${selectedNode.nodeKey}-${trigger}`} trigger={trigger} sourceNode={selectedNode} nodes={nodes} transitions={transitions}
@@ -534,19 +560,21 @@ function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issuesByNod
   );
 }
 
-function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versions, intakeControl, scheduleControl, ownershipControl }) {
+export function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout = null, versions, intakeControl = null, scheduleControl = null, ownershipControl = null, rules = null, footer = null, onOpenStep = null, stepsDescription = "Başlangıçtan itibaren akıştaki sırasıyla. Birine tıklayınca ayarları açılır." }) {
   const depths = depthMap(state.nodes, state.transitions);
   const orderedNodes = flowOrder(state.nodes, state.transitions);
 
   return (
     <div className={PANEL_STACK}>
-      <IntakeSection intakeControl={intakeControl} scheduleControl={scheduleControl} allowMultipleRuns={state.allowMultipleRuns}
-        hasTimedStep={state.nodes.some(isTimedNode)}
-        onToggleMultipleRuns={() => dispatch({ type: "SET_META", key: "allowMultipleRuns", value: !state.allowMultipleRuns })}
-      />
+      {rules ?? (
+        <IntakeSection intakeControl={intakeControl} scheduleControl={scheduleControl} allowMultipleRuns={state.allowMultipleRuns}
+          hasTimedStep={state.nodes.some(isTimedNode)}
+          onToggleMultipleRuns={() => dispatch({ type: "SET_META", key: "allowMultipleRuns", value: !state.allowMultipleRuns })}
+        />
+      )}
 
       <section className={PANEL_SECTION}>
-        <SectionHeader title="Adımlar" description="Başlangıçtan itibaren akıştaki sırasıyla. Birine tıklayınca ayarları açılır." />
+        <SectionHeader title="Adımlar" description={stepsDescription} />
 
         {orderedNodes.length === 0 ? (
           <p className="text-2xs leading-relaxed text-neutral-500">Henüz adım yok. İlk eklediğin form akışın başlangıcı olur.</p>
@@ -563,7 +591,7 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
               ].filter(Boolean).join(" · ");
 
               return (
-                <button key={node.nodeKey} type="button" onClick={() => dispatch({ type: "SELECT", nodeKey: node.nodeKey })}
+                <button key={node.nodeKey} type="button" onClick={() => (onOpenStep ? onOpenStep(node) : dispatch({ type: "SELECT", nodeKey: node.nodeKey }))}
                   className={`${ROW} ${ROW_HOVER} ${FOCUS_RING} flex w-full items-center gap-3 border-white/10 px-3 py-2.5 text-left`}
                 >
                   <span className={`${TILE} ${node.isStart ? "border-skylab-400/40 text-skylab-300" : "border-white/10 text-neutral-300"}`}>
@@ -584,17 +612,23 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
           <PanelButton icon={Plus} chevron active={picker.open} onClick={picker.onOpen} className="min-w-fit flex-1">
             Adım ekle
           </PanelButton>
-          <PanelButton icon={LayoutGrid} onClick={onRelayout} disabled={state.nodes.length < 2} title="Adımları başlangıçtan itibaren akış sırasına göre dizer"
-            className="min-w-fit flex-1"
-          >
-            Otomatik yerleştir
-          </PanelButton>
+          {onRelayout ? (
+            <PanelButton icon={LayoutGrid} onClick={onRelayout} disabled={state.nodes.length < 2} title="Adımları başlangıçtan itibaren akış sırasına göre dizer"
+              className="min-w-fit flex-1"
+            >
+              Otomatik yerleştir
+            </PanelButton>
+          ) : null}
 
-          <AddStepPicker open={picker.open} forms={picker.forms} usedFormIds={picker.usedFormIds} isLoading={picker.isLoading}
-            onClose={picker.onClose} onSelect={picker.onSelect}
-          />
+          {picker.render ? picker.render() : (
+            <AddStepPicker open={picker.open} forms={picker.forms} usedFormIds={picker.usedFormIds} isLoading={picker.isLoading}
+              onClose={picker.onClose} onSelect={picker.onSelect}
+            />
+          )}
         </div>
       </section>
+
+      {footer}
 
       <section className={PANEL_SECTION}>
         <SectionHeader title="Sürümler" description="Devam eden başvurular başladıkları sürümde kalır." />
@@ -627,7 +661,7 @@ function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout, versi
   );
 }
 
-function DescriptionPanel({ description, dispatch }) {
+export function DescriptionPanel({ description, dispatch }) {
   return (
     <div className="flex flex-col gap-4 p-4 text-sm text-neutral-200">
       <SectionHeader title="Akış açıklaması" description="Akışın ne için kullanıldığını ekip arkadaşların için yaz." />
@@ -638,13 +672,8 @@ function DescriptionPanel({ description, dispatch }) {
   );
 }
 
-export default function WorkflowInspector({ state, dispatch, schemasByFormId, issuesByNode, versions, picker, onRelayout, intakeControl = null, scheduleControl = null, ownershipControl = null, layout = "grid" }) {
-  const { nodes, transitions, selectedKey, focus, panelTab } = state;
-  const selectedNode = nodes.find((node) => node.nodeKey === selectedKey) ?? null;
-  const view = selectedNode && panelTab === "step" ? "step" : panelTab === "description" ? "description" : "flow";
-  const tabs = selectedNode
-    ? [FLOW_TAB, { id: "step", label: selectedNode.formTitle, title: selectedNode.formTitle }, DESCRIPTION_TAB]
-    : [FLOW_TAB, DESCRIPTION_TAB];
+export function useRouteFocus(state, dispatch) {
+  const { transitions, selectedKey, focus } = state;
 
   const [openKey, setOpenKey] = useState(() => {
     const target = focus?.localId ? transitions.find((transition) => transition.localId === focus.localId) : null;
@@ -679,35 +708,5 @@ export default function WorkflowInspector({ state, dispatch, schemasByFormId, is
 
   useEffect(() => () => dispatch({ type: "CLEAR_FOCUS" }), [dispatch]);
 
-  return (
-    <motion.div className={panelShellClass(layout)}
-      initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.6 }}
-    >
-      <div className="flex h-full min-w-0 flex-1 flex-col rounded-xl">
-        <PanelTabs tabs={tabs} active={view} onChange={(tab) => dispatch({ type: "SET_PANEL_TAB", tab })} />
-
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={view === "step" ? `step-${selectedNode.nodeKey}` : view}
-              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="h-full"
-            >
-              {view === "step" ? (
-                <StepPanel selectedNode={selectedNode} state={state} dispatch={dispatch} schemasByFormId={schemasByFormId}
-                  issuesByNode={issuesByNode} openKey={openKey} setOpenKey={setOpenKey} flashKey={flash?.key ?? null}
-                />
-              ) : view === "description" ? (
-                <DescriptionPanel description={state.description} dispatch={dispatch} />
-              ) : (
-                <FlowPanel state={state} dispatch={dispatch} schemasByFormId={schemasByFormId} picker={picker} onRelayout={onRelayout}
-                  versions={versions} intakeControl={intakeControl} scheduleControl={scheduleControl} ownershipControl={ownershipControl}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-    </motion.div>
-  );
+  return { openKey, setOpenKey, flashKey: flash?.key ?? null };
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Clock, Eye, FileClock, FilePenLine, FileX, Flag, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldAlert, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Clock, Eye, FileClock, FilePenLine, FileX, Flag, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldAlert, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { useResponseStatusMutation, useResponseArchiveMutation, useAttemptActionMutation } from "@/lib/hooks/useResponse";
 import { DecisionSection, ReminderSection, TimeHistory, TimeSection, attemptTimeValue, formatPersonName } from "./AttemptPanels";
@@ -11,7 +11,6 @@ import RunSection from "./RunSection";
 import { ATTEMPT_STATUS, ROW_STATUS, attemptKindOf } from "@/lib/attempt-status";
 import { formatDay, useTicker } from "@/lib/form-timing";
 import { useCreateResponseShareMutation, useRevokeResponseTokenMutation } from "@/lib/hooks/useResponseShare";
-import Popover from "@/app/components/utils/Popover";
 import ShareOverlay from "@/app/admin/components/ShareOverlay";
 import ChannelIcon from "@/app/admin/components/share/ChannelIcon";
 import { sourceLabel } from "@/lib/share-channels";
@@ -193,6 +192,8 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
   const [actionError, setActionError] = useState(null);
   const [pendingDecision, setPendingDecision] = useState(null);
   const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const archiveRef = useRef(null);
   const actionTimerRef = useRef(null);
   const noteRef = useRef(null);
   const responseId = response?.id;
@@ -201,11 +202,28 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
   const shareMutation = useCreateResponseShareMutation();
   const revokeMutation = useRevokeResponseTokenMutation();
 
+  const closeArchive = () => {
+    setArchiveOpen(false);
+    if (isError) reset();
+  };
+
   useEffect(() => {
     if (!isError && !isSuccess) return;
-    const timer = setTimeout(() => { reset(); }, 2000);
+    const timer = setTimeout(() => { reset(); setArchiveOpen(false); }, isError ? 2500 : 2000);
     return () => clearTimeout(timer);
   }, [isError, isSuccess, reset]);
+
+  useEffect(() => {
+    if (!archiveOpen) return;
+    const handleDown = (event) => { if (!archiveRef.current?.contains(event.target)) setArchiveOpen(false); };
+    const handleKey = (event) => { if (event.key === "Escape") setArchiveOpen(false); };
+    document.addEventListener("mousedown", handleDown);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleDown);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [archiveOpen]);
 
   const clearActionTimer = () => {
     if (actionTimerRef.current) {
@@ -348,15 +366,60 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
             >
               <Share2 size={15} />
             </button>
-            <Popover open={isError} error={error} variant="error" align="bottom-right">
-              <button type="button" aria-label="Cevabı sil"
-                title={isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin." : isReturned ? "Düzeltme istenen cevap başvurunun geçmişinde kalır; arşivlenmez." : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce karar verin." : "Cevabı sil"}
-                disabled={isArchivePending || isError || isSuccess || isArchived || isArchiveBlocked} onClick={() => archiveMutate(responseId)}
-                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : "hover:text-neutral-100 hover:bg-white/5"}`}
+            <div ref={archiveRef} className="relative inline-flex">
+              <button type="button" aria-label="Cevabı arşivle" aria-expanded={archiveOpen}
+                title={isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin." : isReturned ? "Düzeltme istenen cevap başvurunun geçmişinde kalır; arşivlenmez." : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce karar verin." : "Cevabı arşivle"}
+                disabled={isArchivePending || isError || isSuccess || isArchived || isArchiveBlocked} onClick={() => setArchiveOpen((open) => !open)}
+                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : archiveOpen ? "bg-white/5 text-neutral-100" : "hover:text-neutral-100 hover:bg-white/5"}`}
               >
                 <Archive size={15} />
               </button>
-            </Popover>
+              <AnimatePresence>
+                {archiveOpen && (
+                  <motion.div key={isError ? "error" : "confirm"} role={isError ? "alert" : "dialog"} aria-label="Cevabı arşivle"
+                    initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -2, scale: 0.96 }}
+                    transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                    onClick={isError ? closeArchive : undefined}
+                    className={`absolute right-0 top-full z-50 mt-2.5 rounded-[10px] border shadow-xl ${isError ? "w-max max-w-[220px] cursor-pointer border-red-500/20 bg-[#1f1414] px-2.5 py-1.5" : "w-64 border-white/20 bg-[#1e1e1e] p-3"}`}
+                  >
+                    <div className={`absolute -top-[5.5px] right-2 h-2.5 w-2.5 rotate-45 rounded-[2.5px] border-l border-t ${isError ? "border-red-500/20 bg-[#1f1414]" : "border-white/20 bg-[#1e1e1e]"}`} style={{ zIndex: -1 }} />
+                    {isError ? (
+                      <div className="flex items-center gap-1.5">
+                        <AlertCircle size={13} strokeWidth={2.5} className="shrink-0 text-red-200/30" />
+                        <span className="text-3xs font-medium leading-snug text-neutral-200 wrap-break-word">
+                          {error?.response?.data?.message || error?.data?.message || error?.message || "Cevap arşivlenemedi."}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs font-medium text-neutral-100">Cevabı arşivle</p>
+                        <p className="mt-1 text-2xs text-neutral-300">
+                          {statusValue === 1 || statusValue === FLAGGED
+                            ? <>Karar verilmediği için cevap <span className="text-red-300">reddedilir</span> ve listeden gizlenir.</>
+                            : "Cevap listeden gizlenir, silinmez; Arşiv dahil filtresiyle görünür."}
+                        </p>
+                        <p className="mt-1 text-3xs leading-relaxed text-neutral-500">
+                          {isWorkflowStep ? "Arşivden geri çıkarılamaz." : "Kişi formu yeniden doldurabilir. Arşivden geri çıkarılamaz."}
+                        </p>
+                        <div className="mt-3 flex items-center gap-2">
+                          <button type="button" autoFocus onClick={closeArchive}
+                            className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                          >
+                            Vazgeç
+                          </button>
+                          <button type="button" disabled={isArchivePending} onClick={() => archiveMutate(responseId, { onSuccess: () => setArchiveOpen(false) })}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-2xs font-semibold text-red-100 transition-colors hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isArchivePending && <Loader2 size={12} className="animate-spin" />}
+                            {isArchivePending ? "Arşivleniyor" : "Arşivle"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         )}
       </div>

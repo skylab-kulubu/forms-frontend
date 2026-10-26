@@ -1,22 +1,26 @@
 "use client";
 
+import { Fragment } from "react";
 import Link from "next/link";
-import { ChevronRight, FileText, Workflow } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronRight, PencilLine, Workflow } from "lucide-react";
 import { formatUpdatedAt } from "./ListItem";
+import { workflowEditHref } from "@/lib/workflow-links";
 
 const WORKFLOW_GRID = [
   "grid items-center gap-3",
-  "grid-cols-[1.5rem_minmax(0,1.5fr)_minmax(0,1fr)_auto]",
-  "sm:grid-cols-[1.5rem_minmax(0,1.5fr)_minmax(0,1fr)_4rem_auto]",
-  "lg:grid-cols-[1.5rem_minmax(0,1.5fr)_minmax(0,1fr)_4rem_6rem_6.5rem_auto]",
+  "grid-cols-[1.5rem_minmax(0,1.5fr)_auto]",
+  "md:grid-cols-[1.5rem_minmax(0,1.2fr)_minmax(0,1.8fr)_auto]",
+  "xl:grid-cols-[1.5rem_minmax(0,1.1fr)_minmax(0,1.9fr)_5.5rem_5.5rem_6rem_4.5rem]",
 ].join(" ");
 
 const COLUMN_LABEL = "text-3xs font-medium text-neutral-600";
 
-const WORKFLOW_STATUS = {
-  0: { label: "Taslak", dot: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40" },
-  1: { label: "Canlı", dot: "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40" },
-  2: { label: "Arşiv", dot: "bg-neutral-600" },
+const STATUS_DOT = {
+  live: "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40",
+  draft: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40",
+  closed: "bg-red-400 shadow-[0_0_6px] shadow-red-400/40",
+  archived: "bg-neutral-600",
 };
 
 function SkeletonBlock({ className = "" }) {
@@ -28,10 +32,10 @@ export function WorkflowListHeader() {
     <div className={`${WORKFLOW_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
       <span />
       <span className={COLUMN_LABEL}>Akış</span>
-      <span className={COLUMN_LABEL}>Başlangıç formu</span>
-      <span className={`text-center ${COLUMN_LABEL}`}>Adım</span>
-      <span className={`hidden text-center lg:block ${COLUMN_LABEL}`}>Sürüm</span>
-      <span className={`hidden text-center lg:block ${COLUMN_LABEL}`}>Güncellendi</span>
+      <span className={`hidden md:block ${COLUMN_LABEL}`}>Adımlarda şu an</span>
+      <span className={`hidden text-center xl:block ${COLUMN_LABEL}`}>Onay bekleyen</span>
+      <span className={`hidden text-center xl:block ${COLUMN_LABEL}`}>Devam eden</span>
+      <span className={`hidden text-center xl:block ${COLUMN_LABEL}`}>Güncellendi</span>
       <span className={`text-right ${COLUMN_LABEL}`}>İşlem</span>
     </div>
   );
@@ -41,52 +45,61 @@ export function WorkflowListItemSkeleton({ count = 4, className = "" }) {
   return (
     <div className={`divide-y divide-white/5 ${className}`}>
       {Array.from({ length: count }, (_, index) => (
-        <div key={index} className={`${WORKFLOW_GRID} px-3 py-2.5`}>
+        <div key={index} className={`${WORKFLOW_GRID} px-3 py-3`}>
           <div className="flex justify-center"><SkeletonBlock className="size-1.5 rounded-full" /></div>
           <div className="flex min-w-0 items-center gap-3">
             <SkeletonBlock className="h-9 w-9 shrink-0 rounded-lg" />
             <SkeletonBlock className="h-3.5 w-36 rounded-md" />
           </div>
-          <SkeletonBlock className="h-7 w-36 max-w-full rounded-md" />
-          <div className="flex justify-center"><SkeletonBlock className="h-3.5 w-5 rounded-md" /></div>
-          <div className="hidden justify-center lg:flex"><SkeletonBlock className="h-3 w-12 rounded-md" /></div>
-          <div className="hidden justify-center lg:flex"><SkeletonBlock className="h-3 w-16 rounded-md" /></div>
-          <div className="flex items-center justify-end"><SkeletonBlock className="h-4 w-4 rounded" /></div>
+          <SkeletonBlock className="hidden h-4 w-56 max-w-full rounded-md md:block" />
+          <div className="hidden justify-center xl:flex"><SkeletonBlock className="h-3.5 w-5 rounded-md" /></div>
+          <div className="hidden justify-center xl:flex"><SkeletonBlock className="h-3.5 w-5 rounded-md" /></div>
+          <div className="hidden justify-center xl:flex"><SkeletonBlock className="h-3 w-16 rounded-md" /></div>
+          <div className="flex items-center justify-end"><SkeletonBlock className="h-4 w-10 rounded" /></div>
         </div>
       ))}
     </div>
   );
 }
 
+function stateOf(workflow) {
+  const status = Number(workflow.status);
+  const intake = Number(workflow.intake ?? 0);
+  if (status === 2) return { dot: STATUS_DOT.archived, label: "Arşivde", subtitle: "Arşivlendi", tone: "text-neutral-500" };
+  if (!workflow.publishedVersion) return { dot: STATUS_DOT.draft, label: "Taslak", subtitle: "Henüz yayınlanmadı", tone: "text-neutral-500" };
+  if (intake === 2) return { dot: STATUS_DOT.closed, label: "Kapalı", subtitle: "Başvurular kapalı", tone: "text-neutral-500" };
+  if (intake === 1) return { dot: STATUS_DOT.live, label: "Yayında", subtitle: "Yeni başvuru alınmıyor", tone: "text-amber-300/80" };
+  return {
+    dot: STATUS_DOT.live,
+    label: "Yayında",
+    subtitle: workflow.hasUnpublishedChanges ? `Yayında · v${workflow.publishedVersion} · yayınlanmamış değişiklik var` : `Yayında · v${workflow.publishedVersion}`,
+    tone: "text-neutral-500",
+  };
+}
+
+function Count({ value, tone = "text-neutral-200", muted }) {
+  if (muted || !value) return <span className="text-neutral-600">—</span>;
+  return <span className={`font-medium ${tone}`}>{value}</span>;
+}
+
 export default function WorkflowListItem({ workflow, className = "" }) {
+  const router = useRouter();
   if (!workflow) return null;
 
-  const isLive = Number(workflow.status) === 1;
-  const intake = Number(workflow.intake ?? 0);
-  const status = isLive && intake === 2
-    ? { label: "Kapalı", dot: "bg-red-400 shadow-[0_0_6px] shadow-red-400/40" }
-    : WORKFLOW_STATUS[Number(workflow.status)] ?? WORKFLOW_STATUS[0];
+  const state = stateOf(workflow);
   const href = `/admin/workflows/${workflow.id}`;
-  const startForm = workflow.startForm ?? null;
-  const versionLabel = workflow.publishedVersion ? `v${workflow.publishedVersion}` : "--";
-
-  const subtitle = isLive && intake === 2
-    ? "Başvurular kapalı"
-    : isLive && intake === 1
-      ? "Yeni başvuru alınmıyor"
-      : workflow.hasUnpublishedChanges
-        ? "Yayınlanmamış değişiklik var"
-        : workflow.publishedVersion
-          ? "Yayında"
-          : "Henüz yayınlanmadı";
+  const editHref = workflowEditHref(workflow);
+  const runs = workflow.runs ?? null;
+  const draft = !workflow.publishedVersion;
+  const steps = (runs?.steps ?? []).filter((step) => !step.isRemoved || step.count > 0);
 
   return (
-    <div className={`group/row relative transition-colors hover:bg-white/3 ${className}`}>
-      <Link href={href} className="absolute inset-0 z-0" aria-label={workflow.name ?? "Akış"} tabIndex={-1} />
-      <div className={`${WORKFLOW_GRID} px-3 py-2.5`}>
-
+    <div role="link" tabIndex={0} onClick={() => router.push(href)} onKeyDown={(event) => { if (event.key === "Enter") router.push(href); }}
+      className={`group/row relative cursor-pointer transition-colors hover:bg-white/3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-skylab-400/40 ${className}`}
+    >
+      <div className={`${WORKFLOW_GRID} px-3 py-3`}>
         <div className="flex justify-center">
-          <span title={status.label} className={`relative z-10 size-1.5 shrink-0 rounded-full ${status.dot}`} />
+          <span title={state.label} className={`size-1.5 shrink-0 rounded-full ${state.dot}`} />
         </div>
 
         <div className="flex min-w-0 items-center gap-3">
@@ -94,46 +107,46 @@ export default function WorkflowListItem({ workflow, className = "" }) {
             <Workflow className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
           </div>
           <div className="min-w-0">
-            <h3 className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">
-              {workflow.name || "Adsız akış"}
-            </h3>
-            <p className={`mt-0.5 truncate text-3xs ${isLive && intake === 1 ? "text-amber-300/80" : "text-neutral-500"}`}>{subtitle}</p>
+            <h3 className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">{workflow.name || "Adsız akış"}</h3>
+            <p className={`mt-0.5 truncate text-3xs ${state.tone}`}>{state.subtitle}</p>
+            {!draft && runs ? (
+              <p className="mt-1 flex flex-wrap items-center gap-x-2.5 text-3xs md:hidden">
+                <span className="text-neutral-400"><span className="font-medium tabular-nums text-neutral-100">{runs.activeRunCount}</span> devam eden</span>
+                {runs.awaitingReviewCount > 0 ? <span className="text-amber-200/90"><span className="font-medium tabular-nums">{runs.awaitingReviewCount}</span> onay bekliyor</span> : null}
+              </p>
+            ) : null}
           </div>
         </div>
 
-        <div className="min-w-0">
-          {startForm ? (
-            <Link href={`/admin/forms/${startForm.id}`} title={`Forma git: ${startForm.title}`}
-              className="relative z-10 flex w-full min-w-0 max-w-60 items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2 py-1 transition-colors hover:border-white/20 hover:bg-white/5"
-            >
-              <FileText size={12} className="shrink-0 text-neutral-500" />
-              <span className="truncate text-2xs font-medium text-neutral-200">{startForm.title || "Adsız form"}</span>
-            </Link>
-          ) : (
-            <span className="pl-1 text-2xs text-neutral-700">—</span>
-          )}
+        <div className="hidden min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 md:flex">
+          {steps.length === 0 ? <span className="text-2xs text-neutral-700">—</span> : null}
+          {steps.map((step, index) => (
+            <Fragment key={step.nodeKey}>
+              {index > 0 ? <ChevronRight size={12} className="shrink-0 text-neutral-700" /> : null}
+              <span className="inline-flex min-w-0 items-center gap-1.5 text-2xs" title={step.isRemoved ? `${step.formTitle} (eski sürümde)` : step.formTitle}>
+                <span className="grid size-4 shrink-0 place-items-center rounded border border-white/10 bg-white/5 text-4xs font-semibold text-neutral-400">{step.isRemoved ? "–" : step.depth || index + 1}</span>
+                <span className="max-w-24 truncate text-neutral-400">{step.formTitle}</span>
+                <span className={`font-medium tabular-nums ${draft ? "text-neutral-600" : "text-neutral-100"}`}>{draft ? "—" : step.count}</span>
+                {!draft && step.awaitingReview > 0 ? <span title={`${step.awaitingReview} onay bekliyor`} className="size-1.5 shrink-0 rounded-full bg-amber-400" /> : null}
+              </span>
+            </Fragment>
+          ))}
         </div>
 
-        <div className="text-center text-sm font-medium tabular-nums text-neutral-200">
-          {workflow.nodeCount ?? 0}
-        </div>
+        <div className="hidden text-center text-sm tabular-nums xl:block"><Count value={runs?.awaitingReviewCount} tone="text-amber-200" muted={draft} /></div>
+        <div className="hidden text-center text-sm tabular-nums xl:block"><Count value={runs?.activeRunCount} muted={draft} /></div>
+        <span className="hidden text-center text-2xs tabular-nums text-neutral-500 xl:block">{formatUpdatedAt(workflow.updatedAt)}</span>
 
-        <div className="hidden text-center text-2xs text-neutral-400 lg:block">
-          {versionLabel}
-        </div>
-
-        <span className="hidden text-center text-2xs tabular-nums text-neutral-500 lg:block">
-          {formatUpdatedAt(workflow.updatedAt)}
-        </span>
-
-        <div className="flex items-center justify-end">
-          <Link href={href} title="Akışı aç" aria-label="Akışı aç"
-            className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center text-neutral-400 transition-colors hover:text-skylab-300"
+        <div className="flex items-center justify-end gap-0.5">
+          <Link href={editHref} title="Düzenle" aria-label="Düzenle" onClick={(event) => event.stopPropagation()}
+            className="grid size-7 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-100"
           >
-            <ChevronRight className="h-4.5 w-4.5 transition-transform group-hover/row:translate-x-0.5" />
+            <PencilLine size={14} />
           </Link>
+          <span className="grid size-7 place-items-center text-neutral-400">
+            <ChevronRight size={17} className="transition-transform group-hover/row:translate-x-0.5" />
+          </span>
         </div>
-
       </div>
     </div>
   );

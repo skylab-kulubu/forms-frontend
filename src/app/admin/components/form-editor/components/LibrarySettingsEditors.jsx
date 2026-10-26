@@ -158,8 +158,8 @@ export function LibrarySettingsEditors() {
 
             <AnimatePresence initial={false}>
             {isExpanded && (
-            <motion.div key="editors-body" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} onAnimationStart={() => setIsAnimating(true)} onAnimationComplete={() => setIsAnimating(false)} className={isAnimating ? "overflow-hidden" : ""}>
-            <div className="space-y-4">
+            <motion.div key="editors-body" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} onAnimationStart={() => setIsAnimating(true)} onAnimationComplete={() => setIsAnimating(false)} className={`-mt-4 ${isAnimating ? "overflow-hidden" : ""}`}>
+            <div className="space-y-4 pt-4">
             <div className="space-y-3">
                 {sortedEditors.map((editor, index) => {
                     const roleValue = Number(editor.role);

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, useEffect } from "react";
-import { useParams, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useFormInfoQuery } from "@/lib/hooks/useFormContext";
 import { useWorkflowQuery } from "@/lib/hooks/useWorkflowAdmin";
@@ -9,9 +9,13 @@ import { useWorkflowQuery } from "@/lib/hooks/useWorkflowAdmin";
 const FormContext = createContext(null);
 const WorkflowContext = createContext(null);
 
+const FORM_ROUTES = new Set(["new-form", "all"]);
+
 export function FormProvider({ children }) {
-    const params = useParams();
-    const formId = params?.formId;
+    const pathname = usePathname();
+    const segments = (pathname ?? "").split("/");
+    const candidate = segments[1] === "admin" && segments[2] === "forms" ? segments[3] : undefined;
+    const formId = candidate && !FORM_ROUTES.has(candidate) ? candidate : undefined;
     const { status } = useSession();
 
     const { data: initialForm, isLoading, error } = useFormInfoQuery(formId, status === "authenticated");

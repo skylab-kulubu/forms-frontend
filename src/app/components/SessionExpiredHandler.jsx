@@ -25,7 +25,7 @@ function hasUnsavedInputRisk(pathname) {
     /^\/admin\/forms\/[^/]+\/edit$/.test(pathname) ||
     /^\/admin\/forms\/[^/]+\/responses\/[^/]+$/.test(pathname) ||
     /^\/admin\/templates\/[^/]+$/.test(pathname) ||
-    /^\/admin\/workflows\/[^/]+$/.test(pathname)
+    /^\/admin\/workflows\/[^/]+\/edit$/.test(pathname)
   );
 }
 

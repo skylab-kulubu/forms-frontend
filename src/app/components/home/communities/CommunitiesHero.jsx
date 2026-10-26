@@ -1,9 +1,10 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
 import { ArrowRight, Check, Timer, X } from "lucide-react";
 import Poster from "../poster/Poster";
-import { SECTIONS } from "../config";
+import { HOME_PATHS, SECTIONS } from "../config";
 import { useScrollTo } from "../HomeContext";
 import "./communities-hero.css";
 
@@ -171,9 +172,9 @@ export default function CommunitiesHero() {
               Erişim isteyin
               <ArrowRight size={13} aria-hidden="true" />
             </a>
-            <a className="f-quiet" href={`#${IDS.review}`} onClick={goTo(IDS.review)}>
-              Kendiniz deneyin
-            </a>
+            <Link className="f-quiet" href={HOME_PATHS.kisiler}>
+              Başvuranlar için
+            </Link>
           </div>
         </div>
         <div className="at-stage">

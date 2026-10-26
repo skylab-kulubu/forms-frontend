@@ -24,6 +24,7 @@ export function Floating({ anchor, onDismiss, placement = "bottom-start", offset
     const resolved = resolveAnchor(anchor);
     const floating = floatingRef.current;
     if (!resolved || !floating) return;
+    if (resolved.node && !resolved.node.isConnected) return;
 
     const { rect } = resolved;
     if (matchWidth) floating.style.width = `${rect.width}px`;
@@ -43,12 +44,14 @@ export function Floating({ anchor, onDismiss, placement = "bottom-start", offset
     const maxTop = window.innerHeight - height - VIEWPORT_PADDING;
     const top = Math.min(Math.max(rawTop, VIEWPORT_PADDING), Math.max(maxTop, VIEWPORT_PADDING));
 
-    const rawLeft = placement.endsWith("end") ? rect.right - width : rect.left;
+    const align = placement.endsWith("-end") ? "end" : placement.endsWith("-start") ? "start" : "center";
+    const rawLeft = align === "end" ? rect.right - width : align === "start" ? rect.left : rect.left + rect.width / 2 - width / 2;
     const maxLeft = window.innerWidth - width - VIEWPORT_PADDING;
     const left = Math.min(Math.max(rawLeft, VIEWPORT_PADDING), Math.max(maxLeft, VIEWPORT_PADDING));
 
     floating.style.top = `${top}px`;
     floating.style.left = `${left}px`;
+    floating.style.setProperty("--floating-origin", `${onTop ? "bottom" : "top"} ${align === "start" ? "left" : align === "end" ? "right" : "center"}`);
     floating.style.visibility = "visible";
   }, [anchor, matchWidth, offset, placement]);
 

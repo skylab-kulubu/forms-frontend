@@ -1,7 +1,5 @@
-"use client";
-
-import WorkflowEditor from "../../components/workflow-editor/WorkflowEditor";
+import { redirect } from "next/navigation";
 
 export default function NewWorkflowPage() {
-  return <WorkflowEditor workflow={null} />;
+  redirect("/admin/forms/new-form");
 }

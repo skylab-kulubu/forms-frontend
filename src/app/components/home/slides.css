@@ -1,0 +1,23 @@
+.hm-slides { --slide: min(300px, 100cqw); --gap: 14px; position: relative; display: flex; align-items: stretch; gap: var(--gap); margin-bottom: -32px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 4px calc((100cqw - var(--slide)) / 2) 44px; }
+.hm-slides::-webkit-scrollbar { display: none; }
+.hm-slide { position: relative; flex: none; width: var(--slide); min-width: 0; scroll-snap-align: center; scroll-snap-stop: always; }
+
+.duo { --duo-h: clamp(500px, calc(100svh - 250px), 640px); container: duo / inline-size; }
+.duo-bar { display: flex; min-height: 34px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.duo-tabs button { min-width: 56px; }
+.duo-tools { display: flex; flex-shrink: 0; align-items: center; gap: 4px; margin-left: auto; }
+.duo .hm-slides { --gap: 44px; }
+.duo .hm-slide > .f-phone, .duo .hm-slide > .sl-phone { width: 100%; height: var(--duo-h); }
+.duo-link { position: absolute; left: 100%; top: 50%; width: var(--gap); height: 6px; margin-top: -3px; background: radial-gradient(circle, rgba(224, 200, 229, .55) 1.3px, transparent 1.8px) 0 50% / 8px 6px repeat-x; pointer-events: none; }
+.duo-link[data-to="1"] { animation: duo-flow-r .9s linear; }
+.duo-link[data-to="0"] { animation: duo-flow-l .9s linear; }
+@container duo (max-width: 339px) { .duo-tools button { gap: 0; padding: 0 9px; font-size: 0; } }
+@container duo (min-width: 680px) {
+  .duo-tabs { display: none; }
+  .duo .hm-slides { --gap: 72px; justify-content: center; overflow: visible; scroll-snap-type: none; padding-inline: 0; }
+  .duo .hm-slide { transition: opacity .45s ease; }
+  .duo .hm-slide:not(.is-on) { opacity: .55; }
+}
+@keyframes duo-flow-r { from { background-position: -24px 50%; } to { background-position: 0 50%; } }
+@keyframes duo-flow-l { from { background-position: 24px 50%; } to { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .duo .hm-slide, .duo-link { transition: none; animation: none; } }
