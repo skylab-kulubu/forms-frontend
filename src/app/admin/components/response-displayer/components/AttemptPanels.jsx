@@ -118,7 +118,7 @@ export function ProvisionalNotice({ actionable = true, closed = false }) {
   );
 }
 
-function FlowButtons({ onCancel, onConfirm, confirmLabel, pending, danger = false }) {
+export function FlowButtons({ onCancel, onConfirm, confirmLabel, pending, danger = false }) {
   return (
     <div className="mt-3 flex items-center gap-2">
       <button type="button" onClick={onCancel} disabled={pending}
@@ -135,7 +135,7 @@ function FlowButtons({ onCancel, onConfirm, confirmLabel, pending, danger = fals
   );
 }
 
-function ConfirmCard({ title, outcome, note, confirmLabel, danger = false, onCancel, onConfirm, pending, decisionNote, onNoteChange }) {
+export function ConfirmCard({ title, outcome, note, confirmLabel, danger = false, onCancel, onConfirm, pending, decisionNote, onNoteChange }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/3 p-3">
       <p className="text-xs font-medium text-neutral-100">{title}</p>
@@ -188,12 +188,12 @@ export function ExtendForm({ attempt, pending, onCancel, onConfirm }) {
   );
 }
 
-function ActionError({ error }) {
+export function ActionError({ error }) {
   if (!error) return null;
   return <p className="mt-2 text-3xs leading-relaxed text-red-300" role="alert">{error.body?.message ?? error.message ?? "İşlem tamamlanamadı."}</p>;
 }
 
-function routeText(route, endText) {
+export function routeText(route, endText) {
   if (!route) return null;
   if (route.endsFlow) return endText;
   return `${route.formTitle || "Sıradaki"} adımı açılır`;
@@ -382,34 +382,42 @@ export function TimeHistory({ attempt }) {
         <h3 className="text-2xs font-medium text-neutral-500">Süre geçmişi</h3>
         <span className="text-3xs tabular-nums text-neutral-500">{events.length} kayıt</span>
       </div>
-      <ol className="w-full text-left">
-        {events.map((event, index) => {
-          const view = eventView(event, attempt);
-          const last = index === events.length - 1;
-          return (
-            <li key={event.id ?? index} className={`relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 ${last ? "" : "pb-4"}`}>
-              {!last && <span aria-hidden className="absolute bottom-1.5 left-3 top-7.5 w-px -translate-x-1/2 bg-white/10" />}
-              <span className={`grid size-6 place-items-center rounded-md border text-2xs font-semibold ${MARK_TONE[view.tone]}`}>
-                <view.Icon size={12} strokeWidth={2.2} />
-              </span>
-              <div className="min-w-0">
-                <div className="flex items-baseline justify-between gap-3 pt-0.5">
-                  <span className="min-w-0 text-xs font-medium text-neutral-100">{view.title}</span>
-                  <span className="shrink-0 text-3xs tabular-nums text-neutral-500">{formatShortDate(event.createdAt)}</span>
-                </div>
-                {view.detail && <p className="mt-px text-2xs leading-5 text-neutral-400">{view.detail}</p>}
-                {view.note && (
-                  <div className="relative mt-2 pl-3 text-left before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-full before:bg-neutral-700">
-                    <p className="text-2xs text-neutral-500">Not</p>
-                    <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-neutral-200">{view.note}</p>
-                  </div>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      <TimeEvents attempt={attempt} />
     </div>
+  );
+}
+
+export function TimeEvents({ attempt }) {
+  const events = attempt?.events ?? [];
+
+  return (
+    <ol className="w-full text-left">
+      {events.map((event, index) => {
+        const view = eventView(event, attempt);
+        const last = index === events.length - 1;
+        return (
+          <li key={event.id ?? index} className={`relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 ${last ? "" : "pb-4"}`}>
+            {!last && <span aria-hidden className="absolute bottom-1.5 left-3 top-7.5 w-px -translate-x-1/2 bg-white/10" />}
+            <span className={`grid size-6 place-items-center rounded-md border text-2xs font-semibold ${MARK_TONE[view.tone]}`}>
+              <view.Icon size={12} strokeWidth={2.2} />
+            </span>
+            <div className="min-w-0">
+              <div className="flex items-baseline justify-between gap-3 pt-0.5">
+                <span className="min-w-0 text-xs font-medium text-neutral-100">{view.title}</span>
+                <span className="shrink-0 text-3xs tabular-nums text-neutral-500">{formatShortDate(event.createdAt)}</span>
+              </div>
+              {view.detail && <p className="mt-px text-2xs leading-5 text-neutral-400">{view.detail}</p>}
+              {view.note && (
+                <div className="relative mt-2 pl-3 text-left before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-full before:bg-neutral-700">
+                  <p className="text-2xs text-neutral-500">Not</p>
+                  <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-neutral-200">{view.note}</p>
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

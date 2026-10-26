@@ -11,7 +11,7 @@ import { LinkAnswerInput } from "./FormLink";
 import { CompactField } from "./CompactField";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
-const INPUT_TYPES = [
+export const INPUT_TYPES = [
   { id: "text", label: "Düz Metin", icon: Type, placeholder: "Yanıtınızı yazın." },
   { id: "name", label: "İsim", icon: UserRound, placeholder: "Adınızı yazın." },
   { id: "email", label: "E-Posta", icon: Mail, placeholder: "ornek@mail.com" },

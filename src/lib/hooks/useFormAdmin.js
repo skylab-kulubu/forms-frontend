@@ -87,13 +87,26 @@ export const useUserFormsQuery = (options = {}) => {
   });
 };
 
+export const formQuery = (formId) => ({
+  queryKey: ["form", formId],
+  queryFn: () => fetchFormById(formId),
+  retry: false,
+});
+
+export const formMetricsQuery = (formId) => ({
+  queryKey: ["form-metrics", formId],
+  queryFn: () => fetchFormMetrics(formId),
+  retry: false,
+});
+
+export const formAnalyticsQuery = (formId) => ({
+  queryKey: ["form-analytics", formId],
+  queryFn: () => fetchFormAnalytics(formId),
+  retry: false,
+});
+
 export const useFormQuery = (formId) =>
-  useQuery({
-    queryKey: ["form", formId],
-    queryFn: () => fetchFormById(formId),
-    enabled: !!formId,
-    retry: false,
-  });
+  useQuery({ ...formQuery(formId), enabled: !!formId });
 
 export const useServiceMetricsQuery = (options = {}) => {
   return useQuery({
@@ -106,18 +119,7 @@ export const useServiceMetricsQuery = (options = {}) => {
 
 export const useFormMetricsQuery = (formId, options = {}) => {
   return useQuery({
-    queryKey: ["form-metrics", formId],
-    queryFn: () => fetchFormMetrics(formId),
-    enabled: options.enabled ?? !!formId,
-    retry: options.retry ?? false,
-    ...options,
-  });
-};
-
-export const useFormAnalyticsQuery = (formId, options = {}) => {
-  return useQuery({
-    queryKey: ["form-analytics", formId],
-    queryFn: () => fetchFormAnalytics(formId),
+    ...formMetricsQuery(formId),
     enabled: options.enabled ?? !!formId,
     retry: options.retry ?? false,
     ...options,

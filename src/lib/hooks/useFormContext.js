@@ -6,11 +6,12 @@ const fetchFormInfo = async (formId) => {
   return res?.data;
 };
 
+export const formInfoQuery = (formId) => ({
+  queryKey: ["form-info", formId],
+  queryFn: () => fetchFormInfo(formId),
+  retry: false,
+  staleTime: 60_000,
+});
+
 export const useFormInfoQuery = (formId, enabled = true) =>
-  useQuery({
-    queryKey: ["form-info", formId],
-    queryFn: () => fetchFormInfo(formId),
-    enabled: !!formId && enabled,
-    retry: false,
-    staleTime: 60_000,
-  });
+  useQuery({ ...formInfoQuery(formId), enabled: !!formId && enabled });

@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Check, ChevronRight, ClipboardCheck, ClockPlus, FileText, Mail, PencilLine, Repeat2, UserX, ChartColumn, Archive, Workflow } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, ClipboardCheck, FileText, PencilLine, Repeat2, UserX, ChartColumn, Workflow } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { eventRefFromForm } from "@/lib/return-to";
 import { effectiveFormSettings } from "@/lib/form-settings";
-import { ROW_STATUS, rowKindOf } from "@/lib/attempt-status";
-import { currentTime, leftText, shortDuration } from "@/lib/form-timing";
-import { isDeletedUser } from "@/lib/deleted-user";
 
 const FORM_GRID = [
   "grid items-center gap-3",
@@ -18,17 +14,6 @@ const FORM_GRID = [
   "xl:grid-cols-[1.5rem_minmax(0,22rem)_minmax(0,1fr)_7rem_4rem_6.5rem_5rem]",
 ].join(" ");
 const COLUMN_LABEL = "text-3xs font-medium uppercase tracking-[0.18em] text-neutral-600";
-
-const RESPONSE_GRID = [
-  "grid items-center gap-3",
-  "grid-cols-[1.5rem_minmax(0,1fr)_4.5rem]",
-  "sm:grid-cols-[1.5rem_minmax(0,1fr)_8rem_4.5rem]",
-  "md:grid-cols-[1.5rem_minmax(0,1fr)_7rem_8rem_4.5rem]",
-  "lg:grid-cols-[1.5rem_minmax(0,1fr)_7rem_8rem_7rem_8rem_4.5rem]",
-].join(" ");
-
-const formatPersonName = (name) =>
-  name?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map((w) => w.replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR"))).join(" ") || "";
 
 const FEATURES = [
   { key: "allowMultipleResponses", Icon: Repeat2, on: "Birden fazla cevap açık", managed: "Akışta tekrar başlatma açık" },
@@ -114,7 +99,7 @@ export const ROLE_BADGE = {
   default: { label: "Görüntüleyici", className: "bg-white/5 text-neutral-400 border border-white/10" },
 };
 
-function RoleBadge({ role }) {
+export function RoleBadge({ role }) {
   const { label, className } = ROLE_BADGE[role] ?? ROLE_BADGE.default;
 
   return (
@@ -179,177 +164,6 @@ export const formatUpdatedAt = (value) => {
   }
   return date.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }) });
 };
-
-export function ResponseListHeader({ sortDirection, onSort }) {
-  return (
-    <div className={`${RESPONSE_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
-      <span />
-      <span className={COLUMN_LABEL}>Kullanıcı</span>
-      <span className={`hidden text-center lg:block ${COLUMN_LABEL}`}>Durum</span>
-      <span className={`hidden lg:block ${COLUMN_LABEL}`}>İnceleyen</span>
-      <span className={`hidden text-center md:block ${COLUMN_LABEL}`}>Süre</span>
-      <SortHeader label="Gönderilme" field="submittedAt" sortField="submittedAt" sortDirection={sortDirection} onSort={onSort} visibility="hidden sm:flex" title="Gönderilme tarihine göre sırala" />
-      <span className={`text-right ${COLUMN_LABEL}`}>İşlem</span>
-    </div>
-  );
-}
-
-export function ResponseListItemSkeleton({ count = 4, className = "" }) {
-  return (
-    <div className={`divide-y divide-white/5 ${className}`}>
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className={`${RESPONSE_GRID} px-3 py-2.5`}>
-          <div className="flex justify-center"><SkeletonBlock className="size-1.5 rounded-full" /></div>
-          <div className="flex min-w-0 items-center gap-3">
-            <SkeletonBlock className="h-9 w-9 shrink-0 rounded-lg" />
-            <div className="min-w-0">
-              <SkeletonBlock className="h-3.5 w-28 rounded-md" />
-              <SkeletonBlock className="mt-1.5 h-2.5 w-20 rounded-md" />
-            </div>
-          </div>
-          <div className="hidden justify-center lg:flex"><SkeletonBlock className="h-3 w-14 rounded-md" /></div>
-          <div className="hidden lg:block"><SkeletonBlock className="h-3 w-24 rounded-md" /></div>
-          <div className="hidden justify-center md:flex"><SkeletonBlock className="h-3 w-14 rounded-md" /></div>
-          <div className="hidden justify-center sm:flex"><SkeletonBlock className="h-3 w-16 rounded-md" /></div>
-          <div className="flex items-center justify-end"><SkeletonBlock className="h-4 w-4 rounded" /></div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function RemainingText({ deadlineAt }) {
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setTick((value) => value + 1), 30_000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return <>{leftText(new Date(deadlineAt).getTime() - currentTime())}</>;
-}
-
-function formatSpent(seconds) {
-  if (seconds == null) return "—";
-  const minutes = Math.floor(seconds / 60);
-  return minutes > 0 ? `${minutes} dk` : `${seconds} sn`;
-}
-
-function ResponseTime({ kind, response }) {
-  const attempt = response.attempt;
-
-  if (!attempt) return <span className="text-neutral-500">{formatSpent(response.timeSpent)}</span>;
-  if (kind === "running" && attempt.deadlineAt) return <span className="text-skylab-300"><RemainingText deadlineAt={attempt.deadlineAt} /></span>;
-  if (kind === "opened") return <span className="text-neutral-600">—</span>;
-  if (attempt.taskSeconds != null) return <span className="text-neutral-300">{shortDuration(attempt.taskSeconds * 1000)}</span>;
-  if (kind === "provisional" || kind === "none") return <span className="text-neutral-500">süre doldu</span>;
-  return <span className="text-neutral-500">{formatSpent(response.timeSpent)}</span>;
-}
-
-function QuickAction({ href, onClick, title, children, busy = false }) {
-  const className = "relative z-10 inline-flex h-6 w-6 items-center justify-center rounded-md text-neutral-500 opacity-0 transition-[opacity,color] group-hover/row:opacity-100 hover:bg-white/5 hover:text-skylab-300 focus-visible:opacity-100 max-lg:opacity-100";
-
-  if (href) {
-    return <Link href={href} title={title} aria-label={title} className={className}>{children}</Link>;
-  }
-
-  return (
-    <button type="button" title={title} aria-label={title} onClick={onClick} disabled={busy} className={`${className} disabled:opacity-60`}>
-      {children}
-    </button>
-  );
-}
-
-export function ResponseListItem({ formId, response, className = "", onRemind, reminding = false, reminded = false }) {
-  if (!response) return null;
-
-  const kind = rowKindOf(response);
-  const status = ROW_STATUS[kind] ?? ROW_STATUS.submitted;
-  const attempt = response.attempt;
-  const isAttemptRow = response.status == null && attempt;
-  const guest = response.guest;
-  const personName = response.user?.fullName || (guest ? `${guest.firstName} ${guest.lastName}`.trim() : "");
-  const userName = formatPersonName(personName) || "Anonim Kullanıcı";
-  const isErased = isDeletedUser(response.user?.id);
-  const userId = isErased ? "" : response.user?.id || "";
-  const photoUrl = response.user?.profilePictureUrl || null;
-  const reviewerName = formatPersonName(response.reviewedBy?.fullName);
-  const isReviewed = kind === "approved" || kind === "declined";
-  const submittedAt = response.submittedAt ? formatUpdatedAt(response.submittedAt) : "—";
-
-  const detailHref = isAttemptRow
-    ? `/admin/forms/${formId}/responses/${attempt.id}?attempt=1`
-    : `/admin/forms/${formId}/responses/${response.id}`;
-  const extendHref = `${detailHref}${isAttemptRow ? "&" : "?"}flow=extend`;
-
-  return (
-    <div className={`group/row relative transition-colors hover:bg-white/3 ${className}`}>
-      <Link href={detailHref} className="absolute inset-0 z-0" aria-label={userName} tabIndex={-1} />
-      <div className={`${RESPONSE_GRID} px-3 py-2.5`}>
-
-        <div className="flex justify-center">
-          <span title={status.label} className={`relative z-10 size-1.5 shrink-0 rounded-full ${status.dot}`} />
-        </div>
-
-        <div className="flex min-w-0 items-center gap-3">
-          <Avatar name={personName ? userName : ""} photoUrl={photoUrl} size="md" />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">{userName}</p>
-            <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
-              {response.isArchived && <Archive size={10} className="shrink-0 text-skylab-500/70" />}
-              <span className={`shrink-0 text-3xs font-medium lg:hidden ${status.text}`}>{status.label}</span>
-              <span className="truncate text-3xs text-neutral-500">{userId || guest?.email || (isErased ? "" : "Anonim")}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className={`hidden text-center text-2xs font-medium lg:block ${status.text}`}>
-          {status.label}
-        </div>
-
-        <span className="hidden min-w-0 truncate text-2xs lg:block">
-          {isReviewed
-            ? <span className="text-neutral-300">{reviewerName || "—"}</span>
-            : kind === "provisional"
-              ? <span className="text-amber-200/80">Karar bekliyor</span>
-              : <span className="text-neutral-600">{kind === "pending" ? "Bekliyor" : "—"}</span>}
-        </span>
-
-        <span className="hidden min-w-0 truncate text-center text-2xs tabular-nums md:block">
-          <ResponseTime kind={kind} response={response} />
-          {attempt?.extendedMinutes > 0 && (
-            <span title="Ek süre verildi" className="ml-1.5 rounded border border-skylab-400/30 px-1 text-3xs text-skylab-300/80">
-              +{shortDuration(attempt.extendedMinutes * 60_000)}
-            </span>
-          )}
-        </span>
-
-        <span className="hidden text-center text-2xs tabular-nums text-neutral-500 sm:block">
-          {submittedAt}
-        </span>
-
-        <div className="flex items-center justify-end gap-1">
-          {attempt?.canExtend && (
-            <QuickAction href={extendHref} title="Süre ver">
-              <ClockPlus size={14} />
-            </QuickAction>
-          )}
-          {attempt?.canRemind && onRemind && (
-            <QuickAction onClick={() => onRemind(attempt.id)} busy={reminding || reminded} title={reminded ? "Hatırlatma gönderildi" : "Hatırlat"}>
-              {reminded ? <Check size={14} /> : <Mail size={14} />}
-            </QuickAction>
-          )}
-          <Link href={detailHref} title="Kaydı aç" aria-label="Kaydı aç"
-            className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center text-neutral-400 transition-colors hover:text-skylab-300"
-          >
-            <ChevronRight className="h-4.5 w-4.5 transition-transform group-hover/row:translate-x-0.5" />
-          </Link>
-        </div>
-
-      </div>
-    </div>
-  );
-}
 
 export default function ListItem({ form, viewHref, editHref, className = "" }) {
   if (!form) return null;

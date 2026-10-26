@@ -29,20 +29,21 @@ const NOTICE_TONE = {
 };
 
 const HEADER_ROW = "flex h-10 min-w-0 shrink-0 items-center border-b border-neutral-800 px-4 text-sm font-semibold tracking-wide";
-const ACTION_BASE = `group flex h-7 items-center justify-center gap-2 rounded-lg border px-3 text-2xs font-medium transition-colors ${FOCUS_RING} disabled:pointer-events-none disabled:opacity-40`;
-const PILL_BASE = "flex min-w-22 max-w-36 shrink-0 items-center gap-1 rounded-lg border px-2.5 py-1 text-2xs";
+const ACTION_BASE = `group flex items-center justify-center gap-2 rounded-lg border px-3 text-2xs font-medium transition-colors ${FOCUS_RING} disabled:pointer-events-none disabled:opacity-40`;
+const PILL_BASE = "flex min-w-22 shrink-0 items-center gap-1 rounded-lg border px-2.5 py-1 text-2xs";
 
 export function panelShellClass(layout) {
   const size = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
   return `relative flex min-w-0 max-w-xl overflow-hidden rounded-xl p-2 ${size}`;
 }
 
-export function actionClass({ danger = false, active = false } = {}) {
-  if (active) return `${ACTION_BASE} border-skylab-400/30 bg-skylab-500/10 text-skylab-300`;
+export function actionClass({ danger = false, active = false, compact = false, touch = false } = {}) {
+  const base = `${ACTION_BASE} ${touch ? "h-11 sm:h-7" : compact ? "h-6" : "h-7"}`;
+  if (active) return `${base} border-skylab-400/30 bg-skylab-500/10 text-skylab-300`;
   const hover = danger
     ? "hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
     : "hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300";
-  return `${ACTION_BASE} border-white/10 bg-white/5 text-neutral-300 ${hover}`;
+  return `${base} border-white/10 bg-white/5 text-neutral-300 ${hover}`;
 }
 
 export function PanelTabs({ tabs, active, onChange }) {
@@ -130,9 +131,9 @@ export function ToggleRow({ title, description, checked, onChange, disabled = fa
   );
 }
 
-export function PanelButton({ icon: Icon, iconClassName = "", children, danger = false, active = false, chevron = false, className = "", ...props }) {
+export function PanelButton({ icon: Icon, iconClassName = "", children, danger = false, active = false, chevron = false, compact = false, touch = false, className = "", ...props }) {
   return (
-    <button type="button" className={`${actionClass({ danger, active })} ${className}`} {...props}>
+    <button type="button" className={`${actionClass({ danger, active, compact, touch })} ${className}`} {...props}>
       {Icon ? <Icon size={13} className={`${ACTION_ICON} ${iconClassName}`} /> : null}
       {children}
       {chevron ? <ChevronDown size={12} className={`-ml-0.5 shrink-0 opacity-70 transition-transform duration-200 ${active ? "rotate-180" : ""}`} /> : null}
@@ -170,10 +171,10 @@ export function PanelNotice({ tone = "amber", className = "", children }) {
 }
 
 export function PillBadge({ children }) {
-  return <span className={`${PILL_BASE} justify-center border-white/10 bg-white/5 text-neutral-300`}>{children}</span>;
+  return <span className={`${PILL_BASE} max-w-36 justify-center border-white/10 bg-white/5 text-neutral-300`}>{children}</span>;
 }
 
-export function MenuPill({ value, options, onSelect, placeholder = "", italic = false, onDelete, deleteLabel = "Kaldır", deleteHint, open: controlledOpen, onOpenChange }) {
+export function MenuPill({ value, options, onSelect, placeholder = "", italic = false, wide = false, onDelete, deleteLabel = "Kaldır", deleteHint, open: controlledOpen, onOpenChange }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
@@ -192,7 +193,7 @@ export function MenuPill({ value, options, onSelect, placeholder = "", italic = 
     <>
       <button ref={anchorRef} type="button" aria-haspopup="menu" aria-expanded={open}
         onClick={(event) => { event.stopPropagation(); setOpen(!open); }} onKeyDown={stop}
-        className={`${PILL_BASE} justify-between transition-colors ${FOCUS_RING} ${italic ? "italic" : ""} ${
+        className={`${PILL_BASE} ${wide ? "max-w-52" : "max-w-36"} justify-between transition-colors ${FOCUS_RING} ${italic ? "italic" : ""} ${
           open ? "border-white/20 bg-[#1e1e1e] text-neutral-50"
             : `border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:text-neutral-50 ${italic ? "text-neutral-400" : "text-neutral-300"}`
         }`}

@@ -18,7 +18,8 @@ import {
   X,
 } from "lucide-react";
 import { formatDay } from "../dates";
-import { useInView } from "../useInView";
+import { useInView, useNarrow, useReducedMotion } from "../useInView";
+import Duo from "../Duo";
 import "./review-loop.css";
 
 const TEAMS = ["Frontend", "Backend", "DevOps"];
@@ -74,14 +75,36 @@ function noteFor(kind, team, exp) {
   return opener + (team === "Backend" ? "Sonraki adımda backend tarafını görelim." : "Teknik görüşmede devam edelim.");
 }
 
-function hintFor(s) {
-  if (s.stage === 0) return "Telefonda formu doldurun ve en alttaki Gönder'e basın.";
-  if (s.stage === 1 && s.view === "list") return "Başvuru ekibin listesine düştü. Satıra tıklayıp açın.";
-  if (s.stage === 1 && s.ask) return "Kararı onaylayın.";
-  if (s.stage === 1) return "Onaylayın ya da reddedin. Açıklama yazarsanız başvuran onu görür.";
+function hintFor(s, auto) {
+  if (s.stage === 0) return auto ? "Ayşe formu doldurup gönderiyor." : "Telefonda formu doldurun ve en alttaki Gönder'e basın.";
+  if (s.stage === 1 && s.view === "list") return auto ? "Başvuru ekibin listesine düştü. Ekipten biri açıyor." : "Başvuru ekibin listesine düştü. Satıra tıklayıp açın.";
+  if (s.stage === 1 && s.ask) return auto ? "Ekip kararını onaylıyor." : "Kararı onaylayın.";
+  if (s.stage === 1) return auto ? "Ekip cevapları okuyup karar veriyor. Açıklama yazarsa Ayşe onu görür." : "Onaylayın ya da reddedin. Açıklama yazarsanız başvuran onu görür.";
   if (s.dec === "ok") return "Başvurana e-posta gitti. Formun sayfasını açınca sıradaki adımı ve ekibin notunu görür.";
-  return "Başvurana e-posta gitti. Formun sayfasını açınca kararı ve notunuzu görür.";
+  return auto ? "Başvurana e-posta gitti. Formun sayfasını açınca kararı ve ekibin notunu görür." : "Başvurana e-posta gitti. Formun sayfasını açınca kararı ve notunuzu görür.";
 }
+
+function phaseOf(s) {
+  if (s.stage === 0) return "form";
+  if (s.stage === 2) return "done";
+  if (s.busy) return "busy";
+  if (s.view === "list") return "list";
+  return s.ask ? "ask" : "detail";
+}
+
+const tapped = (base, on) => (on ? `${base} is-tap` : base);
+
+const PAUSE = (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <rect x="6" y="4" width="4" height="16" rx="1" />
+    <rect x="14" y="4" width="4" height="16" rx="1" />
+  </svg>
+);
+const PLAY = (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M7 4.5v15a1 1 0 0 0 1.52.85l12-7.5a1 1 0 0 0 0-1.7l-12-7.5A1 1 0 0 0 7 4.5z" />
+  </svg>
+);
 
 function reducer(s, a) {
   switch (a.type) {
@@ -147,7 +170,7 @@ function TeamNote({ note }) {
   );
 }
 
-function FormCard({ s, set, closeLong, onSend }) {
+function FormCard({ s, set, closeLong, tap, onSend }) {
   const fill = s.exp && !s.story.trim() ? 75 : 100;
 
   return (
@@ -272,7 +295,7 @@ function FormCard({ s, set, closeLong, onSend }) {
               <p className="f-next-k">Gönderdikten sonra</p>
               <p className="f-next-v">Ekip cevaplarınızı inceleyecek; sonucu e-postayla bildireceğiz.</p>
             </div>
-            <button type="button" className="f-submit sl-send is-pulse" onClick={onSend}>Gönder</button>
+            <button type="button" className={tapped("f-submit sl-send is-pulse", tap === "send")} onClick={onSend}>Gönder</button>
           </div>
           <p className="f-who">
             <span className="f-who-i">
@@ -399,15 +422,15 @@ function DeclinedCard({ note }) {
   );
 }
 
-function PhoneScreen({ s, set, closeLong, next, noteShown, onSend }) {
-  if (s.stage === 0) return <FormCard s={s} set={set} closeLong={closeLong} onSend={onSend} />;
+function PhoneScreen({ s, set, closeLong, next, noteShown, tap, onSend }) {
+  if (s.stage === 0) return <FormCard s={s} set={set} closeLong={closeLong} tap={tap} onSend={onSend} />;
   if (s.stage === 1) return <PendingCard />;
   if (s.dec === "ok") return <ApprovedCard next={next} note={noteShown} />;
   if (s.dec === "no") return <DeclinedCard note={noteShown} />;
   return null;
 }
 
-function Row({ r, ping, onOpen }) {
+function Row({ r, ping, tap, onOpen }) {
   const o = OUTCOME[r.outcome];
   const open = r.mine
     ? {
@@ -426,7 +449,7 @@ function Row({ r, ping, onOpen }) {
 
   return (
     <li>
-      <div className={r.mine ? `rl-row is-click is-new${ping ? " is-ping" : ""}` : "rl-row"} {...open}>
+      <div className={r.mine ? tapped(`rl-row is-click is-new${ping ? " is-ping" : ""}`, tap === "row") : "rl-row"} {...open}>
         <span className={`rl-dot ${o.dot}`} />
         <span className="rl-av">{r.av}</span>
         <span className="rl-who">
@@ -440,7 +463,7 @@ function Row({ r, ping, onOpen }) {
   );
 }
 
-function Deciding({ s, set, dispatch, next, noteId, noteText }) {
+function Deciding({ s, set, dispatch, next, noteId, noteText, tap }) {
   const ping = s.stage === 1 && s.view === "detail" && !s.ask;
   const no = s.ask === "no";
 
@@ -450,11 +473,11 @@ function Deciding({ s, set, dispatch, next, noteId, noteText }) {
       {!s.ask && !s.busy && (
         <>
           <div className={ping ? "rl-btns is-ping" : "rl-btns"}>
-            <button type="button" className="f-ok" onClick={() => set({ ask: "ok" })}>
+            <button type="button" className={tapped("f-ok", tap === "ok")} onClick={() => set({ ask: "ok" })}>
               <Check size={15} aria-hidden="true" />
               Onayla
             </button>
-            <button type="button" className="f-no" onClick={() => set({ ask: "no" })}>
+            <button type="button" className={tapped("f-no", tap === "no")} onClick={() => set({ ask: "no" })}>
               <X size={15} aria-hidden="true" />
               Reddet
             </button>
@@ -482,7 +505,7 @@ function Deciding({ s, set, dispatch, next, noteId, noteText }) {
           <p className="w">Bu karar başvurunun yönünü belirler ve geri alınamaz.</p>
           <div className="rl-cf-b">
             <button type="button" className="v" onClick={() => set({ ask: null })}>Vazgeç</button>
-            <button type="button" className={no ? "no" : "ok"} onClick={() => dispatch({ type: "confirm" })}>
+            <button type="button" className={tapped(no ? "no" : "ok", tap === "cf")} onClick={() => dispatch({ type: "confirm" })}>
               {no ? "Reddet" : "Onayla"}
             </button>
           </div>
@@ -531,7 +554,7 @@ function Decided({ decidedAt, note }) {
   );
 }
 
-function Detail({ s, set, dispatch, next, noteId, noteText, noteShown }) {
+function Detail({ s, set, dispatch, next, noteId, noteText, noteShown, tap }) {
   const outcome = OUTCOME[s.dec ?? "wait"];
   const answers = [
     { q: "Adınız ve soyadınız", v: "Ayşe Yılmaz" },
@@ -564,14 +587,14 @@ function Detail({ s, set, dispatch, next, noteId, noteText, noteShown }) {
         {s.dec ? (
           <Decided decidedAt={s.decidedAt} note={noteShown} />
         ) : (
-          <Deciding s={s} set={set} dispatch={dispatch} next={next} noteId={noteId} noteText={noteText} />
+          <Deciding s={s} set={set} dispatch={dispatch} next={next} noteId={noteId} noteText={noteText} tap={tap} />
         )}
       </div>
     </div>
   );
 }
 
-function ReviewPanel({ s, set, dispatch, rows, next, noteId, noteText, noteShown }) {
+function ReviewPanel({ s, set, dispatch, rows, next, noteId, noteText, noteShown, tap }) {
   const detail = s.view === "detail";
   const ping = s.stage === 1 && s.view === "list";
   const open = () => set({ view: "detail" });
@@ -589,11 +612,11 @@ function ReviewPanel({ s, set, dispatch, rows, next, noteId, noteText, noteShown
       </div>
       <div className="rl-body">
         {detail ? (
-          <Detail s={s} set={set} dispatch={dispatch} next={next} noteId={noteId} noteText={noteText} noteShown={noteShown} />
+          <Detail s={s} set={set} dispatch={dispatch} next={next} noteId={noteId} noteText={noteText} noteShown={noteShown} tap={tap} />
         ) : (
           <ul className="rl-list">
             {rows.map((r) => (
-              <Row key={r.name} r={r} ping={ping} onOpen={open} />
+              <Row key={r.name} r={r} ping={ping} tap={tap} onOpen={open} />
             ))}
           </ul>
         )}
@@ -607,8 +630,63 @@ export default function ReviewLoop() {
   const scrollerRef = useRef(null);
   const noteId = useId();
   const inView = useInView(rootRef);
+  const narrow = useNarrow(rootRef);
+  const reduce = useReducedMotion();
   const [closeLong] = useState(() => `${formatDay(12, { day: "numeric", month: "long", weekday: "long" })}, 23:59`);
   const [s, dispatch] = useReducer(reducer, INITIAL);
+  const [side, setSide] = useState(0);
+  const [paused, setPaused] = useState(reduce);
+  const [plan, setPlan] = useState("ok");
+  const [tap, setTap] = useState(null);
+  const run = !paused && inView;
+  const phase = phaseOf(s);
+  const tapOn = tap && tap.at === phase ? tap.on : null;
+
+  useEffect(() => {
+    if (!run) return undefined;
+    const timers = [];
+    const later = (ms, fn) => timers.push(setTimeout(fn, ms));
+    const press = (on, ms, fn) => {
+      later(ms, () => setTap({ at: phase, on }));
+      later(ms + 320, fn);
+    };
+    if (phase === "form") {
+      later(1200, () => {
+        const el = scrollerRef.current;
+        el?.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      });
+      press("send", 2300, () => {
+        dispatch({ type: "send", at: stamp() });
+        toTop(scrollerRef.current);
+      });
+    } else if (phase === "list") {
+      press("row", narrow ? 2200 : 1300, () => dispatch({ type: "set", patch: { view: "detail" } }));
+    } else if (phase === "detail") {
+      press(plan, 1800, () => dispatch({ type: "set", patch: { ask: plan } }));
+    } else if (phase === "ask") {
+      press("cf", 1300, () => dispatch({ type: "confirm" }));
+    } else if (phase === "done") {
+      later(5200, () => {
+        setPlan((p) => (p === "ok" ? "no" : "ok"));
+        dispatch({ type: "reset" });
+        toTop(scrollerRef.current);
+      });
+    }
+    return () => timers.forEach(clearTimeout);
+  }, [run, phase, plan, narrow]);
+
+  useEffect(() => {
+    if (!narrow) return undefined;
+    const to = s.stage === 1 ? 1 : 0;
+    const id = setTimeout(() => setSide(to), s.stage === 0 ? 0 : s.stage === 1 ? 1100 : 900);
+    return () => clearTimeout(id);
+  }, [narrow, s.stage]);
+
+  useEffect(() => {
+    if (!narrow || !s.ask) return;
+    const det = rootRef.current?.querySelector(".duo .rl-det");
+    det?.scrollTo({ top: det.scrollHeight, behavior: "smooth" });
+  }, [narrow, s.ask]);
 
   useEffect(() => {
     if (!inView || !s.busy) return undefined;
@@ -646,52 +724,83 @@ export default function ReviewLoop() {
   const noteShown = (s.note || "").trim();
   const rows = s.stage >= 1 ? [{ av: "AY", name: "Ayşe Yılmaz", outcome: s.dec ?? "wait", at: s.sentAt, mine: true }, ...BASE_ROWS] : BASE_ROWS;
 
-  return (
-    <div className="sl" ref={rootRef}>
-      <div className="sl-bar">
-        <p className="sl-hint" key={`h${s.stage}${s.view}${s.ask || ""}${s.dec || ""}`}>
-          <i />
-          <span>{hintFor(s)}</span>
-        </p>
-        <button type="button" className="sl-reset" onClick={reset} disabled={s.stage === 0}>
-          <RotateCcw size={13} aria-hidden="true" />
-          Baştan
-        </button>
+  const takeOver = (e) => {
+    if (e.target.closest(".sl-phone, .rl-app") && e.target.closest("button, [role='button'], input, textarea, .f-tog")) setPaused(true);
+  };
+
+  const tools = (
+    <>
+      <button type="button" className={run ? "f-auto is-on" : "f-auto"} aria-pressed={run} onClick={() => setPaused(run)}>
+        {run ? PAUSE : PLAY}
+        {run ? "Durdur" : "Oynat"}
+      </button>
+      <button type="button" className="f-reset" onClick={reset} disabled={s.stage === 0}>
+        <RotateCcw size={13} aria-hidden="true" />
+        Baştan
+      </button>
+    </>
+  );
+
+  const applicant = (
+    <div className="sl-phone">
+      <div className="sl-scr">
+        <StatusBar />
+        <div className="sl-scroll" ref={scrollerRef}>
+          <PhoneScreen s={s} set={set} closeLong={closeLong} next={next} noteShown={noteShown} tap={tapOn} onSend={send} />
+        </div>
       </div>
-      <div className="sl-stage">
-        <div className="sl-phone">
-          <div className="sl-scr">
-            <StatusBar />
-            <div className="sl-scroll" ref={scrollerRef}>
-              <PhoneScreen s={s} set={set} closeLong={closeLong} next={next} noteShown={noteShown} onSend={send} />
+    </div>
+  );
+
+  const panel = (
+    <ReviewPanel
+      s={s}
+      set={set}
+      dispatch={dispatch}
+      rows={rows}
+      next={next}
+      noteId={noteId}
+      noteText={noteText}
+      noteShown={noteShown}
+      tap={tapOn}
+    />
+  );
+
+  return (
+    <div className={run ? "sl is-auto" : "sl"} ref={rootRef} onClickCapture={takeOver}>
+      <div className="sl-bar">
+        <p className="sl-hint" key={`h${s.stage}${s.view}${s.ask || ""}${s.dec || ""}${run}`}>
+          <i />
+          <span>{hintFor(s, run)}</span>
+        </p>
+        {!narrow && <div className="sl-tools">{tools}</div>}
+      </div>
+      {narrow ? (
+        <Duo labels={["Başvuran", "Ekip"]} side={side} onSide={setSide} tools={tools}>
+          {applicant}
+          <div className="sl-phone">
+            <div className="sl-scr">
+              <StatusBar />
+              {panel}
             </div>
           </div>
-        </div>
+        </Duo>
+      ) : (
+        <div className="sl-stage">
+          {applicant}
 
-        <div className="sl-link" aria-hidden="true">
-          <svg viewBox="0 0 56 640" preserveAspectRatio="none">
-            <path className={s.showGo ? "is-on" : undefined} d="M0 548 C 28 548, 28 150, 56 150" />
-            <path className={s.showBack ? "is-on" : undefined} d="M56 360 C 28 360, 28 300, 0 300" />
-          </svg>
-          {s.beadGo > 0 && <span className="sl-bead go" key={`g${s.beadGo}`} />}
-          {s.beadBack > 0 && <span className="sl-bead back" key={`b${s.beadBack}`} />}
-        </div>
-        <div className="sl-vlink" aria-hidden="true">
-          {s.beadGo > 0 && <i className="go" key={`g${s.beadGo}`} />}
-          {s.beadBack > 0 && <i className="back" key={`b${s.beadBack}`} />}
-        </div>
+          <div className="sl-link" aria-hidden="true">
+            <svg viewBox="0 0 56 640" preserveAspectRatio="none">
+              <path className={s.showGo ? "is-on" : undefined} d="M0 548 C 28 548, 28 150, 56 150" />
+              <path className={s.showBack ? "is-on" : undefined} d="M56 360 C 28 360, 28 300, 0 300" />
+            </svg>
+            {s.beadGo > 0 && <span className="sl-bead go" key={`g${s.beadGo}`} />}
+            {s.beadBack > 0 && <span className="sl-bead back" key={`b${s.beadBack}`} />}
+          </div>
 
-        <ReviewPanel
-          s={s}
-          set={set}
-          dispatch={dispatch}
-          rows={rows}
-          next={next}
-          noteId={noteId}
-          noteText={noteText}
-          noteShown={noteShown}
-        />
-      </div>
+          {panel}
+        </div>
+      )}
     </div>
   );
 }

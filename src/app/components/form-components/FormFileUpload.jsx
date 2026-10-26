@@ -31,7 +31,7 @@ function formatMegabytes(bytes) {
   return `${Math.round(bytes / 1024 / 1024)} MB`;
 }
 
-function AccountUploadHint({ acceptedFiles }) {
+export function AccountUploadHint({ acceptedFiles }) {
   const rules = accountFileRules(acceptedFiles, 0);
 
   if (!rules.types.length) {
@@ -47,7 +47,7 @@ function AccountUploadHint({ acceptedFiles }) {
   );
 }
 
-function GuestUploadHint({ acceptedFiles, maxSize }) {
+export function GuestUploadHint({ acceptedFiles, maxSize }) {
   const { data, isSuccess } = useGuestUploadCapabilityQuery();
   if (!isSuccess) return null;
 

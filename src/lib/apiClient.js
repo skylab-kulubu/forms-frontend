@@ -4,13 +4,32 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 
 export const SESSION_EXPIRED_EVENT = "skyforms:session-expired";
 
+const SESSION_REUSE_MARGIN_MS = 30 * 1000;
+
+function tokenExpiry(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return Number(payload.exp) * 1000 || 0;
+  } catch {
+    return 0;
+  }
+}
+
 // Concurrent callers share one in-flight session fetch. Every request() reads the session,
 // and each separate fetch can trigger its own server-side token refresh; with refresh-token
 // rotation two parallel refreshes race and the loser gets invalid_grant.
 let inflightSession = null;
-function getSharedSession() {
+let reusableSession = null;
+function getSharedSession({ fresh = false } = {}) {
+  if (!fresh && reusableSession && Date.now() < reusableSession.until) return Promise.resolve(reusableSession.session);
   if (!inflightSession) {
-    inflightSession = getSession().finally(() => { inflightSession = null; });
+    inflightSession = getSession()
+      .then((session) => {
+        const until = session?.accessToken && !session.error ? tokenExpiry(session.accessToken) - SESSION_REUSE_MARGIN_MS : 0;
+        reusableSession = until > Date.now() ? { session, until } : null;
+        return session;
+      })
+      .finally(() => { inflightSession = null; });
   }
   return inflightSession;
 }
@@ -71,7 +90,7 @@ export async function request(path, options = {}) {
   if (response.status === 401 && !hasAuthHeader && !anonymous && !skippedDeadSession) {
     let refreshed = false;
     try {
-      const session = await getSharedSession();
+      const session = await getSharedSession({ fresh: true });
       const freshToken = session?.accessToken;
       if (freshToken && freshToken !== resolvedToken) {
         refreshed = true;
@@ -148,7 +167,7 @@ export async function uploadWithProgress(path, file, onProgress, purpose) {
     if (error.status === 401) {
       let freshToken = null;
       try {
-        const session = await getSharedSession();
+        const session = await getSharedSession({ fresh: true });
         freshToken = session?.accessToken;
       } catch {}
       if (freshToken && freshToken !== resolvedToken) {
