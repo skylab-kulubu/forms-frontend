@@ -10,17 +10,11 @@ import {
 } from "@/lib/hooks/useWorkflowAdmin";
 import { EMPTY_RULE, useWorkflowEditor } from "../workflow-editor/WorkflowEditorContext";
 import { TRIGGER, connectionError, groupTransitions, toDefinitionPayload } from "../workflow-editor/workflow-graph";
-import { COMPARISON_SYMBOL, CONNECTION_COPY, VALUELESS_COMPARISONS, fieldQuestionLabel } from "../workflow-editor/workflow-copy";
+import { CONNECTION_COPY, fieldQuestionLabel } from "../workflow-editor/workflow-copy";
+import { transitionLabel } from "./studio-flow";
 
 const DEFINITION_DEBOUNCE_MS = 1200;
 const META_DEBOUNCE_MS = 900;
-
-export const TRIGGER_LABEL = {
-  [TRIGGER.SUBMITTED]: "gönderilince",
-  [TRIGGER.APPROVED]: "onaylanırsa",
-  [TRIGGER.DECLINED]: "reddedilirse",
-  [TRIGGER.TIMED_OUT]: "süre dolunca",
-};
 
 export function useWorkflowStudio({ workflow, liveForm = null, onCreated }) {
   const { state, dispatch } = useWorkflowEditor();
@@ -217,30 +211,11 @@ export function useWorkflowStudio({ workflow, liveForm = null, onCreated }) {
     return map;
   }, [issues]);
 
-  const labelForTransition = useCallback((transition) => {
-    const group = groupTransitions(state.transitions, transition.sourceNodeKey, transition.trigger);
-    const hasConditional = group.some((item) => item.condition);
-
-    if (!transition.condition) return hasConditional ? "aksi halde" : TRIGGER_LABEL[transition.trigger];
-
-    const rules = transition.condition.rules ?? [];
-    const rule = rules[0];
-    if (!rule?.questionId) return "koşul eksik";
-
-    const sourceNode = rule.nodeKey
-      ? state.nodes.find((node) => node.nodeKey === rule.nodeKey)
-      : state.nodes.find((node) => node.nodeKey === transition.sourceNodeKey);
-
-    const field = schemasByFormId[sourceNode?.formId]?.schema?.find((item) => item.id === rule.questionId);
-    const question = field ? fieldQuestionLabel(field) : rule.questionId;
-    const comparison = Number(rule.comparison);
-    const value = Array.isArray(rule.values) && rule.values.length > 0 ? rule.values.join(", ") : rule.value;
-    const summary = VALUELESS_COMPARISONS.includes(comparison)
-      ? `${question} ${COMPARISON_SYMBOL[comparison]}`
-      : `${question} ${COMPARISON_SYMBOL[comparison]} ${value || "?"}`;
-
-    return rules.length > 1 ? `${summary} +${rules.length - 1}` : summary;
-  }, [state.transitions, state.nodes, schemasByFormId]);
+  const labelForTransition = useCallback((transition) => transitionLabel(transition, {
+    nodes: state.nodes,
+    transitions: state.transitions,
+    schemaOf: (formId) => schemasByFormId[formId]?.schema,
+  }), [state.transitions, state.nodes, schemasByFormId]);
 
   const lockedHighlights = useMemo(() => {
     const locked = new Map();

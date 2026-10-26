@@ -9,10 +9,15 @@ import { workflowEditHref } from "@/lib/workflow-links";
 import { Floating } from "@/app/components/utils/Floating";
 import { POPOVER_MOTION } from "./studio-motion";
 
-function paletteAnchor() {
-  const row = document.querySelector("[data-studio-root] [data-palette-anchor]")?.parentElement;
+const STUDIO_LINKS = {
+  form: (form) => `/admin/forms/${form.id}/edit`,
+  workflow: (workflow) => workflowEditHref(workflow),
+};
+
+function paletteAnchor(root) {
+  const row = document.querySelector(`${root} [data-palette-anchor]`)?.parentElement;
   if (row && row.getClientRects().length > 0) return row;
-  const rect = document.querySelector("[data-studio-root]")?.getBoundingClientRect();
+  const rect = document.querySelector(root)?.getBoundingClientRect();
   return { top: (rect?.top ?? 56) + 10, left: rect ? rect.left + rect.width / 2 : window.innerWidth / 2, width: 0, height: 0 };
 }
 
@@ -22,8 +27,8 @@ function listOf(payload) {
   return Array.isArray(data?.items) ? data.items : [];
 }
 
-export default function StudioPalette({ current, onPickStep, onNavigate, onClose }) {
-  const [anchor] = useState(paletteAnchor);
+export default function StudioPalette({ current, onPickStep, onNavigate, onClose, root = "[data-studio-root]", links = STUDIO_LINKS }) {
+  const [anchor] = useState(() => paletteAnchor(root));
   const docked = anchor?.nodeType === 1;
   const inputRef = useRef(null);
   const [search, setSearch] = useState("");
@@ -50,7 +55,7 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
       .map((workflow) => ({
         key: `workflow-${workflow.id}`,
         kind: "workflow",
-        href: workflowEditHref(workflow),
+        href: links.workflow(workflow),
         label: workflow.name || "Adsız akış",
         meta: `${workflow.nodeCount ?? 0} adım`,
         Icon: Workflow,
@@ -61,7 +66,7 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
     const solos = forms.filter((form) => !form.workflow).map((form) => ({
       key: `form-${form.id}`,
       kind: "form",
-      href: `/admin/forms/${form.id}/edit`,
+      href: links.form(form),
       label: form.title || "Adsız form",
       meta: "tek başına",
       Icon: FileText,
@@ -71,7 +76,7 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
       ? forms.filter((form) => form.workflow && form.workflow.id !== current.workflowId).map((form) => ({
         key: `inner-${form.id}`,
         kind: "form",
-        href: `/admin/forms/${form.id}/edit`,
+        href: links.form(form),
         label: form.title || "Adsız form",
         meta: form.workflow.name || "akışta",
         Icon: FileText,
@@ -80,7 +85,7 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
       : [];
 
     return [...own, ...workflows, ...solos, ...inner].filter((item) => matches(item.label));
-  }, [current, workflowsData, formsData, query]);
+  }, [current, workflowsData, formsData, query, links]);
 
   const choose = (item) => {
     if (!item) return;

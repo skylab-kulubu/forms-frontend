@@ -4,10 +4,9 @@ import { Fragment, useRef, useState } from "react";
 import { ArrowRight, CornerDownRight, Map as MapIcon, Plus } from "lucide-react";
 import { MenuPill, actionClass } from "@/app/admin/components/utils/SidePanel";
 import { groupTransitions, triggersForNode } from "../workflow-editor/workflow-graph";
-import { END_TARGET, NEW_TARGET, targetOptions, triggerStyle } from "./studio-flow";
-import { TRIGGER_LABEL } from "./useWorkflowStudio";
+import { END_TARGET, NEW_TARGET, TRIGGER_LABEL, targetOptions, triggerStyle } from "./studio-flow";
 
-function Heading({ children }) {
+export function Heading({ children }) {
   return (
     <div className="mb-1 flex items-center gap-2">
       <span className="text-2xs font-medium text-neutral-500">{children}</span>
@@ -16,7 +15,7 @@ function Heading({ children }) {
   );
 }
 
-function TriggerRow({ trigger, children }) {
+export function TriggerRow({ trigger, children }) {
   const style = triggerStyle(trigger);
   return (
     <div className="flex min-h-11 flex-wrap items-center gap-x-2.5 gap-y-1 py-1.5 text-xs">

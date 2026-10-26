@@ -6,7 +6,7 @@ import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS as DndCSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { Activity, ChevronsUpDown, ClipboardList, CornerDownRight, FileText, GripVertical, LayoutTemplate, Map as MapIcon, Plus, Workflow } from "lucide-react";
+import { Activity, ChevronsUpDown, ClipboardList, CornerDownRight, FileText, GripVertical, LayoutTemplate, Map as MapIcon, PanelLeftClose, Plus, Workflow } from "lucide-react";
 import { PanelButton } from "@/app/admin/components/utils/SidePanel";
 import { useFormEditor } from "../form-editor/FormEditorContext";
 import { useFormActions } from "./useFormActions";
@@ -17,7 +17,7 @@ import { DROP_ANIMATION, conditionLoss, slotOf, useStudioSensors } from "./studi
 
 const emptySubscribe = () => () => {};
 
-export function OutlineHeader({ title, untitled = false, inFlow, onOpenPalette, onOpenFlowPage }) {
+export function OutlineHeader({ title, untitled = false, inFlow, onOpenPalette, onOpenFlowPage, onCollapse }) {
   const SwitchIcon = inFlow ? Workflow : FileText;
 
   return (
@@ -35,6 +35,13 @@ export function OutlineHeader({ title, untitled = false, inFlow, onOpenPalette, 
           className="ml-0.5 grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200"
         >
           <Activity size={14} />
+        </button>
+      ) : null}
+      {onCollapse ? (
+        <button type="button" title="Paneli kapat" aria-label="Paneli kapat" onClick={onCollapse}
+          className="ml-0.5 grid size-8 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200"
+        >
+          <PanelLeftClose size={15} />
         </button>
       ) : null}
     </div>

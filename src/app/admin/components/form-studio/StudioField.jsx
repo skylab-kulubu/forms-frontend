@@ -77,7 +77,7 @@ export function Editable({ editKey, value, onChange, placeholder, className = ""
   );
 }
 
-function QuestionBadge({ number, conditional }) {
+export function QuestionBadge({ number, conditional }) {
   return (
     <div data-anchor="number" className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-xs font-semibold transition-colors ${
       conditional ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-neutral-700 bg-neutral-900 text-neutral-300"
@@ -304,7 +304,7 @@ function AddChildButton({ onPick }) {
   );
 }
 
-function RepeaterPreview({ field, selected, api }) {
+function RepeaterPreview({ field, selected, readOnly = false, api }) {
   const children = Array.isArray(field.props?.fields) ? field.props.fields : [];
 
   return (
@@ -339,12 +339,12 @@ function RepeaterPreview({ field, selected, api }) {
           ))}
         </div>
       </div>
-      <AddChildButton onPick={(type) => api.addChild(field.id, type)} />
+      {readOnly ? null : <AddChildButton onPick={(type) => api.addChild(field.id, type)} />}
     </div>
   );
 }
 
-function ControlPreview({ field, selected, lockedValues, readOnly = false, api }) {
+export function ControlPreview({ field, selected, lockedValues, readOnly = false, api }) {
   const props = field.props ?? {};
 
   switch (field.type) {
@@ -422,7 +422,7 @@ function ControlPreview({ field, selected, lockedValues, readOnly = false, api }
     case "matrix":
       return <MatrixPreview field={field} selected={selected} api={api} />;
     case "repeater":
-      return <RepeaterPreview field={field} selected={selected} api={api} />;
+      return <RepeaterPreview field={field} selected={selected} readOnly={readOnly} api={api} />;
     default:
       return null;
   }

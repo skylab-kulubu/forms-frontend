@@ -1,6 +1,6 @@
 import { ArrowRight, Check, TimerOff, X } from "lucide-react";
-import { TRIGGER, connectionError, depthMap, flowOrder } from "../workflow-editor/workflow-graph";
-import { CONNECTION_COPY } from "../workflow-editor/workflow-copy";
+import { TRIGGER, connectionError, depthMap, flowOrder, groupTransitions } from "../workflow-editor/workflow-graph";
+import { COMPARISON_SYMBOL, CONNECTION_COPY, VALUELESS_COMPARISONS, fieldQuestionLabel } from "../workflow-editor/workflow-copy";
 
 export const END_TARGET = "__end";
 export const NEW_TARGET = "__new";
@@ -11,6 +11,38 @@ export const TRIGGER_STYLE = {
   [TRIGGER.DECLINED]: { label: "Reddedilince", Icon: X, icon: "text-red-400", port: "border-red-400/80", portFill: "bg-red-400 ring-2 ring-red-400/15", stroke: "rgba(248,113,113,0.7)", edgeLabel: "text-red-300 border-red-400/30" },
   [TRIGGER.TIMED_OUT]: { label: "Süre dolunca", Icon: TimerOff, icon: "text-amber-400", text: "text-amber-100/80", port: "border-amber-400/80", portFill: "bg-amber-400 ring-2 ring-amber-400/15", stroke: "rgba(251,191,36,0.75)", edgeLabel: "text-amber-300 border-amber-400/30" },
 };
+
+export const TRIGGER_LABEL = {
+  [TRIGGER.SUBMITTED]: "gönderilince",
+  [TRIGGER.APPROVED]: "onaylanırsa",
+  [TRIGGER.DECLINED]: "reddedilirse",
+  [TRIGGER.TIMED_OUT]: "süre dolunca",
+};
+
+export function transitionLabel(transition, { nodes, transitions, schemaOf }) {
+  const group = groupTransitions(transitions, transition.sourceNodeKey, transition.trigger);
+  const hasConditional = group.some((item) => item.condition);
+
+  if (!transition.condition) return hasConditional ? "aksi halde" : TRIGGER_LABEL[transition.trigger];
+
+  const rules = transition.condition.rules ?? [];
+  const rule = rules[0];
+  if (!rule?.questionId) return "koşul eksik";
+
+  const sourceNode = rule.nodeKey
+    ? nodes.find((node) => node.nodeKey === rule.nodeKey)
+    : nodes.find((node) => node.nodeKey === transition.sourceNodeKey);
+
+  const field = schemaOf(sourceNode?.formId)?.find((item) => item.id === rule.questionId);
+  const question = field ? fieldQuestionLabel(field) : rule.questionId;
+  const comparison = Number(rule.comparison);
+  const value = Array.isArray(rule.values) && rule.values.length > 0 ? rule.values.join(", ") : rule.value;
+  const summary = VALUELESS_COMPARISONS.includes(comparison)
+    ? `${question} ${COMPARISON_SYMBOL[comparison]}`
+    : `${question} ${COMPARISON_SYMBOL[comparison]} ${value || "?"}`;
+
+  return rules.length > 1 ? `${summary} +${rules.length - 1}` : summary;
+}
 
 export function triggerStyle(trigger) {
   return TRIGGER_STYLE[Number(trigger)] ?? TRIGGER_STYLE[TRIGGER.SUBMITTED];

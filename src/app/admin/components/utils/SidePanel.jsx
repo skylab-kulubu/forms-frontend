@@ -37,8 +37,8 @@ export function panelShellClass(layout) {
   return `relative flex min-w-0 max-w-xl overflow-hidden rounded-xl p-2 ${size}`;
 }
 
-export function actionClass({ danger = false, active = false, compact = false } = {}) {
-  const base = `${ACTION_BASE} ${compact ? "h-6" : "h-7"}`;
+export function actionClass({ danger = false, active = false, compact = false, touch = false } = {}) {
+  const base = `${ACTION_BASE} ${touch ? "h-11 sm:h-7" : compact ? "h-6" : "h-7"}`;
   if (active) return `${base} border-skylab-400/30 bg-skylab-500/10 text-skylab-300`;
   const hover = danger
     ? "hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
@@ -131,9 +131,9 @@ export function ToggleRow({ title, description, checked, onChange, disabled = fa
   );
 }
 
-export function PanelButton({ icon: Icon, iconClassName = "", children, danger = false, active = false, chevron = false, compact = false, className = "", ...props }) {
+export function PanelButton({ icon: Icon, iconClassName = "", children, danger = false, active = false, chevron = false, compact = false, touch = false, className = "", ...props }) {
   return (
-    <button type="button" className={`${actionClass({ danger, active, compact })} ${className}`} {...props}>
+    <button type="button" className={`${actionClass({ danger, active, compact, touch })} ${className}`} {...props}>
       {Icon ? <Icon size={13} className={`${ACTION_ICON} ${iconClassName}`} /> : null}
       {children}
       {chevron ? <ChevronDown size={12} className={`-ml-0.5 shrink-0 opacity-70 transition-transform duration-200 ${active ? "rotate-180" : ""}`} /> : null}
