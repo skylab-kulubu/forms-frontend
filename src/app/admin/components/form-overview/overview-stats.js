@@ -40,6 +40,11 @@ function matches(source, operator, target, value) {
 
 export function askedCount(field, fields, byId, total) {
   const condition = field?.condition;
+  const stats = byId.get(field?.id);
+  const served = stats?.askedCount;
+  if (typeof served === "number" && served >= (stats.answeredCount ?? 0)) {
+    return condition?.fieldId || served < total ? served : null;
+  }
   if (!condition?.fieldId) return null;
   const source = fields.find((item) => item.id === condition.fieldId);
   const sourceStats = byId.get(condition.fieldId);
