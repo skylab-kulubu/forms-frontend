@@ -204,6 +204,7 @@ export default function ApplicantList({
                     <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-3xs">
                       {row.isArchived ? <Archive size={10} className="shrink-0 text-skylab-500/70" /> : null}
                       <span className={`shrink-0 ${status.text}`}>{status.label}</span>
+                      {Number(row.workflow?.round) > 1 ? <span className="shrink-0 text-neutral-500">· {row.workflow.round}. gönderim</span> : null}
                       {kind === "running" && deadline ? <span className="truncate text-neutral-500">· {leftText(deadline - currentTime())}</span> : null}
                       {attempt?.extendedMinutes > 0 ? (
                         <span title="Ek süre verildi" className="rounded border border-skylab-400/30 px-1 text-skylab-300/80">+{shortDuration(attempt.extendedMinutes * 60_000)}</span>
