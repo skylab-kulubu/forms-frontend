@@ -23,6 +23,8 @@ const LINE = {
 };
 
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const routeKey = (source, trigger, target) => `${source}|${Number(trigger)}|${target ?? ""}`;
+const hasPill = (edge) => Boolean(edge?.label) || edge?.count != null;
 
 export function useElementWidth(ref) {
   const [width, setWidth] = useState(0);
@@ -110,6 +112,15 @@ function TriggerLabel({ trigger, text = null }) {
   );
 }
 
+function EdgeContent({ edge }) {
+  return (
+    <>
+      {edge.label ? <TriggerLabel trigger={edge.trigger} text={edge.label} /> : null}
+      {edge.count != null ? <span className="shrink-0 tabular-nums">{edge.label ? "· " : ""}{edge.count} kişi</span> : null}
+    </>
+  );
+}
+
 function Fork({ trunk, left, right, height = 92 }) {
   const ref = useRef(null);
   const width = useElementWidth(ref);
@@ -129,9 +140,9 @@ function Fork({ trunk, left, right, height = 92 }) {
             <path d={`M ${center} ${bend} H ${leftX + radius} Q ${leftX} ${bend} ${leftX} ${bend + radius} V ${height}`} fill="none" stroke={LINE[left?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
             <path d={`M ${center} ${bend} H ${rightX - radius} Q ${rightX} ${bend} ${rightX} ${bend + radius} V ${height}`} fill="none" stroke={LINE[right?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
           </svg>
-          {trunk?.label ? <EdgePill trigger={trunk.trigger} x={center} y={14}><TriggerLabel trigger={trunk.trigger} text={trunk.label} /></EdgePill> : null}
-          {left?.label ? <EdgePill trigger={left.trigger} x={leftX} y={64} maxWidth={branchMax}><TriggerLabel trigger={left.trigger} text={left.label} /></EdgePill> : null}
-          {right?.label ? <EdgePill trigger={right.trigger} x={rightX} y={64} maxWidth={branchMax}><TriggerLabel trigger={right.trigger} text={right.label} /></EdgePill> : null}
+          {hasPill(trunk) ? <EdgePill trigger={trunk.label ? trunk.trigger : null} x={center} y={14}><EdgeContent edge={trunk} /></EdgePill> : null}
+          {hasPill(left) ? <EdgePill trigger={left.label ? left.trigger : null} x={leftX} y={64} maxWidth={branchMax}><EdgeContent edge={left} /></EdgePill> : null}
+          {hasPill(right) ? <EdgePill trigger={right.label ? right.trigger : null} x={rightX} y={64} maxWidth={branchMax}><EdgeContent edge={right} /></EdgePill> : null}
         </>
       ) : null}
     </div>
@@ -157,9 +168,9 @@ function Merge({ left, right, trunk, height = 92 }) {
             <path d={`M ${rightX} 0 V ${bend - radius} Q ${rightX} ${bend} ${rightX - radius} ${bend} H ${center}`} fill="none" stroke={LINE[right?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
             <path d={`M ${center} ${bend} V ${height}`} fill="none" stroke={LINE[trunk?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
           </svg>
-          {left?.label ? <EdgePill trigger={left.trigger} x={leftX} y={26} maxWidth={branchMax}><TriggerLabel trigger={left.trigger} text={left.label} /></EdgePill> : null}
-          {right?.label ? <EdgePill trigger={right.trigger} x={rightX} y={26} maxWidth={branchMax}><TriggerLabel trigger={right.trigger} text={right.label} /></EdgePill> : null}
-          {trunk?.label ? <EdgePill trigger={trunk.trigger} x={center} y={height - 14}><TriggerLabel trigger={trunk.trigger} text={trunk.label} /></EdgePill> : null}
+          {hasPill(left) ? <EdgePill trigger={left.label ? left.trigger : null} x={leftX} y={26} maxWidth={branchMax}><EdgeContent edge={left} /></EdgePill> : null}
+          {hasPill(right) ? <EdgePill trigger={right.label ? right.trigger : null} x={rightX} y={26} maxWidth={branchMax}><EdgeContent edge={right} /></EdgePill> : null}
+          {hasPill(trunk) ? <EdgePill trigger={trunk.label ? trunk.trigger : null} x={center} y={height - 14}><EdgeContent edge={trunk} /></EdgePill> : null}
         </>
       ) : null}
     </div>
@@ -170,7 +181,7 @@ function Trunk({ edge = null, height = 64 }) {
   return (
     <div className="relative w-full" style={{ height }}>
       <span aria-hidden="true" className="absolute inset-y-0 left-1/2 w-[1.5px] -translate-x-1/2" style={{ background: LINE[edge?.trigger] ?? NEUTRAL_STROKE }} />
-      {edge?.label ? <EdgePill trigger={edge.trigger} x="50%" y={height / 2} maxWidth="calc(100% - 2rem)"><TriggerLabel trigger={edge.trigger} text={edge.label} /></EdgePill> : null}
+      {hasPill(edge) ? <EdgePill trigger={edge.label ? edge.trigger : null} x="50%" y={height / 2} maxWidth="calc(100% - 2rem)"><EdgeContent edge={edge} /></EdgePill> : null}
     </div>
   );
 }
@@ -317,8 +328,9 @@ function Participation({ data, onAnalytics }) {
 }
 
 function StepSheet({ step, narrow, selected, cardSelect, flash, onSelect, onOpenRun, onMore, onFinishedHere, onAnalytics }) {
-  const { node, depth, meta, counts, people, finishedHere, attempts } = step;
+  const { node, depth, meta, counts, people, finishedHere, finished, attempts } = step;
   const groups = GROUPS.filter(([key]) => (counts?.[key] ?? 0) > 0);
+  const endings = FINISHED_ROWS.map(([key, state]) => [state, finished?.[key] ?? 0]).filter(([, count]) => count > 0);
   const total = counts?.count ?? 0;
 
   return (
@@ -355,11 +367,17 @@ function StepSheet({ step, narrow, selected, cardSelect, flash, onSelect, onOpen
 
       {finishedHere > 0 ? (
         <button type="button" onClick={onFinishedHere} title="Bu adımda biten başvuruları listede göster"
-          className="flex w-fit flex-wrap items-center gap-x-2 gap-y-1 border-t border-white/5 pt-4 text-left text-2xs text-neutral-500 transition-colors hover:text-neutral-200"
+          className="flex w-fit flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/5 pt-4 text-left text-2xs text-neutral-500 transition-colors hover:text-neutral-200"
         >
           <span>Buradan biten</span>
-          <span className="tabular-nums text-neutral-300">{finishedHere}</span>
-          <ArrowRight size={11} />
+          {endings.map(([state, count], position) => (
+            <span key={state} className="inline-flex items-center gap-1.5">
+              <span className={`size-1.5 rounded-full ${RUN_STATE[state].dot}`} />
+              <span className="text-neutral-300">{RUN_STATE[state].label}</span>
+              <span className="tabular-nums">{count}</span>
+              {position === endings.length - 1 ? <ArrowRight size={11} className="ml-0.5" /> : null}
+            </span>
+          ))}
         </button>
       ) : null}
     </Sheet>
@@ -474,19 +492,24 @@ function edgeBetween(transitions, sourceKey, targetKey) {
   return transitions.filter((transition) => transition.sourceNodeKey === sourceKey && transition.targetNodeKey === targetKey);
 }
 
-function edgeInfo(edges, labelOf, { withCondition = true } = {}) {
+function edgeInfo(edges, labelOf, { withCondition = true, countOf = null } = {}) {
   if (edges.length === 0) return null;
+  const count = countOf ? countOf(edges) : null;
   const trigger = Number(edges[0].trigger);
-  if (!edges.every((edge) => Number(edge.trigger) === trigger)) return { trigger: null, label: "Birden çok yol" };
-  if (!withCondition) return { trigger, label: triggerStyle(trigger).label };
+  if (!edges.every((edge) => Number(edge.trigger) === trigger)) return { trigger: null, label: "Birden çok yol", count };
+  if (!withCondition) return { trigger, label: triggerStyle(trigger).label, count };
   const special = edges.length === 1 ? labelOf(edges[0]) : null;
-  return { trigger, label: special ?? triggerStyle(trigger).label };
+  return { trigger, label: special ?? triggerStyle(trigger).label, count };
 }
 
 export default function JourneyCanvas({
-  scrollRef, width, flow, steps, overview, done, finished, recentFinished, removed, pill, versionText, closesText, updatedAt, draft,
+  scrollRef, width, flow, steps, overview, done, finished, routes = null, recentFinished, removed, pill, versionText, closesText, updatedAt, draft,
   selected, cardSelect, flash, labelOf, onSelect, onOpenRun, onMore, onFinishedHere, onFinished, onAnalytics,
 }) {
+  const routeTotals = routes ? new Map(routes.map((route) => [routeKey(route.sourceNodeKey, route.trigger, route.targetNodeKey), route.count])) : null;
+  const countOf = routeTotals
+    ? (edges) => [...new Set(edges.map((edge) => routeKey(edge.sourceNodeKey, edge.trigger, edge.targetNodeKey)))].reduce((sum, key) => sum + (routeTotals.get(key) ?? 0), 0)
+    : null;
   const pad = width === 0 || width >= 896 ? 56 : width >= 600 ? 24 : 12;
   const wide = width === 0 || Math.min(width, 784) - 2 * pad >= 560;
   const flashOf = (key) => (flash?.sec === key ? flash.id : null);
@@ -510,23 +533,23 @@ export default function JourneyCanvas({
 
     if (previous) {
       if (previous.length === 1 && group.length === 1) {
-        blocks.push(<Trunk key={`c-${index}`} edge={edgeInfo(edgeBetween(flow.transitions, previous[0].nodeKey, group[0].nodeKey), labelOf)} />);
+        blocks.push(<Trunk key={`c-${index}`} edge={edgeInfo(edgeBetween(flow.transitions, previous[0].nodeKey, group[0].nodeKey), labelOf, { countOf })} />);
       } else if (previous.length === 1 && twoUp) {
         const left = edgeBetween(flow.transitions, previous[0].nodeKey, group[0].nodeKey);
         const right = edgeBetween(flow.transitions, previous[0].nodeKey, group[1].nodeKey);
-        const leftInfo = edgeInfo(left, labelOf);
-        const rightInfo = edgeInfo(right, labelOf);
+        const leftInfo = edgeInfo(left, labelOf, { countOf });
+        const rightInfo = edgeInfo(right, labelOf, { countOf });
         const sharedTrigger = leftInfo && rightInfo && leftInfo.trigger === rightInfo.trigger ? leftInfo.trigger : null;
         const trunk = sharedTrigger != null ? { trigger: sharedTrigger, label: triggerStyle(sharedTrigger).label } : null;
-        const branch = (info) => (info && trunk && info.label === trunk.label ? { trigger: info.trigger, label: null } : info);
+        const branch = (info) => (info && trunk && info.label === trunk.label ? { trigger: info.trigger, label: null, count: info.count } : info);
         blocks.push(<Fork key={`c-${index}`} trunk={trunk} left={branch(leftInfo)} right={branch(rightInfo)} />);
       } else if (previous.length === 2 && wide && group.length === 1) {
-        const leftInfo = edgeInfo(edgeBetween(flow.transitions, previous[0].nodeKey, group[0].nodeKey), labelOf, { withCondition: false });
-        const rightInfo = edgeInfo(edgeBetween(flow.transitions, previous[1].nodeKey, group[0].nodeKey), labelOf, { withCondition: false });
+        const leftInfo = edgeInfo(edgeBetween(flow.transitions, previous[0].nodeKey, group[0].nodeKey), labelOf, { withCondition: false, countOf });
+        const rightInfo = edgeInfo(edgeBetween(flow.transitions, previous[1].nodeKey, group[0].nodeKey), labelOf, { withCondition: false, countOf });
         const sharedTrigger = leftInfo && rightInfo && leftInfo.trigger === rightInfo.trigger ? leftInfo.trigger : null;
         blocks.push(
           <Merge key={`c-${index}`} trunk={sharedTrigger != null ? { trigger: sharedTrigger, label: triggerStyle(sharedTrigger).label } : null}
-            left={sharedTrigger != null ? { trigger: leftInfo?.trigger } : leftInfo} right={sharedTrigger != null ? { trigger: rightInfo?.trigger } : rightInfo}
+            left={sharedTrigger != null ? { trigger: leftInfo?.trigger, count: leftInfo?.count } : leftInfo} right={sharedTrigger != null ? { trigger: rightInfo?.trigger, count: rightInfo?.count } : rightInfo}
           />,
         );
       } else if (previous.length === 2 && wide && twoUp) {
@@ -536,7 +559,7 @@ export default function JourneyCanvas({
         blocks.push(null);
       } else {
         const incoming = previous.flatMap((source) => edgeBetween(flow.transitions, source.nodeKey, group[0].nodeKey));
-        blocks.push(<Trunk key={`c-${index}`} edge={edgeInfo(incoming, labelOf, { withCondition: previous.length === 1 })} />);
+        blocks.push(<Trunk key={`c-${index}`} edge={edgeInfo(incoming, labelOf, { withCondition: previous.length === 1, countOf })} />);
       }
     }
 
@@ -562,7 +585,7 @@ export default function JourneyCanvas({
       group.forEach((node, nodeIndex) => {
         const incoming = (previous ?? []).flatMap((source) => edgeBetween(flow.transitions, source.nodeKey, node.nodeKey));
         if (nodeIndex > 0) blocks.push(<SameStage key={`same-${node.nodeKey}`} />);
-        if (previous) blocks.push(<Trunk key={`t-${node.nodeKey}`} height={nodeIndex === 0 ? 56 : 44} edge={edgeInfo(incoming, labelOf)} />);
+        if (previous) blocks.push(<Trunk key={`t-${node.nodeKey}`} height={nodeIndex === 0 ? 56 : 44} edge={edgeInfo(incoming, labelOf, { countOf })} />);
         blocks.push(stepView(node, true));
       });
     } else {

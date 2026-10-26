@@ -83,9 +83,6 @@ export default function WorkflowMode() {
   const peopleResults = useQueries({
     queries: nodes.map((node) => ({ ...workflowRunsQuery(workflowId, { pageSize: STEP_PEOPLE, filter: 0, nodeKey: node.nodeKey }), enabled: Boolean(workflowId), staleTime: FRESH, refetchInterval: 60_000 })),
   });
-  const finishedResults = useQueries({
-    queries: nodes.map((node) => ({ ...workflowRunsQuery(workflowId, { pageSize: 1, filter: 2, nodeKey: node.nodeKey }), enabled: Boolean(workflowId), staleTime: 60_000 })),
-  });
   const attemptResults = useQueries({ queries: timedNodes.map((node) => ({ ...attemptAnalyticsQuery(node.formId), staleTime: 60_000 })) });
   const schemaResults = useQueries({ queries: conditionForms.map((formId) => ({ ...formQuery(formId), staleTime: 60_000 })) });
   const recentResult = useQuery({ ...workflowRunsQuery(workflowId, { pageSize: 5, filter: 2 }), enabled: Boolean(workflowId), staleTime: FRESH });
@@ -98,13 +95,12 @@ export default function WorkflowMode() {
 
   const counts = useMemo(() => Object.fromEntries((overview?.steps ?? []).map((step) => [step.nodeKey, step])), [overview]);
   const removed = useMemo(() => (overview?.steps ?? []).filter((step) => step.isRemoved && step.count > 0 && !flow?.nodeOf(step.nodeKey)), [overview, flow]);
-  const finishedHere = {};
-  nodes.forEach((node, index) => { finishedHere[node.nodeKey] = payloadOf(finishedResults[index]?.data)?.totalCount ?? 0; });
+  const finishedHere = Object.fromEntries((overview?.steps ?? NO_ITEMS).filter((step) => step.finished).map((step) => [step.nodeKey, finishedTotal(step.finished)]));
   const done = finishedTotal(overview?.finished);
   const pill = intakePill(workflow);
   const published = publishedVersion(versions);
   const depthOf = (key) => flow?.stages.depths.get(key) ?? counts[key]?.depth ?? null;
-  const ready = width > 0 && !overviewResult.isPending && [...peopleResults, ...finishedResults, ...attemptResults].every((result) => !result.isPending);
+  const ready = width > 0 && !overviewResult.isPending && [...peopleResults, ...attemptResults].every((result) => !result.isPending);
 
   const schemaOf = (formId) => {
     if (sameId(formId, room.formId) && room.form) return room.form.schema;
@@ -158,7 +154,8 @@ export default function WorkflowMode() {
       meta: metaOf(node),
       counts: counts[node.nodeKey] ?? null,
       people: payloadOf(peopleResults[index]?.data)?.items ?? NO_ITEMS,
-      finishedHere: finishedHere[node.nodeKey],
+      finishedHere: finishedHere[node.nodeKey] ?? 0,
+      finished: counts[node.nodeKey]?.finished ?? null,
       attempts,
     };
   });
@@ -310,7 +307,7 @@ export default function WorkflowMode() {
   ) : room.outlineHead(where));
 
   const center = flow ? (
-    <JourneyCanvas scrollRef={scrollRef} width={width} flow={flow} steps={steps} overview={overview} done={done} finished={overview?.finished}
+    <JourneyCanvas scrollRef={scrollRef} width={width} flow={flow} steps={steps} overview={overview} done={done} finished={overview?.finished} routes={live ? overview?.routes ?? null : null}
       recentFinished={payloadOf(recentResult.data)?.items ?? NO_ITEMS} removed={removed} pill={pill} versionText={versionText} closesText={closesText}
       updatedAt={overviewResult.dataUpdatedAt ? new Date(overviewResult.dataUpdatedAt) : null} draft={!live}
       selected={selected} cardSelect={room.rightDocked} flash={flash} labelOf={labelOf}
