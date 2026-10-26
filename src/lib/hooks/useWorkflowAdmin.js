@@ -19,12 +19,13 @@ const fetchAvailableForms = async (workflowId) =>
 
 const fetchRunsOverview = async (workflowId) => request(`/api/admin/workflows/${workflowId}/runs/overview`);
 
-const fetchRuns = async ({ workflowId, page = 1, pageSize = 20, filter = 0, nodeKey }) => {
+const fetchRuns = async ({ workflowId, page = 1, pageSize = 20, filter = 0, nodeKey, state = null }) => {
   const params = new URLSearchParams();
   params.set("Page", page);
   params.set("PageSize", pageSize);
   params.set("Filter", filter);
   if (nodeKey) params.set("NodeKey", nodeKey);
+  if (state != null) params.set("State", state);
   return request(`/api/admin/workflows/${workflowId}/runs?${params.toString()}`);
 };
 
@@ -55,9 +56,9 @@ export const workflowRunsOverviewQuery = (workflowId) => ({
   retry: false,
 });
 
-export const workflowRunsQuery = (workflowId, { page = 1, pageSize = 20, filter = 0, nodeKey = null } = {}) => ({
-  queryKey: ["workflow-runs", workflowId, page, pageSize, filter, nodeKey],
-  queryFn: () => fetchRuns({ workflowId, page, pageSize, filter, nodeKey }),
+export const workflowRunsQuery = (workflowId, { page = 1, pageSize = 20, filter = 0, nodeKey = null, state = null } = {}) => ({
+  queryKey: ["workflow-runs", workflowId, page, pageSize, filter, nodeKey, state],
+  queryFn: () => fetchRuns({ workflowId, page, pageSize, filter, nodeKey, state }),
   retry: false,
 });
 

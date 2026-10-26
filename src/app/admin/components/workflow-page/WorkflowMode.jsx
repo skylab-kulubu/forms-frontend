@@ -92,7 +92,7 @@ export default function WorkflowMode() {
 
   const onlyMode = only != null && Boolean(selected);
   const listResult = useQuery({
-    ...workflowRunsQuery(workflowId, onlyMode ? { page: 1, pageSize: 100, filter: 0, nodeKey: selected } : { page, pageSize: PAGE_SIZE, filter: runsTab, nodeKey: selected }),
+    ...workflowRunsQuery(workflowId, onlyMode ? { page, pageSize: PAGE_SIZE, filter: 0, nodeKey: selected, state: only } : { page, pageSize: PAGE_SIZE, filter: runsTab, nodeKey: selected }),
     enabled: Boolean(workflowId), staleTime: FRESH, placeholderData: keepPreviousData,
   });
 
@@ -283,10 +283,9 @@ export default function WorkflowMode() {
   const selectedCounts = selected ? counts[selected] ?? null : null;
   const listPage = payloadOf(listResult.data);
   const listItems = listPage?.items ?? NO_ITEMS;
-  const filtered = onlyMode ? listItems.filter((run) => Number(run.state) === only) : listItems;
-  const listTotal = onlyMode ? filtered.length : listPage?.totalCount ?? 0;
-  const listPages = onlyMode ? Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)) : listPage?.totalPages ?? Math.max(1, Math.ceil(listTotal / PAGE_SIZE));
-  const listRuns = onlyMode ? filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) : listItems;
+  const listRuns = onlyMode ? listItems.filter((run) => Number(run.state) === only) : listItems;
+  const listTotal = listPage?.totalCount ?? 0;
+  const listPages = listPage?.totalPages ?? Math.max(1, Math.ceil(listTotal / PAGE_SIZE));
   const tabCounts = selected
     ? [selectedCounts?.count ?? 0, selectedCounts?.awaitingReview ?? 0, finishedHere[selected] ?? (runsTab === 2 ? listPage?.totalCount : null)]
     : [overview?.activeRunCount ?? 0, overview?.awaitingReviewCount ?? 0, done];
