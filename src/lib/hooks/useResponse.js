@@ -5,7 +5,7 @@ const fetchResponseById = async (responseId) => {
   return request(`/api/admin/forms/responses/${responseId}`);
 };
 
-const fetchFormResponses = async (formId, { page = 1, status, attemptStatus, time, responderType, showArchived = false, sortingDirection } = {}) => {
+const responseListSearch = ({ page, status, attemptStatus, time, responderType, showArchived = false, sortingDirection } = {}) => {
   const params = new URLSearchParams();
   if (page !== undefined && page !== null) params.set("Page", page);
   if (status !== undefined && status !== null) params.set("Status", status);
@@ -15,8 +15,14 @@ const fetchFormResponses = async (formId, { page = 1, status, attemptStatus, tim
   if (showArchived !== undefined && showArchived !== null) params.set("ShowArchived", showArchived ? "true" : "false");
   if (sortingDirection) params.set("SortingDirection", sortingDirection);
   const query = params.toString();
-  return request(`/api/admin/forms/${formId}/responses${query ? `?${query}` : ""}`);
+  return query ? `?${query}` : "";
 };
+
+const fetchFormResponses = async (formId, { page = 1, ...options } = {}) =>
+  request(`/api/admin/forms/${formId}/responses${responseListSearch({ page, ...options })}`);
+
+const fetchResponsePage = async (formId, responseId, options) =>
+  request(`/api/admin/forms/${formId}/responses/${responseId}/page${responseListSearch(options)}`);
 
 const postResponseArchive = async (responseId) => {
   if (!responseId) throw new Error("responseId is required");
@@ -57,6 +63,12 @@ const postAttemptAction = async ({ attemptId, action, body }) => {
 export const formResponsesQuery = (formId, { page = 1, status = null, attemptStatus = null, time = null, responderType = 0, showArchived = false, sortingDirection } = {}) => ({
   queryKey: ["form-responses", formId, page, status, attemptStatus, time, responderType, showArchived, sortingDirection],
   queryFn: () => fetchFormResponses(formId, { page, status, attemptStatus, time, responderType, showArchived, sortingDirection }),
+  retry: false,
+});
+
+export const responsePageQuery = (formId, responseId, { status = null, attemptStatus = null, time = null, responderType = 0, showArchived = false, sortingDirection } = {}) => ({
+  queryKey: ["form-response-page", formId, responseId, status, attemptStatus, time, responderType, showArchived, sortingDirection],
+  queryFn: () => fetchResponsePage(formId, responseId, { status, attemptStatus, time, responderType, showArchived, sortingDirection }),
   retry: false,
 });
 

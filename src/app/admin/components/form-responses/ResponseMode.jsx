@@ -7,7 +7,7 @@ import StateCard from "@/app/components/StateCard";
 import Avatar from "@/app/components/utils/Avatar";
 import { ATTEMPT_STATUS, STATUS_FILTERS } from "@/lib/attempt-status";
 import { formQuery, useExportResponses } from "@/lib/hooks/useFormAdmin";
-import { attemptViewQuery, formResponsesQuery, useResponseStatusMutation } from "@/lib/hooks/useResponse";
+import { attemptViewQuery, formResponsesQuery, responsePageQuery, useResponseStatusMutation } from "@/lib/hooks/useResponse";
 import { responsePreviewQuery } from "@/lib/hooks/useResponseShare";
 import RoomFrame, { INSPECTOR_HEADER } from "../form-room/RoomFrame";
 import RoomCanvas, { CardTop } from "../form-room/RoomCanvas";
@@ -116,6 +116,7 @@ export default function ResponseMode() {
   const [autoNext, setAutoNext] = useRoomState("response.autoNext", true);
   const [showChanges, setShowChanges] = useRoomState("response.showChanges", true);
   const [viewKeys, setViewKeys] = useRoomState("response.viewKey", EMPTY);
+  const [placed, setPlaced] = useRoomState("response.placed", null);
   const [, setLastResp] = useRoomState("lastResp", EMPTY);
   const [hover, setHover] = useState(null);
   const repick = useRef(false);
@@ -167,6 +168,23 @@ export default function ResponseMode() {
     staleTime: FRESH,
   });
   const own = route.responseId ? detailOf(ownResult.data, isAttempt) : null;
+
+  const wantsPlace = Boolean(route.responseId) && !isAttempt && !routeStatus && listReady && !sameId(placed, route.responseId);
+  const onPage = rows.some((row) => rowMatches(row, route));
+  const placeResult = useQuery({
+    ...responsePageQuery(formId, route.responseId, listParams(activeFilters, null)),
+    enabled: wantsPlace && !onPage && canView,
+    staleTime: FRESH,
+  });
+  const placeLoading = placeResult.isPending && placeResult.fetchStatus !== "idle";
+  const placePage = placeResult.data?.data?.page ?? null;
+
+  useEffect(() => {
+    if (!wantsPlace || (!onPage && placeLoading)) return;
+    setPlaced(route.responseId);
+    if (!onPage && placePage && placePage !== page) setPages((current) => ({ ...current, [formId]: placePage }));
+  }, [wantsPlace, onPage, placeLoading, placePage, page, route.responseId, formId, setPlaced, setPages]);
+
   const linkedId = isAttempt && [ATTEMPT_STATUS.SUBMITTED, ATTEMPT_STATUS.PROVISIONAL].includes(own?.attempt?.status) ? own.attempt.responseId ?? null : null;
   const linkedFormId = linkedId ? own?.formId ?? null : null;
 
