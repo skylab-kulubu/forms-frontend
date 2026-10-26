@@ -164,8 +164,25 @@ export function DisplayFields({ fields, values = null, missing = [], interactive
   );
 }
 
-export function StaticCard({ form, phone = false, active = false, stepInfo = null, echo = null }) {
+function limitFields(fields, limit) {
+  if (!limit) return { shown: fields, hidden: 0 };
+  const shown = [];
+  let questions = 0;
+  for (const field of fields) {
+    if (field.type !== "separator") {
+      if (questions === limit) break;
+      questions += 1;
+    }
+    shown.push(field);
+  }
+  while (shown.length && shown[shown.length - 1].type === "separator") shown.pop();
+  const total = fields.filter((field) => field.type !== "separator").length;
+  return { shown, hidden: total - questions };
+}
+
+export function StaticCard({ form, phone = false, active = false, stepInfo = null, echo = null, limit = null }) {
   const fields = Array.isArray(form?.schema) ? form.schema : [];
+  const { shown, hidden } = limitFields(fields, limit);
   const task = form?.task?.content?.trim() ? form.task : null;
   const shellRef = useRef(null);
   const gapRef = useRef(null);
@@ -192,11 +209,18 @@ export function StaticCard({ form, phone = false, active = false, stepInfo = nul
       {task && fields.length > 0 ? <DeliverablesHeader phone={phone} /> : null}
       {fields.length > 0 ? (
         <div className="pointer-events-none select-none **:[scrollbar-width:none]">
-          <DisplayFields fields={fields} />
+          <DisplayFields fields={shown} />
         </div>
       ) : (
         <p className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-neutral-500">Bu formda henüz soru yok.</p>
       )}
+      {hidden > 0 ? (
+        <div className="flex items-center gap-3 px-2 md:px-4">
+          <span className="h-px flex-1 bg-white/10" />
+          <span className="text-sm text-neutral-400">{hidden} soru daha</span>
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+      ) : null}
       <div className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
         <div className="flex justify-end">
           <span className="inline-flex min-w-30 items-center justify-center rounded-xl border-[1.5px] border-skylab-300/50 bg-skylab-400/40 px-8 py-3 text-sm font-semibold">Gönder</span>

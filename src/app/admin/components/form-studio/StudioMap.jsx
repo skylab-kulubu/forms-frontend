@@ -164,8 +164,10 @@ export function FlowCardDecor({ node, transitions }) {
   );
 }
 
+const MAP_QUESTION_LIMIT = 6;
+
 const NodeCard = memo(function NodeCard({ form, active, flowName, stage, total, echo }) {
-  return <StaticCard form={form} active={active} stepInfo={{ flowName, stage, total }} echo={echo} />;
+  return <StaticCard form={form} active={active} stepInfo={{ flowName, stage, total }} echo={echo} limit={MAP_QUESTION_LIMIT} />;
 });
 
 function FrameMeasure({ formId, onHeight, children }) {
