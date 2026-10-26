@@ -205,6 +205,7 @@ function WorkflowStudioContent({ workflow, seed }) {
   const cachedState = activeInit.formId === activeFormId ? activeInit.state : null;
   const stages = useMemo(() => stagesOf(state.nodes, state.transitions), [state.nodes, state.transitions]);
   const activeNode = state.nodes.find((node) => node.formId === activeFormId) ?? null;
+  const overviewFormId = activeFormId ?? state.nodes.find((node) => node.isStart)?.formId ?? state.nodes[0]?.formId ?? null;
 
   const knownDraftOf = useCallback((formId) => {
     const flag = queryClient.getQueryState(draftQueryKey(formId));
@@ -626,10 +627,12 @@ function WorkflowStudioContent({ workflow, seed }) {
           onOpenForm={requestPage} onSelectNode={(nodeKey) => dispatch({ type: "SELECT", nodeKey })} onBack={() => requestPage(activeFormId)}
           entry={mapEntry} exitTo={mapExit} onExitDone={finishExit}
           onAddStep={(anchor) => setStepMenu({ anchor })} onToast={studio.toast}
+          onOverview={overviewFormId ? () => router.push(`/admin/forms/${overviewFormId}`) : null}
         />
       )
     ) : formState ? (
       <StudioPage inFlow userName={session?.user?.fullName} onShowMap={showMap} arrival={arrival?.formId === activeFormId ? arrival : null} onArrived={clearArrival}
+        onOverview={activeFormId ? () => router.push(`/admin/forms/${activeFormId}`) : null}
         cardDecor={activeNode ? <FlowCardDecor node={activeNode} transitions={state.transitions} /> : null}
         stepInfo={activeNode ? { flowName, stage: stages.depths.get(activeNode.nodeKey) ?? null, total: stages.total, isStart: activeNode.isStart } : null}
         nextBlock={activeNode ? (

@@ -5,7 +5,7 @@ import { ArrowLeft, Maximize2, Minus, Plus, Timer } from "lucide-react";
 import { shortDuration } from "@/lib/form-timing";
 import { depthMap, flowOrder, groupTransitions, isTimedNode, triggersForNode } from "../workflow-editor/workflow-graph";
 import { StaticCard } from "./StudioCard";
-import { SheetButtons, TOOLBAR_CLASS, TOOL_DIVIDER, ToolButton, pageCardRect } from "./StudioPage";
+import { OverviewButton, SheetButtons, TOOLBAR_CLASS, TOOL_DIVIDER, ToolButton, pageCardRect } from "./StudioPage";
 import { triggerStyle } from "./studio-flow";
 import { prefersReducedMotion } from "./studio-motion";
 
@@ -183,7 +183,7 @@ function FrameMeasure({ formId, onHeight, children }) {
 }
 
 export default function StudioMap({
-  wf, flowName, activeFormId, liveForm, selectedKey, entry = null, exitTo = null, onExitDone, onOpenForm, onSelectNode, onBack, onAddStep, onToast,
+  wf, flowName, activeFormId, liveForm, selectedKey, entry = null, exitTo = null, onExitDone, onOpenForm, onSelectNode, onBack, onAddStep, onToast, onOverview = null,
 }) {
   const { nodes, transitions } = wf.state;
   const canvasRef = useRef(null);
@@ -663,6 +663,7 @@ export default function StudioMap({
       </div>
 
       <div data-map-ui onPointerDown={(event) => event.stopPropagation()} className={TOOLBAR_CLASS}>
+        {onOverview ? <OverviewButton onClick={onOverview} /> : null}
         <SheetButtons side="start" />
         {activeFormId ? (
           <>

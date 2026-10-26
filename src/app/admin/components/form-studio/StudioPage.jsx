@@ -7,7 +7,7 @@ import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS as DndCSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { GitBranch, ListTree, Map as MapIcon, Monitor, PencilLine, Play, Plus, SlidersHorizontal, Smartphone, Timer, TriangleAlert } from "lucide-react";
+import { FileText, GitBranch, ListTree, Map as MapIcon, Monitor, PencilLine, Play, Plus, SlidersHorizontal, Smartphone, Timer, TriangleAlert } from "lucide-react";
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { isIdentityField } from "@/lib/event-handoff";
@@ -130,11 +130,24 @@ export function SheetButtons({ side }) {
   );
 }
 
-export function StudioToolbar({ inFlow, empty = false, onAdd, onShowMap }) {
+export function OverviewButton({ onClick }) {
+  return (
+    <>
+      <ToolButton label="Özete dön" onClick={onClick}>
+        <FileText size={15} />
+        Özet
+      </ToolButton>
+      <span className={TOOL_DIVIDER} />
+    </>
+  );
+}
+
+export function StudioToolbar({ inFlow, empty = false, onAdd, onShowMap, onOverview = null }) {
   const { ui, actions: studio } = useStudio();
 
   return (
     <div onPointerDown={(event) => event.stopPropagation()} className={TOOLBAR_CLASS}>
+      {onOverview ? <OverviewButton onClick={onOverview} /> : null}
       <SheetButtons side="start" />
       <ToolButton label="Bileşen ekle (/)" onClick={(event) => onAdd(event.currentTarget)}>
         <Plus size={15} />
@@ -209,7 +222,7 @@ function LogicLayer({ fields, anchors, selectedIds }) {
   );
 }
 
-export default function StudioPage({ eventLinked = false, stepInfo = null, inFlow = false, nextBlock = null, cardDecor = null, arrival = null, userName, onShowMap, onArrived }) {
+export default function StudioPage({ eventLinked = false, stepInfo = null, inFlow = false, nextBlock = null, cardDecor = null, arrival = null, userName, onShowMap, onArrived, onOverview = null }) {
   const { state } = useFormEditor();
   const actions = useFormActions({ eventLinked });
   const insertItem = useInsertItem({ eventLinked });
@@ -552,7 +565,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
         </div>
       </div>
 
-      <StudioToolbar inFlow={inFlow} empty={empty} onShowMap={onShowMap} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))} />
+      <StudioToolbar inFlow={inFlow} empty={empty} onShowMap={onShowMap} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))} />
 
       <AnimatePresence>
         {ui.menu && !ui.fill ? (

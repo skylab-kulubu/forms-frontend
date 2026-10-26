@@ -285,7 +285,7 @@ function SingleStudioContent({ isNewForm, draft, onRefresh, handoff, formEvent }
     <StudioLayout
       top={<EventReturnBar returnHref={returnHref} pending={hasReturnTo && !returnHref} eventHref={eventRef?.href} eventName={eventRef?.name} />}
       outline={outline}
-      center={<StudioPage eventLinked={eventLinked} userName={session?.user?.fullName} nextBlock={nextBlock} />}
+      center={<StudioPage eventLinked={eventLinked} userName={session?.user?.fullName} nextBlock={nextBlock} onOverview={!isNewForm && state.id ? () => router.push(`/admin/forms/${state.id}`) : null} />}
       inspectorHeader={<Crumbs items={crumbs} />}
       inspector={<FormInspectorBody eventLinked={eventLinked} />}
       overlays={(
