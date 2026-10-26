@@ -157,7 +157,8 @@ export default function FormRoom() {
   const role = Number(shell?.userRole ?? 0);
   const canView = role >= 1;
   const canEdit = role >= 2;
-  const disabledModes = [...(canEdit ? [] : ["edit"]), ...(canView ? [] : ["analytics", "response"])];
+  const editAllowed = route.mode === "workflow" && typeof workflow?.canEdit === "boolean" ? workflow.canEdit : canEdit;
+  const disabledModes = [...(editAllowed ? [] : ["edit"]), ...(canView ? [] : ["analytics", "response"])];
   const settings = effectiveFormSettings(shell);
   const lastResp = useMemo(() => store.lastResp ?? {}, [store.lastResp]);
 
@@ -251,7 +252,7 @@ export default function FormRoom() {
     const current = routeRef.current;
     setSheet(null);
     if (mode === "edit") {
-      if (!canEdit) return;
+      if (!editAllowed) return;
       if (current.mode === "workflow") {
         const target = flow?.nodeOf(current.step) ?? flow?.start;
         router.push(target ? `/admin/forms/${target.formId}/edit?view=map` : workflowEditHref({ id: current.workflowId }));

@@ -254,7 +254,7 @@ export default function WorkflowMode() {
 
   const formOf = (key) => flow?.nodeOf(key)?.formId ?? counts[key]?.formId ?? null;
   const toMode = (mode, formId) => room.leaveJourney(mode, formId);
-  const editable = room.shell ? room.canEdit : true;
+  const editable = typeof workflow?.canEdit === "boolean" ? workflow.canEdit : room.shell ? room.canEdit : true;
   const edit = () => {
     if (!editable) return;
     if (room.shell) room.switchMode("edit");
