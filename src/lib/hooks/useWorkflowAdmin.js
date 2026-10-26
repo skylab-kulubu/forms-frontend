@@ -49,6 +49,24 @@ const publishWorkflow = async (workflowId) => request(`/api/admin/workflows/${wo
 
 const archiveWorkflow = async (workflowId) => request(`/api/admin/workflows/${workflowId}`, { method: "DELETE" });
 
+export const workflowRunsOverviewQuery = (workflowId) => ({
+  queryKey: ["workflow-runs-overview", workflowId],
+  queryFn: () => fetchRunsOverview(workflowId),
+  retry: false,
+});
+
+export const workflowRunsQuery = (workflowId, { page = 1, pageSize = 20, filter = 0, nodeKey = null } = {}) => ({
+  queryKey: ["workflow-runs", workflowId, page, pageSize, filter, nodeKey],
+  queryFn: () => fetchRuns({ workflowId, page, pageSize, filter, nodeKey }),
+  retry: false,
+});
+
+export const workflowVersionsQuery = (workflowId) => ({
+  queryKey: ["workflow-versions", workflowId],
+  queryFn: () => fetchWorkflowVersions(workflowId),
+  retry: false,
+});
+
 export const useWorkflowsQuery = (options = {}) => {
   const { page = 1, pageSize, search, sortDirection, showArchived = false, ...queryOptions } = options;
   return useQuery({
@@ -59,10 +77,14 @@ export const useWorkflowsQuery = (options = {}) => {
   });
 };
 
+export const workflowQuery = (workflowId) => ({
+  queryKey: ["workflow", workflowId],
+  queryFn: () => fetchWorkflow(workflowId),
+});
+
 export const useWorkflowQuery = (workflowId, options = {}) =>
   useQuery({
-    queryKey: ["workflow", workflowId],
-    queryFn: () => fetchWorkflow(workflowId),
+    ...workflowQuery(workflowId),
     enabled: options.enabled ?? !!workflowId,
     retry: options.retry ?? false,
     ...options,

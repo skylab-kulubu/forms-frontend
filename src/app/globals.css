@@ -197,6 +197,22 @@ body {
       mask-image: linear-gradient(to right, transparent, #000 48px, #000 calc(100% - 48px), transparent), linear-gradient(to bottom, transparent, #000 16px);
       mask-composite: intersect;
     }
+
+    .studio-fade-edge {
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent), linear-gradient(to bottom, transparent, #000 16px);
+      -webkit-mask-composite: source-in;
+      mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent), linear-gradient(to bottom, transparent, #000 16px);
+      mask-composite: intersect;
+    }
+  }
+
+  @media (width < 48rem) {
+    [data-room] {
+      --text-4xs: 0.625rem;
+      --text-4xs--line-height: 0.875rem;
+      --text-3xs: 0.6875rem;
+      --text-3xs--line-height: 1rem;
+    }
   }
 
   :root.studio-swap::view-transition-old(root),

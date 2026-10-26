@@ -54,6 +54,18 @@ const postAttemptAction = async ({ attemptId, action, body }) => {
   });
 };
 
+export const formResponsesQuery = (formId, { page = 1, status = null, attemptStatus = null, time = null, responderType = 0, showArchived = false, sortingDirection } = {}) => ({
+  queryKey: ["form-responses", formId, page, status, attemptStatus, time, responderType, showArchived, sortingDirection],
+  queryFn: () => fetchFormResponses(formId, { page, status, attemptStatus, time, responderType, showArchived, sortingDirection }),
+  retry: false,
+});
+
+export const attemptViewQuery = (attemptId) => ({
+  queryKey: ["attempt", attemptId],
+  queryFn: () => request(`/api/admin/forms/attempts/${attemptId}`),
+  retry: false,
+});
+
 export const useResponseQuery = (responseId, options = {}) =>
   useQuery({
     queryKey: ["response", responseId],
@@ -63,34 +75,11 @@ export const useResponseQuery = (responseId, options = {}) =>
     ...options,
   });
 
-export const useFormResponsesQuery = (formId, options = {}) => {
-  const { page = 1, status, attemptStatus, time, responderType, showArchived = false, sortingDirection, ...queryOptions } = options;
-  return useQuery({
-    queryKey: ["form-responses", formId, page, status, attemptStatus, time, responderType, showArchived, sortingDirection],
-    queryFn: () => fetchFormResponses(formId, { page, status, attemptStatus, time, responderType, showArchived, sortingDirection }),
-    enabled: queryOptions.enabled ?? !!formId,
-    retry: queryOptions.retry ?? false,
-    ...queryOptions,
-  });
-};
-
-export const useAttemptQuery = (attemptId, options = {}) =>
-  useQuery({
-    queryKey: ["attempt", attemptId],
-    queryFn: () => request(`/api/admin/forms/attempts/${attemptId}`),
-    enabled: options.enabled ?? !!attemptId,
-    retry: false,
-    ...options,
-  });
-
-export const useAttemptAnalyticsQuery = (formId, options = {}) =>
-  useQuery({
-    queryKey: ["attempt-analytics", formId],
-    queryFn: () => request(`/api/admin/forms/${formId}/attempts/analytics`),
-    enabled: options.enabled ?? !!formId,
-    retry: false,
-    ...options,
-  });
+export const attemptAnalyticsQuery = (formId) => ({
+  queryKey: ["attempt-analytics", formId],
+  queryFn: () => request(`/api/admin/forms/${formId}/attempts/analytics`),
+  retry: false,
+});
 
 export const useAttemptActionMutation = () => {
   const queryClient = useQueryClient();

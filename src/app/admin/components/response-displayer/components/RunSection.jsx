@@ -9,12 +9,12 @@ import { isDeletedUser } from "@/lib/deleted-user";
 import { formatDay } from "@/lib/form-timing";
 import { formatPersonName } from "./AttemptPanels";
 
-const RUN_STATUS = { ACTIVE: 0, COMPLETED: 1, TERMINATED: 2, FAULTED: 3, VOIDED: 4 };
+export const RUN_STATUS = { ACTIVE: 0, COMPLETED: 1, TERMINATED: 2, FAULTED: 3, VOIDED: 4 };
 const RUN_OUTCOME = { APPROVED: 1, DECLINED: 2, TIMED_OUT: 3 };
 const INTAKE = { NEW_RUNS_CLOSED: 1, CLOSED: 2 };
-const NOTE_MAX_LENGTH = 500;
+export const NOTE_MAX_LENGTH = 500;
 
-const BLOCK_COPY = {
+export const BLOCK_COPY = {
   timedStep: "Süreli adımı olan akışta başvuru yeniden açılamaz.",
   workflowArchived: "Akış arşivlendiği için başvuru yeniden açılamaz.",
 };
@@ -25,7 +25,7 @@ const formatDateTime = (value) => {
   return Number.isNaN(date.getTime()) ? "--" : date.toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
 };
 
-function pillOf(run) {
+export function pillOf(run) {
   switch (run.status) {
     case RUN_STATUS.VOIDED: return { tone: "neutral", label: "Geçersiz sayıldı" };
     case RUN_STATUS.ACTIVE: return { tone: "amber", label: "Devam ediyor" };
@@ -35,7 +35,7 @@ function pillOf(run) {
   }
 }
 
-function summaryOf(run) {
+export function summaryOf(run) {
   if (run.status === RUN_STATUS.ACTIVE) return "Başvuru sürüyor.";
 
   const day = formatDay(run.completedAt);
@@ -50,7 +50,7 @@ function summaryOf(run) {
   return run.allowMultipleRuns ? ended : `${ended} Bu akışta her aday bir kez başvurabiliyor.`;
 }
 
-function copyOf(run) {
+export function copyOf(run) {
   const intakeLine = run.intake === INTAKE.CLOSED
     ? "Akış şu an kapalı; aday akış açılınca başlayabilir."
     : run.intake === INTAKE.NEW_RUNS_CLOSED
@@ -78,7 +78,7 @@ function copyOf(run) {
   };
 }
 
-function VoidedBlock({ run }) {
+export function VoidedBlock({ run }) {
   // Başvuru sürerken geçersiz sayıldıysa kapanış ve geçersiz sayma aynı anda yazılır.
   const restarted = Boolean(run.completedAt) && run.completedAt === run.voidedAt;
   const voider = run.voidedBy;

@@ -3,10 +3,8 @@
 import { useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { ChartColumn, ChevronLeft, Download, LayoutTemplate, List, Mail, PencilLine, Plus, RefreshCw, Search, Share2, SlidersHorizontal } from "lucide-react";
+import { LayoutTemplate, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
-import Tip from "./utils/Tip";
-import ResponsesFilterShell from "./utils/ResponsesFilterShell";
 import FormsFilterShell, { DatabaseFilterShell } from "./utils/FormsFilterShell";
 import WorkflowsFilterShell from "./utils/WorkflowsFilterShell";
 
@@ -135,64 +133,6 @@ export function FormsHeader(toolbarProps) {
   );
 }
 
-function ResponsesToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", showArchived = false, onShowArchivedChange,
-  onSortChange, statusValue = "all", onStatusChange, respondentValue = "all", onRespondentChange, timeValue = "all", onTimeChange, counts = null, timed = false,
-  onOverview, onRefresh, onExport, exportLoading = false, onMail, mailLoading = false
-}) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", statusValue !== "all", respondentValue !== "all", showArchived !== false, timeValue !== "all"].filter(Boolean).length;
-  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
-  const buttonSize = compact ? "sm" : "md";
-
-  return (
-    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full flex-wrap gap-2"}`}>
-      <Tip label="Genel Bakış">
-        <ActionButton icon={ChevronLeft} onClick={onOverview} size={buttonSize} tone="header" aria-label="Genel Bakış" />
-      </Tip>
-      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Kullanıcı ara" />
-      <div className="flex items-center gap-1.5 shrink-0">
-        <div ref={filterButtonRef} className="relative">
-          <Tip label={filtersLabel}>
-            <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
-              variant={filtersOpen ? "primary" : "ghost"} aria-label={filtersLabel} aria-expanded={filtersOpen}
-            />
-          </Tip>
-          <ResponsesFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
-            sortValue={sortValue} onSortChange={onSortChange} statusValue={statusValue} onStatusChange={onStatusChange}
-            respondentValue={respondentValue} onRespondentChange={onRespondentChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange}
-            timeValue={timeValue} onTimeChange={onTimeChange} counts={counts} timed={timed}
-          />
-        </div>
-        <Tip label="Yenile">
-          <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" aria-label="Yenile" />
-        </Tip>
-        {onMail && (
-          <Tip label="Yanıtlayanlara mail gönder">
-            <ActionButton icon={Mail} onClick={onMail} disabled={mailLoading} size={buttonSize} tone="header" aria-label="Yanıtlayanlara mail gönder" />
-          </Tip>
-        )}
-        <Tip label="Excel İndir">
-          <ActionButton icon={Download} variant="primary" onClick={onExport} disabled={exportLoading} size={buttonSize} tone="header" aria-label="Excel İndir" />
-        </Tip>
-      </div>
-    </div>
-  );
-}
-
-export function ResponsesHeader(toolbarProps) {
-  return (
-    <>
-      <HeaderSlotPortal>
-        <ResponsesToolbar compact {...toolbarProps} />
-      </HeaderSlotPortal>
-      <div className="md:hidden">
-        <ResponsesToolbar {...toolbarProps} />
-      </div>
-    </>
-  );
-}
-
 export function DashboardHeader({ onRefresh }) {
   return (
     <HeaderSlotPortal>
@@ -303,85 +243,5 @@ export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "
         <Stat label="Toplam Form" value={stats.count} />
       </div>
     </HeaderShell>
-  );
-}
-
-function OverviewToolbar({ compact = false, statusLabel, statusType = 1, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole }) {
-  const size = compact ? "sm" : "md";
-  const canView = Number(userRole) >= 1;
-  const canEdit = Number(userRole) >= 2;
-
-  return (
-    <div className={`flex items-center gap-2 ${compact ? "" : "w-full justify-between"}`}>
-      {statusLabel && (
-        <span className={`shrink-0 rounded-md border px-2 py-0.5 text-3xs uppercase tracking-[0.18em] ${LABEL_STYLES[statusType]}`}>
-          {statusLabel}
-        </span>
-      )}
-      <div className="flex items-center gap-1.5 shrink-0">
-        <Tip label="Yenile">
-          <ActionButton icon={RefreshCw} onClick={onRefresh} size={size} tone="header" aria-label="Yenile" />
-        </Tip>
-        <Tip label="Analitik">
-          <ActionButton icon={ChartColumn} onClick={onAnalytics} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Analitik" />
-        </Tip>
-        <Tip label="Cevaplar">
-          <ActionButton icon={List} onClick={onViewResponses} disabled={!canView} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Cevaplar" />
-        </Tip>
-        <Tip label="Paylaş">
-          <ActionButton icon={Share2} onClick={onShare} disabled={!canView || !onShare} className={!canView ? "opacity-30 pointer-events-none" : ""} size={size} tone="header" aria-label="Formu paylaş" />
-        </Tip>
-        <Tip label="Düzenle">
-          <ActionButton icon={PencilLine} variant={canEdit ? "primary" : "ghost"} disabled={!canEdit} className={!canEdit ? "opacity-30 pointer-events-none" : ""} onClick={onEdit} size={size} tone="header" aria-label="Düzenle" />
-        </Tip>
-      </div>
-    </div>
-  );
-}
-
-export function OverviewHeader({ formStatus, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole }) {
-  const isActive = formStatus === 2;
-  const toolbarProps = { statusLabel: isActive ? "Aktif" : "Pasif", statusType: isActive ? 1 : 2, onEdit, onViewResponses, onAnalytics, onShare, onRefresh, userRole };
-
-  return (
-    <>
-      <HeaderSlotPortal>
-        <OverviewToolbar compact {...toolbarProps} />
-      </HeaderSlotPortal>
-      <div className="md:hidden">
-        <OverviewToolbar {...toolbarProps} />
-      </div>
-    </>
-  );
-}
-
-function AnalyticsToolbar({ compact = false, onOverview, onRefresh }) {
-  const size = compact ? "sm" : "md";
-
-  return (
-    <div className={`flex items-center gap-1.5 ${compact ? "" : "w-full justify-end"}`}>
-      <Tip label="Genel Bakış">
-        <ActionButton icon={ChevronLeft} onClick={onOverview} size={size} tone="header" aria-label="Genel Bakış" />
-      </Tip>
-      <Tip label="Yenile">
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size={size} tone="header" aria-label="Yenile" />
-      </Tip>
-      <Tip label="İndir">
-        <ActionButton icon={Download} disabled size={size} tone="header" aria-label="İndir" />
-      </Tip>
-    </div>
-  );
-}
-
-export function AnalyticsHeader(props) {
-  return (
-    <>
-      <HeaderSlotPortal>
-        <AnalyticsToolbar compact {...props} />
-      </HeaderSlotPortal>
-      <div className="md:hidden">
-        <AnalyticsToolbar {...props} />
-      </div>
-    </>
   );
 }

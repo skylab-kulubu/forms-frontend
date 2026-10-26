@@ -30,6 +30,12 @@ export const useRevokeResponseTokenMutation = () => {
   });
 };
 
+export const responsePreviewQuery = (responseId, token = null) => ({
+  queryKey: ["response", responseId, token || null],
+  queryFn: () => fetchResponsePreview(responseId, token),
+  retry: false,
+});
+
 export const useResponsePreviewQuery = (responseId, token, options = {}) =>
   useQuery({
     queryKey: ["response", responseId, token || null],

@@ -273,6 +273,7 @@ export default function Sidebar({ user, children }) {
         [`/admin/forms/${formId}/edit`]: "Düzenleme",
         [`/admin/forms/${formId}/responses`]: "Cevaplar",
         [`/admin/forms/${formId}/analytics`]: "Analitik",
+        [`/admin/forms/${formId}/responses/:responseId`]: "Cevap",
       };
     }
 
