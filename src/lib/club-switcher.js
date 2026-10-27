@@ -13,7 +13,7 @@ export function clubSwitcherLinks(current) {
     {
       id: "mail",
       label: "Mail",
-      href: process.env.NEXT_PUBLIC_MAIL_URL || "https://mail.yildizskylab.com",
+      href: process.env.NEXT_PUBLIC_MAIL_URL || "https://iletisim.yildizskylab.com",
     },
   ];
   return consoles.filter((app) => app.id !== current);
