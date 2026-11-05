@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { request } from "@/lib/apiClient";
 import {
-  saveDefinition as saveDefinitionRequest, useArchiveWorkflowMutation, useCreateWorkflowMutation, usePublishWorkflowMutation, useSaveDefinitionMutation,
-  useUpdateWorkflowMutation, useWorkflowVersionsQuery,
+  saveDefinition as saveDefinitionRequest, useArchiveWorkflowMutation, useCreateWorkflowMutation, useSaveDefinitionMutation, useSaveWorkflowMutation,
+  useWorkflowVersionsQuery,
 } from "@/lib/hooks/useWorkflowAdmin";
 import { EMPTY_RULE, useWorkflowEditor } from "../workflow-editor/WorkflowEditorContext";
 import { TRIGGER, connectionError, groupTransitions, toDefinitionPayload } from "../workflow-editor/workflow-graph";
@@ -13,26 +13,74 @@ import { CONNECTION_COPY, fieldQuestionLabel } from "../workflow-editor/workflow
 import { transitionLabel } from "./studio-flow";
 
 const DEFINITION_DEBOUNCE_MS = 1200;
-const META_DEBOUNCE_MS = 900;
 const NO_FORMS = {};
 const NO_IDS = new Set();
+const TEXT_COMPARISONS = new Set([0, 1, 2, 3, 4]);
+
+const metaOf = (source) => ({
+  name: source?.name ?? "",
+  description: source?.description ?? "",
+  allowMultipleRuns: Boolean(source?.allowMultipleRuns),
+});
+
+const sameMeta = (a, b) => a.name === b.name && a.description === b.description && a.allowMultipleRuns === b.allowMultipleRuns;
+
+const metaDraftKey = (workflowId) => `workflow-meta:${workflowId}`;
+
+function readMetaDraft(workflowId) {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(metaDraftKey(workflowId)) ?? "null");
+    return stored ? metaOf(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeMetaDraft(workflowId, meta) {
+  try {
+    if (meta) sessionStorage.setItem(metaDraftKey(workflowId), JSON.stringify(meta));
+    else sessionStorage.removeItem(metaDraftKey(workflowId));
+  } catch { }
+}
+
+export function questionReads(nodes, transitions) {
+  const formIdByKey = new Map(nodes.map((node) => [node.nodeKey.toLowerCase(), node.formId]));
+  const reads = new Map();
+
+  transitions.forEach((transition) => {
+    (transition.condition?.rules ?? []).forEach((rule) => {
+      if (!rule.questionId) return;
+      const formId = formIdByKey.get((rule.nodeKey || transition.sourceNodeKey || "").toLowerCase());
+      if (!formId) return;
+
+      const questions = reads.get(formId) ?? new Map();
+      const values = questions.get(rule.questionId) ?? new Set();
+      if (TEXT_COMPARISONS.has(Number(rule.comparison))) {
+        [rule.value, ...(Array.isArray(rule.values) ? rule.values : [])].forEach((value) => {
+          if (typeof value === "string" && value.trim()) values.add(value);
+        });
+      }
+      questions.set(rule.questionId, values);
+      reads.set(formId, questions);
+    });
+  });
+
+  return reads;
+}
 
 export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds = NO_IDS, onCreated }) {
   const { state, dispatch } = useWorkflowEditor();
   const queryClient = useQueryClient();
 
   const [validation, setValidation] = useState(workflow?.validation ?? null);
-  const [savedAt, setSavedAt] = useState(null);
+  const [draftSavedAt, setDraftSavedAt] = useState(null);
   const [hasDraft, setHasDraft] = useState(Boolean(workflow?.draft) || !workflow?.published);
-  const [publishedFlash, setPublishedFlash] = useState(false);
+  const [liveWorkflow, setLiveWorkflow] = useState(workflow?.published ? workflow : null);
+  const [savedMeta, setSavedMeta] = useState(() => metaOf(workflow));
 
-  const metaRef = useRef(workflow ? {
-    name: workflow.name ?? "",
-    description: workflow.description ?? "",
-    allowMultipleRuns: Boolean(workflow.allowMultipleRuns),
-  } : null);
   const [loadedDefinition] = useState(() => JSON.stringify(toDefinitionPayload(state.nodes, state.transitions)));
   const savedDefinitionRef = useRef(loadedDefinition);
+  const metaRestoredRef = useRef(false);
   const stateRef = useRef(state);
   const onCreatedRef = useRef(onCreated);
 
@@ -43,8 +91,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
 
   const createMutation = useCreateWorkflowMutation();
   const saveDefinitionMutation = useSaveDefinitionMutation();
-  const updateWorkflowMutation = useUpdateWorkflowMutation();
-  const publishMutation = usePublishWorkflowMutation();
+  const saveWorkflowMutation = useSaveWorkflowMutation();
   const archiveMutation = useArchiveWorkflowMutation();
 
   const creatingRef = useRef(null);
@@ -59,11 +106,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
       .then((response) => {
         const created = response?.data ?? response ?? {};
         if (!created.id) throw new Error("Akış oluşturulamadı");
-        metaRef.current = {
-          name: created.name ?? "",
-          description: created.description ?? "",
-          allowMultipleRuns: Boolean(created.allowMultipleRuns),
-        };
+        setSavedMeta(metaOf(created));
         dispatch({ type: "SET_ID", id: created.id });
         onCreatedRef.current?.(created.id);
         return created.id;
@@ -76,7 +119,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
   const { data: versionsData } = useWorkflowVersionsQuery(state.id);
   const versionsPayload = versionsData?.data ?? versionsData;
   const versions = useMemo(() => (Array.isArray(versionsPayload) ? versionsPayload : versionsPayload?.items ?? []), [versionsPayload]);
-  const isLive = Boolean(workflow?.published) || versions.some((version) => Number(version.status) === 1);
+  const isLive = Boolean(liveWorkflow?.published) || versions.some((version) => Number(version.status) === 1);
 
   const formsById = forms;
 
@@ -96,6 +139,26 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     if (Object.keys(schemasByFormId).length === 0) return;
     dispatch({ type: "SYNC_NODE_FORMS", forms: schemasByFormId });
   }, [schemasByFormId, dispatch]);
+
+  const currentMeta = useMemo(
+    () => metaOf({ name: state.name, description: state.description, allowMultipleRuns: state.allowMultipleRuns }),
+    [state.name, state.description, state.allowMultipleRuns],
+  );
+  const metaDirty = !sameMeta(currentMeta, savedMeta);
+  const flowDirty = !isLive || hasDraft || !state.isSaved || metaDirty;
+
+  useEffect(() => {
+    if (!state.id) return;
+    if (!metaRestoredRef.current) {
+      metaRestoredRef.current = true;
+      const draft = readMetaDraft(state.id);
+      if (draft && !sameMeta(draft, currentMeta)) {
+        dispatch({ type: "RESTORE_META", meta: draft });
+        return;
+      }
+    }
+    writeMetaDraft(state.id, sameMeta(currentMeta, savedMeta) ? null : currentMeta);
+  }, [state.id, currentMeta, savedMeta, dispatch]);
 
   useEffect(() => {
     if (state.id || state.isSaved) return undefined;
@@ -122,7 +185,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
           savedDefinitionRef.current = serialized;
           setHasDraft(response?.data ? Boolean(response.data.draft) : true);
           dispatch({ type: "MARK_SAVED" });
-          setSavedAt(new Date());
+          setDraftSavedAt(new Date());
           const next = response?.data?.validation ?? response?.data;
           if (next?.errors) setValidation(next);
           queryClient.invalidateQueries({ queryKey: ["workflow", state.id] });
@@ -132,25 +195,6 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
 
     return () => clearTimeout(timer);
   }, [state.id, state.isSaved, state.nodes, state.transitions, dispatch, saveDefinition, queryClient]);
-
-  const updateWorkflow = updateWorkflowMutation.mutate;
-
-  useEffect(() => {
-    if (!state.id || !metaRef.current) return undefined;
-
-    const current = { name: state.name, description: state.description, allowMultipleRuns: state.allowMultipleRuns };
-    const previous = metaRef.current;
-    if (current.name === previous.name && current.description === previous.description && current.allowMultipleRuns === previous.allowMultipleRuns) return undefined;
-
-    const timer = setTimeout(() => {
-      updateWorkflow(
-        { workflowId: state.id, payload: current },
-        { onSuccess: () => { metaRef.current = current; setSavedAt(new Date()); } },
-      );
-    }, META_DEBOUNCE_MS);
-
-    return () => clearTimeout(timer);
-  }, [state.id, state.name, state.description, state.allowMultipleRuns, updateWorkflow]);
 
   useEffect(() => {
     const latest = stateRef;
@@ -164,20 +208,28 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     };
   }, []);
 
-  useEffect(() => {
-    if (!publishedFlash) return undefined;
-    const timer = setTimeout(() => setPublishedFlash(false), 2200);
-    return () => clearTimeout(timer);
-  }, [publishedFlash]);
+  const nodeByKey = useMemo(() => new Map(state.nodes.map((node) => [node.nodeKey.toLowerCase(), node])), [state.nodes]);
 
-  useEffect(() => {
-    if (state.isSaved) return undefined;
-    const warn = (event) => { event.preventDefault(); event.returnValue = ""; };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [state.isSaved]);
-
-  const issues = useMemo(() => (Array.isArray(validation?.errors) ? validation.errors : []), [validation]);
+  const issues = useMemo(() => {
+    const all = Array.isArray(validation?.errors) ? validation.errors : [];
+    const readsKnownQuestions = (sourceNodeKey) => state.transitions
+      .filter((transition) => (transition.sourceNodeKey ?? "").toLowerCase() === sourceNodeKey.toLowerCase())
+      .every((transition) => (transition.condition?.rules ?? []).every((rule) => {
+        if (!rule.questionId) return false;
+        const node = nodeByKey.get((rule.nodeKey || transition.sourceNodeKey).toLowerCase());
+        return Boolean(node && schemasByFormId[node.formId]?.schema.some((field) => field.id === rule.questionId));
+      }));
+    const settledOnDraft = (issue) => {
+      const form = formsById[nodeByKey.get((issue.nodeKey ?? "").toLowerCase())?.formId];
+      if (!form) return false;
+      if (issue.code === "formClosed") return Number(form.status) === 2;
+      if (issue.code === "formAnonymous") return !form.allowAnonymousResponses;
+      if (issue.code === "formTimedRepeatable") return !(Number(form.timeLimitMinutes) > 0);
+      if (issue.code === "timeoutNotAllowed") return Number(form.timeLimitMinutes) > 0;
+      return false;
+    };
+    return all.filter((issue) => !settledOnDraft(issue) && (issue.code !== "conditionQuestionMissing" || !issue.nodeKey || !readsKnownQuestions(issue.nodeKey)));
+  }, [validation, state.transitions, nodeByKey, schemasByFormId, formsById]);
 
   const issuesByNode = useMemo(() => {
     const map = {};
@@ -194,56 +246,99 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     schemaOf: (formId) => schemasByFormId[formId]?.schema,
   }), [state.transitions, state.nodes, schemasByFormId]);
 
+  const localReads = useMemo(() => questionReads(state.nodes, state.transitions), [state.nodes, state.transitions]);
+  const liveReads = useMemo(() => {
+    const published = liveWorkflow?.published;
+    return published ? questionReads(published.nodes ?? [], published.transitions ?? []) : new Map();
+  }, [liveWorkflow]);
+
   const lockedHighlights = useMemo(() => {
-    const locked = new Map();
-
-    state.transitions.forEach((transition) => {
-      (transition.condition?.rules ?? []).forEach((rule) => {
-        if (!rule.questionId) return;
-        const node = rule.nodeKey
-          ? state.nodes.find((item) => item.nodeKey === rule.nodeKey)
-          : state.nodes.find((item) => item.nodeKey === transition.sourceNodeKey);
-        if (!node) return;
-
-        const field = schemasByFormId[node.formId]?.schema?.find((item) => item.id === rule.questionId);
-        const question = field ? fieldQuestionLabel(field) : rule.questionId;
-        const values = Array.isArray(rule.values) && rule.values.length > 0 ? rule.values : rule.value ? [rule.value] : [];
-        const key = `${node.formTitle}|${question}`;
-        const current = locked.get(key) ?? { form: node.formTitle, question, values: new Set() };
-        values.forEach((value) => current.values.add(value));
-        locked.set(key, current);
+    const lines = [];
+    localReads.forEach((questions, formId) => {
+      const formTitle = state.nodes.find((node) => node.formId === formId)?.formTitle ?? "Adsız form";
+      questions.forEach((values, questionId) => {
+        const field = schemasByFormId[formId]?.schema.find((item) => item.id === questionId);
+        const question = field ? fieldQuestionLabel(field) : questionId;
+        const valueText = values.size > 0 ? `, ${[...values].map((value) => `"${value}"`).join(" ve ")} seçeneği yeniden adlandırılamaz` : "";
+        lines.push(`${formTitle} formundaki "${question}" sorusu silinemez${valueText}.`);
       });
     });
+    return [...lines, "Akıştaki formlar kapatılamaz, silinemez ve anonim cevaba açılamaz."];
+  }, [localReads, state.nodes, schemasByFormId]);
 
-    const lines = [...locked.values()].map((item) => {
-      const values = [...item.values];
-      const valueText = values.length > 0 ? `, ${values.map((value) => `"${value}"`).join(" ve ")} seçeneği yeniden adlandırılamaz` : "";
-      return `${item.form} formundaki "${item.question}" sorusu silinemez${valueText}.`;
+  const membershipOf = useCallback((formId, server) => {
+    const node = state.nodes.find((item) => item.formId === formId);
+    if (!node) return server ?? null;
+
+    const live = server?.isPublished && server.id !== state.id
+      ? new Map((server.lockedQuestions ?? []).map((question) => [question.id, question.values ?? []]))
+      : liveReads.get(formId) ?? new Map();
+    const locked = new Map();
+    live.forEach((values, questionId) => locked.set(questionId, { values: new Set(values), liveOnly: true }));
+    (localReads.get(formId) ?? new Map()).forEach((values, questionId) => {
+      const entry = locked.get(questionId) ?? { values: new Set(), liveOnly: false };
+      values.forEach((value) => entry.values.add(value));
+      locked.set(questionId, { ...entry, liveOnly: false });
     });
 
-    return [
-      ...lines,
-      "Akıştaki formlar kapatılamaz, silinemez ve anonim cevaba açılamaz.",
-      "Devam eden başvurular yayındaki eski sürümde kalmaya devam eder.",
-    ];
-  }, [state.transitions, state.nodes, schemasByFormId]);
+    return {
+      ...(server ?? {}),
+      id: state.id,
+      name: state.name || "Adsız akış",
+      isStart: node.isStart,
+      isPublished: true,
+      allowMultipleRuns: state.allowMultipleRuns,
+      requiresManualReview: node.requiresManualReview,
+      intake: workflow?.intake ?? server?.intake ?? 0,
+      lockedQuestions: [...locked].map(([id, entry]) => ({ id, values: [...entry.values], liveOnly: entry.liveOnly })),
+    };
+  }, [state.nodes, state.id, state.name, state.allowMultipleRuns, localReads, liveReads, workflow?.intake]);
 
-  const publish = useCallback((handlers = {}) => {
-    publishMutation.mutate(stateRef.current.id, {
-      onSuccess: (response) => {
-        const next = response?.data?.validation ?? response?.data;
-        if (next?.errors) setValidation(next);
-        setHasDraft(false);
-        setPublishedFlash(true);
-        handlers.onSuccess?.();
-      },
-      onError: (error) => {
-        const next = error?.body?.data;
-        if (next?.errors) setValidation(next);
-        handlers.onError?.(error);
-      },
-    });
-  }, [publishMutation]);
+  const save = useCallback(async (forms) => {
+    const workflowId = await ensureWorkflow();
+    const current = stateRef.current;
+    const meta = metaOf(current);
+    const definition = toDefinitionPayload(current.nodes, current.transitions);
+    const serialized = JSON.stringify(definition);
+
+    try {
+      const response = await saveWorkflowMutation.mutateAsync({
+        workflowId,
+        payload: { name: meta.name, description: meta.description || null, allowMultipleRuns: meta.allowMultipleRuns, definition, forms },
+      });
+      const data = response?.data ?? response ?? {};
+      savedDefinitionRef.current = serialized;
+      setHasDraft(false);
+      setSavedMeta(meta);
+      if (data.workflow) {
+        setLiveWorkflow(data.workflow);
+        if (data.workflow.validation) setValidation(data.workflow.validation);
+      }
+      const latest = stateRef.current;
+      dispatch({ type: JSON.stringify(toDefinitionPayload(latest.nodes, latest.transitions)) === serialized ? "MARK_SAVED" : "MARK_DIRTY" });
+      return data;
+    } catch (error) {
+      const next = error?.body?.data?.validation;
+      if (next?.errors) setValidation(next);
+      throw error;
+    }
+  }, [ensureWorkflow, saveWorkflowMutation, dispatch]);
+
+  const discardFlow = useCallback(async () => {
+    const workflowId = stateRef.current.id;
+    const published = liveWorkflow?.published;
+    if (!workflowId || !published) return false;
+
+    const definition = toDefinitionPayload(published.nodes ?? [], published.transitions ?? []);
+    const response = await saveDefinitionMutation.mutateAsync({ workflowId, definition });
+    savedDefinitionRef.current = JSON.stringify(definition);
+    setHasDraft(Boolean(response?.data?.draft));
+    const next = response?.data?.validation;
+    if (next?.errors) setValidation(next);
+    dispatch({ type: "LOAD_WORKFLOW", workflow: { ...liveWorkflow, ...savedMeta, draft: null } });
+    queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
+    return true;
+  }, [liveWorkflow, savedMeta, saveDefinitionMutation, dispatch, queryClient]);
 
   const archive = useCallback((handlers = {}) => {
     archiveMutation.mutate(stateRef.current.id, handlers);
@@ -338,6 +433,8 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     versions,
     isLive,
     hasDraft,
+    metaDirty,
+    flowDirty,
     formsById,
     schemasByFormId,
     loadingFormIds,
@@ -345,18 +442,19 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     issuesByNode,
     labelForTransition,
     lockedHighlights,
-    publish,
+    membershipOf,
+    save,
+    discardFlow,
     archive,
     connect,
     setSingleRoute,
     createBlankForm,
     saveStatus: {
-      isSaving: saveDefinitionMutation.isPending || createMutation.isPending || updateWorkflowMutation.isPending,
+      isSaving: saveDefinitionMutation.isPending || createMutation.isPending || saveWorkflowMutation.isPending,
       isFailed: saveDefinitionMutation.isError || createMutation.isError,
-      savedAt,
-      publishedFlash,
+      draftSavedAt,
     },
-    publishState: { isPending: publishMutation.isPending, isError: publishMutation.isError, error: publishMutation.error },
+    saveState: { isPending: saveWorkflowMutation.isPending },
     archiveState: { isPending: archiveMutation.isPending },
   };
 }

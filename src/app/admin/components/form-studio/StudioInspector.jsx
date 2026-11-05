@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { Activity, ChevronRight, Copy, EyeOff, LayoutTemplate, Lock, PencilLine, RotateCcw, Send, Trash2 } from "lucide-react";
+import { Activity, ChevronRight, Copy, EyeOff, LayoutTemplate, Lock, PencilLine, RotateCcw, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTextarea, SectionHeader, Switch, ToggleRow,
@@ -17,7 +17,7 @@ import { useFormEditor } from "../form-editor/FormEditorContext";
 import { LibrarySettings } from "../form-editor/components/LibrarySettings";
 import { FlowPanel, StepPanel, useRouteFocus } from "../workflow-editor/components/WorkflowInspector";
 import { isTimedNode } from "../workflow-editor/workflow-graph";
-import { useFormActions } from "./useFormActions";
+import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
 import { NONE, useStudio } from "./StudioContext";
 import { CHOICE_PRESETS } from "./studio-presets";
 import {
@@ -517,7 +517,7 @@ function FlowStepSection({ flow }) {
   const { wf, node, onOpenRoutes } = flow;
   return (
     <section className={PANEL_SECTION}>
-      <SectionHeader title="Akış adımı" pill={wf.isLive ? "Canlı" : "Taslak"} pillTone={wf.isLive ? "emerald" : "neutral"}
+      <SectionHeader title="Akış adımı"
         description={`${wf.state.name || "Bu akış"} akışının ${node.isStart ? "başlangıç adımı" : "bir adımı"}. Yönlendirmeleri kartın altından ya da buradan değiştirirsin.`}
       />
       <ToggleRow title="Manuel onay" checked={node.requiresManualReview}
@@ -536,7 +536,7 @@ function RulesSection({ wf }) {
 
   return (
     <section className={PANEL_SECTION}>
-      <SectionHeader title="Kurallar" pill={wf.isLive ? "Canlı" : "Taslak"} pillTone={wf.isLive ? "emerald" : "neutral"}
+      <SectionHeader title="Kurallar"
         description="Başvuru kabulü, yeni başvurular ve otomatik kapanış akış sayfasında; burada akışın kuralları var."
       />
       <input value={state.name ?? ""} onChange={(event) => dispatch({ type: "SET_META", key: "name", value: event.target.value })}
@@ -553,22 +553,14 @@ function RulesSection({ wf }) {
   );
 }
 
-function PublishSection({ flow }) {
-  const { wf, onRequestPublish, onOpenFlowPage } = flow;
-  const canPublish = Boolean(wf.state.id) && wf.state.nodes.length > 0 && wf.hasDraft;
+function FlowPageSection({ flow }) {
+  const { wf, onOpenFlowPage } = flow;
 
   return (
     <section className={PANEL_SECTION}>
-      <SectionHeader title="Yayın"
-        description={wf.hasDraft
-          ? wf.isLive ? "Yayınlanmamış değişiklik var. Başvuranlar yayınlanana kadar önceki sürümü görür." : "Yayınlanana kadar başvuranlar akışı görmez."
-          : "Yayındaki sürüm güncel."}
-      />
-      <div className="flex flex-col gap-2">
-        <PanelButton icon={Send} onClick={onRequestPublish} disabled={!canPublish}>Akışı yayınla</PanelButton>
-        {wf.state.id ? <PanelButton icon={Activity} onClick={onOpenFlowPage}>Akış sayfasına git</PanelButton> : null}
-      </div>
-      {wf.issues.length > 0 ? <PanelNotice tone="red">Yayınlamayı engelleyen {wf.issues.length} sorun var. Başlıktaki sorun düğmesi listeyi açar.</PanelNotice> : null}
+      <SectionHeader title="Akış sayfası" description={wf.isLive ? null : "Akış ilk kayıtta başvurulara açılır."} />
+      {wf.state.id ? <PanelButton icon={Activity} onClick={onOpenFlowPage}>Akış sayfasına git</PanelButton> : null}
+      {wf.issues.length > 0 ? <PanelNotice tone="red">Kaydı engelleyen {wf.issues.length} sorun var. Başlıktaki sorun düğmesi listeyi açar.</PanelNotice> : null}
     </section>
   );
 }
@@ -577,7 +569,7 @@ export function FlowRootBody({ flow, picker, ownershipControl }) {
   const { wf, onOpenForm } = flow;
   return (
     <FlowPanel state={wf.state} dispatch={wf.dispatch} schemasByFormId={wf.schemasByFormId} versions={wf.versions} picker={picker}
-      rules={<RulesSection wf={wf} />} footer={<PublishSection flow={flow} />} ownershipControl={ownershipControl}
+      rules={<RulesSection wf={wf} />} footer={<FlowPageSection flow={flow} />} ownershipControl={ownershipControl}
       onOpenStep={(node) => onOpenForm(node.formId)}
       stepsDescription="Başlangıçtan itibaren akıştaki sırasıyla. Birine tıklayınca formu tuvalde açılır."
     />
@@ -610,7 +602,7 @@ export function FormInspectorBody({ eventLinked = false, flow = null, focusTimin
   const remove = (ids) => {
     const result = actions.remove(ids);
     if (result.removed === 0) {
-      if (result.blocked) studio.toast("Bu soru silinemez", "red");
+      if (result.blocked) studio.toast(result.waitsForSave ? LIVE_LOCK_HINT : "Bu soru silinemez", "red");
       return;
     }
     studio.select(NONE);

@@ -9,10 +9,12 @@ import { dropInvalidDependents, newFieldOf, pruneConditions, retypeField } from 
 
 function lockedMapOf(workflow) {
   if (!workflow?.isPublished) return new Map();
-  return new Map((workflow.lockedQuestions ?? []).map((question) => [question.id, { values: Array.isArray(question.values) ? question.values : [] }]));
+  return new Map((workflow.lockedQuestions ?? []).map((question) => [question.id, { values: Array.isArray(question.values) ? question.values : [], liveOnly: Boolean(question.liveOnly) }]));
 }
 
 const TITLE_MAX_LENGTH = 100;
+
+export const LIVE_LOCK_HINT = "Kayıtlı akış bu soruyu hâlâ okuyor; önce kaydedin, sonra silebilirsiniz.";
 
 export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) {
   const { state, doc } = useFormEditor();
@@ -85,7 +87,8 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
       const fields = current();
       const blocked = fields.filter((field) => ids.includes(field.id) && isProtected(field)).map((field) => field.id);
       const removable = ids.filter((id) => !blocked.includes(id));
-      if (removable.length === 0) return { removed: 0, cleared: 0, blocked: blocked.length };
+      const waitsForSave = blocked.some((id) => lockedById.get(id)?.liveOnly);
+      if (removable.length === 0) return { removed: 0, cleared: 0, blocked: blocked.length, waitsForSave };
 
       let cleared = 0;
       const next = fields.filter((field) => !removable.includes(field.id)).map((field) => {
@@ -95,7 +98,7 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
         return rest;
       });
       commit(next);
-      return { removed: removable.length, cleared, blocked: blocked.length };
+      return { removed: removable.length, cleared, blocked: blocked.length, waitsForSave };
     };
 
     const move = (ids, direction) => {

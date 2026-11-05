@@ -23,6 +23,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
 
     const isWorkflowLocked = Boolean(workflow?.isPublished);
     const isAnonymousLocked = isWorkflowLocked && !allowAnonymousResponses;
+    const isStatusManaged = isWorkflowLocked && status === 2;
     const isAccepting = effectiveFormSettings(state).isOpen;
     const intake = Number(workflow?.intake ?? WORKFLOW_INTAKE.OPEN);
     const personal = Boolean(timeLimitMinutes);
@@ -73,7 +74,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
                 />
 
                 <div className="space-y-3">
-                    {isWorkflowLocked ? (
+                    {isStatusManaged ? (
                         <WorkflowManagedRow title="Cevap kabulü" href={`/admin/workflows/${workflow.id}`} onClick={managedActions.acceptance}
                             description={workflow.isStart
                                 ? `Akış yönetiyor · yeni başvurular ${intake === WORKFLOW_INTAKE.OPEN ? "açık" : "kapalı"}`
@@ -86,7 +87,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
                     )}
 
                     <AnimatePresence>
-                        {!isWorkflowLocked && status !== 2 && (
+                        {!isStatusManaged && status !== 2 && (
                             <motion.div key={"status-paused-alert"} variants={alertVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
                                 <PanelNotice className="mb-3">
                                     Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.

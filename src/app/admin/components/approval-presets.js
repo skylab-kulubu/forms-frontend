@@ -5,9 +5,9 @@ export const APPROVAL_PRESETS = {
         variant: "delayed",
         delaySeconds: 2,
         icon: Workflow,
-        title: "Akışı yayınla",
+        title: "Akışı başvurulara aç",
         highlights: (ctx) => ctx.highlights ?? [],
-        approveLabel: (ctx) => ctx.isPending ? "Yayınlanıyor..." : "Yayınla",
+        approveLabel: (ctx) => ctx.isPending ? "Kaydediliyor..." : "Kaydet ve aç",
         rejectLabel: () => "Vazgeç",
     },
 

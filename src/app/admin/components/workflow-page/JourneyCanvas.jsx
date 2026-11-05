@@ -442,7 +442,7 @@ function RemovedSheet({ steps, selected, onSelect }) {
         <span className="grid size-6 shrink-0 place-items-center rounded-md border border-white/10 bg-white/5 text-neutral-400"><History size={12} /></span>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-neutral-100">Eski sürümdeki adımlar</h2>
-          <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">Yayındaki sürümde olmayan adımlarda bekleyen başvurular. Başladıkları sürümde devam ederler.</p>
+          <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">Güncel sürümde olmayan adımlarda bekleyen başvurular. Başladıkları sürümde devam ederler.</p>
         </div>
       </div>
       <div className="divide-y divide-white/5">
@@ -472,7 +472,7 @@ function JourneyHead({ overview, done, pill, versionText, closesText, updatedAt,
         <span className="h-px flex-1 bg-white/5" />
       </div>
       {draft ? (
-        <p className="text-base leading-relaxed text-neutral-300 sm:text-lg">Akış henüz yayınlanmadı. Yayınlanınca başvurular adım adım burada görünür.</p>
+        <p className="text-base leading-relaxed text-neutral-300 sm:text-lg">Akış henüz kaydedilmedi. Kaydedilince başvurular adım adım burada görünür.</p>
       ) : (
         <p className="text-base leading-relaxed text-neutral-300 sm:text-lg">
           {number(active)} kişinin başvurusu sürüyor, {number(waiting, "text-amber-300")}{possessive(waiting)} onay bekliyor. {number(done)} başvuru bitti.

@@ -13,7 +13,7 @@ import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { isIdentityField } from "@/lib/event-handoff";
 import { durationText } from "@/lib/form-timing";
 import { useFormEditor } from "../form-editor/FormEditorContext";
-import { useFormActions } from "./useFormActions";
+import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
 import { NONE, useStudio } from "./StudioContext";
 import { FieldBlock, InsertLine, focusEditable } from "./StudioField";
 import StudioTask from "./StudioTask";
@@ -24,7 +24,8 @@ import { conditionLabel, insertIndexOf, missingFieldIds, questionNumbers, requir
 import { DROP_ANIMATION, conditionLoss, slotOf, useStudioSensors } from "./studio-dnd";
 import { ARRIVAL_EASE, ARRIVAL_MS, SLIDE_IN_EASING, SLIDE_IN_MS, SLIDE_PX, prefersReducedMotion } from "./studio-motion";
 
-const LOCK_BADGE = { label: "Akış koşulu", title: "Yayındaki bir akışın koşulu bu soruyu okuyor; soru silinemez." };
+const LOCK_BADGE = { label: "Akış koşulu", title: "Akıştaki bir yönlendirme koşulu bu soruyu okuyor; soru silinemez." };
+const LIVE_LOCK_BADGE = { label: "Akış koşulu", title: LIVE_LOCK_HINT };
 const IDENTITY_BADGE = { label: "Kimlik alanı", title: "Etkinlik formunda ad, soyad ve e-posta soruları kalmalı." };
 export const REORDER_NOTICE = "Koşul kaldırıldı: koşulun sorusu artık bu sorudan sonra geliyor";
 const NO_VALUES = [];
@@ -390,7 +391,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
     remove: (ids) => {
       const result = actions.remove(ids);
       if (result.removed === 0) {
-        if (result.blocked) studio.toast("Bu soru silinemez", "red");
+        if (result.blocked) studio.toast(result.waitsForSave ? LIVE_LOCK_HINT : "Bu soru silinemez", "red");
         return;
       }
       studio.select(NONE);
@@ -446,8 +447,8 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
       canUp: index > 0,
       canDown: index < fields.length - 1,
       isLast: index === fields.length - 1,
-      protectedReason: locked ? "Akış koşulu bu soruyu okuyor; silinemez" : identity ? "Etkinlik kimlik alanı silinemez" : null,
-      lockBadge: locked ? LOCK_BADGE : identity ? IDENTITY_BADGE : null,
+      protectedReason: locked ? locked.liveOnly ? "Kayıtlı akış bu soruyu hâlâ okuyor; önce kaydedin" : "Akış koşulu bu soruyu okuyor; silinemez" : identity ? "Etkinlik kimlik alanı silinemez" : null,
+      lockBadge: locked ? locked.liveOnly ? LIVE_LOCK_BADGE : LOCK_BADGE : identity ? IDENTITY_BADGE : null,
       lockedValues: locked?.values ?? NO_VALUES,
     };
   };

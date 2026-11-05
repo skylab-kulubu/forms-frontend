@@ -25,7 +25,7 @@ export default function AddStepPicker({ open, forms = [], usedFormIds = [], isLo
           <div className="relative w-full">
             <SearchPicker searchValue={search} onSearchChange={setSearch} searchable autoFocus loading={isLoading}
               items={items} itemsPerPage={5} getItemId={(form) => form.id}
-              footerText="Bir form yalnızca tek bir yayındaki akışta kullanılabilir."
+              footerText="Bir form aynı anda yalnız tek bir akışta kullanılabilir."
               onSelect={(form) => {
                 if (!form.isEligible || form.isUsed) return;
                 onSelect?.(form);

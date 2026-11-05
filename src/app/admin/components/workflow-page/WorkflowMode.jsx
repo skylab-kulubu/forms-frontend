@@ -289,7 +289,7 @@ export default function WorkflowMode() {
 
   const intake = intakeOf(workflow);
   const closesText = live && intake === WORKFLOW_INTAKE.OPEN && workflow?.intakeClosesAt ? `Yeni başvuruların kapanışı: ${formatShortDate(workflow.intakeClosesAt)}` : null;
-  const versionText = published ? `v${published.version} yayında${published.publishedAt ? ` (${formatDay(published.publishedAt)})` : ""}` : live ? null : "Yayınlanmadı";
+  const versionText = published ? `v${published.version}${published.publishedAt ? ` (${formatDay(published.publishedAt)})` : ""}` : live ? null : "Kaydedilmedi";
   const pillText = `${pill.label}${live && published ? ` · v${published.version}` : ""}`;
 
   const outline = (where) => (flow ? (

@@ -109,7 +109,7 @@ export const VALIDATION_COPY = {
   formClosed: { message: "Bu adımın formu cevap kabul etmiyor.", action: "openForm" },
   formAnonymous: { message: "Bu adımın formu anonim cevaba açık. Akışlar imzalı kullanıcı ister.", action: "openForm" },
   formNotOwned: { message: "Bu formun sahibi değilsiniz.", action: "openForm" },
-  formInAnotherWorkflow: { message: "Bu form başka bir yayındaki akışta kullanılıyor." },
+  formInAnotherWorkflow: { message: "Bu form başka bir akışta kullanılıyor." },
   formIsLegacyLinked: { message: "Bu form hâlâ eski bağlı form eşleşmesinde." },
 };
 

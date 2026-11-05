@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight, Lock, Workflow } from "lucide-react";
 import { FOCUS_RING, PANEL_SECTION, ROW, ROW_HOVER, SectionHeader, TILE } from "@/app/admin/components/utils/SidePanel";
 
-export const WORKFLOW_LOCK_REASON = "Yayındaki bir akışta kullanıldığı için değiştirilemez.";
+export const WORKFLOW_LOCK_REASON = "Akışta kullanıldığı için değiştirilemez.";
 
 export function WorkflowLockMark({ title = WORKFLOW_LOCK_REASON }) {
     return (
@@ -48,7 +48,7 @@ export function WorkflowMembershipSection({ workflow }) {
             <SectionHeader title="Akış" pill={workflow.isPublished ? "Canlı" : "Taslak"} pillTone={workflow.isPublished ? "emerald" : "neutral"}
                 description={workflow.isPublished
                     ? "Akış yayında olduğu için bu formun akışın dayandığı kısımları kilitli."
-                    : "Akış henüz yayınlanmadı; yayınlanana kadar bu formda hiçbir şey kilitlenmez. Yayınlanınca cevap kabulü, çoklu cevap ve onay ayarlarını akış yönetir."}
+                    : "Akış henüz kaydedilmedi; kaydedilene kadar bu formda hiçbir şey kilitlenmez. Kaydedilince cevap kabulü, çoklu cevap ve onay ayarlarını akış yönetir."}
             />
 
             <Link href={`/admin/workflows/${workflow.id}`}

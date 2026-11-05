@@ -66,13 +66,13 @@ function stateOf(workflow) {
   const status = Number(workflow.status);
   const intake = Number(workflow.intake ?? 0);
   if (status === 2) return { dot: STATUS_DOT.archived, label: "Arşivde", subtitle: "Arşivlendi", tone: "text-neutral-500" };
-  if (!workflow.publishedVersion) return { dot: STATUS_DOT.draft, label: "Taslak", subtitle: "Henüz yayınlanmadı", tone: "text-neutral-500" };
+  if (!workflow.publishedVersion) return { dot: STATUS_DOT.draft, label: "Taslak", subtitle: "Henüz kaydedilmedi", tone: "text-neutral-500" };
   if (intake === 2) return { dot: STATUS_DOT.closed, label: "Kapalı", subtitle: "Başvurular kapalı", tone: "text-neutral-500" };
   if (intake === 1) return { dot: STATUS_DOT.live, label: "Yayında", subtitle: "Yeni başvuru alınmıyor", tone: "text-amber-300/80" };
   return {
     dot: STATUS_DOT.live,
     label: "Yayında",
-    subtitle: workflow.hasUnpublishedChanges ? `Yayında · v${workflow.publishedVersion} · yayınlanmamış değişiklik var` : `Yayında · v${workflow.publishedVersion}`,
+    subtitle: workflow.hasUnpublishedChanges ? `Yayında · v${workflow.publishedVersion} · kaydedilmemiş değişiklik var` : `Yayında · v${workflow.publishedVersion}`,
     tone: "text-neutral-500",
   };
 }

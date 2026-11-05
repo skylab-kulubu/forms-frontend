@@ -54,7 +54,7 @@ function IssuesPanel({ issues, nodes, onPick, onClose }) {
   return (
     <div className="absolute inset-x-3 bottom-16 z-30 mx-auto max-h-56 max-w-xl overflow-y-auto rounded-lg border border-red-400/25 bg-neutral-900/95 p-3 shadow-xl backdrop-blur scrollbar">
       <div className="flex items-center gap-2">
-        <span className="text-2xs font-medium text-red-200">Yayınlamayı engelleyen {issues.length} sorun</span>
+        <span className="text-2xs font-medium text-red-200">Kaydı engelleyen {issues.length} sorun</span>
         <span className="h-px flex-1 bg-red-400/20" />
         <button type="button" onClick={onClose} aria-label="Kapat" className="rounded p-0.5 text-red-200/70 transition-colors hover:text-red-100"><X size={12} /></button>
       </div>
@@ -145,10 +145,11 @@ function WorkflowStudioContent({ workflow, seed }) {
     loadingFormIds: pendingIds,
     onCreated: (id) => window.history.replaceState(null, "", `/admin/workflows/${id}/edit`),
   });
-  const { state, dispatch } = wf;
+  const { state, dispatch, membershipOf } = wf;
 
   const uiRef = useRef(ui);
-  const [publishOpen, setPublishOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [discardingFlow, setDiscardingFlow] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -187,17 +188,22 @@ function WorkflowStudioContent({ workflow, seed }) {
     return () => clearTimeout(timer);
   }, [savedFlash]);
 
-  const anyPending = docStates.some((snapshot) => snapshot.pending);
+  const unsaved = docStates.some((snapshot) => snapshot.pending) || !state.isSaved || wf.metaDirty;
 
   useEffect(() => {
-    if (!anyPending) return undefined;
+    if (!unsaved) return undefined;
     const warn = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [anyPending]);
+  }, [unsaved]);
 
   const activeFormId = ui.activeFormId;
   const activeDoc = activeFormId ? docs[activeFormId] ?? null : null;
+  const activeServerMembership = activeFormId ? stateById[activeFormId]?.form?.workflow ?? null : null;
+  const activeMembership = useMemo(
+    () => (activeFormId ? membershipOf(activeFormId, activeServerMembership) : undefined),
+    [activeFormId, activeServerMembership, membershipOf],
+  );
   const stages = useMemo(() => stagesOf(state.nodes, state.transitions), [state.nodes, state.transitions]);
   const activeNode = state.nodes.find((node) => node.formId === activeFormId) ?? null;
   const overviewFormId = activeFormId ?? state.nodes.find((node) => node.isStart)?.formId ?? state.nodes[0]?.formId ?? null;
@@ -371,11 +377,13 @@ function WorkflowStudioContent({ workflow, seed }) {
     if (next && next.formId !== base) requestPage(next.formId);
   }, [stages, requestPage]);
 
-  const saveAll = useCallback(async () => {
-    const targets = docList.filter((doc) => {
-      const snapshot = doc.getSnapshot();
-      return snapshot.canEdit && (snapshot.dirty || snapshot.pending);
-    });
+  const changedDocs = useCallback(() => docList.filter((doc) => {
+    const snapshot = doc.getSnapshot();
+    return snapshot.canEdit && (snapshot.dirty || snapshot.pending);
+  }), [docList]);
+
+  const saveForms = useCallback(async () => {
+    const targets = changedDocs();
     if (targets.length === 0) return;
 
     setSavingAll(true);
@@ -402,7 +410,79 @@ function WorkflowStudioContent({ workflow, seed }) {
     setLastSavedAt(new Date());
     setSavedFlash(true);
     if (targets.length > 1) studio.toast(`${targets.length} form birlikte kaydedildi`);
-  }, [docList, queryClient, studio]);
+  }, [changedDocs, queryClient, studio]);
+
+  const saveFlow = useCallback(async () => {
+    const firstLive = !wf.isLive;
+    const attempt = async () => {
+      const entries = await Promise.all(changedDocs().map(async (doc) => ({ doc, formId: doc.id, workingVersion: await doc.syncedVersion() })));
+      const data = await wf.save(entries.map(({ formId, workingVersion }) => ({ formId, workingVersion })));
+      return { entries, data };
+    };
+
+    setSavingAll(true);
+    setSaveFailed(false);
+    try {
+      const { entries, data } = await attempt().catch((error) => {
+        if (error?.status === 409 && error?.body?.data?.failedFormId) return attempt();
+        throw error;
+      });
+      (data.forms ?? []).forEach((form) => {
+        const entry = entries.find((item) => item.formId === form.id);
+        if (entry) entry.doc.applySaved(form, entry.workingVersion);
+        publishedQueries(queryClient, form);
+      });
+      setConfirmOpen(false);
+      setLastSavedAt(new Date());
+      setSavedFlash(true);
+      if (firstLive) studio.toast("Akış başvurulara açıldı");
+    } catch (error) {
+      setConfirmOpen(false);
+      setSaveFailed(true);
+      const body = error?.body?.data;
+      const problems = body?.validation?.errors?.length ?? 0;
+      if (problems > 0) {
+        setIssuesOpen(true);
+        studio.toast(`Kaydedilemedi: akışta ${problems} sorun var`, "red");
+      } else if (body?.failedFormId) {
+        const title = docs[body.failedFormId]?.getView().title?.trim()
+          || state.nodes.find((node) => node.formId === body.failedFormId)?.formTitle
+          || "Bir form";
+        studio.toast(`${title}: ${error.message}`, "red");
+      } else {
+        studio.toast(error?.message ?? "Kaydedilemedi", "red");
+      }
+    } finally {
+      setSavingAll(false);
+    }
+  }, [changedDocs, docs, queryClient, state.nodes, studio, wf]);
+
+  const canSaveFlow = !workflow?.id || Boolean(workflow?.canEdit);
+
+  const requestSave = useCallback(() => {
+    if (savingAll) return;
+    if (!canSaveFlow) {
+      saveForms();
+      return;
+    }
+    if (!wf.flowDirty && changedDocs().length === 0) return;
+    if (!wf.isLive) {
+      setConfirmOpen(true);
+      return;
+    }
+    saveFlow();
+  }, [canSaveFlow, changedDocs, saveFlow, saveForms, savingAll, wf.flowDirty, wf.isLive]);
+
+  const discardFlowDraft = async () => {
+    setDiscardingFlow(true);
+    try {
+      if (await wf.discardFlow()) studio.toast("Akış taslağı silindi. Ctrl+Z geri alır.");
+    } catch (error) {
+      studio.toast(error?.message ?? "Akış taslağı silinemedi", "red");
+    } finally {
+      setDiscardingFlow(false);
+    }
+  };
 
   const discardDraft = () => {
     if (activeDoc?.discard()) studio.toast("Taslak silindi. Ctrl+Z geri alır.");
@@ -423,14 +503,6 @@ function WorkflowStudioContent({ workflow, seed }) {
     } catch {
       studio.toast("Adım eklenemedi. Tekrar deneyin.", "red");
     }
-  };
-
-  const requestPublish = () => {
-    if (!state.isSaved) {
-      studio.toast("Akıştaki değişiklikler kaydediliyor; birkaç saniye sonra tekrar deneyin.");
-      return;
-    }
-    setPublishOpen(true);
   };
 
   const isOwner = Boolean(workflow?.owner?.id) && workflow?.owner?.id === session?.user?.id;
@@ -456,7 +528,7 @@ function WorkflowStudioContent({ workflow, seed }) {
     return () => clearTimeout(timer);
   }, [ui.mode, formReady, activeNode, stages, state.transitions, state.nodes, prefetchStudioForm, queryClient]);
 
-  const flowContext = { wf, onOpenForm: requestPage, onRequestPublish: requestPublish, onOpenFlowPage: () => state.id && router.push(`/admin/workflows/${state.id}`) };
+  const flowContext = { wf, onOpenForm: requestPage, onOpenFlowPage: () => state.id && router.push(`/admin/workflows/${state.id}`) };
   const picker = {
     open: Boolean(stepMenu),
     onOpen: (event) => setStepMenu({ anchor: event?.currentTarget ?? null }),
@@ -473,10 +545,6 @@ function WorkflowStudioContent({ workflow, seed }) {
     onUndoFlow: () => dispatch({ type: "UNDO" }),
   };
   const dirtyCount = dirtyIds.length;
-  const canPublish = Boolean(state.id) && state.nodes.length > 0 && wf.hasDraft;
-  const highlights = dirtyCount > 0
-    ? [...wf.lockedHighlights, `Kaydedilmemiş ${dirtyCount} form var; yayın formların kayıtlı hallerini kullanır.`]
-    : wf.lockedHighlights;
 
   const selectedMapNode = state.nodes.find((node) => node.nodeKey === state.selectedKey) ?? null;
   const flowCrumb = { label: flowName, onClick: () => (ui.mode === "map" ? dispatch({ type: "SELECT", nodeKey: null }) : studio.select({ kind: "flow" })) };
@@ -570,12 +638,13 @@ function WorkflowStudioContent({ workflow, seed }) {
     );
 
     const formStatus = formState ? studioStatusOf(formState) : null;
+    const draftTimes = [formStatus?.draftSavedAt, wf.saveStatus.draftSavedAt].filter(Boolean).map((value) => new Date(value).getTime());
     const saveStatus = (
-      <HeaderStatusPill dirty={dirtyCount > 0 || Boolean(formStatus?.dirty)} draftSyncStatus={formStatus?.draftSyncStatus ?? "idle"}
-        draftSavedAt={formStatus?.draftSavedAt ?? null} offline={Boolean(formStatus?.offline)}
+      <HeaderStatusPill dirty={dirtyCount > 0 || wf.flowDirty || Boolean(formStatus?.dirty)} draftSyncStatus={formStatus?.draftSyncStatus ?? "idle"}
+        draftSavedAt={draftTimes.length > 0 ? new Date(Math.max(...draftTimes)) : null} offline={Boolean(formStatus?.offline)}
         isSaving={savingAll || wf.saveStatus.isSaving} isFailed={saveFailed || wf.saveStatus.isFailed}
-        lastSavedAt={lastSavedAt ?? formStatus?.lastSavedAt ?? wf.saveStatus.savedAt}
-        publishedFlash={savedFlash || wf.saveStatus.publishedFlash}
+        lastSavedAt={lastSavedAt ?? formStatus?.lastSavedAt ?? null}
+        publishedFlash={savedFlash} flashLabel="Kaydedildi"
       />
     );
 
@@ -598,19 +667,20 @@ function WorkflowStudioContent({ workflow, seed }) {
         inspector={inspector}
         overlays={(
           <>
-            {formState ? <FormKeys flow={flowKeys} onSave={saveAll} /> : <FlowKeys flow={flowKeys} onSave={saveAll} />}
+            {formState ? <FormKeys flow={flowKeys} onSave={requestSave} /> : <FlowKeys flow={flowKeys} onSave={requestSave} />}
             <StudioHeaderActions saveStatus={saveStatus}
               fill={inPage && formState ? { active: ui.fill, onToggle: studio.toggleFill } : null}
               onShare={inPage && formState?.id ? () => setShareOpen(true) : null}
-              draft={inPage ? { has: Boolean(formState?.canEdit && formState?.dirty && !formState?.neverPublished), onDiscard: discardDraft, discarding: false } : null}
+              draft={inPage
+                ? { has: Boolean(formState?.canEdit && formState?.dirty && !formState?.neverPublished), onDiscard: discardDraft, discarding: false }
+                : { has: canSaveFlow && wf.isLive && wf.flowDirty, onDiscard: discardFlowDraft, discarding: discardingFlow }}
               onUndo={() => (formUndo ? editor.doc.undo() : dispatch({ type: "UNDO" }))}
               canUndo={formUndo || state._history.length > 0}
               onRedo={inPage && formState ? () => editor.doc.redo() : null}
               canRedo={Boolean(formState?.canRedo)}
               secondary={state.id ? { label: "Akışı arşivle", icon: Archive, onClick: () => setArchiveOpen(true), disabled: wf.archiveState.isPending } : null}
               issues={{ count: wf.issues.length, onShow: () => setIssuesOpen((open) => !open) }}
-              publish={{ onClick: requestPublish, disabled: !canPublish, pending: wf.publishState.isPending, isError: wf.publishState.isError, error: wf.publishState.error, title: canPublish ? "Akışı yayınla" : "Yayınlanacak değişiklik yok" }}
-              onSave={saveAll} isSaving={savingAll} isError={saveFailed} saveExtra={dirtyCount > 1 ? `${dirtyCount} form` : null}
+              onSave={requestSave} isSaving={savingAll} isError={saveFailed} saveExtra={dirtyCount > 1 ? `${dirtyCount} form` : null}
             />
             <AnimatePresence>
             {ui.palette ? (
@@ -635,16 +705,9 @@ function WorkflowStudioContent({ workflow, seed }) {
               />
             ) : null}
             </AnimatePresence>
-            <ApprovalOverlay open={publishOpen} preset="publish-workflow" context={{ highlights, isPending: wf.publishState.isPending }}
-              onApprove={() => wf.publish({
-                onSuccess: () => {
-                  setPublishOpen(false);
-                  studio.toast("Akış yayınlandı");
-                  queryClient.invalidateQueries({ queryKey: ["workflow", state.id] });
-                },
-                onError: () => { setPublishOpen(false); setIssuesOpen(true); },
-              })}
-              onReject={() => setPublishOpen(false)}
+            <ApprovalOverlay open={confirmOpen} preset="publish-workflow" context={{ highlights: wf.lockedHighlights, isPending: savingAll }}
+              onApprove={saveFlow}
+              onReject={() => setConfirmOpen(false)}
             />
             <ApprovalOverlay open={archiveOpen} preset="archive-workflow" context={{ isPending: wf.archiveState.isPending }}
               onApprove={() => wf.archive({ onSuccess: () => router.push("/admin/workflows"), onError: () => setArchiveOpen(false) })}
@@ -664,7 +727,7 @@ function WorkflowStudioContent({ workflow, seed }) {
   if (!activeDoc) return renderLayout(null);
 
   return (
-    <FormEditorProvider key={activeFormId} doc={activeDoc}>
+    <FormEditorProvider key={activeFormId} doc={activeDoc} membership={activeMembership}>
       <FormArea>{(editor) => renderLayout(editor)}</FormArea>
     </FormEditorProvider>
   );

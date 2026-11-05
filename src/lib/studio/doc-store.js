@@ -323,17 +323,23 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     });
   }
 
-  async function publish() {
+  async function syncedVersion() {
     if (!(await whenSynced()) || !id) throw new Error("Değişiklikler henüz gönderilemedi. Bağlantıyı kontrol edip tekrar deneyin.");
+    return version;
+  }
 
-    const at = version;
-    const saved = await transport.publish(id, at);
+  function applySaved(saved, at) {
     form = { ...saved };
     team = saved.collaborators ?? team;
     publishedAt = new Date();
     if (version === at) dirty = false;
     emit();
     return saved;
+  }
+
+  async function publish() {
+    const at = await syncedVersion();
+    return applySaved(await transport.publish(id, at), at);
   }
 
   function onPublished(event) {
@@ -435,6 +441,8 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     adoptLegacyDraft,
     setTeam,
     publish,
+    syncedVersion,
+    applySaved,
     whenSynced,
     ensureCreated: () => (id ? Promise.resolve(api) : create().then(() => api)),
     receive,

@@ -4,14 +4,14 @@ import { createContext, useCallback, useContext, useMemo, useSyncExternalStore }
 
 const OWNER_ROLE = 3;
 
-function stateOf(snapshot) {
+function stateOf(snapshot, membership) {
     const { view, form } = snapshot;
     return {
         ...view,
         id: snapshot.id,
         editors: snapshot.team,
         userRole: form ? Number(form.userRole ?? 0) : OWNER_ROLE,
-        workflow: form?.workflow ?? null,
+        workflow: membership === undefined ? form?.workflow ?? null : membership,
         publishedVersion: form ? Number(form.publishedVersion ?? 1) : 0,
         neverPublished: snapshot.neverPublished,
         dirty: snapshot.dirty,
@@ -56,9 +56,9 @@ function dispatchTo(doc, action) {
 
 const FormEditorContext = createContext(null);
 
-export function FormEditorProvider({ doc, children }) {
+export function FormEditorProvider({ doc, membership, children }) {
     const snapshot = useSyncExternalStore(doc.subscribe, doc.getSnapshot, doc.getSnapshot);
-    const state = useMemo(() => stateOf(snapshot), [snapshot]);
+    const state = useMemo(() => stateOf(snapshot, membership), [snapshot, membership]);
     const dispatch = useCallback((action) => dispatchTo(doc, action), [doc]);
     const value = useMemo(() => ({ state, dispatch, doc }), [state, dispatch, doc]);
 

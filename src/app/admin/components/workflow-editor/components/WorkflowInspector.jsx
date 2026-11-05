@@ -89,7 +89,7 @@ function IntakeSection({ intakeControl, scheduleControl, allowMultipleRuns, hasT
       <SectionHeader title="Başvuru durumu" pill={info.pill} pillTone={info.tone}
         description={intakeControl
           ? "Akışı tamamen ya da yalnız yeni başvurulara kapatabilirsin."
-          : "Akış yayınlanınca başvuru kabulünü de buradan yönetirsin."}
+          : "Akış kaydedilince başvuru kabulünü de buradan yönetirsin."}
       />
 
       <div className="space-y-3">
@@ -633,14 +633,14 @@ export function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout
       <section className={PANEL_SECTION}>
         <SectionHeader title="Sürümler" description="Devam eden başvurular başladıkları sürümde kalır." />
         {versions.length === 0 ? (
-          <p className="text-2xs text-neutral-600">Henüz yayınlanmış sürüm yok.</p>
+          <p className="text-2xs text-neutral-600">Henüz kaydedilmiş sürüm yok.</p>
         ) : (
           <div className="space-y-2">
             {versions.map((version) => (
               <div key={version.id ?? version.version} className="flex items-center gap-2 text-2xs">
                 <span className={`size-1.5 shrink-0 rounded-full ${version.status === 1 ? "bg-emerald-400" : version.status === 0 ? "bg-amber-400" : "bg-neutral-600"}`} />
                 <span className="text-neutral-300">v{version.version}</span>
-                <span className="text-neutral-600">{version.status === 1 ? "Canlı" : version.status === 0 ? "Taslak" : "Arşiv"}</span>
+                <span className="text-neutral-600">{version.status === 1 ? "Canlı" : version.status === 0 ? "Kaydedilmemiş" : "Arşiv"}</span>
                 <span className="ml-auto text-3xs text-neutral-600">
                   {version.publishedAt ? new Date(version.publishedAt).toLocaleDateString("tr-TR", { day: "2-digit", month: "short" }) : "--"}
                 </span>

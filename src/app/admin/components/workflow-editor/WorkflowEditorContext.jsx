@@ -8,7 +8,7 @@ const HISTORY_DEBOUNCE_MS = 800;
 
 const TRACKABLE_ACTIONS = new Set([
   "SET_META", "ADD_NODE", "REMOVE_NODE", "MOVE_NODE", "RELAYOUT", "SET_START", "SET_NODE_REVIEW",
-  "ADD_TRANSITION", "UPDATE_TRANSITION", "REMOVE_TRANSITION", "MOVE_TRANSITION",
+  "ADD_TRANSITION", "UPDATE_TRANSITION", "REMOVE_TRANSITION", "MOVE_TRANSITION", "LOAD_WORKFLOW",
 ]);
 
 let transitionSeq = 0;
@@ -127,6 +127,15 @@ function reducer(state, action) {
 
     case "SET_META":
       return touched(state, { [action.key]: action.value });
+
+    case "RESTORE_META":
+      return touched(state, action.meta);
+
+    case "LOAD_WORKFLOW": {
+      const next = buildInitialState({ workflow: action.workflow });
+      const selectedKey = next.nodes.some((node) => node.nodeKey === state.selectedKey) ? state.selectedKey : null;
+      return { ...next, selectedKey, panelTab: selectedKey ? state.panelTab : "flow" };
+    }
 
     case "SELECT":
       return { ...state, selectedKey: action.nodeKey, panelTab: action.nodeKey ? "step" : "flow" };
@@ -304,6 +313,9 @@ function reducer(state, action) {
 
     case "MARK_SAVED":
       return state.isSaved ? state : { ...state, isSaved: true };
+
+    case "MARK_DIRTY":
+      return state.isSaved ? { ...state, isSaved: false } : state;
 
     default:
       return state;

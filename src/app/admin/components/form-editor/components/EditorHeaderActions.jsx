@@ -22,7 +22,7 @@ function PillTime({ value }) {
     );
 }
 
-export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSaving, isFailed, lastSavedAt, publishedFlash, offline = false }) {
+export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSaving, isFailed, lastSavedAt, publishedFlash, offline = false, flashLabel = "Form kaydedildi" }) {
     const isSyncing = draftSyncStatus === "saving" || isSaving;
     const savedTime = formatTime(lastSavedAt);
     const draftTime = formatTime(draftSavedAt);
@@ -37,7 +37,7 @@ export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSavin
         view = { state: "offline", dot: DOT_WARN, pulse: true, label: "Bağlantı bekleniyor", title: "Değişiklikler bağlantı gelince gönderilecek" };
     } else if (publishedFlash) {
         // Kayıt sonrası kısa vurgu; birkaç saniye sonra kalıcı "Kaydedildi" durumuna düşer.
-        view = { state: "published", dot: DOT_OK, pulse: false, label: "Form kaydedildi", title: "Tüm değişiklikler kaydedildi" };
+        view = { state: "published", dot: DOT_OK, pulse: false, label: flashLabel, title: "Tüm değişiklikler kaydedildi" };
     } else if (!dirty && savedTime) {
         view = { state: "saved", dot: DOT_OK, pulse: false, title: `Form en son ${savedTime}'de kaydedildi`, label: (<>Kaydedildi<PillTime value={savedTime} /></>) };
     } else if (dirty && draftTime) {
