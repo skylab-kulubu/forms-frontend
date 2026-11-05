@@ -1,47 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, MotionConfig, motion, useIsPresent } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { Check, PencilLine, RotateCcw, Trash2 } from "lucide-react";
 import { formatDay } from "@/lib/form-timing";
+import { BoardNote, EASE, EASE_CLASS, placeBoardNotes } from "./StudioBoard";
 import { useStudio } from "./StudioContext";
 import { useComments, useStudioSession } from "./StudioSession";
 import { PresenceAvatar, firstName, useStudioPresence } from "./StudioPresence";
 import StudioSheet from "./StudioSheet";
 
-const THREAD_GAP = 16;
-const THREAD_WIDTH = 256;
-const THREAD_MIN = 200;
-const RIGHT_EDGE = 20;
-const LEFT_EDGE = 16;
-const STACK_GAP = 14;
-const BLOCK_INSET = 14;
-const RELEASE_DELAY_MS = 70;
 const DISARM_MS = 3000;
 const MAX_COMMENT_LENGTH = 2000;
-const EASE = [0.22, 1, 0.36, 1];
-const EASE_CLASS = "ease-[cubic-bezier(0.22,1,0.36,1)]";
-
-const THREAD_MOTION = { hidden: {}, shown: {} };
-const LINE_MOTION = {
-  hidden: { scaleY: 0, transition: { duration: 0.16, ease: "easeIn", delay: 0.05 } },
-  shown: (index) => ({ scaleY: 1, transition: { duration: 0.3, ease: EASE, delay: index * 0.03 } }),
-};
-const BODY_MOTION = {
-  hidden: { opacity: 0, x: -8, transition: { duration: 0.13 } },
-  shown: (index) => ({ opacity: 1, x: 0, transition: { duration: 0.3, ease: EASE, delay: 0.07 + index * 0.03 } }),
-};
-
 const COMMENT_KEY_PREFIX = "comment:";
-
-function fitBoard(pageWidth, cardWidth) {
-  const free = (pageWidth - cardWidth) / 2;
-  let missing = Math.max(0, THREAD_WIDTH - (free - THREAD_GAP - RIGHT_EDGE));
-  const clear = Math.min(missing, Math.max(0, free - LEFT_EDGE));
-  missing -= clear;
-  const trim = Math.min(missing, THREAD_WIDTH - THREAD_MIN);
-  return { push: Math.round(clear + missing - trim), width: THREAD_WIDTH - trim };
-}
 
 function nameOf(user) {
   return user?.fullName?.trim() || user?.firstName?.trim() || "Editör";
@@ -118,38 +89,6 @@ export function useCommentBoard({ formId, fields, selectedIds, phoneViewport }) 
     resolvedCount: placed.length - openThreads.length,
     openFor, focusThread,
   };
-}
-
-export function useBoardPush({ onBoard, scrollRef, cardRef, pushRef, sideRef }) {
-  const applyFit = useCallback(() => {
-    const page = scrollRef.current;
-    const card = cardRef.current;
-    const push = pushRef.current;
-    if (!page || !card || !push) return;
-    const fit = fitBoard(page.clientWidth, card.offsetWidth);
-    push.style.transform = fit.push ? `translateX(${-fit.push}px)` : "";
-    const side = sideRef.current;
-    if (!side) return;
-    side.style.left = `${card.offsetLeft + card.offsetWidth + THREAD_GAP}px`;
-    side.style.width = `${fit.width}px`;
-  }, [scrollRef, cardRef, pushRef, sideRef]);
-
-  useLayoutEffect(() => {
-    if (!onBoard) return undefined;
-    applyFit();
-    const observer = new ResizeObserver(applyFit);
-    if (scrollRef.current) observer.observe(scrollRef.current);
-    if (cardRef.current) observer.observe(cardRef.current);
-    return () => observer.disconnect();
-  }, [onBoard, applyFit, scrollRef, cardRef]);
-
-  useEffect(() => {
-    if (onBoard) return undefined;
-    const timer = setTimeout(() => {
-      if (pushRef.current) pushRef.current.style.transform = "";
-    }, RELEASE_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [onBoard, pushRef]);
 }
 
 function Composer({ initial = "", placeholder, typingKey, autoFocus = false, onSubmit, onCancel }) {
@@ -244,27 +183,12 @@ function CommentMessage({ comment, canEdit, canDelete, guard, board }) {
 }
 
 function ThreadShell({ fieldId, focused, index, inline, onClick, onResize, children, line = null }) {
-  const ref = useRef(null);
-  const isPresent = useIsPresent();
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || !onResize) return undefined;
-    const observer = new ResizeObserver(onResize);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [onResize]);
-
   return (
-    <motion.div ref={ref} data-comment-thread="true" data-field={fieldId} data-focused={focused} data-leaving={!isPresent}
-      variants={THREAD_MOTION} initial="hidden" animate="shown" exit="hidden" onClick={onClick}
-      className={`group/thread pointer-events-auto pl-3.5 ${inline ? "relative" : `absolute inset-x-0 transition-[top] duration-300 ${EASE_CLASS}`} ${focused ? "" : "cursor-pointer"}`}
+    <BoardNote anchor={fieldId} focused={focused} index={index} inline={inline} onResize={onResize} onClick={onClick}
+      line={line ?? (focused ? "bg-skylab-400" : "bg-skylab-400/30 group-hover/note:bg-skylab-400/55")} className={focused ? "" : "cursor-pointer"}
     >
-      <motion.span variants={LINE_MOTION} custom={index}
-        className={`absolute inset-y-0 left-0 w-0.5 origin-top rounded-full transition-colors duration-150 ${line ?? (focused ? "bg-skylab-400" : "bg-skylab-400/30 group-hover/thread:bg-skylab-400/55")}`}
-      />
-      <motion.div variants={BODY_MOTION} custom={index}>{children}</motion.div>
-    </motion.div>
+      {children}
+    </BoardNote>
   );
 }
 
@@ -370,37 +294,8 @@ export function CommentSide({ board, sideRef, columnRef, fields, userId, canWrit
     const side = sideRef.current;
     const column = columnRef.current;
     if (!side || !column) return;
-    const base = column.getBoundingClientRect().top;
-    const items = [...side.querySelectorAll("[data-comment-thread]")]
-      .filter((element) => element.dataset.leaving !== "true")
-      .map((element) => {
-        const block = column.querySelector(`[data-fid="${CSS.escape(element.dataset.field)}"]`);
-        return {
-          element,
-          desired: block ? block.getBoundingClientRect().top - base + BLOCK_INSET : 0,
-          height: element.offsetHeight,
-          focused: element.dataset.focused === "true",
-        };
-      })
-      .sort((a, b) => a.desired - b.desired);
-
-    const anchor = items.findIndex((item) => item.focused);
-    if (anchor < 0) {
-      items.forEach((item, index) => {
-        item.top = index === 0 ? item.desired : Math.max(item.desired, items[index - 1].top + items[index - 1].height + STACK_GAP);
-      });
-    } else {
-      items[anchor].top = items[anchor].desired;
-      for (let index = anchor + 1; index < items.length; index += 1) items[index].top = Math.max(items[index].desired, items[index - 1].top + items[index - 1].height + STACK_GAP);
-      for (let index = anchor - 1; index >= 0; index -= 1) items[index].top = Math.min(items[index].desired, items[index + 1].top - items[index].height - STACK_GAP);
-    }
-    items.forEach((item) => {
-      const top = `${Math.round(item.top)}px`;
-      if (item.element.style.top !== top) item.element.style.top = top;
-    });
-
-    const last = items[items.length - 1];
-    if (resolvedRef.current) resolvedRef.current.style.top = `${last ? Math.round(last.top + last.height + STACK_GAP) : 0}px`;
+    const bottom = placeBoardNotes(side, column, (id) => column.querySelector(`[data-fid="${CSS.escape(id)}"]`));
+    if (resolvedRef.current) resolvedRef.current.style.top = `${bottom}px`;
   }, [sideRef, columnRef]);
 
   useLayoutEffect(layout);

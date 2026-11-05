@@ -1,15 +1,13 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect } from "react";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 import { FilePenLine, Flag } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
+import { BoardNote, placeBoardNotes } from "../form-studio/StudioBoard";
 import { formatDateTime, formatPersonName, noteOf, plainAnswer } from "./response-data";
 
-export const RAIL_W = 208;
-export const RAIL_GAP = 28;
-export const RAIL_PAD = 24;
-export const RAIL_EXTRA = RAIL_GAP + RAIL_W + 2 * RAIL_PAD;
-export const RAIL_MIN_CARD = 560;
+const REQUEST_INSET = 24;
 
 export function Rail({ children, tone = "bg-neutral-700" }) {
   return (
@@ -66,50 +64,42 @@ export function ChangeNote({ field, number, previous, previousAnswer, requested 
   );
 }
 
-export default function MarginRail({ cardRef, notes, onHover }) {
-  const [positions, setPositions] = useState({});
-  const refs = useRef({});
-  const notesRef = useRef(notes);
-  const signature = notes.map((note) => note.key).join("|");
+export default function MarginRail({ open, notes, sideRef, columnRef, onHover }) {
+  const layout = useCallback(() => {
+    const side = sideRef.current;
+    const column = columnRef.current;
+    if (!side || !column) return;
+    const card = column.querySelector("[data-room-card]");
+    const requestTop = card ? card.getBoundingClientRect().top - column.getBoundingClientRect().top + REQUEST_INSET : 0;
+    placeBoardNotes(side, column, (id) => column.querySelector(`[data-q="${CSS.escape(id)}"]`), requestTop);
+  }, [sideRef, columnRef]);
 
-  useLayoutEffect(() => {
-    notesRef.current = notes;
-  });
+  useLayoutEffect(layout);
 
-  useLayoutEffect(() => {
-    const card = cardRef.current;
-    if (!card) return undefined;
-    const measure = () => {
-      const base = card.getBoundingClientRect().top;
-      const next = {};
-      let floor = 0;
-      notesRef.current.forEach((note) => {
-        const anchor = note.anchor ? card.querySelector(`[data-q="${CSS.escape(note.anchor)}"]`) : null;
-        const target = anchor ? anchor.getBoundingClientRect().top - base + 16 : 40;
-        const top = Math.max(target, floor);
-        next[note.key] = Math.round(top);
-        floor = top + (refs.current[note.key]?.offsetHeight ?? 0) + 20;
-      });
-      setPositions((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next));
-    };
-    const observer = new ResizeObserver(measure);
-    observer.observe(card);
-    Object.values(refs.current).forEach((element) => element && observer.observe(element));
+  useEffect(() => {
+    const column = columnRef.current;
+    if (!column) return undefined;
+    const observer = new ResizeObserver(layout);
+    observer.observe(column);
     return () => observer.disconnect();
-  }, [signature, cardRef]);
+  }, [columnRef, layout]);
 
   return (
-    <div className="relative h-full">
-      {notes.map((note) => (
-        <div key={note.key} ref={(element) => { refs.current[note.key] = element; }}
-          onMouseEnter={() => onHover(note.anchor)} onMouseLeave={() => onHover(null)}
-          className="absolute inset-x-0 transition-[top] duration-200"
-          style={{ top: positions[note.key] ?? 0, visibility: positions[note.key] == null ? "hidden" : "visible" }}
-        >
-          {note.anchor ? <span aria-hidden="true" className="absolute top-2 h-px bg-sky-400/30" style={{ left: 4 - RAIL_GAP, width: RAIL_GAP - 8 }} /> : null}
-          {note.node}
-        </div>
-      ))}
-    </div>
+    <aside ref={sideRef} aria-label="Kenar notları" className="pointer-events-none absolute top-0 z-20">
+      <MotionConfig reducedMotion="user">
+        <AnimatePresence onExitComplete={layout}>
+          {open ? notes.map((note, index) => (
+            <BoardNote key={note.key} anchor={note.anchor} index={index} onResize={layout} line={note.anchor ? "bg-neutral-700" : "bg-sky-400/50"}
+              onMouseEnter={() => onHover(note.anchor)} onMouseLeave={() => onHover(null)}
+            >
+              <div className="relative">
+                {note.anchor ? <span aria-hidden="true" className="absolute -left-7 top-2 h-px w-3 bg-neutral-700" /> : null}
+                {note.node}
+              </div>
+            </BoardNote>
+          )) : null}
+        </AnimatePresence>
+      </MotionConfig>
+    </aside>
   );
 }

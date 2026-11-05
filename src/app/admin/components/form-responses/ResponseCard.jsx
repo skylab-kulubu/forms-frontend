@@ -134,11 +134,24 @@ function SeparatorBlock({ field, phone }) {
   );
 }
 
-function AnswerBlock({ field, number, answer, responseId, phone, accent, hint, aside, below }) {
+function NoteLine({ number, open, onClick }) {
+  return (
+    <button type="button" aria-label={`${number}. sorunun önceki cevabını göster`} title="Önceki cevabı göster" onClick={onClick}
+      className="group/line absolute -right-4.5 bottom-3.5 top-3.5 z-10 w-3 outline-none"
+    >
+      <span className={`absolute inset-y-0 rounded-full transition-all duration-150 ${
+        open ? "left-[4.5px] w-0.75 bg-sky-300" : "left-1.25 w-0.5 bg-sky-400/50 group-hover/line:left-[4.5px] group-hover/line:w-0.75 group-hover/line:bg-sky-300 group-focus-visible/line:bg-sky-300"
+      }`} />
+    </button>
+  );
+}
+
+function AnswerBlock({ field, number, answer, responseId, phone, accent, hint, aside, below, line }) {
   const props = field.props ?? {};
   return (
     <div data-q={field.id} className={`group/q relative flex flex-col rounded-xl transition-[box-shadow,background-color] duration-150 ${phone ? "p-2" : "p-2 md:p-4"} ${hint ? "bg-sky-400/3 ring-1 ring-sky-400/30" : ""}`}>
       {accent ? <span className="absolute -left-3 bottom-5 top-5 w-0.5 rounded-full bg-sky-400/50" /> : null}
+      {line}
       <div className="flex gap-3">
         <QuestionBadge number={number} conditional={Boolean(field.condition?.fieldId)} />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -178,7 +191,7 @@ function CompactHeader({ title, description }) {
 
 export default function ResponseCard({
   form, detail, isAttempt = false, previous = null, showChanges = true, flagMode = false, flags = [], onFlag, phone = false,
-  railOn = false, hoverQ = null, compactHeader = false, revisionRow = false, onOpenPrevious = null, stepInfo = null,
+  board = false, notesOpen = false, onOpenNote = null, hoverQ = null, compactHeader = false, revisionRow = false, onOpenPrevious = null, stepInfo = null,
 }) {
   const { fields, orphans, answers } = useMemo(() => fieldsOf(form, detail), [form, detail]);
   const previousAnswers = useMemo(() => (previous ? new Map((previous.schema ?? []).map((item) => [item.id, item.answer])) : null), [previous]);
@@ -189,7 +202,8 @@ export default function ResponseCard({
   const requestedBefore = previous?.returnedQuestionIds ?? [];
   const requested = status === RETURNED ? detail?.returnedQuestionIds ?? [] : requestedBefore;
   const changedAll = useMemo(() => changedIdsOf(allFields, answers, previousAnswers), [allFields, answers, previousAnswers]);
-  const changed = showChanges ? changedAll : [];
+  const marking = board || showChanges;
+  const changed = marking ? changedAll : [];
   const person = personOf(detail);
   const task = detail?.task?.content?.trim() ? detail.task : form?.task?.content?.trim() ? form.task : null;
   const title = form?.title || detail?.workflow?.steps?.find((step) => step.stage === detail?.workflow?.stage)?.formTitle || "Form";
@@ -233,7 +247,7 @@ export default function ResponseCard({
       <span className="flex h-6 shrink-0 items-center gap-1 text-3xs font-medium text-sky-300/80" title="Bu soruda düzeltme istendi">
         <Flag size={11} />
         İstendi
-        {previous && showChanges && requestedBefore.includes(field.id) ? (
+        {previous && marking && requestedBefore.includes(field.id) ? (
           <>
             <span className="text-neutral-600">·</span>
             {changedAll.includes(field.id) ? <span className="text-sky-200">değişti</span> : <span className="text-amber-200/80">değişmedi</span>}
@@ -246,9 +260,10 @@ export default function ResponseCard({
 
     return (
       <div key={field.id} className={last ? "" : "border-b border-white/5 pb-6"}>
-        <AnswerBlock field={field} number={number} answer={answer} responseId={detail?.id} phone={phone} accent={isChanged || isFlagged} hint={hoverQ === field.id}
+        <AnswerBlock field={field} number={number} answer={answer} responseId={detail?.id} phone={phone} accent={isFlagged || (isChanged && !board)} hint={hoverQ === field.id}
           aside={aside}
-          below={isChanged && !railOn ? <PrevAnswer field={field} previous={previous} previousAnswer={previousAnswers?.get(field.id)} onOpenPrevious={onOpenPrevious} /> : null}
+          below={isChanged && !board ? <PrevAnswer field={field} previous={previous} previousAnswer={previousAnswers?.get(field.id)} onOpenPrevious={onOpenPrevious} /> : null}
+          line={isChanged && board ? <NoteLine number={number} open={notesOpen} onClick={() => onOpenNote?.(field.id)} /> : null}
         />
       </div>
     );
@@ -263,7 +278,7 @@ export default function ResponseCard({
         <div className="-mt-2">
           <RevisionRow previous={previous} fields={allFields} numbers={numbers} requested={requestedBefore} changedAll={changedAll} onJump={scrollToQuestion} />
         </div>
-      ) : changed.length ? (
+      ) : changed.length && !board ? (
         <div className="-mt-2 flex flex-wrap items-center gap-1.5 px-2 md:px-4">
           <button type="button" onClick={() => scrollToQuestion(changed[0])}
             className="inline-flex min-h-8 items-center gap-1 rounded-md border border-sky-400/25 bg-sky-400/10 px-2 py-0.5 text-left text-3xs text-sky-200 transition-colors hover:bg-sky-400/15 sm:min-h-0 sm:px-1.5"

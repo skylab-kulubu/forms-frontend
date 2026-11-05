@@ -3,9 +3,18 @@
 import { Fragment, useLayoutEffect, useRef } from "react";
 import { ChevronRight, Monitor, Smartphone, Timer } from "lucide-react";
 import { durationText } from "@/lib/form-timing";
+import { EASE_CLASS, boardFits, useBoardPush } from "../form-studio/StudioBoard";
 import { sameId } from "./room-flow";
 
 export const CANVAS_WIDE = 896;
+const SCROLLBAR_WIDTH = 10;
+const WIDE_GUTTER = 112;
+const NARROW_GUTTER = 48;
+
+export function fitsBeside(width, cardWidth) {
+  const page = width - SCROLLBAR_WIDTH;
+  return boardFits(page, Math.min(cardWidth, page - (width >= CANVAS_WIDE ? WIDE_GUTTER : NARROW_GUTTER)));
+}
 
 let pendingAnchor = null;
 
@@ -16,6 +25,12 @@ export function captureCanvasAnchor() {
   const top = canvas.getBoundingClientRect().top;
   const hit = [...canvas.querySelectorAll("[data-q]")].find((element) => element.getBoundingClientRect().bottom > top + 24);
   if (hit) pendingAnchor = { q: hit.getAttribute("data-q"), offset: hit.getBoundingClientRect().top - top };
+}
+
+function takeCanvasAnchor() {
+  const anchor = pendingAnchor;
+  pendingAnchor = null;
+  return anchor;
 }
 
 export function StepBadge({ depth, isStart = false, size = "sm" }) {
@@ -105,32 +120,50 @@ export function CardTop({ row1, row2 = null }) {
   );
 }
 
-export default function RoomCanvas({ width, cardWidth, top, above = null, card, below = null, rail = null, sticky = null }) {
+export default function RoomCanvas({ width, cardWidth, top, above = null, card, below = null, side = null, sticky = null }) {
   const scrollRef = useRef(null);
+  const pushRef = useRef(null);
+  const columnRef = useRef(null);
+  const headRef = useRef(null);
   const cardRef = useRef(null);
+  const sideRef = useRef(null);
   const wide = width === 0 || width >= CANVAS_WIDE;
+  const onBoard = Boolean(side?.open);
+
+  useBoardPush({ onBoard, scrollRef, cardRef, pushRef, sideRef, insetRef: headRef });
 
   useLayoutEffect(() => {
-    const anchor = pendingAnchor;
-    pendingAnchor = null;
+    const anchor = takeCanvasAnchor();
     const canvas = scrollRef.current;
     const target = anchor && canvas?.querySelector(`[data-q="${CSS.escape(anchor.q)}"]`);
     if (target) canvas.scrollTop += target.getBoundingClientRect().top - canvas.getBoundingClientRect().top - anchor.offset;
   }, []);
 
+  const handleBackgroundDown = (event) => {
+    if (!onBoard) return;
+    const canvas = event.currentTarget;
+    if (event.clientX - canvas.getBoundingClientRect().left >= canvas.clientWidth) return;
+    if (event.target.closest?.("[data-room-head], [data-room-card], [data-decision], [data-board-note], button, a, input, textarea")) return;
+    side.onClose();
+  };
+
   return (
-    <div ref={scrollRef} data-room-canvas className={`${wide && !rail ? "studio-fade" : "studio-fade-edge"} h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar`}>
-      <div data-room-column className={`relative mx-auto flex min-h-full w-full flex-col px-3 pb-36 pt-4 sm:pb-40 sm:pt-10 ${rail ? "sm:px-6" : wide ? "sm:px-14" : "sm:px-6"}`}
-        style={{ maxWidth: rail ? cardWidth + rail.extra : cardWidth + 112 }}
-      >
-        {sticky ? <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-1 border-b border-white/5 bg-neutral-900/90 px-3 backdrop-blur sm:hidden">{sticky}</div> : null}
-        <div className={`w-full ${rail ? "" : "mx-auto"}`} style={{ maxWidth: cardWidth }}>{top}</div>
-        {above ? <div className={`mb-4 w-full ${rail ? "" : "mx-auto"}`} style={{ maxWidth: cardWidth }}>{above}</div> : null}
-        <div className={rail ? "flex items-stretch" : ""} style={rail ? { gap: rail.gap } : undefined}>
-          <div ref={cardRef} data-room-card className={`relative flex w-full flex-col ${rail ? "shrink-0" : "mx-auto"}`} style={{ maxWidth: cardWidth }}>{card}</div>
-          {rail ? <aside aria-label="Kenar notları" className="relative min-w-0 flex-1" style={{ maxWidth: rail.width }}>{rail.render(cardRef)}</aside> : null}
+    <div ref={scrollRef} data-room-canvas data-commenting={onBoard ? "true" : undefined} onPointerDown={handleBackgroundDown}
+      className={`${wide && !onBoard ? "studio-fade" : "studio-fade-edge"} h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar`}
+    >
+      <div ref={pushRef} className={`flex min-h-full flex-col transition-transform duration-400 motion-reduce:transition-none ${EASE_CLASS}`}>
+        <div ref={columnRef} data-room-column className={`relative mx-auto flex w-full flex-1 flex-col px-3 pb-36 pt-4 sm:pb-40 sm:pt-10 ${wide ? "sm:px-14" : "sm:px-6"}`}
+          style={{ maxWidth: cardWidth + WIDE_GUTTER }}
+        >
+          {sticky ? <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-1 border-b border-white/5 bg-neutral-900/90 px-3 backdrop-blur sm:hidden">{sticky}</div> : null}
+          <div ref={headRef} data-room-head className={`mx-auto w-full transition-[padding] duration-400 motion-reduce:transition-none ${EASE_CLASS}`} style={{ maxWidth: cardWidth }}>
+            {top}
+            {above ? <div className="mb-4">{above}</div> : null}
+          </div>
+          <div ref={cardRef} data-room-card className="relative mx-auto flex w-full flex-col" style={{ maxWidth: cardWidth }}>{card}</div>
+          {below ? <div className="mx-auto mt-7 w-full" style={{ maxWidth: cardWidth }}>{below}</div> : null}
+          {side ? <side.Notes {...side.props} sideRef={sideRef} columnRef={columnRef} /> : null}
         </div>
-        {below ? <div className={`mt-7 w-full ${rail ? "" : "mx-auto"}`} style={{ maxWidth: cardWidth }}>{below}</div> : null}
       </div>
     </div>
   );
