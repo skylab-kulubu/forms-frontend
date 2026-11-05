@@ -30,6 +30,19 @@ function docStatesStore(docs) {
   };
 }
 
+function presenceListsStore(session, ids) {
+  let last = null;
+  return {
+    subscribe: (listener) => session.presence.subscribe(listener),
+    getSnapshot() {
+      const next = ids.map((formId) => session.presence.get(formId));
+      if (last && last.length === next.length && last.every((list, index) => list === next[index])) return last;
+      last = next;
+      return next;
+    },
+  };
+}
+
 export function StudioSessionProvider({ onNotice, fallback = null, children }) {
   const { data: auth } = useSession();
   const userId = auth?.user?.id ?? null;
@@ -77,12 +90,30 @@ export function useConnectionStatus(session) {
   return useSyncExternalStore(session.onStatus, session.status, session.status);
 }
 
-export function usePresenceBroadcast(session, formId, selection) {
+export function usePresenceBroadcast(session, formId, selection, editing = null) {
   const ids = selection?.kind === "fields" ? selection.ids : [];
   const key = ids.join("|");
 
   useEffect(() => {
     if (!formId) return;
-    session.sendPresence(formId, { selection: key ? key.split("|") : [], editing: null });
-  }, [session, formId, key]);
+    session.sendPresence(formId, { selection: key ? key.split("|") : [], editing, here: true });
+  }, [session, formId, key, editing]);
+
+  useEffect(() => {
+    if (!formId) return undefined;
+    return () => session.sendPresence(formId, { selection: [], editing: null, here: false });
+  }, [session, formId]);
+}
+
+export function usePresenceMembers(session, formIds) {
+  const key = formIds.filter(Boolean).join("|");
+
+  const store = useMemo(() => presenceListsStore(session, key ? key.split("|") : []), [session, key]);
+
+  const lists = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+
+  return useMemo(() => {
+    const ids = key ? key.split("|") : [];
+    return Object.fromEntries(ids.map((formId, index) => [formId, lists[index].filter((member) => member.here && member.userId !== session.userId)]));
+  }, [lists, key, session]);
 }

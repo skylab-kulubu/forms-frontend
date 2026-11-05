@@ -18,6 +18,7 @@ import { LibrarySettings } from "../form-editor/components/LibrarySettings";
 import { FlowPanel, StepPanel, useRouteFocus } from "../workflow-editor/components/WorkflowInspector";
 import { isTimedNode } from "../workflow-editor/workflow-graph";
 import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
+import { colorOf, uniquePeople, useStudioPresence } from "./StudioPresence";
 import { NONE, useStudio } from "./StudioContext";
 import { CHOICE_PRESETS } from "./studio-presets";
 import {
@@ -586,10 +587,31 @@ export function RoutesBody({ flow, node }) {
   );
 }
 
+function suffixDa(name) {
+  const vowels = String(name ?? "").toLocaleLowerCase("tr-TR").match(/[aıoueiöü]/g);
+  return vowels && "eiöü".includes(vowels[vowels.length - 1]) ? "de" : "da";
+}
+
+function PeersNote({ others, fieldId }) {
+  const people = uniquePeople(others ?? []);
+  if (people.length === 0) return null;
+  const typing = people.find((member) => member.editing === fieldId);
+  const names = typing ? typing.name : people.map((member) => member.name).join(", ");
+  const doing = typing ? "bu soruyu şu an yazıyor." : `${suffixDa(people[people.length - 1].name)} bu soruda.`;
+
+  return (
+    <div className="mx-4 mt-4 flex items-start gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-2xs leading-4 text-neutral-300">
+      <span className="mt-1 size-2 shrink-0 rounded-full" style={{ backgroundColor: colorOf((typing ?? people[0]).userId) }} />
+      <span><span className="font-semibold text-neutral-100">{names}</span> {doing} Aynı metni aynı anda yazarsanız son yazılan kalır.</span>
+    </div>
+  );
+}
+
 export function FormInspectorBody({ eventLinked = false, flow = null, focusTiming = 0, managedActions = {} }) {
   const { state } = useFormEditor();
   const actions = useFormActions({ eventLinked });
   const { ui, actions: studio } = useStudio();
+  const presence = useStudioPresence();
   const fields = state.schema;
   const formKey = ui.activeFormId ?? "new";
   const selection = ui.selection;
@@ -620,9 +642,12 @@ export function FormInspectorBody({ eventLinked = false, flow = null, focusTimin
   if (ids.length === 1) {
     const field = fields.find((item) => item.id === ids[0]);
     return (
-      <QuestionInspector key={field.id} field={field} fields={fields} actions={actions} anonymous={state.allowAnonymousResponses}
-        onDuplicate={duplicate} onRemove={remove} onToast={studio.toast}
-      />
+      <>
+        <PeersNote others={presence.byField.get(field.id)} fieldId={field.id} />
+        <QuestionInspector key={field.id} field={field} fields={fields} actions={actions} anonymous={state.allowAnonymousResponses}
+          onDuplicate={duplicate} onRemove={remove} onToast={studio.toast}
+        />
+      </>
     );
   }
 

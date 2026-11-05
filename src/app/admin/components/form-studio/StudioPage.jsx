@@ -16,6 +16,7 @@ import { useFormEditor } from "../form-editor/FormEditorContext";
 import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
 import { NONE, useStudio } from "./StudioContext";
 import { FieldBlock, InsertLine, focusEditable } from "./StudioField";
+import { useStudioPresence } from "./StudioPresence";
 import StudioTask from "./StudioTask";
 import StudioInsertMenu from "./StudioInsertMenu";
 import { EmptyStart, IntroFields, TemplateStart, previewOf } from "./StudioStart";
@@ -237,6 +238,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
   const fillValues = ui.fillValues[formKey] ?? {};
   const missing = ui.missing[formKey] ?? [];
   const numbers = useMemo(() => questionNumbers(fields), [fields]);
+  const presence = useStudioPresence();
 
   const scrollRef = useRef(null);
   const columnRef = useRef(null);
@@ -450,6 +452,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
       protectedReason: locked ? locked.liveOnly ? "Kayıtlı akış bu soruyu hâlâ okuyor; önce kaydedin" : "Akış koşulu bu soruyu okuyor; silinemez" : identity ? "Etkinlik kimlik alanı silinemez" : null,
       lockBadge: locked ? locked.liveOnly ? LIVE_LOCK_BADGE : LOCK_BADGE : identity ? IDENTITY_BADGE : null,
       lockedValues: locked?.values ?? NO_VALUES,
+      others: presence.byField.get(field.id),
     };
   };
 

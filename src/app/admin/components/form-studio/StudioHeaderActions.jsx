@@ -10,6 +10,7 @@ import Popover from "@/app/components/utils/Popover";
 import { Floating } from "@/app/components/utils/Floating";
 import Tip from "@/app/admin/components/utils/Tip";
 import { POPOVER_MOTION } from "./studio-motion";
+import { PeopleCount, PeopleStack } from "./StudioPresence";
 
 const emptySubscribe = () => () => {};
 
@@ -31,7 +32,7 @@ function SaveButton({ onSave, isSaving, isError, error, saveLabel, saveExtra, dr
   );
 }
 
-function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, onSave, ...save }) {
+function FullActions({ saveStatus, returnHref, people = [], onGoToPerson, fill, onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, onSave, ...save }) {
   return (
     <div className="flex items-center gap-1 text-neutral-500">
       {returnHref ? (
@@ -42,6 +43,7 @@ function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, can
           Etkinliğe dön
         </a>
       ) : null}
+      <PeopleStack people={people} onGo={onGoToPerson} />
       {saveStatus ? <div className="mr-2 hidden sm:block">{saveStatus}</div> : null}
 
       {fill ? (
@@ -102,7 +104,7 @@ function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, can
   );
 }
 
-function CompactActions({ returnHref, onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, onSave, ...save }) {
+function CompactActions({ returnHref, people = [], onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, onSave, ...save }) {
   const [anchor, setAnchor] = useState(null);
 
   const items = [
@@ -116,6 +118,7 @@ function CompactActions({ returnHref, onShare, draft, onUndo, canUndo, onRedo, c
 
   return (
     <div className="flex items-center gap-0.5 text-neutral-500">
+      <PeopleCount people={people} />
       <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo} className={`${ICON_BUTTON} p-2`}><Undo2 size={17} /></button>
       {items.length > 0 ? (
         <button type="button" aria-label="Diğer işlemler" aria-expanded={Boolean(anchor)} onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}

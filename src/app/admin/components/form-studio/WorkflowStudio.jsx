@@ -16,7 +16,8 @@ import FormShareDialog from "../share/FormShareDialog";
 import { formInfoQuery } from "@/lib/hooks/useFormContext";
 import { useAvailableFormsQuery, useCandidateFormsQuery } from "@/lib/hooks/useWorkflowAdmin";
 import { NONE, StudioProvider, useStudio } from "./StudioContext";
-import { StudioSessionProvider, useDocStates, usePresenceBroadcast, useStudioSession } from "./StudioSession";
+import { StudioSessionProvider, useDocStates, usePresenceBroadcast, usePresenceMembers, useStudioSession } from "./StudioSession";
+import { RemoteCursors, StudioPresenceProvider, colorOf, revealField, uniquePeople, useCursorBroadcast, useTypingField, whereOf } from "./StudioPresence";
 import StudioLayout from "./StudioLayout";
 import StudioPage, { pageCardRect } from "./StudioPage";
 import StudioMap, { FlowCardDecor } from "./StudioMap";
@@ -36,6 +37,8 @@ import { SLIDE_IN_EASING, SLIDE_IN_MS, SLIDE_OUT_EASING, SLIDE_OUT_MS, SLIDE_PX,
 import { publishedQueries, studioStatusOf } from "./studio-save";
 
 const SWITCH_WAIT_MS = 1500;
+const REVEAL_DELAY_MS = 450;
+const NO_MEMBERS = [];
 
 function blankTitle(nodes) {
   const taken = new Set(nodes.map((node) => node.formTitle));
@@ -208,7 +211,12 @@ function WorkflowStudioContent({ workflow, seed }) {
   const activeNode = state.nodes.find((node) => node.formId === activeFormId) ?? null;
   const overviewFormId = activeFormId ?? state.nodes.find((node) => node.isStart)?.formId ?? state.nodes[0]?.formId ?? null;
 
-  usePresenceBroadcast(studioSession, activeDoc?.id ?? null, ui.selection);
+  const typingField = useTypingField();
+  usePresenceBroadcast(studioSession, activeDoc?.id ?? null, ui.selection, typingField);
+  useCursorBroadcast(studioSession, ui.mode === "page" ? activeDoc?.id ?? null : null);
+  const peopleByForm = usePresenceMembers(studioSession, docList.map((doc) => doc.id));
+  const activeOthers = (activeFormId && peopleByForm[activeFormId]) || NO_MEMBERS;
+  const revealRef = useRef(null);
 
   const dirtyIds = state.nodes
     .filter((node) => stateById[node.formId]?.dirty || stateById[node.formId]?.pending)
@@ -488,6 +496,23 @@ function WorkflowStudioContent({ workflow, seed }) {
     if (activeDoc?.discard()) studio.toast("Taslak silindi. Ctrl+Z geri alır.");
   };
 
+  const people = uniquePeople(state.nodes.flatMap((node) => (peopleByForm[node.formId] ?? []).map((member) => ({
+    ...member,
+    formId: node.formId,
+    where: whereOf(member, { fields: stateById[node.formId]?.view?.schema ?? [], formTitle: node.formTitle || "Adsız form" }),
+  }))));
+
+  const goToPerson = (person) => {
+    const fieldId = person.selection?.[0] ?? null;
+    const color = colorOf(person.userId);
+    if (person.formId === uiRef.current.activeFormId && uiRef.current.mode === "page") {
+      if (!fieldId || !revealField(fieldId, color)) studio.toast(`${person.name} bu adımda, bir soru seçmemiş`);
+      return;
+    }
+    revealRef.current = fieldId ? { formId: person.formId, fieldId, color } : null;
+    requestPage(person.formId);
+  };
+
   const { data: availableData, isLoading: availableLoading } = useAvailableFormsQuery(state.id, { enabled: Boolean(stepMenu) && Boolean(state.id) });
   const { data: candidateData, isLoading: candidateLoading } = useCandidateFormsQuery({ enabled: Boolean(stepMenu) && !state.id });
   const pickerForms = state.id ? listOf(availableData) : listOf(candidateData);
@@ -504,6 +529,16 @@ function WorkflowStudioContent({ workflow, seed }) {
       studio.toast("Adım eklenemedi. Tekrar deneyin.", "red");
     }
   };
+
+  useEffect(() => {
+    const reveal = revealRef.current;
+    if (!reveal || ui.mode !== "page" || activeFormId !== reveal.formId || !activeDoc) return undefined;
+    const timer = setTimeout(() => {
+      revealRef.current = null;
+      revealField(reveal.fieldId, reveal.color);
+    }, REVEAL_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [ui.mode, activeFormId, activeDoc]);
 
   const isOwner = Boolean(workflow?.owner?.id) && workflow?.owner?.id === session?.user?.id;
   const flowName = state.name || "Adsız akış";
@@ -589,7 +624,7 @@ function WorkflowStudioContent({ workflow, seed }) {
     const outline = (
       <>
         <OutlineHeader title={flowName} inFlow onOpenPalette={() => studio.setPalette(true)} onOpenFlowPage={state.id ? flowContext.onOpenFlowPage : null} />
-        <OutlineSteps nodes={stages.ordered} stages={stages} activeFormId={activeFormId} dirtyIds={dirtyIds} mapActive={ui.mode === "map"}
+        <OutlineSteps nodes={stages.ordered} stages={stages} activeFormId={activeFormId} dirtyIds={dirtyIds} mapActive={ui.mode === "map"} peopleByForm={peopleByForm}
           questionCounts={questionCounts} onActivate={requestPage} onToggleMap={flowKeys.onToggleMap}
         />
         {formState ? (
@@ -608,7 +643,7 @@ function WorkflowStudioContent({ workflow, seed }) {
           activeFormId={activeFormId} onOpenForm={requestPage} onBack={() => requestPage(activeFormId)} onAddStep={(anchor) => setStepMenu({ anchor })}
         />
       ) : (
-        <StudioMap wf={wf} flowName={flowName} activeFormId={activeFormId} selectedKey={state.selectedKey}
+        <StudioMap wf={wf} flowName={flowName} activeFormId={activeFormId} selectedKey={state.selectedKey} peopleByForm={peopleByForm}
           onOpenForm={requestPage} onSelectNode={(nodeKey) => dispatch({ type: "SELECT", nodeKey })} onBack={() => requestPage(activeFormId)}
           entry={mapEntry} exitTo={mapExit} onExitDone={finishExit}
           onAddStep={(anchor) => setStepMenu({ anchor })} onToast={studio.toast}
@@ -651,11 +686,13 @@ function WorkflowStudioContent({ workflow, seed }) {
     const formUndo = Boolean(formState) && inPage && formState.canUndo;
 
     return (
+      <StudioPresenceProvider members={activeOthers}>
       <StudioLayout
         outline={outline}
         center={(
           <>
             {center}
+            <RemoteCursors session={studioSession} formId={inPage && formState ? activeFormId : null} members={activeOthers} />
             {issuesOpen && wf.issues.length > 0 ? (
               <IssuesPanel issues={wf.issues} nodes={state.nodes} onClose={() => setIssuesOpen(false)}
                 onPick={(nodeKey) => { setIssuesOpen(false); showMap(); dispatch({ type: "SELECT", nodeKey }); }}
@@ -668,7 +705,7 @@ function WorkflowStudioContent({ workflow, seed }) {
         overlays={(
           <>
             {formState ? <FormKeys flow={flowKeys} onSave={requestSave} /> : <FlowKeys flow={flowKeys} onSave={requestSave} />}
-            <StudioHeaderActions saveStatus={saveStatus}
+            <StudioHeaderActions saveStatus={saveStatus} people={people} onGoToPerson={goToPerson}
               fill={inPage && formState ? { active: ui.fill, onToggle: studio.toggleFill } : null}
               onShare={inPage && formState?.id ? () => setShareOpen(true) : null}
               draft={inPage
@@ -721,6 +758,7 @@ function WorkflowStudioContent({ workflow, seed }) {
           </>
         )}
       />
+      </StudioPresenceProvider>
     );
   };
 

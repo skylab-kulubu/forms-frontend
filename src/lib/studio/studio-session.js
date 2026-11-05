@@ -4,6 +4,7 @@ import { createStudioDoc } from "./doc-store.js";
 const RECONNECT_DELAYS_MS = [0, 2000, 5000, 10000, 30000];
 const RESTART_DELAY_MS = 5000;
 const PRESENCE_INTERVAL_MS = 250;
+const CURSOR_INTERVAL_MS = 50;
 const CLOSE_GRACE_MS = 15000;
 const RELEASE_GRACE_MS = 2000;
 
@@ -11,12 +12,14 @@ export const HUB_PATH = "/hubs/studio";
 
 const offlineError = () => Object.assign(new Error("Bağlantı yok"), { offline: true });
 
+const NO_MEMBERS = [];
+
 function createPresence() {
   const members = new Map();
   const listeners = new Set();
 
   return {
-    get: (formId) => members.get(formId) ?? [],
+    get: (formId) => members.get(formId) ?? NO_MEMBERS,
     set(formId, list) {
       members.set(formId, Array.isArray(list) ? list : []);
       listeners.forEach((listener) => listener(formId));
@@ -32,18 +35,51 @@ function createPresence() {
   };
 }
 
+function createCursors() {
+  const byForm = new Map();
+  const listeners = new Set();
+  const notify = (formId) => listeners.forEach((listener) => listener(formId));
+
+  return {
+    get: (formId) => byForm.get(formId) ?? new Map(),
+    set(formId, cursor) {
+      if (!cursor?.key) return;
+      const cursors = byForm.get(formId) ?? new Map();
+      byForm.set(formId, cursors);
+      if (cursor.anchor) cursors.set(cursor.key, { anchor: cursor.anchor, x: Number(cursor.x) || 0, y: Number(cursor.y) || 0, userId: cursor.userId, at: Date.now() });
+      else if (!cursors.delete(cursor.key)) return;
+      notify(formId);
+    },
+    keep(formId, keys) {
+      const cursors = byForm.get(formId);
+      if (!cursors) return;
+      const gone = [...cursors.keys()].filter((key) => !keys.has(key));
+      gone.forEach((key) => cursors.delete(key));
+      if (gone.length) notify(formId);
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+}
+
 export function createStudioSession({ baseUrl, getToken, http, userId, onNotice = () => {}, onSessionExpired = () => {}, logLevel = LogLevel.Warning, transport }) {
   const docs = new Map();
   const loading = new Map();
   const presence = createPresence();
+  const cursors = createCursors();
   const statusListeners = new Set();
   const presenceQueue = new Map();
+  const presenceStates = new Map();
+  const cursorQueue = new Map();
 
   let status = "connecting";
   let stopped = false;
   let starting = null;
   let restartTimer = null;
   let presenceTimer = null;
+  let cursorTimer = null;
   let releaseTimer = null;
   let holders = 0;
   let lastToken = null;
@@ -79,6 +115,10 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
   });
   connection.on("Presence", (formId, members) => {
     presence.set(formId, members);
+    cursors.keep(formId, new Set((members ?? []).filter((member) => member.here).map((member) => member.key)));
+  });
+  connection.on("Cursor", (formId, cursor) => {
+    cursors.set(formId, cursor);
   });
 
   connection.onreconnecting(() => {
@@ -103,7 +143,10 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
     if (!doc.id || connection.state !== HubConnectionState.Connected) return null;
     try {
       const reply = await connection.invoke("Join", doc.id, doc.version);
-      if (Number(reply?.status) === 200) presence.set(doc.id, reply.data.members);
+      if (Number(reply?.status) === 200) {
+        presence.set(doc.id, reply.data.members);
+        if (presenceStates.has(doc.id)) connection.send("Presence", doc.id, presenceStates.get(doc.id)).catch(() => {});
+      }
       await doc.joined(reply);
       return reply;
     } catch {
@@ -198,8 +241,26 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
 
   function sendPresence(formId, state) {
     if (!formId) return;
-    presenceQueue.set(formId, { selection: state?.selection ?? [], editing: state?.editing ?? null });
+    const next = { selection: state?.selection ?? [], editing: state?.editing ?? null, here: state?.here ?? true };
+    presenceStates.set(formId, next);
+    presenceQueue.set(formId, next);
     if (!presenceTimer) presenceTimer = setTimeout(flushPresence, PRESENCE_INTERVAL_MS);
+  }
+
+  function flushCursors() {
+    cursorTimer = null;
+    if (connection.state === HubConnectionState.Connected) {
+      cursorQueue.forEach((cursor, formId) => {
+        connection.send("Cursor", formId, cursor).catch(() => {});
+      });
+    }
+    cursorQueue.clear();
+  }
+
+  function sendCursor(formId, cursor) {
+    if (!formId) return;
+    cursorQueue.set(formId, cursor ?? { anchor: null, x: 0, y: 0 });
+    if (!cursorTimer) cursorTimer = setTimeout(flushCursors, CURSOR_INTERVAL_MS);
   }
 
   async function close() {
@@ -208,6 +269,7 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
     stopped = true;
     clearTimeout(restartTimer);
     clearTimeout(presenceTimer);
+    clearTimeout(cursorTimer);
     docs.forEach((doc) => doc.dispose());
     docs.clear();
     await connection.stop().catch(() => {});
@@ -238,8 +300,11 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
     create,
     get: (formId) => docs.get(formId) ?? null,
     docs: () => [...docs.values()],
+    userId,
     presence,
     sendPresence,
+    cursors,
+    sendCursor,
     connectionId: () => connection.connectionId,
     status: () => status,
     onStatus(listener) {

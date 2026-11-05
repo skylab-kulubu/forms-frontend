@@ -12,8 +12,10 @@ import { REGISTRY } from "@/app/components/form-registry";
 import { CHOICE_PRESET_LABELS } from "./studio-presets";
 import { FIELD_TYPES, REPEATER_CHILD_TYPES } from "./studio-schema";
 import { POPOVER_MOTION } from "./studio-motion";
+import { colorOf, firstName } from "./StudioPresence";
 
 const NO_VALUES = [];
+const NO_OTHERS = [];
 
 export function focusEditable(key, atEnd = true) {
   setTimeout(() => {
@@ -491,20 +493,38 @@ export function InsertLine({ index, api, disabled = false }) {
 
 export const FieldBlock = memo(function FieldBlock({
   field, number, selected = false, solo = false, condText = null, canUp = false, canDown = false, isLast = false,
-  protectedReason = null, lockBadge = null, lockedValues = [], phone = false, hoverable = true, api,
+  protectedReason = null, lockBadge = null, lockedValues = [], phone = false, hoverable = true, others = NO_OTHERS, api,
 }) {
   const props = field.props ?? {};
   const isSeparator = field.type === "separator";
   const hint = hintOf(field);
+  const peer = others.length > 0 ? colorOf(others[0].userId) : null;
+  const typist = others.find((member) => member.editing === field.id);
+  const peerShadow = peer
+    ? selected ? `0 0 0 2px rgba(235, 213, 238, 0.5), 0 0 0 5px color-mix(in srgb, ${peer} 45%, transparent)` : `0 0 0 2px color-mix(in srgb, ${peer} 55%, transparent)`
+    : undefined;
 
   return (
     <div data-fid={field.id} className={`relative ${!isLast && !isSeparator ? "border-b border-white/5 pb-6" : ""}`}>
-      <div onPointerDown={api.pressField} onClick={(event) => api.selectField(event, field.id)}
+      <div onPointerDown={api.pressField} onClick={(event) => api.selectField(event, field.id)} style={peerShadow ? { boxShadow: peerShadow } : undefined}
         className={`group/q relative flex flex-col rounded-xl transition-[box-shadow,background-color] duration-150 ${phone ? "p-2" : "p-4"} ${
           selected ? "bg-skylab-500/[0.04] ring-2 ring-skylab-400/50" : hoverable ? "hover:ring-1 hover:ring-white/15" : ""
         }`}
       >
         {solo ? <ActionStrip field={field} canUp={canUp} canDown={canDown} protectedReason={protectedReason} phone={phone} api={api} /> : null}
+
+        {others.length > 0 ? (
+          <div className="pointer-events-none absolute -top-2.5 right-3.5 z-10 flex gap-1">
+            {others.map((member) => (
+              <span key={member.key} className="inline-flex items-center gap-1 whitespace-nowrap rounded-[5px] px-1.5 py-0.5 text-3xs font-semibold text-neutral-950"
+                style={{ backgroundColor: colorOf(member.userId) }}
+              >
+                {firstName(member.name)}
+                {member.editing === field.id ? <span className="font-medium opacity-75">yazıyor</span> : null}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
         {(condText || lockBadge) && (
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
@@ -544,7 +564,7 @@ export const FieldBlock = memo(function FieldBlock({
             <div className="flex gap-3">
               <QuestionBadge number={number} conditional={Boolean(field.condition?.fieldId)} />
               <div className="flex w-full min-w-0 flex-col">
-                <p className="text-sm font-medium text-neutral-100">
+                <p className="text-sm font-medium text-neutral-100" style={typist ? { boxShadow: `inset 0 -1.5px 0 color-mix(in srgb, ${colorOf(typist.userId)} 70%, transparent)` } : undefined}>
                   <Editable editKey={`q-${field.id}`} value={props.question} placeholder="Sorunuzu yazın"
                     onChange={(value) => api.updateProps(field.id, { question: value })}
                   />

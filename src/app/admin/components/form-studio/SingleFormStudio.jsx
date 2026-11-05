@@ -20,7 +20,8 @@ import ApprovalOverlay from "../ApprovalOverlay";
 import FormShareDialog from "../share/FormShareDialog";
 import { TRIGGER, autoLayout, slugifyNodeKey, toDefinitionPayload } from "../workflow-editor/workflow-graph";
 import { StudioProvider, useStudio } from "./StudioContext";
-import { StudioSessionProvider, usePresenceBroadcast, useStudioSession } from "./StudioSession";
+import { StudioSessionProvider, usePresenceBroadcast, usePresenceMembers, useStudioSession } from "./StudioSession";
+import { RemoteCursors, StudioPresenceProvider, colorOf, revealField, uniquePeople, useCursorBroadcast, useTypingField, whereOf } from "./StudioPresence";
 import StudioLayout from "./StudioLayout";
 import StudioPage from "./StudioPage";
 import StudioPalette from "./StudioPalette";
@@ -36,6 +37,8 @@ import { newFormDataOf, publishedQueries, studioStatusOf } from "./studio-save";
 const emptySubscribe = () => () => {};
 
 const readReturnTo = () => sanitizeReturnTo(new URLSearchParams(window.location.search).get("returnTo"));
+
+const NO_MEMBERS = [];
 
 function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }) {
   const router = useRouter();
@@ -70,7 +73,11 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
   }, returnTo);
   const eventLinked = Boolean(handoff?.eventLinked || handoff?.eventId || eventRef?.id || hasEventIdentity(state.schema));
 
-  usePresenceBroadcast(studioSession, state.id, ui.selection);
+  const typingField = useTypingField();
+  usePresenceBroadcast(studioSession, state.id, ui.selection, typingField);
+  useCursorBroadcast(studioSession, state.id);
+  const presenceByForm = usePresenceMembers(studioSession, [state.id]);
+  const others = presenceByForm[state.id] ?? NO_MEMBERS;
 
   useEffect(() => {
     if (!eventLinked || !state.canEdit) return;
@@ -223,6 +230,12 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
     <HeaderStatusPill {...studioStatusOf(state)} isSaving={saving} isFailed={Boolean(saveError)} publishedFlash={publishedFlash} />
   );
 
+  const people = uniquePeople(others).map((member) => ({ ...member, where: whereOf(member, { fields }) }));
+  const goToPerson = (person) => {
+    const fieldId = person.selection?.[0];
+    if (!fieldId || !revealField(fieldId, colorOf(person.userId))) studio.toast(`${person.name} bu formda, bir soru seçmemiş`);
+  };
+
   const outline = (
     <>
       <OutlineHeader title={formCrumb(state)} untitled={!state.title?.trim()} inFlow={false} onOpenPalette={() => studio.setPalette(true)} />
@@ -238,16 +251,22 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
   );
 
   return (
+    <StudioPresenceProvider members={others}>
     <StudioLayout
       top={<EventReturnBar returnHref={returnHref} pending={hasReturnTo && !returnHref} eventHref={eventRef?.href} eventName={eventRef?.name} />}
       outline={outline}
-      center={<StudioPage eventLinked={eventLinked} userName={session?.user?.fullName} nextBlock={nextBlock} onOverview={!isNewForm ? () => router.push(`/admin/forms/${state.id}`) : null} />}
+      center={(
+        <>
+          <StudioPage eventLinked={eventLinked} userName={session?.user?.fullName} nextBlock={nextBlock} onOverview={!isNewForm ? () => router.push(`/admin/forms/${state.id}`) : null} />
+          <RemoteCursors session={studioSession} formId={state.id} members={others} />
+        </>
+      )}
       inspectorHeader={<Crumbs items={crumbs} />}
       inspector={<FormInspectorBody eventLinked={eventLinked} />}
       overlays={(
         <>
           <FormKeys eventLinked={eventLinked} onSave={handleSave} />
-          <StudioHeaderActions saveStatus={saveStatus} returnHref={returnHref}
+          <StudioHeaderActions saveStatus={saveStatus} returnHref={returnHref} people={people} onGoToPerson={goToPerson}
             fill={{ active: ui.fill, onToggle: studio.toggleFill }}
             onShare={!isNewForm ? () => setShareOpen(true) : null}
             draft={{ has: state.canEdit && state.dirty && !state.neverPublished, onDiscard: handleDiscardDraft, discarding: false }}
@@ -288,6 +307,7 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
         </>
       )}
     />
+    </StudioPresenceProvider>
   );
 }
 
