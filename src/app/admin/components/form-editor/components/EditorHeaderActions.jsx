@@ -22,7 +22,7 @@ function PillTime({ value }) {
     );
 }
 
-export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSaving, isFailed, lastSavedAt, publishedFlash }) {
+export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSaving, isFailed, lastSavedAt, publishedFlash, offline = false }) {
     const isSyncing = draftSyncStatus === "saving" || isSaving;
     const savedTime = formatTime(lastSavedAt);
     const draftTime = formatTime(draftSavedAt);
@@ -33,6 +33,8 @@ export function HeaderStatusPill({ dirty, draftSyncStatus, draftSavedAt, isSavin
     let view;
     if (isFailed || draftSyncStatus === "failed") {
         view = { state: "failed", dot: "bg-red-400 shadow-[0_0_5px] shadow-red-400/40", pulse: false, label: "Kaydedilemedi", title: isFailed ? "Form kaydedilemedi" : "Taslak kaydedilemedi" };
+    } else if (offline) {
+        view = { state: "offline", dot: DOT_WARN, pulse: true, label: "Bağlantı bekleniyor", title: "Değişiklikler bağlantı gelince gönderilecek" };
     } else if (publishedFlash) {
         // Kayıt sonrası kısa vurgu; birkaç saniye sonra kalıcı "Kaydedildi" durumuna düşer.
         view = { state: "published", dot: DOT_OK, pulse: false, label: "Form kaydedildi", title: "Tüm değişiklikler kaydedildi" };

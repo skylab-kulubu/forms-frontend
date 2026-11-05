@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { fetchFormById } from "@/lib/hooks/useFormAdmin";
+import { useQueryClient } from "@tanstack/react-query";
 import { request } from "@/lib/apiClient";
 import {
   saveDefinition as saveDefinitionRequest, useArchiveWorkflowMutation, useCreateWorkflowMutation, usePublishWorkflowMutation, useSaveDefinitionMutation,
@@ -15,8 +14,10 @@ import { transitionLabel } from "./studio-flow";
 
 const DEFINITION_DEBOUNCE_MS = 1200;
 const META_DEBOUNCE_MS = 900;
+const NO_FORMS = {};
+const NO_IDS = new Set();
 
-export function useWorkflowStudio({ workflow, liveForm = null, onCreated }) {
+export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds = NO_IDS, onCreated }) {
   const { state, dispatch } = useWorkflowEditor();
   const queryClient = useQueryClient();
 
@@ -77,31 +78,7 @@ export function useWorkflowStudio({ workflow, liveForm = null, onCreated }) {
   const versions = useMemo(() => (Array.isArray(versionsPayload) ? versionsPayload : versionsPayload?.items ?? []), [versionsPayload]);
   const isLive = Boolean(workflow?.published) || versions.some((version) => Number(version.status) === 1);
 
-  const formQueries = useQueries({
-    queries: state.nodes.map((node) => ({
-      queryKey: ["form", node.formId],
-      queryFn: () => fetchFormById(node.formId),
-      enabled: Boolean(node.formId),
-      retry: false,
-      staleTime: 60000,
-    })),
-  });
-
-  const formsById = useMemo(() => {
-    const map = {};
-    formQueries.forEach((query, index) => {
-      const node = state.nodes[index];
-      const form = query.data?.data ?? query.data;
-      if (node && form) map[node.formId] = form;
-    });
-    if (liveForm?.id) map[liveForm.id] = { ...(map[liveForm.id] ?? {}), ...liveForm };
-    return map;
-  }, [formQueries, state.nodes, liveForm]);
-
-  const loadingFormIds = useMemo(
-    () => new Set(formQueries.flatMap((query, index) => (query.isLoading && state.nodes[index] ? [state.nodes[index].formId] : []))),
-    [formQueries, state.nodes],
-  );
+  const formsById = forms;
 
   const schemasByFormId = useMemo(() => {
     const map = {};

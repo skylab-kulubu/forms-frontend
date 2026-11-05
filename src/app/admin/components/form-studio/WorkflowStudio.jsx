@@ -3,22 +3,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
 import { Archive, X } from "lucide-react";
 import { useWorkflowContext } from "../../providers";
-import { FormEditorProvider, hasDraftChanges, markStateSaved, useFormEditor, useOptionalFormEditor } from "../form-editor/FormEditorContext";
-import { useDraftAutoSave } from "../form-editor/hooks/useDraftAutoSave";
+import { FormEditorProvider, useOptionalFormEditor } from "../form-editor/FormEditorContext";
 import { HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
-import { WorkflowEditorProvider } from "../workflow-editor/WorkflowEditorContext";
+import { WorkflowEditorProvider, useWorkflowEditor } from "../workflow-editor/WorkflowEditorContext";
 import { validationMessage } from "../workflow-editor/workflow-copy";
 import ApprovalOverlay from "../ApprovalOverlay";
 import FormShareDialog from "../share/FormShareDialog";
-import { fetchFormById, useFormMutation } from "@/lib/hooks/useFormAdmin";
 import { formInfoQuery } from "@/lib/hooks/useFormContext";
 import { useAvailableFormsQuery, useCandidateFormsQuery } from "@/lib/hooks/useWorkflowAdmin";
-import { request } from "@/lib/apiClient";
 import { NONE, StudioProvider, useStudio } from "./StudioContext";
+import { StudioSessionProvider, useDocStates, usePresenceBroadcast, useStudioSession } from "./StudioSession";
 import StudioLayout from "./StudioLayout";
 import StudioPage, { pageCardRect } from "./StudioPage";
 import StudioMap, { FlowCardDecor } from "./StudioMap";
@@ -26,6 +24,7 @@ import StudioFlowList from "./StudioFlowList";
 import StudioPalette from "./StudioPalette";
 import StudioHeaderActions from "./StudioHeaderActions";
 import StudioFormPicker, { NEW_FORM } from "./StudioFormPicker";
+import StudioSkeleton from "./StudioSkeleton";
 import { FlowNextBlock } from "./StudioNextBlock";
 import { OutlineHeader, OutlineQuestions, OutlineSteps } from "./StudioOutline";
 import { Crumbs, FlowRootBody, FormInspectorBody, RoutesBody, formCrumb, selectionCrumb } from "./StudioInspector";
@@ -34,22 +33,9 @@ import { useWorkflowStudio } from "./useWorkflowStudio";
 import { useMediaQuery } from "./useMediaQuery";
 import { slideDirection, stagesOf } from "./studio-flow";
 import { SLIDE_IN_EASING, SLIDE_IN_MS, SLIDE_OUT_EASING, SLIDE_OUT_MS, SLIDE_PX, prefersReducedMotion, swapView } from "./studio-motion";
-import { editorDataOf, formPayloadOf, liveFormOf } from "./studio-save";
+import { publishedQueries, studioStatusOf } from "./studio-save";
 
-const PREFETCH_TTL_MS = 2 * 60_000;
 const SWITCH_WAIT_MS = 1500;
-
-const fetchDraft = (formId) => request(`/api/admin/forms/${formId}/draft`).then((response) => response?.data ?? null).catch(() => null);
-
-const draftQueryKey = (formId) => ["studio-draft", formId];
-
-async function loadStudioForm(queryClient, formId, knownDraft) {
-  const [formPayload, draft] = await Promise.all([
-    queryClient.fetchQuery({ queryKey: ["form", formId], queryFn: () => fetchFormById(formId), staleTime: 60_000, retry: false }),
-    knownDraft === undefined ? fetchDraft(formId) : knownDraft,
-  ]);
-  return { form: formPayload?.data ?? formPayload, draft };
-}
 
 function blankTitle(nodes) {
   const taken = new Set(nodes.map((node) => node.formTitle));
@@ -62,27 +48,6 @@ function listOf(payload) {
   const data = payload?.data ?? payload;
   if (Array.isArray(data)) return data;
   return Array.isArray(data?.items) ? data.items : [];
-}
-
-function ActiveFormBridge({ formId, hasDraft, onSnapshot, onDraftInfo, handleRef }) {
-  const { state, dispatch } = useFormEditor();
-  const { hasServerDraft, syncStatus, draftSavedAt } = useDraftAutoSave(formId, state, hasDraft);
-
-  useEffect(() => {
-    onSnapshot(formId, state);
-  }, [formId, state, onSnapshot]);
-
-  useEffect(() => {
-    onDraftInfo({ hasServerDraft, syncStatus, draftSavedAt });
-  }, [hasServerDraft, syncStatus, draftSavedAt, onDraftInfo]);
-
-  useEffect(() => {
-    handleRef.current = { formId, state, dispatch };
-  });
-
-  useEffect(() => () => { handleRef.current = null; }, [handleRef]);
-
-  return null;
 }
 
 function IssuesPanel({ issues, nodes, onPick, onClose }) {
@@ -139,23 +104,50 @@ function WorkflowStudioContent({ workflow, seed }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const studioSession = useStudioSession();
   const { setName } = useWorkflowContext();
   const { ui, actions: studio } = useStudio();
 
-  const [liveForm, setLiveForm] = useState(null);
+  const [docs, setDocs] = useState(() => (seed ? { [seed.form.id]: studioSession.open(seed) } : {}));
+  const [failedIds, setFailedIds] = useState(() => new Set());
+  const docList = useMemo(() => Object.values(docs), [docs]);
+  const docStates = useDocStates(docList);
+  const stateById = useMemo(() => Object.fromEntries(docList.map((doc, index) => [doc.id, docStates[index]])), [docList, docStates]);
+
+  const formsById = useMemo(() => Object.fromEntries(Object.entries(stateById).map(([formId, snapshot]) => [
+    formId,
+    { ...(snapshot.form ?? {}), ...snapshot.view, id: formId },
+  ])), [stateById]);
+
+  const loadDoc = useCallback((formId) => {
+    if (!formId) return null;
+    return studioSession.load(formId).then(
+      (doc) => {
+        setDocs((current) => (current[formId] ? current : { ...current, [formId]: doc }));
+        return doc;
+      },
+      (error) => {
+        setFailedIds((current) => new Set(current).add(formId));
+        throw error;
+      },
+    );
+  }, [studioSession]);
+
+  const { state: flowState } = useWorkflowEditor();
+  const pendingIds = useMemo(
+    () => new Set(flowState.nodes.map((node) => node.formId).filter((formId) => formId && !docs[formId] && !failedIds.has(formId))),
+    [flowState.nodes, docs, failedIds],
+  );
+
   const wf = useWorkflowStudio({
     workflow,
-    liveForm,
+    forms: formsById,
+    loadingFormIds: pendingIds,
     onCreated: (id) => window.history.replaceState(null, "", `/admin/workflows/${id}/edit`),
   });
   const { state, dispatch } = wf;
 
-  const cacheRef = useRef(new Map());
-  const activeHandleRef = useRef(null);
   const uiRef = useRef(ui);
-  const [activeInit, setActiveInit] = useState({ formId: ui.activeFormId, state: null, data: null });
-  const [dirtyMap, setDirtyMap] = useState({});
-  const [draftInfo, setDraftInfo] = useState({ hasServerDraft: false, syncStatus: "idle", draftSavedAt: null });
   const [publishOpen, setPublishOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
@@ -166,7 +158,6 @@ function WorkflowStudioContent({ workflow, seed }) {
   const [saveFailed, setSaveFailed] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [savedFlash, setSavedFlash] = useState(false);
-  const [isDiscarding, setIsDiscarding] = useState(false);
   const [mapEntry, setMapEntry] = useState(null);
   const [mapExit, setMapExit] = useState(null);
   const [arrival, setArrival] = useState(null);
@@ -175,21 +166,16 @@ function WorkflowStudioContent({ workflow, seed }) {
   const swappingRef = useRef(false);
   const switchRef = useRef(null);
   const pendingRef = useRef(null);
-  const prefetchRef = useRef(new Map());
-  const seedRef = useRef(seed);
-  const mountedAtRef = useRef(Infinity);
-  const [refetchDraftOnMount] = useState(() => (query) => (query.state.dataUpdatedAt >= mountedAtRef.current ? false : "always"));
-  const { mutateAsync: saveFormAsync } = useFormMutation();
 
   useEffect(() => {
     uiRef.current = ui;
   });
 
   useEffect(() => {
-    mountedAtRef.current = Date.now();
-    const seeded = seedRef.current;
-    if (seeded) queryClient.setQueryData(draftQueryKey(seeded.formId), seeded.draft);
-  }, [queryClient]);
+    state.nodes.forEach((node) => {
+      if (node.formId && !docs[node.formId] && !failedIds.has(node.formId)) loadDoc(node.formId)?.catch(() => {});
+    });
+  }, [state.nodes, docs, failedIds, loadDoc]);
 
   useEffect(() => {
     setName(state.name);
@@ -201,61 +187,25 @@ function WorkflowStudioContent({ workflow, seed }) {
     return () => clearTimeout(timer);
   }, [savedFlash]);
 
+  const anyPending = docStates.some((snapshot) => snapshot.pending);
+
+  useEffect(() => {
+    if (!anyPending) return undefined;
+    const warn = (event) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [anyPending]);
+
   const activeFormId = ui.activeFormId;
-  const cachedState = activeInit.formId === activeFormId ? activeInit.state : null;
+  const activeDoc = activeFormId ? docs[activeFormId] ?? null : null;
   const stages = useMemo(() => stagesOf(state.nodes, state.transitions), [state.nodes, state.transitions]);
   const activeNode = state.nodes.find((node) => node.formId === activeFormId) ?? null;
   const overviewFormId = activeFormId ?? state.nodes.find((node) => node.isStart)?.formId ?? state.nodes[0]?.formId ?? null;
 
-  const knownDraftOf = useCallback((formId) => {
-    const flag = queryClient.getQueryState(draftQueryKey(formId));
-    const fresh = flag?.status === "success" && flag.dataUpdatedAt >= mountedAtRef.current && Date.now() - flag.dataUpdatedAt < PREFETCH_TTL_MS;
-    return fresh ? flag.data ?? null : undefined;
-  }, [queryClient]);
-
-  const takeStudioForm = useCallback((formId) => {
-    const hit = prefetchRef.current.get(formId);
-    prefetchRef.current.delete(formId);
-    if (hit && Date.now() - hit.at < PREFETCH_TTL_MS) return hit.promise;
-    return loadStudioForm(queryClient, formId, knownDraftOf(formId));
-  }, [knownDraftOf, queryClient]);
-
-  const prefetchStudioForm = useCallback((formId) => {
-    if (!formId || formId === uiRef.current.activeFormId || cacheRef.current.has(formId)) return null;
-    const store = prefetchRef.current;
-    const hit = store.get(formId);
-    if (hit && Date.now() - hit.at < PREFETCH_TTL_MS) return hit.promise;
-    const entry = { at: Date.now(), promise: loadStudioForm(queryClient, formId, knownDraftOf(formId)), data: null };
-    entry.promise.then((data) => { entry.data = data; }, () => {
-      if (store.get(formId) === entry) store.delete(formId);
-    });
-    store.set(formId, entry);
-    return entry.promise;
-  }, [knownDraftOf, queryClient]);
-
-  const readyData = activeInit.formId === activeFormId ? activeInit.data : null;
-  const loader = useQuery({
-    queryKey: ["studio-form", activeFormId],
-    queryFn: () => takeStudioForm(activeFormId),
-    enabled: Boolean(activeFormId) && !cachedState && !readyData,
-    staleTime: Infinity,
-    gcTime: 0,
-    retry: false,
-  });
-
-  const draftFlags = useQueries({
-    queries: state.nodes.map((node) => ({
-      queryKey: draftQueryKey(node.formId),
-      queryFn: () => fetchDraft(node.formId),
-      select: Boolean,
-      staleTime: 5 * 60_000,
-      refetchOnMount: refetchDraftOnMount,
-      retry: false,
-    })),
-  });
+  usePresenceBroadcast(studioSession, activeDoc?.id ?? null, ui.selection);
 
   const dirtyIds = state.nodes
-    .filter((node, index) => (node.formId in dirtyMap ? dirtyMap[node.formId] : Boolean(draftFlags[index]?.data)))
+    .filter((node) => stateById[node.formId]?.dirty || stateById[node.formId]?.pending)
     .map((node) => node.formId);
 
   useEffect(() => {
@@ -272,25 +222,16 @@ function WorkflowStudioContent({ workflow, seed }) {
     if (`${window.location.pathname}${window.location.search}` !== next) window.history.replaceState(null, "", next);
   }, [state.id, ui.mode, activeFormId]);
 
-  const handleSnapshot = useCallback((formId, formState) => {
-    cacheRef.current.set(formId, formState);
-    setLiveForm(liveFormOf(formState));
-    const dirty = hasDraftChanges(formState);
-    setDirtyMap((current) => (current[formId] === dirty ? current : { ...current, [formId]: dirty }));
-  }, []);
-
-  const handleDraftInfo = useCallback((info) => setDraftInfo(info), []);
+  const prefetchStudioForm = useCallback((formId) => {
+    if (!formId || docs[formId]) return docs[formId] ? Promise.resolve(docs[formId]) : null;
+    return loadDoc(formId);
+  }, [docs, loadDoc]);
 
   const activateForm = useCallback((formId, { panel } = {}) => {
     if (!formId) return;
     const current = uiRef.current;
     if (current.activeFormId) studio.remember(current.activeFormId, { selection: current.selection });
     const memory = studio.recall(formId);
-    const hit = prefetchRef.current.get(formId);
-    const data = hit?.data && Date.now() - hit.at < PREFETCH_TTL_MS ? hit.data : null;
-    if (data) prefetchRef.current.delete(formId);
-    setActiveInit({ formId, state: cacheRef.current.get(formId) ?? null, data });
-    if (formId !== current.activeFormId) setLiveForm(null);
     studio.activate(formId, {
       mode: "page",
       selection: panel === "timing" ? { kind: "none", focusTiming: Date.now() } : memory?.selection ?? NONE,
@@ -431,56 +372,40 @@ function WorkflowStudioContent({ workflow, seed }) {
   }, [stages, requestPage]);
 
   const saveAll = useCallback(async () => {
-    const handle = activeHandleRef.current;
-    const tasks = [];
-    if (handle?.state && handle.formId) tasks.push({ formId: handle.formId, state: handle.state, active: true });
-    cacheRef.current.forEach((cached, formId) => {
-      if (formId !== handle?.formId && !cached.isSaved) tasks.push({ formId, state: cached, active: false });
+    const targets = docList.filter((doc) => {
+      const snapshot = doc.getSnapshot();
+      return snapshot.canEdit && (snapshot.dirty || snapshot.pending);
     });
-    if (tasks.length === 0) return;
+    if (targets.length === 0) return;
 
     setSavingAll(true);
     setSaveFailed(false);
     let failed = 0;
+    let lastError = null;
 
-    for (const task of tasks) {
+    for (const doc of targets) {
       try {
-        await saveFormAsync({ id: task.formId, payload: formPayloadOf(task.state), isUpdate: true });
-        if (task.active && activeHandleRef.current?.formId === task.formId) {
-          activeHandleRef.current.dispatch({ type: "MARK_SAVED", payload: task.state });
-        } else {
-          cacheRef.current.set(task.formId, markStateSaved(task.state));
-        }
-        setDirtyMap((current) => ({ ...current, [task.formId]: false }));
-        queryClient.setQueryData(draftQueryKey(task.formId), null);
-        queryClient.invalidateQueries({ queryKey: ["form", task.formId] });
-      } catch {
+        publishedQueries(queryClient, await doc.publish());
+      } catch (error) {
         failed += 1;
+        lastError = error;
       }
     }
 
     setSavingAll(false);
     if (failed > 0) {
       setSaveFailed(true);
-      studio.toast(failed === tasks.length ? "Kaydedilemedi" : `${failed} form kaydedilemedi`, "red");
+      const message = targets.length === 1 ? lastError?.message ?? "Kaydedilemedi" : failed === targets.length ? "Kaydedilemedi" : `${failed} form kaydedilemedi`;
+      studio.toast(message, "red");
       return;
     }
     setLastSavedAt(new Date());
     setSavedFlash(true);
-    if (tasks.length > 1) studio.toast(`${tasks.length} form birlikte kaydedildi`);
-  }, [saveFormAsync, queryClient, studio]);
+    if (targets.length > 1) studio.toast(`${targets.length} form birlikte kaydedildi`);
+  }, [docList, queryClient, studio]);
 
-  const discardDraft = async () => {
-    const handle = activeHandleRef.current;
-    if (!handle?.formId) return;
-    setIsDiscarding(true);
-    try {
-      const response = await fetchFormById(handle.formId);
-      const form = response?.data ?? response;
-      if (form) activeHandleRef.current?.dispatch({ type: "LOAD_FORM", payload: form });
-    } finally {
-      setIsDiscarding(false);
-    }
+  const discardDraft = () => {
+    if (activeDoc?.discard()) studio.toast("Taslak silindi. Ctrl+Z geri alır.");
   };
 
   const { data: availableData, isLoading: availableLoading } = useAvailableFormsQuery(state.id, { enabled: Boolean(stepMenu) && Boolean(state.id) });
@@ -511,15 +436,7 @@ function WorkflowStudioContent({ workflow, seed }) {
   const isOwner = Boolean(workflow?.owner?.id) && workflow?.owner?.id === session?.user?.id;
   const flowName = state.name || "Adsız akış";
   const inPage = ui.mode === "page" && Boolean(activeFormId);
-  const loaded = readyData ?? loader.data;
-  const formSource = !activeFormId
-    ? null
-    : cachedState
-      ? { initialState: cachedState, hasDraft: hasDraftChanges(cachedState) }
-      : loaded?.form
-        ? { initialData: editorDataOf(loaded.form), initialDraft: loaded.draft, hasDraft: Boolean(loaded.draft) }
-        : null;
-  const formReady = Boolean(formSource);
+  const formReady = Boolean(activeDoc);
 
   useEffect(() => {
     if (ui.mode !== "page" || !formReady || !activeNode) return undefined;
@@ -532,7 +449,7 @@ function WorkflowStudioContent({ workflow, seed }) {
       });
       targets.forEach((formId) => {
         if (!formId || formId === activeNode.formId) return;
-        prefetchStudioForm(formId);
+        prefetchStudioForm(formId)?.catch(() => {});
         queryClient.prefetchQuery(formInfoQuery(formId));
       });
     }, 400);
@@ -623,7 +540,7 @@ function WorkflowStudioContent({ workflow, seed }) {
           activeFormId={activeFormId} onOpenForm={requestPage} onBack={() => requestPage(activeFormId)} onAddStep={(anchor) => setStepMenu({ anchor })}
         />
       ) : (
-        <StudioMap wf={wf} flowName={flowName} activeFormId={activeFormId} liveForm={liveForm} selectedKey={state.selectedKey}
+        <StudioMap wf={wf} flowName={flowName} activeFormId={activeFormId} selectedKey={state.selectedKey}
           onOpenForm={requestPage} onSelectNode={(nodeKey) => dispatch({ type: "SELECT", nodeKey })} onBack={() => requestPage(activeFormId)}
           entry={mapEntry} exitTo={mapExit} onExitDone={finishExit}
           onAddStep={(anchor) => setStepMenu({ anchor })} onToast={studio.toast}
@@ -649,17 +566,20 @@ function WorkflowStudioContent({ workflow, seed }) {
         ) : null}
       />
     ) : (
-      <PageLoading error={loader.isError} />
+      <PageLoading error={failedIds.has(activeFormId)} />
     );
 
+    const formStatus = formState ? studioStatusOf(formState) : null;
     const saveStatus = (
-      <HeaderStatusPill dirty={dirtyCount > 0 || (formState ? !formState.isSaved : false)} draftSyncStatus={draftInfo.syncStatus} draftSavedAt={draftInfo.draftSavedAt}
-        isSaving={savingAll || wf.saveStatus.isSaving} isFailed={saveFailed || wf.saveStatus.isFailed} lastSavedAt={lastSavedAt ?? wf.saveStatus.savedAt}
+      <HeaderStatusPill dirty={dirtyCount > 0 || Boolean(formStatus?.dirty)} draftSyncStatus={formStatus?.draftSyncStatus ?? "idle"}
+        draftSavedAt={formStatus?.draftSavedAt ?? null} offline={Boolean(formStatus?.offline)}
+        isSaving={savingAll || wf.saveStatus.isSaving} isFailed={saveFailed || wf.saveStatus.isFailed}
+        lastSavedAt={lastSavedAt ?? formStatus?.lastSavedAt ?? wf.saveStatus.savedAt}
         publishedFlash={savedFlash || wf.saveStatus.publishedFlash}
       />
     );
 
-    const formUndo = Boolean(formState) && inPage && formState._history.length > 0;
+    const formUndo = Boolean(formState) && inPage && formState.canUndo;
 
     return (
       <StudioLayout
@@ -682,9 +602,11 @@ function WorkflowStudioContent({ workflow, seed }) {
             <StudioHeaderActions saveStatus={saveStatus}
               fill={inPage && formState ? { active: ui.fill, onToggle: studio.toggleFill } : null}
               onShare={inPage && formState?.id ? () => setShareOpen(true) : null}
-              draft={inPage ? { has: draftInfo.hasServerDraft && formState && hasDraftChanges(formState), onDiscard: discardDraft, discarding: isDiscarding } : null}
-              onUndo={() => (formUndo ? editor.dispatch({ type: "UNDO" }) : dispatch({ type: "UNDO" }))}
+              draft={inPage ? { has: Boolean(formState?.canEdit && formState?.dirty && !formState?.neverPublished), onDiscard: discardDraft, discarding: false } : null}
+              onUndo={() => (formUndo ? editor.doc.undo() : dispatch({ type: "UNDO" }))}
               canUndo={formUndo || state._history.length > 0}
+              onRedo={inPage && formState ? () => editor.doc.redo() : null}
+              canRedo={Boolean(formState?.canRedo)}
               secondary={state.id ? { label: "Akışı arşivle", icon: Archive, onClick: () => setArchiveOpen(true), disabled: wf.archiveState.isPending } : null}
               issues={{ count: wf.issues.length, onShow: () => setIssuesOpen((open) => !open) }}
               publish={{ onClick: requestPublish, disabled: !canPublish, pending: wf.publishState.isPending, isError: wf.publishState.isError, error: wf.publishState.error, title: canPublish ? "Akışı yayınla" : "Yayınlanacak değişiklik yok" }}
@@ -739,28 +661,36 @@ function WorkflowStudioContent({ workflow, seed }) {
     );
   };
 
-  if (!formSource) return renderLayout(null);
+  if (!activeDoc) return renderLayout(null);
 
   return (
-    <FormEditorProvider key={activeFormId} initialData={formSource.initialData} initialDraft={formSource.initialDraft ?? null} initialState={formSource.initialState ?? null}>
-      <ActiveFormBridge formId={activeFormId} hasDraft={formSource.hasDraft} onSnapshot={handleSnapshot} onDraftInfo={handleDraftInfo} handleRef={activeHandleRef} />
+    <FormEditorProvider key={activeFormId} doc={activeDoc}>
       <FormArea>{(editor) => renderLayout(editor)}</FormArea>
     </FormEditorProvider>
   );
 }
 
-export default function WorkflowStudio({ workflow, initialFormId = null, initialView = "page", initialDraft }) {
+function WorkflowStudioSession(props) {
+  const { actions: studio } = useStudio();
+
+  return (
+    <StudioSessionProvider onNotice={(text, tone) => studio.toast(text, tone === "red" ? "red" : undefined)} fallback={<StudioSkeleton />}>
+      <WorkflowStudioContent {...props} />
+    </StudioSessionProvider>
+  );
+}
+
+export default function WorkflowStudio({ workflow, initialFormId = null, initialView = "page", seed = null }) {
   const definition = workflow?.draft ?? workflow?.published ?? null;
   const nodes = definition?.nodes ?? [];
   const requested = initialFormId && nodes.some((node) => node.formId === initialFormId) ? initialFormId : null;
   const startFormId = requested ?? nodes.find((node) => node.isStart)?.formId ?? nodes[0]?.formId ?? null;
   const mode = initialView === "map" || !startFormId ? "map" : "page";
-  const seed = initialDraft !== undefined && requested ? { formId: requested, draft: initialDraft } : null;
 
   return (
     <WorkflowEditorProvider workflow={workflow}>
       <StudioProvider initialFormId={startFormId} initialMode={mode}>
-        <WorkflowStudioContent workflow={workflow} seed={seed} />
+        <WorkflowStudioSession workflow={workflow} seed={seed && seed.form?.id === requested ? seed : null} />
       </StudioProvider>
     </WorkflowEditorProvider>
   );

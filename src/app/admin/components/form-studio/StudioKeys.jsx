@@ -45,10 +45,18 @@ function handleShared(event, context) {
 
   if (ui.palette || ui.menu || ui.sheet || isTyping(event.target)) return true;
 
+  const onFlow = Boolean(flow?.inFlow) && (ui.mode === "map" || !flow.hasActiveForm);
+
   if (modifier && key === "z" && !event.shiftKey) {
     event.preventDefault();
-    if (ui.mode === "map" || !flow?.hasActiveForm) flow?.onUndoFlow?.();
+    if (onFlow) flow.onUndoFlow?.();
     else context.onUndoForm?.();
+    return true;
+  }
+
+  if (modifier && (key === "y" || (key === "z" && event.shiftKey))) {
+    event.preventDefault();
+    if (!onFlow) context.onRedoForm?.();
     return true;
   }
 
@@ -103,6 +111,7 @@ export function FormKeys({ eventLinked = false, flow = null, onSave }) {
     contextRef.current = {
       ui, studio, flow, onSave, actions, fields: state.schema,
       onUndoForm: () => dispatch({ type: "UNDO" }),
+      onRedoForm: () => dispatch({ type: "REDO" }),
     };
   });
 

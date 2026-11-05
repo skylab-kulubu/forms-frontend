@@ -185,7 +185,7 @@ function FrameMeasure({ formId, onHeight, children }) {
 }
 
 export default function StudioMap({
-  wf, flowName, activeFormId, liveForm, selectedKey, entry = null, exitTo = null, onExitDone, onOpenForm, onSelectNode, onBack, onAddStep, onToast, onOverview = null,
+  wf, flowName, activeFormId, selectedKey, entry = null, exitTo = null, onExitDone, onOpenForm, onSelectNode, onBack, onAddStep, onToast, onOverview = null,
 }) {
   const { nodes, transitions } = wf.state;
   const canvasRef = useRef(null);
@@ -517,7 +517,7 @@ export default function StudioMap({
 
   const z = view.z;
   const inverse = 1 / z;
-  const formOf = (node) => (node.formId === activeFormId && liveForm ? liveForm : wf.formsById[node.formId]);
+  const formOf = (node) => wf.formsById[node.formId];
 
   return (
     <div className="@container relative h-full min-h-0">

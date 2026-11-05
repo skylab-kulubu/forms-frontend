@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeft, CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, MoreHorizontal, PencilLine, Send, Share2, TriangleAlert, Undo2,
+  ArrowLeft, CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, MoreHorizontal, PencilLine, Redo2, Send, Share2, TriangleAlert, Undo2,
 } from "lucide-react";
 import Popover from "@/app/components/utils/Popover";
 import { Floating } from "@/app/components/utils/Floating";
@@ -31,7 +31,7 @@ function SaveButton({ onSave, isSaving, isError, error, saveLabel, saveExtra, dr
   );
 }
 
-function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, canUndo, issues, secondary, publish, onSave, ...save }) {
+function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, publish, onSave, ...save }) {
   return (
     <div className="flex items-center gap-1 text-neutral-500">
       {returnHref ? (
@@ -72,6 +72,12 @@ function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, can
         <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo} className={ICON_BUTTON}><Undo2 size={16} /></button>
       </Tip>
 
+      {onRedo ? (
+        <Tip label="İleri al (Ctrl+Shift+Z)">
+          <button type="button" aria-label="İleri al" onClick={onRedo} disabled={!canRedo} className={ICON_BUTTON}><Redo2 size={16} /></button>
+        </Tip>
+      ) : null}
+
       {secondary ? (
         <Tip label={secondary.label}>
           <button type="button" aria-label={secondary.label} onClick={secondary.onClick} disabled={secondary.disabled} className={ICON_BUTTON}>
@@ -107,7 +113,7 @@ function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, can
   );
 }
 
-function CompactActions({ returnHref, onShare, draft, onUndo, canUndo, issues, secondary, publish, onSave, ...save }) {
+function CompactActions({ returnHref, onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, publish, onSave, ...save }) {
   const [anchor, setAnchor] = useState(null);
 
   const items = [
@@ -115,6 +121,7 @@ function CompactActions({ returnHref, onShare, draft, onUndo, canUndo, issues, s
     publish ? { key: "publish", label: publish.pending ? "Yayınlanıyor..." : "Akışı yayınla", icon: Send, onClick: publish.onClick, disabled: publish.disabled || publish.pending, hint: publish.disabled ? publish.title : null } : null,
     issues?.count > 0 ? { key: "issues", label: `Yayını engelleyen ${issues.count} sorun`, icon: TriangleAlert, onClick: issues.onShow, tone: "text-red-200" } : null,
     onShare ? { key: "share", label: "Formu paylaş", icon: Share2, onClick: onShare } : null,
+    onRedo ? { key: "redo", label: "İleri al", icon: Redo2, onClick: onRedo, disabled: !canRedo } : null,
     draft?.has ? { key: "draft", label: "Taslağı sil", icon: ClipboardX, onClick: draft.onDiscard, disabled: draft.discarding } : null,
     secondary ? { key: "secondary", label: secondary.label, icon: secondary.icon, onClick: secondary.onClick, disabled: secondary.disabled, tone: "text-red-300" } : null,
   ].filter(Boolean);

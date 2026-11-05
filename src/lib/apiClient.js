@@ -38,9 +38,18 @@ function getSharedSession({ fresh = false } = {}) {
 // tell the UI (SessionExpiredHandler) so it can offer a re-login instead of failing silently.
 // The rejected token rides along so the handler can tell "still the same dead token" apart
 // from "a fresh one arrived in the meantime".
-function announceSessionExpired(rejectedToken) {
+export function announceSessionExpired(rejectedToken) {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: { token: rejectedToken } }));
+  }
+}
+
+export async function getAccessToken() {
+  try {
+    const session = await getSharedSession();
+    return session?.error ? null : session?.accessToken ?? null;
+  } catch {
+    return null;
   }
 }
 

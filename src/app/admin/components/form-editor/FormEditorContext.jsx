@@ -1,191 +1,66 @@
 "use client";
 
-import { createContext, useContext, useReducer, useMemo, useCallback, useRef, useEffect } from "react";
-import { migrateSchema } from "@/app/components/form-migrate";
+import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
 
-const MAX_HISTORY = 20;
-const HISTORY_DEBOUNCE_MS = 800;
+const OWNER_ROLE = 3;
 
-const TRACKABLE_ACTIONS = new Set([
-    "SET_TITLE", "SET_DESCRIPTION", "SET_SCHEMA",
-    "SET_STATUS", "UPDATE_SETTINGS", "SET_EDITORS", "SET_TASK",
-]);
+function stateOf(snapshot) {
+    const { view, form } = snapshot;
+    return {
+        ...view,
+        id: snapshot.id,
+        editors: snapshot.team,
+        userRole: form ? Number(form.userRole ?? 0) : OWNER_ROLE,
+        workflow: form?.workflow ?? null,
+        publishedVersion: form ? Number(form.publishedVersion ?? 1) : 0,
+        neverPublished: snapshot.neverPublished,
+        dirty: snapshot.dirty,
+        pending: snapshot.pending,
+        isSaved: !snapshot.dirty && !snapshot.pending,
+        canEdit: snapshot.canEdit,
+        canUndo: snapshot.canUndo,
+        canRedo: snapshot.canRedo,
+        online: snapshot.online,
+        syncedAt: snapshot.syncedAt,
+        publishedAt: snapshot.publishedAt,
+        failure: snapshot.failure,
+    };
+}
 
-const initialFormState = {
-    id: null,
-    schema: [],
-    title: "Yeni Form",
-    description: "",
-    allowMultipleResponses: false,
-    allowAnonymousResponses: false,
-    requiresManualReview: false,
-    task: null,
-    closesAt: null,
-    timeLimitMinutes: null,
-    editors: [],
-    status: 1,
-    isSaved: true,
-    userRole: 3,
-    workflow: null,
-    _history: [],
-};
-
-const draftFields = (state) => ({
-    title: state.title,
-    description: state.description,
-    schema: state.schema,
-    status: state.status,
-    allowAnonymousResponses: state.allowAnonymousResponses,
-    allowMultipleResponses: state.allowMultipleResponses,
-    requiresManualReview: state.requiresManualReview,
-    task: state.task ?? null,
-    closesAt: state.closesAt ?? null,
-    timeLimitMinutes: state.timeLimitMinutes ?? null,
-});
-
-const savedFields = (state) => ({
-    ...draftFields(state),
-    editors: (state.editors ?? []).map((editor) => [editor.user?.id, Number(editor.role)]),
-});
-
-export const hasDraftChanges = (state) =>
-    JSON.stringify(draftFields(state)) !== JSON.stringify(draftFields(state._saved));
-
-export const markStateSaved = (state) => withSnapshot(state);
-
-const withSavedFlag = (state) => ({
-    ...state,
-    isSaved: JSON.stringify(savedFields(state)) === JSON.stringify(state._saved),
-});
-
-const withSnapshot = (state) => ({ ...state, _saved: savedFields(state), isSaved: true });
-
-function coreReducer(state, action) {
+function dispatchTo(doc, action) {
     switch (action.type) {
-        case "LOAD_FORM":
-            return withSnapshot({
-                ...state,
-                ...action.payload,
-                schema: migrateSchema(action.payload.schema),
-                editors: Array.isArray(action.payload.collaborators) ? action.payload.collaborators : [],
-                title: action.payload.title || "Yeni Form",
-            });
-
         case "SET_TITLE":
-            return { ...state, title: action.payload };
-
+            return doc.set(["title"], action.payload);
         case "SET_DESCRIPTION":
-            return { ...state, description: action.payload };
-
+            return doc.set(["description"], action.payload);
         case "SET_SCHEMA":
-            return { ...state, schema: action.payload };
-
+            return doc.setSchema(action.payload);
         case "SET_STATUS":
-            return { ...state, status: action.payload };
-
-        case "LOAD_DRAFT":
-            return {
-                ...state,
-                title: action.payload.title || state.title,
-                description: action.payload.description ?? state.description,
-                schema: Array.isArray(action.payload.schema) ? migrateSchema(action.payload.schema) : state.schema,
-                allowAnonymousResponses: action.payload.allowAnonymousResponses ?? state.allowAnonymousResponses,
-                allowMultipleResponses: action.payload.allowMultipleResponses ?? state.allowMultipleResponses,
-                requiresManualReview: action.payload.requiresManualReview ?? state.requiresManualReview,
-                status: action.payload.status ?? state.status,
-                task: action.payload.task !== undefined ? action.payload.task : state.task,
-                closesAt: action.payload.closesAt !== undefined ? action.payload.closesAt : state.closesAt,
-                timeLimitMinutes: action.payload.timeLimitMinutes !== undefined ? action.payload.timeLimitMinutes : state.timeLimitMinutes,
-            };
-
+            return doc.set(["status"], action.payload);
         case "SET_TASK":
-            return { ...state, task: action.payload };
-
-        case "MARK_SAVED":
-            return { ...state, _saved: savedFields(action.payload ?? state) };
-
+            return doc.set(["task"], action.payload);
         case "UPDATE_SETTINGS":
-            return { ...state, [action.payload.key]: action.payload.value };
-
+            return doc.set([action.payload.key], action.payload.value);
         case "SET_EDITORS":
-            return { ...state, editors: action.payload };
-
-        case "RESET_FORM":
-             return withSnapshot(initialFormState);
-
+            return doc.ensureCreated().then(() => doc.setTeam(action.payload));
+        case "UNDO":
+            return doc.undo();
+        case "REDO":
+            return doc.redo();
+        case "LOAD_FORM":
+            return doc.reload();
         default:
-            return state;
+            return undefined;
     }
-}
-
-function formReducer(state, action) {
-    if (action.type === "UNDO") {
-        const history = state._history;
-        if (history.length === 0) return state;
-        const previous = history[history.length - 1];
-        return withSavedFlag({
-            ...previous,
-            _saved: state._saved,
-            _history: history.slice(0, -1),
-        });
-    }
-
-    if (action.type === "_COMMIT_HISTORY") {
-        const { _history, ...snapshot } = action.payload;
-        return {
-            ...state,
-            _history: [...state._history.slice(-(MAX_HISTORY - 1)), snapshot],
-        };
-    }
-
-    const next = coreReducer(state, action);
-    return next === state ? state : withSavedFlag({ ...next, _history: state._history });
-}
-
-function initEditorState({ initialData, initialDraft, initialState }) {
-    if (initialState) return { ...initialState, _history: [] };
-    const state = withSnapshot(initialData ? { ...initialFormState, ...initialData, _history: [] } : initialFormState);
-    return initialDraft ? formReducer(state, { type: "LOAD_DRAFT", payload: initialDraft }) : state;
 }
 
 const FormEditorContext = createContext(null);
 
-export function FormEditorProvider({ children, initialData, initialDraft = null, initialState = null }) {
-    const [state, rawDispatch] = useReducer(formReducer, { initialData, initialDraft, initialState }, initEditorState);
-
-    const stateRef = useRef(state);
-    useEffect(() => {
-        stateRef.current = state;
-    }, [state]);
-
-    const pendingSnapshotRef = useRef(null);
-    const timerRef = useRef(null);
-
-    const dispatch = useCallback((action) => {
-        if (action.type === "UNDO") {
-            clearTimeout(timerRef.current);
-            pendingSnapshotRef.current = null;
-            rawDispatch(action);
-            return;
-        }
-
-        if (TRACKABLE_ACTIONS.has(action.type)) {
-            if (!pendingSnapshotRef.current) {
-                pendingSnapshotRef.current = stateRef.current;
-            }
-            clearTimeout(timerRef.current);
-            timerRef.current = setTimeout(() => {
-                if (pendingSnapshotRef.current) {
-                    rawDispatch({ type: "_COMMIT_HISTORY", payload: pendingSnapshotRef.current });
-                    pendingSnapshotRef.current = null;
-                }
-            }, HISTORY_DEBOUNCE_MS);
-        }
-
-        rawDispatch(action);
-    }, []);
-
-    const value = useMemo(() => ({ state, dispatch }), [state, dispatch]);
+export function FormEditorProvider({ doc, children }) {
+    const snapshot = useSyncExternalStore(doc.subscribe, doc.getSnapshot, doc.getSnapshot);
+    const state = useMemo(() => stateOf(snapshot), [snapshot]);
+    const dispatch = useCallback((action) => dispatchTo(doc, action), [doc]);
+    const value = useMemo(() => ({ state, dispatch, doc }), [state, dispatch, doc]);
 
     return (
         <FormEditorContext.Provider value={value}>

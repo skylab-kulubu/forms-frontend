@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { cloneSchema, ensureEventIdentityFields, hasEventIdentity, identityKeyOf, isIdentityField, IDENTITY_EMAIL } from "@/lib/event-handoff";
 import { REGISTRY } from "@/app/components/form-registry";
 import { genFieldId } from "../form-editor/fieldId";
@@ -12,29 +12,24 @@ function lockedMapOf(workflow) {
   return new Map((workflow.lockedQuestions ?? []).map((question) => [question.id, { values: Array.isArray(question.values) ? question.values : [] }]));
 }
 
-export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) {
-  const { state, dispatch } = useFormEditor();
-  const schemaRef = useRef(state.schema);
+const TITLE_MAX_LENGTH = 100;
 
-  useLayoutEffect(() => {
-    schemaRef.current = state.schema;
-  }, [state.schema]);
+export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) {
+  const { state, doc } = useFormEditor();
 
   const eventLinked = forcedEventLinked || hasEventIdentity(state.schema);
   const lockedById = useMemo(() => lockedMapOf(state.workflow), [state.workflow]);
 
   const commit = useCallback((next) => {
-    const wrapped = eventLinked ? ensureEventIdentityFields(next) : next;
-    schemaRef.current = wrapped;
-    dispatch({ type: "SET_SCHEMA", payload: wrapped });
-  }, [dispatch, eventLinked]);
+    doc.setSchema(eventLinked ? ensureEventIdentityFields(next) : next);
+  }, [doc, eventLinked]);
 
   const isProtected = useCallback((field) => Boolean(field) && (lockedById.has(field.id) || (eventLinked && isIdentityField(field))), [lockedById, eventLinked]);
 
   const isLockedChoice = useCallback((field, value) => (lockedById.get(field?.id)?.values ?? []).includes(value), [lockedById]);
 
   return useMemo(() => {
-    const current = () => schemaRef.current;
+    const current = () => doc.getView().schema;
     const find = (id) => current().find((field) => field.id === id);
 
     const updateField = (id, updates) => {
@@ -261,10 +256,10 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
       updateChild,
       addChild,
       removeChild,
-      setTitle: (value) => dispatch({ type: "SET_TITLE", payload: value }),
-      setDescription: (value) => dispatch({ type: "SET_DESCRIPTION", payload: value }),
-      setTask: (task) => dispatch({ type: "SET_TASK", payload: task }),
-      setSetting: (key, value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key, value } }),
+      setTitle: (value) => doc.set(["title"], (value ?? "").slice(0, TITLE_MAX_LENGTH)),
+      setDescription: (value) => doc.set(["description"], value),
+      setTask: (task) => doc.set(["task"], task),
+      setSetting: (key, value) => doc.set([key], value),
     };
-  }, [commit, dispatch, eventLinked, isLockedChoice, isProtected, lockedById]);
+  }, [commit, doc, eventLinked, isLockedChoice, isProtected, lockedById]);
 }

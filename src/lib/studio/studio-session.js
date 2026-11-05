@@ -1,0 +1,255 @@
+import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
+import { createStudioDoc } from "./doc-store.js";
+
+const RECONNECT_DELAYS_MS = [0, 2000, 5000, 10000, 30000];
+const RESTART_DELAY_MS = 5000;
+const PRESENCE_INTERVAL_MS = 250;
+const CLOSE_GRACE_MS = 15000;
+const RELEASE_GRACE_MS = 2000;
+
+export const HUB_PATH = "/hubs/studio";
+
+const offlineError = () => Object.assign(new Error("Bağlantı yok"), { offline: true });
+
+function createPresence() {
+  const members = new Map();
+  const listeners = new Set();
+
+  return {
+    get: (formId) => members.get(formId) ?? [],
+    set(formId, list) {
+      members.set(formId, Array.isArray(list) ? list : []);
+      listeners.forEach((listener) => listener(formId));
+    },
+    clear(formId) {
+      members.delete(formId);
+      listeners.forEach((listener) => listener(formId));
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+}
+
+export function createStudioSession({ baseUrl, getToken, http, userId, onNotice = () => {}, onSessionExpired = () => {}, logLevel = LogLevel.Warning, transport }) {
+  const docs = new Map();
+  const loading = new Map();
+  const presence = createPresence();
+  const statusListeners = new Set();
+  const presenceQueue = new Map();
+
+  let status = "connecting";
+  let stopped = false;
+  let starting = null;
+  let restartTimer = null;
+  let presenceTimer = null;
+  let releaseTimer = null;
+  let holders = 0;
+  let lastToken = null;
+  let notify = onNotice;
+
+  const connection = new HubConnectionBuilder()
+    .withUrl(`${baseUrl}${HUB_PATH}`, {
+      accessTokenFactory: async () => {
+        lastToken = await getToken();
+        return lastToken ?? "";
+      },
+      withCredentials: false,
+      ...(transport ? { transport } : {}),
+    })
+    .withAutomaticReconnect(RECONNECT_DELAYS_MS)
+    .configureLogging(logLevel)
+    .build();
+
+  function setStatus(next) {
+    if (status === next) return;
+    status = next;
+    statusListeners.forEach((listener) => listener(next));
+  }
+
+  connection.on("Edits", (formId, edit) => {
+    docs.get(formId)?.receive(edit);
+  });
+  connection.on("Published", (formId, published) => {
+    docs.get(formId)?.onPublished(published);
+  });
+  connection.on("Team", (formId, team) => {
+    docs.get(formId)?.onTeam(team);
+  });
+  connection.on("Presence", (formId, members) => {
+    presence.set(formId, members);
+  });
+
+  connection.onreconnecting(() => {
+    setStatus("reconnecting");
+    docs.forEach((doc) => doc.setOnline(false));
+  });
+
+  connection.onreconnected(() => {
+    setStatus("connected");
+    docs.forEach((doc) => join(doc));
+  });
+
+  connection.onclose(() => {
+    docs.forEach((doc) => doc.setOnline(false));
+    if (stopped) return;
+    setStatus("offline");
+    clearTimeout(restartTimer);
+    restartTimer = setTimeout(start, RESTART_DELAY_MS);
+  });
+
+  async function join(doc) {
+    if (!doc.id || connection.state !== HubConnectionState.Connected) return null;
+    try {
+      const reply = await connection.invoke("Join", doc.id, doc.version);
+      if (Number(reply?.status) === 200) presence.set(doc.id, reply.data.members);
+      await doc.joined(reply);
+      return reply;
+    } catch {
+      return null;
+    }
+  }
+
+  async function start() {
+    if (stopped || starting || connection.state !== HubConnectionState.Disconnected) return starting;
+    setStatus("connecting");
+    starting = connection.start()
+      .then(() => {
+        setStatus("connected");
+        docs.forEach((doc) => join(doc));
+      })
+      .catch((error) => {
+        setStatus("offline");
+        if (Number(error?.statusCode) === 401) onSessionExpired(lastToken);
+        clearTimeout(restartTimer);
+        if (!stopped) restartTimer = setTimeout(start, RESTART_DELAY_MS);
+      })
+      .finally(() => { starting = null; });
+    return starting;
+  }
+
+  const docTransport = {
+    start: (document) => http.start(document),
+    snapshot: (formId) => http.snapshot(formId),
+    publish: (formId, workingVersion) => http.publish(formId, workingVersion),
+    team: (formId, collaborators) => http.team(formId, collaborators),
+    submit(formId, batch) {
+      if (connection.state !== HubConnectionState.Connected) return Promise.reject(offlineError());
+      return connection.invoke("Edit", formId, batch);
+    },
+    async join(formId) {
+      const doc = docs.get(formId);
+      if (!doc || connection.state !== HubConnectionState.Connected) throw offlineError();
+      const reply = await connection.invoke("Join", formId, doc.version);
+      if (Number(reply?.status) === 200) presence.set(formId, reply.data.members);
+      return reply;
+    },
+  };
+
+  function register(doc) {
+    docs.set(doc.id, doc);
+    join(doc);
+    return doc;
+  }
+
+  function open(snapshot) {
+    const formId = snapshot.form.id;
+    const existing = docs.get(formId);
+    if (existing) return existing;
+    return register(createStudioDoc({ snapshot, userId, transport: docTransport, onNotice: (...args) => notify(...args) }));
+  }
+
+  function load(formId) {
+    if (docs.has(formId)) return Promise.resolve(docs.get(formId));
+    if (!loading.has(formId)) {
+      const promise = http.snapshot(formId)
+        .then((snapshot) => open(snapshot))
+        .finally(() => loading.delete(formId));
+      loading.set(formId, promise);
+    }
+    return loading.get(formId);
+  }
+
+  function create(initial, { onCreated } = {}) {
+    return createStudioDoc({
+      initial,
+      userId,
+      transport: docTransport,
+      onNotice: (...args) => notify(...args),
+      onCreated: (doc) => {
+        register(doc);
+        onCreated?.(doc);
+      },
+    });
+  }
+
+  function flushPresence() {
+    presenceTimer = null;
+    if (connection.state !== HubConnectionState.Connected) {
+      presenceQueue.clear();
+      return;
+    }
+    presenceQueue.forEach((state, formId) => {
+      connection.send("Presence", formId, state).catch(() => {});
+    });
+    presenceQueue.clear();
+  }
+
+  function sendPresence(formId, state) {
+    if (!formId) return;
+    presenceQueue.set(formId, { selection: state?.selection ?? [], editing: state?.editing ?? null });
+    if (!presenceTimer) presenceTimer = setTimeout(flushPresence, PRESENCE_INTERVAL_MS);
+  }
+
+  async function close() {
+    if (stopped) return;
+    await Promise.all([...docs.values()].map((doc) => doc.whenSynced(CLOSE_GRACE_MS)));
+    stopped = true;
+    clearTimeout(restartTimer);
+    clearTimeout(presenceTimer);
+    docs.forEach((doc) => doc.dispose());
+    docs.clear();
+    await connection.stop().catch(() => {});
+  }
+
+  function restart() {
+    if (stopped) return;
+    clearTimeout(restartTimer);
+    start();
+  }
+
+  function hold() {
+    holders += 1;
+    clearTimeout(releaseTimer);
+    start();
+  }
+
+  function release() {
+    holders = Math.max(0, holders - 1);
+    if (holders > 0) return;
+    clearTimeout(releaseTimer);
+    releaseTimer = setTimeout(close, RELEASE_GRACE_MS);
+  }
+
+  return {
+    open,
+    load,
+    create,
+    get: (formId) => docs.get(formId) ?? null,
+    docs: () => [...docs.values()],
+    presence,
+    sendPresence,
+    connectionId: () => connection.connectionId,
+    status: () => status,
+    onStatus(listener) {
+      statusListeners.add(listener);
+      return () => statusListeners.delete(listener);
+    },
+    restart,
+    setNoticeHandler: (handler) => { notify = handler ?? onNotice; },
+    hold,
+    release,
+    close,
+  };
+}
