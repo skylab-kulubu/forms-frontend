@@ -25,6 +25,7 @@ function handleShared(event, context) {
     if (ui.menu) { studio.closeMenu(); return true; }
     if (ui.sheet) { studio.setSheet(null); return true; }
     if (isTyping(event.target)) { event.target.blur(); return true; }
+    if (ui.comments.open) { studio.closeComments(); return true; }
     if (ui.fill) { studio.toggleFill(); return true; }
     if (ui.mode === "map" && flow?.hasActiveForm) { flow.onBackToPage(); return true; }
     if (ui.selection.kind !== "none") { studio.select(NONE); return true; }
@@ -109,7 +110,7 @@ export function FormKeys({ eventLinked = false, flow = null, onSave }) {
 
   useEffect(() => {
     contextRef.current = {
-      ui, studio, flow, onSave, actions, fields: state.schema,
+      ui, studio, flow, onSave, actions, fields: state.schema, formId: state.id,
       onUndoForm: () => dispatch({ type: "UNDO" }),
       onRedoForm: () => dispatch({ type: "REDO" }),
     };
@@ -194,6 +195,7 @@ export function FormKeys({ eventLinked = false, flow = null, onSave }) {
       if (modifier) return;
       if (key === "l") control.toggleLogic();
       else if (key === "p") control.toggleFill();
+      else if (key === "c" && context.formId) control.toggleComments();
     };
 
     window.addEventListener("keydown", onKey);

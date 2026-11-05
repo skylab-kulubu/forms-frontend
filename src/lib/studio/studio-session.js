@@ -64,11 +64,44 @@ function createCursors() {
   };
 }
 
+const NO_COMMENTS = { threads: [], unseen: false };
+
+function createComments(userId) {
+  const forms = new Map();
+  const listeners = new Set();
+  const read = (formId) => forms.get(formId) ?? NO_COMMENTS;
+  const write = (formId, next) => {
+    forms.set(formId, next);
+    listeners.forEach((listener) => listener(formId));
+  };
+
+  return {
+    get: read,
+    load: (formId, threads) => write(formId, { ...read(formId), threads: Array.isArray(threads) ? threads : [] }),
+    merge(formId, thread, fromHub = false) {
+      const { threads, unseen } = read(formId);
+      const lastOf = (item) => item?.comments?.[item.comments.length - 1] ?? null;
+      const last = lastOf(thread);
+      const isNews = fromHub && Boolean(last) && last.author?.id !== userId && lastOf(threads.find((item) => item.id === thread.id))?.id !== last.id;
+      const rest = threads.filter((item) => item.id !== thread.id);
+      write(formId, { threads: thread.comments?.length ? [...rest, thread] : rest, unseen: unseen || isNews });
+    },
+    seen(formId) {
+      if (read(formId).unseen) write(formId, { ...read(formId), unseen: false });
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+}
+
 export function createStudioSession({ baseUrl, getToken, http, userId, onNotice = () => {}, onSessionExpired = () => {}, logLevel = LogLevel.Warning, transport }) {
   const docs = new Map();
   const loading = new Map();
   const presence = createPresence();
   const cursors = createCursors();
+  const comments = createComments(userId);
   const statusListeners = new Set();
   const presenceQueue = new Map();
   const presenceStates = new Map();
@@ -120,6 +153,9 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
   connection.on("Cursor", (formId, cursor) => {
     cursors.set(formId, cursor);
   });
+  connection.on("Comments", (formId, thread) => {
+    if (thread) comments.merge(formId, thread, true);
+  });
 
   connection.onreconnecting(() => {
     setStatus("reconnecting");
@@ -145,6 +181,7 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
       const reply = await connection.invoke("Join", doc.id, doc.version);
       if (Number(reply?.status) === 200) {
         presence.set(doc.id, reply.data.members);
+        http.comments?.(doc.id).then((threads) => comments.load(doc.id, threads), () => {});
         if (presenceStates.has(doc.id)) connection.send("Presence", doc.id, presenceStates.get(doc.id)).catch(() => {});
       }
       await doc.joined(reply);
@@ -247,6 +284,19 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
     if (!presenceTimer) presenceTimer = setTimeout(flushPresence, PRESENCE_INTERVAL_MS);
   }
 
+  const keepThread = (formId) => (thread) => {
+    comments.merge(formId, thread);
+    return thread;
+  };
+
+  const commentActions = {
+    startThread: (formId, fieldId, body) => http.startThread(formId, fieldId, body).then(keepThread(formId)),
+    replyThread: (formId, threadId, body) => http.replyThread(formId, threadId, body).then(keepThread(formId)),
+    editComment: (formId, commentId, body) => http.editComment(formId, commentId, body).then(keepThread(formId)),
+    deleteComment: (formId, commentId) => http.deleteComment(formId, commentId).then(keepThread(formId)),
+    resolveThread: (formId, threadId, resolved) => http.resolveThread(formId, threadId, resolved).then(keepThread(formId)),
+  };
+
   function flushCursors() {
     cursorTimer = null;
     if (connection.state === HubConnectionState.Connected) {
@@ -305,6 +355,8 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
     sendPresence,
     cursors,
     sendCursor,
+    comments,
+    ...commentActions,
     connectionId: () => connection.connectionId,
     status: () => status,
     onStatus(listener) {

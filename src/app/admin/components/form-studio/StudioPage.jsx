@@ -7,7 +7,7 @@ import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS as DndCSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { FileText, GitBranch, ListTree, Map as MapIcon, Monitor, PencilLine, Play, Plus, SlidersHorizontal, Smartphone, Timer, TriangleAlert } from "lucide-react";
+import { FileText, GitBranch, ListTree, Map as MapIcon, MessageSquare, Monitor, PencilLine, Play, Plus, SlidersHorizontal, Smartphone, Timer, TriangleAlert } from "lucide-react";
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { isIdentityField } from "@/lib/event-handoff";
@@ -17,6 +17,9 @@ import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
 import { NONE, useStudio } from "./StudioContext";
 import { FieldBlock, InsertLine, focusEditable } from "./StudioField";
 import { useStudioPresence } from "./StudioPresence";
+import { useStudioSession } from "./StudioSession";
+import { CommentSheet, CommentSide, useBoardPush, useCommentBoard } from "./StudioComments";
+import { useMediaQuery } from "./useMediaQuery";
 import StudioTask from "./StudioTask";
 import StudioInsertMenu from "./StudioInsertMenu";
 import { EmptyStart, IntroFields, TemplateStart, previewOf } from "./StudioStart";
@@ -144,7 +147,7 @@ export function OverviewButton({ onClick }) {
   );
 }
 
-export function StudioToolbar({ inFlow, empty = false, onAdd, onShowMap, onOverview = null }) {
+export function StudioToolbar({ inFlow, empty = false, comments = null, onAdd, onShowMap, onOverview = null }) {
   const { ui, actions: studio } = useStudio();
 
   return (
@@ -167,6 +170,16 @@ export function StudioToolbar({ inFlow, empty = false, onAdd, onShowMap, onOverv
             {ui.fill ? <PencilLine size={15} /> : <Play size={15} />}
             {ui.fill ? "Düzenle" : "Doldur"}
           </ToolButton>
+          {comments && !ui.fill ? (
+            <ToolButton label="Yorumlar (C)" active={comments.open} onClick={comments.onToggle} className="relative">
+              <MessageSquare size={15} />
+              <span className="flex items-center gap-1">
+                Yorumlar
+                {comments.count > 0 ? <span className="tabular-nums opacity-70">{comments.count}</span> : null}
+              </span>
+              {comments.unseen ? <span className="absolute right-1 top-1 size-1.5 rounded-full bg-skylab-500 ring-2 ring-neutral-900" /> : null}
+            </ToolButton>
+          ) : null}
         </>
       )}
       {inFlow ? (
@@ -229,6 +242,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
   const actions = useFormActions({ eventLinked });
   const insertItem = useInsertItem({ eventLinked });
   const { ui, actions: studio } = useStudio();
+  const session = useStudioSession();
 
   const formKey = ui.activeFormId ?? "new";
   const phone = ui.devices[formKey] === "phone";
@@ -239,10 +253,16 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
   const missing = ui.missing[formKey] ?? [];
   const numbers = useMemo(() => questionNumbers(fields), [fields]);
   const presence = useStudioPresence();
+  const phoneViewport = useMediaQuery("(max-width: 767px)");
 
   const scrollRef = useRef(null);
   const columnRef = useRef(null);
   const cardRef = useRef(null);
+  const pushRef = useRef(null);
+  const sideRef = useRef(null);
+  const board = useCommentBoard({ formId: state.id, fields, selectedIds, phoneViewport });
+  const { openFor: openComments } = board;
+  useBoardPush({ onBoard: board.onBoard, scrollRef, cardRef, pushRef, sideRef });
   const selectionRef = useRef(ui.selection);
   const fieldsRef = useRef(fields);
   const [activeId, setActiveId] = useState(null);
@@ -346,6 +366,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
   const openMenu = useCallback((anchor, index) => studio.openMenu({ anchor, index }), [studio]);
 
   const api = useMemo(() => ({
+    openComments,
     pressField: (event) => {
       if (event.shiftKey || event.metaKey || event.ctrlKey) event.preventDefault();
     },
@@ -402,7 +423,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
         : `${result.removed} bileşen silindi. Ctrl+Z geri alır.`);
     },
     openMenu,
-  }), [actions, openMenu, studio]);
+  }), [actions, openComments, openMenu, studio]);
 
   const pickFromMenu = (item) => {
     const index = ui.menu?.index ?? fields.length;
@@ -423,7 +444,8 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
 
   const handleBackgroundDown = (event) => {
     if (ui.fill) return;
-    if (event.target.closest?.("[data-fid], [data-task], [data-next-block], [data-studio-menu], button, a, input, textarea")) return;
+    if (event.target.closest?.("[data-fid], [data-task], [data-next-block], [data-studio-menu], [data-comment-side], button, a, input, textarea")) return;
+    if (!event.target.closest?.(".studio-card")) studio.closeComments();
     studio.select(NONE);
   };
 
@@ -453,15 +475,19 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
       lockBadge: locked ? locked.liveOnly ? LIVE_LOCK_BADGE : LOCK_BADGE : identity ? IDENTITY_BADGE : null,
       lockedValues: locked?.values ?? NO_VALUES,
       others: presence.byField.get(field.id),
+      commentCount: ui.fill ? 0 : board.counts.get(field.id) ?? 0,
+      commentActive: board.open && board.activeField === field.id,
+      commentable: Boolean(state.id) && state.canEdit && !ui.fill,
     };
   };
 
   return (
     <div className="relative h-full min-h-0">
-      <div ref={scrollRef} data-studio-page onPointerDown={handleBackgroundDown}
+      <div ref={scrollRef} data-studio-page data-commenting={board.onBoard ? "true" : undefined} onPointerDown={handleBackgroundDown}
         className="studio-fade h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar"
       >
-        <div ref={columnRef} data-studio-column className={`relative mx-auto flex min-h-full w-full flex-col px-3 pt-4 sm:px-14 sm:pt-10 ${empty ? "pb-24 sm:pb-20" : "pb-36 sm:pb-40"}`}
+        <div ref={pushRef} className="flex min-h-full flex-col transition-transform duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">
+        <div ref={columnRef} data-studio-column className={`relative mx-auto flex w-full flex-1 flex-col px-3 pt-4 sm:px-14 sm:pt-10 ${empty ? "pb-24 sm:pb-20" : "pb-36 sm:pb-40"}`}
           style={{ maxWidth: width + 112 }}
         >
           <div className="mb-2 flex items-center gap-2 px-1">
@@ -540,7 +566,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
                       <DragOverlay dropAnimation={DROP_ANIMATION} modifiers={[restrictToVerticalAxis]}>
                         {activeField ? (
                           <div className="cursor-grabbing rounded-xl bg-[#1f1f1f] shadow-2xl shadow-black/60 ring-1 ring-skylab-400/40">
-                            <FieldBlock {...blockProps(activeField, activeIndex)} solo={false} isLast hoverable={false} />
+                            <FieldBlock {...blockProps(activeField, activeIndex)} solo={false} isLast hoverable={false} commentCount={0} commentable={false} />
                             {loss ? <div className={phone ? "px-2 pb-2" : "px-4 pb-3"}><DragLossNote count={loss} /></div> : null}
                           </div>
                         ) : null}
@@ -566,10 +592,17 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
           {nextBlock ? (
             <div data-next-block className="mx-auto mt-7 w-full" style={{ maxWidth: width }}>{nextBlock}</div>
           ) : null}
+
+          {state.id ? <CommentSide board={board} sideRef={sideRef} columnRef={columnRef} fields={fields} userId={session.userId} canWrite={state.canEdit} isOwner={Number(state.userRole) === 3} /> : null}
+        </div>
         </div>
       </div>
 
-      <StudioToolbar inFlow={inFlow} empty={empty} onShowMap={onShowMap} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))} />
+      <StudioToolbar inFlow={inFlow} empty={empty} onShowMap={onShowMap} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))}
+        comments={state.id ? { open: board.open, count: board.openCount, unseen: board.unseen, onToggle: studio.toggleComments } : null}
+      />
+
+      {state.id ? <CommentSheet board={board} fields={fields} numbers={numbers} userId={session.userId} canWrite={state.canEdit} isOwner={Number(state.userRole) === 3} /> : null}
 
       <AnimatePresence>
         {ui.menu && !ui.fill ? (

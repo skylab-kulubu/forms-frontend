@@ -262,7 +262,7 @@ export function useTypingField() {
     const input = (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (!target?.closest("[data-studio-page]")) return;
-      setFieldId(target.closest("[data-fid]")?.dataset.fid ?? null);
+      setFieldId(target.closest("[data-typing-key]")?.dataset.typingKey ?? target.closest("[data-fid]")?.dataset.fid ?? null);
       clearTimeout(timer);
       timer = setTimeout(stop, TYPING_IDLE_MS);
     };

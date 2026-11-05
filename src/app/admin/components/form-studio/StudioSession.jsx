@@ -105,6 +105,35 @@ export function usePresenceBroadcast(session, formId, selection, editing = null)
   }, [session, formId]);
 }
 
+export function useComments(session, formId) {
+  const read = () => session.comments.get(formId);
+  return useSyncExternalStore(session.comments.subscribe, read, read);
+}
+
+function commentCountsStore(session, ids) {
+  let last = null;
+  return {
+    subscribe: (listener) => session.comments.subscribe(listener),
+    getSnapshot() {
+      const next = ids.map((formId) => session.comments.get(formId).threads.filter((thread) => !thread.resolvedAt).length);
+      if (last && last.every((count, index) => count === next[index])) return last;
+      last = next;
+      return next;
+    },
+  };
+}
+
+export function useOpenThreadCounts(session, formIds) {
+  const key = formIds.filter(Boolean).join("|");
+  const store = useMemo(() => commentCountsStore(session, key ? key.split("|") : []), [session, key]);
+  const counts = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+
+  return useMemo(() => {
+    const ids = key ? key.split("|") : [];
+    return Object.fromEntries(ids.map((formId, index) => [formId, counts[index]]));
+  }, [counts, key]);
+}
+
 export function usePresenceMembers(session, formIds) {
   const key = formIds.filter(Boolean).join("|");
 

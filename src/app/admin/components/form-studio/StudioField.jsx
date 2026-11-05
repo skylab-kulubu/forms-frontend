@@ -493,7 +493,8 @@ export function InsertLine({ index, api, disabled = false }) {
 
 export const FieldBlock = memo(function FieldBlock({
   field, number, selected = false, solo = false, condText = null, canUp = false, canDown = false, isLast = false,
-  protectedReason = null, lockBadge = null, lockedValues = [], phone = false, hoverable = true, others = NO_OTHERS, api,
+  protectedReason = null, lockBadge = null, lockedValues = [], phone = false, hoverable = true, others = NO_OTHERS,
+  commentCount = 0, commentActive = false, commentable = false, api,
 }) {
   const props = field.props ?? {};
   const isSeparator = field.type === "separator";
@@ -512,6 +513,28 @@ export const FieldBlock = memo(function FieldBlock({
         }`}
       >
         {solo ? <ActionStrip field={field} canUp={canUp} canDown={canDown} protectedReason={protectedReason} phone={phone} api={api} /> : null}
+
+        {commentCount > 0 || commentable ? (
+          <button type="button" aria-label={commentCount > 0 ? `${commentCount} açık yorum` : "Yorum ekle"} title={commentCount > 0 ? `${commentCount} açık yorum` : "Yorum ekle"}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              api.openComments?.(field.id);
+            }}
+            className={`group/line absolute -right-4.5 bottom-3.5 top-3.5 z-10 w-3 outline-none transition-opacity duration-150 ${commentCount > 0 || commentActive ? "" : "opacity-0 focus-visible:opacity-100 group-hover/q:opacity-100"}`}
+          >
+            <span className={`absolute inset-y-0 rounded-full transition-all duration-150 ${
+              commentActive ? "left-[4.5px] w-0.75 bg-skylab-400"
+                : commentCount > 0 ? "left-1.25 w-0.5 bg-skylab-400/50 group-hover/line:left-[4.5px] group-hover/line:w-0.75 group-hover/line:bg-skylab-400"
+                  : "left-1.25 w-0.5 bg-white/15 group-hover/line:bg-skylab-400/50"
+            }`} />
+            {commentCount > 0 ? (
+              <span className="absolute -top-3.75 left-1/2 -translate-x-1/2 text-3xs tabular-nums text-skylab-300">{commentCount}</span>
+            ) : (
+              <span className="absolute -top-4.5 left-1/2 grid size-4 -translate-x-1/2 place-items-center rounded-full border border-white/10 bg-neutral-800 text-neutral-300"><Plus size={10} /></span>
+            )}
+          </button>
+        ) : null}
 
         {others.length > 0 ? (
           <div className="pointer-events-none absolute -top-2.5 right-3.5 z-10 flex gap-1">

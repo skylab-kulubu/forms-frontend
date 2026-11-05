@@ -6,14 +6,16 @@ export const NONE = { kind: "none" };
 
 const TOAST_MS = 2600;
 
+const NO_COMMENTS = { open: false, active: null, draftFor: null, compose: false, showResolved: false };
+
 function reducer(state, action) {
   switch (action.type) {
     case "ACTIVATE":
       if (state.activeFormId === action.formId) return { ...state, mode: action.mode ?? state.mode, selection: action.selection ?? state.selection, sheet: null };
-      return { ...state, activeFormId: action.formId, mode: action.mode ?? state.mode, selection: action.selection ?? NONE, menu: null, sheet: null };
+      return { ...state, activeFormId: action.formId, mode: action.mode ?? state.mode, selection: action.selection ?? NONE, menu: null, sheet: null, comments: NO_COMMENTS };
 
     case "SET_MODE":
-      return state.mode === action.mode && !state.sheet ? state : { ...state, mode: action.mode, menu: null, sheet: null };
+      return state.mode === action.mode && !state.sheet ? state : { ...state, mode: action.mode, menu: null, sheet: null, comments: NO_COMMENTS };
 
     case "SET_SHEET":
       return state.sheet === action.sheet ? state : { ...state, sheet: action.sheet, menu: null };
@@ -27,7 +29,22 @@ function reducer(state, action) {
     case "TOGGLE_FILL":
       return state.fill
         ? { ...state, fill: false }
-        : { ...state, fill: true, fillValues: {}, missing: {}, menu: null };
+        : { ...state, fill: true, fillValues: {}, missing: {}, menu: null, comments: NO_COMMENTS };
+
+    case "OPEN_COMMENTS":
+      return { ...state, comments: { ...state.comments, open: true, active: action.active ?? null, draftFor: action.draftFor ?? null, compose: Boolean(action.compose) } };
+
+    case "CLOSE_COMMENTS":
+      return state.comments.open ? { ...state, comments: { ...NO_COMMENTS, showResolved: state.comments.showResolved } } : state;
+
+    case "TOGGLE_COMMENTS":
+      return { ...state, comments: state.comments.open ? { ...NO_COMMENTS, showResolved: state.comments.showResolved } : { ...state.comments, open: true } };
+
+    case "FOCUS_COMMENT":
+      return { ...state, comments: { ...state.comments, active: action.active ?? null, draftFor: null, compose: Boolean(action.compose) } };
+
+    case "TOGGLE_RESOLVED_COMMENTS":
+      return { ...state, comments: { ...state.comments, showResolved: !state.comments.showResolved } };
 
     case "SET_FILL_VALUE": {
       const values = { ...(state.fillValues[action.formId] ?? {}), [action.fieldId]: action.value };
@@ -84,6 +101,7 @@ export function StudioProvider({ initialFormId = null, initialMode = "page", chi
     sheet: null,
     preview: null,
     toast: null,
+    comments: NO_COMMENTS,
   });
 
   const memoryRef = useRef({});
@@ -118,6 +136,11 @@ export function StudioProvider({ initialFormId = null, initialMode = "page", chi
     setSheet: (sheet) => dispatch({ type: "SET_SHEET", sheet }),
     setPreview: (preview) => dispatch({ type: "SET_PREVIEW", preview }),
     toast: (text, tone) => dispatch({ type: "TOAST", text, tone }),
+    openComments: (focus) => dispatch({ type: "OPEN_COMMENTS", ...focus }),
+    closeComments: () => dispatch({ type: "CLOSE_COMMENTS" }),
+    toggleComments: () => dispatch({ type: "TOGGLE_COMMENTS" }),
+    focusComment: (active, compose = false) => dispatch({ type: "FOCUS_COMMENT", active, compose }),
+    toggleResolvedComments: () => dispatch({ type: "TOGGLE_RESOLVED_COMMENTS" }),
     remember,
     recall,
   }), [recall, remember]);
