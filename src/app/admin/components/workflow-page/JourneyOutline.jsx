@@ -39,7 +39,7 @@ export default function JourneyOutline({ head, flow, counts, removed, selected, 
         {removed.map((step) => {
           const active = selected === step.nodeKey;
           return (
-            <button key={step.nodeKey} type="button" onClick={() => onPick(step.nodeKey)} aria-pressed={active} className={row(active)} title="Eski sürümdeki adım">
+            <button key={step.nodeKey} type="button" onClick={() => onPick(step.nodeKey)} aria-pressed={active} className={row(active)} title="Akıştan çıkarılan adım">
               <span className="grid size-5 shrink-0 place-items-center rounded-md border border-dashed border-white/15 text-3xs text-neutral-500">–</span>
               <span className={text(active)}>{step.formTitle || "Adsız form"}</span>
               {step.awaitingReview ? <span className="shrink-0 text-3xs tabular-nums text-amber-200/80">{step.awaitingReview}</span> : null}

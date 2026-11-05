@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { request } from "@/lib/apiClient";
 import {
   saveDefinition as saveDefinitionRequest, useArchiveWorkflowMutation, useCreateWorkflowMutation, useSaveDefinitionMutation, useSaveWorkflowMutation,
-  useWorkflowVersionsQuery,
 } from "@/lib/hooks/useWorkflowAdmin";
 import { EMPTY_RULE, useWorkflowEditor } from "../workflow-editor/WorkflowEditorContext";
 import { TRIGGER, connectionError, groupTransitions, toDefinitionPayload } from "../workflow-editor/workflow-graph";
@@ -116,10 +115,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     return creatingRef.current;
   }, [createMutation, dispatch]);
 
-  const { data: versionsData } = useWorkflowVersionsQuery(state.id);
-  const versionsPayload = versionsData?.data ?? versionsData;
-  const versions = useMemo(() => (Array.isArray(versionsPayload) ? versionsPayload : versionsPayload?.items ?? []), [versionsPayload]);
-  const isLive = Boolean(liveWorkflow?.published) || versions.some((version) => Number(version.status) === 1);
+  const isLive = Boolean(liveWorkflow?.published);
 
   const formsById = forms;
 
@@ -430,7 +426,6 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     state,
     dispatch,
     ensureWorkflow,
-    versions,
     isLive,
     hasDraft,
     metaDirty,

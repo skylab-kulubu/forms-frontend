@@ -11,7 +11,7 @@ import { WORKFLOW_INTAKE } from "@/lib/form-settings";
 import { defaultClosesAt, formatDay, isPastDate } from "@/lib/form-timing";
 import { useUpdateWorkflowIntakeMutation, useUpdateWorkflowIntakeScheduleMutation } from "@/lib/hooks/useWorkflowAdmin";
 import { StepBadge } from "../form-room/RoomCanvas";
-import { RUN_STATE, RUN_TABS, elapsed, intakeOf, intakePill, publishedVersion, remainingText } from "./journey-data";
+import { RUN_STATE, RUN_TABS, elapsed, intakeOf, intakePill, remainingText } from "./journey-data";
 
 const MODE_LINKS = [["overview", "Özet", FileText], ["analytics", "Analitik", ChartColumn], ["response", "Cevaplar", List]];
 
@@ -135,7 +135,7 @@ export function RunsList({
   );
 }
 
-export function OperationsPanel({ workflow, overview, versions, steps, onMode, onEdit, canEdit }) {
+export function OperationsPanel({ workflow, overview, steps, onMode, onEdit, canEdit }) {
   const [closeOpen, setCloseOpen] = useState(false);
   const intakeMutation = useUpdateWorkflowIntakeMutation();
   const scheduleMutation = useUpdateWorkflowIntakeScheduleMutation();
@@ -146,7 +146,7 @@ export function OperationsPanel({ workflow, overview, versions, steps, onMode, o
   const acceptsNewRuns = intake === WORKFLOW_INTAKE.OPEN;
   const closesAt = workflow.intakeClosesAt ?? null;
   const pending = intakeMutation.isPending || scheduleMutation.isPending;
-  const published = publishedVersion(versions);
+  const published = workflow.published ?? null;
   const pill = intakePill(workflow);
 
   const changeIntake = (next, onDone) => intakeMutation.mutate({ workflowId: workflow.id, intake: next }, { onSettled: onDone });
@@ -193,9 +193,9 @@ export function OperationsPanel({ workflow, overview, versions, steps, onMode, o
       </section>
 
       <section className={PANEL_SECTION}>
-        <SectionHeader title="Sürüm"
+        <SectionHeader title="Düzenleme"
           description={published
-            ? `Güncel sürüm v${published.version}${published.publishedAt ? ` (${formatDay(published.publishedAt)})` : ""}. Devam eden başvurular başladıkları sürümde kalır.`
+            ? "Değişiklikler yeni başvurulara uygulanır; devam eden başvurular başladıkları haliyle sürer."
             : "Henüz kaydedilmedi. Adımları ve yönlendirmeleri düzenleme ekranında kurup kaydedersin."}
         />
         {published && workflow.draft ? <PanelNotice tone="neutral">Düzenleme ekranında kaydedilmemiş değişiklik var.</PanelNotice> : null}

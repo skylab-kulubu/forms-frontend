@@ -441,8 +441,8 @@ function RemovedSheet({ steps, selected, onSelect }) {
       <div className="flex items-start gap-3">
         <span className="grid size-6 shrink-0 place-items-center rounded-md border border-white/10 bg-white/5 text-neutral-400"><History size={12} /></span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-neutral-100">Eski sürümdeki adımlar</h2>
-          <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">Güncel sürümde olmayan adımlarda bekleyen başvurular. Başladıkları sürümde devam ederler.</p>
+          <h2 className="text-sm font-semibold text-neutral-100">Akıştan çıkarılan adımlar</h2>
+          <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">Akıştan çıkarılan adımlarda bekleyen başvurular. Başladıkları haliyle devam ederler.</p>
         </div>
       </div>
       <div className="divide-y divide-white/5">

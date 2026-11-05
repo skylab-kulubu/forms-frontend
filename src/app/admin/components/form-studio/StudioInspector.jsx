@@ -568,7 +568,7 @@ function FlowPageSection({ flow }) {
 export function FlowRootBody({ flow, picker, ownershipControl }) {
   const { wf, onOpenForm } = flow;
   return (
-    <FlowPanel state={wf.state} dispatch={wf.dispatch} schemasByFormId={wf.schemasByFormId} versions={wf.versions} picker={picker}
+    <FlowPanel state={wf.state} dispatch={wf.dispatch} schemasByFormId={wf.schemasByFormId} picker={picker}
       rules={<RulesSection wf={wf} />} footer={<FlowPageSection flow={flow} />} ownershipControl={ownershipControl}
       onOpenStep={(node) => onOpenForm(node.formId)}
       stepsDescription="Başlangıçtan itibaren akıştaki sırasıyla. Birine tıklayınca formu tuvalde açılır."

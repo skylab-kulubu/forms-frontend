@@ -35,7 +35,7 @@ export const APPROVAL_PRESETS = {
         title: "Bu akışı arşivle",
         highlights: () => [
             "Akış yayından kalkar, yeni başvuru başlatılamaz.",
-            "Devam eden başvurular bulundukları sürümde kalmaya devam eder.",
+            "Başvuranı bekleyen başvurular durur; onay bekleyen cevaplar yine incelenebilir.",
             "Akıştaki formlar ve cevapları silinmez.",
         ],
         approveLabel: (ctx) => ctx.isPending ? "Arşivleniyor..." : "Akışı arşivle",

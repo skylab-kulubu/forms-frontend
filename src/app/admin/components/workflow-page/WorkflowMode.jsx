@@ -10,7 +10,7 @@ import { durationText, formatDay, formatShortDate } from "@/lib/form-timing";
 import { WORKFLOW_INTAKE } from "@/lib/form-settings";
 import { formQuery } from "@/lib/hooks/useFormAdmin";
 import { attemptAnalyticsQuery } from "@/lib/hooks/useResponse";
-import { workflowQuery, workflowRunsOverviewQuery, workflowRunsQuery, workflowVersionsQuery } from "@/lib/hooks/useWorkflowAdmin";
+import { workflowQuery, workflowRunsOverviewQuery, workflowRunsQuery } from "@/lib/hooks/useWorkflowAdmin";
 import { workflowEditHref } from "@/lib/workflow-links";
 import { COMPARISON_SYMBOL, VALUELESS_COMPARISONS } from "../workflow-editor/workflow-copy";
 import { groupTransitions, isTimedNode } from "../workflow-editor/workflow-graph";
@@ -23,7 +23,7 @@ import { sameId } from "../form-room/room-flow";
 import JourneyCanvas, { scrollToSection, useElementWidth } from "./JourneyCanvas";
 import JourneyOutline from "./JourneyOutline";
 import { OperationsPanel, RunsList } from "./JourneyPanel";
-import { PAGE_SIZE, STEP_PEOPLE, endTriggerOf, finishedTotal, intakeOf, intakePill, payloadOf, publishedVersion } from "./journey-data";
+import { PAGE_SIZE, STEP_PEOPLE, endTriggerOf, finishedTotal, intakeOf, intakePill, payloadOf } from "./journey-data";
 
 const FRESH = 30_000;
 const EMPTY_MAP = {};
@@ -76,9 +76,6 @@ export default function WorkflowMode() {
 
   const overviewResult = useQuery({ ...workflowRunsOverviewQuery(workflowId), enabled: Boolean(workflowId), staleTime: FRESH, refetchInterval: 60_000 });
   const overview = payloadOf(overviewResult.data);
-  const versionsResult = useQuery({ ...workflowVersionsQuery(workflowId), enabled: Boolean(workflowId), staleTime: 60_000 });
-  const versionsPayload = payloadOf(versionsResult.data);
-  const versions = Array.isArray(versionsPayload) ? versionsPayload : versionsPayload?.items ?? NO_ITEMS;
 
   const peopleResults = useQueries({
     queries: nodes.map((node) => ({ ...workflowRunsQuery(workflowId, { pageSize: STEP_PEOPLE, filter: 0, nodeKey: node.nodeKey }), enabled: Boolean(workflowId), staleTime: FRESH, refetchInterval: 60_000 })),
@@ -98,7 +95,7 @@ export default function WorkflowMode() {
   const finishedHere = Object.fromEntries((overview?.steps ?? NO_ITEMS).filter((step) => step.finished).map((step) => [step.nodeKey, finishedTotal(step.finished)]));
   const done = finishedTotal(overview?.finished);
   const pill = intakePill(workflow);
-  const published = publishedVersion(versions);
+  const published = workflow?.published ?? null;
   const depthOf = (key) => flow?.stages.depths.get(key) ?? counts[key]?.depth ?? null;
   const ready = width > 0 && !overviewResult.isPending && [...peopleResults, ...attemptResults].every((result) => !result.isPending);
 
@@ -289,8 +286,7 @@ export default function WorkflowMode() {
 
   const intake = intakeOf(workflow);
   const closesText = live && intake === WORKFLOW_INTAKE.OPEN && workflow?.intakeClosesAt ? `Yeni başvuruların kapanışı: ${formatShortDate(workflow.intakeClosesAt)}` : null;
-  const versionText = published ? `v${published.version}${published.publishedAt ? ` (${formatDay(published.publishedAt)})` : ""}` : live ? null : "Kaydedilmedi";
-  const pillText = `${pill.label}${live && published ? ` · v${published.version}` : ""}`;
+  const versionText = published?.publishedAt ? `Son kayıt ${formatDay(published.publishedAt)}` : live ? null : "Kaydedilmedi";
 
   const outline = (where) => (flow ? (
     <JourneyOutline head={room.outlineHead(where)} flow={flow} counts={counts} removed={removed} selected={selected} finishedCount={done} pill={pill} overview={overview}
@@ -337,12 +333,12 @@ export default function WorkflowMode() {
 
   const stepForms = (flow?.stages.ordered ?? NO_ITEMS).map((node) => ({ ...node, depth: depthOf(node.nodeKey) }));
   const inspector = tab === "ops" ? (
-    <OperationsPanel workflow={workflow} overview={overview} versions={versions} steps={stepForms} canEdit={editable} onEdit={edit}
+    <OperationsPanel workflow={workflow} overview={overview} steps={stepForms} canEdit={editable} onEdit={edit}
       onMode={(mode, formId) => toMode(mode, formId)}
     />
   ) : (
     <RunsList stepKey={selected} stepTitle={selectedNode?.formTitle ?? selectedRemoved?.formTitle} stepDepth={selectedNode ? depthOf(selected) : null}
-      stepIsStart={Boolean(selectedNode?.isStart)} stepNote={selectedRemoved ? "Eski sürüm" : null} counts={selectedCounts} tabCounts={tabCounts} tab={runsTab}
+      stepIsStart={Boolean(selectedNode?.isStart)} stepNote={selectedRemoved ? "Akıştan çıkarıldı" : null} counts={selectedCounts} tabCounts={tabCounts} tab={runsTab}
       onTab={(next) => pickList({ runsTab: next })} only={onlyMode ? only : null} onClearOnly={() => { setOnly(null); setPage(1); }}
       onClear={clearSelection} onMode={selected && formOf(selected) ? (mode) => toMode(mode, formOf(selected)) : null}
       runs={listRuns} total={listTotal} loading={listResult.isPending} error={listResult.isError} live={live}
@@ -356,7 +352,7 @@ export default function WorkflowMode() {
         desktop={(
           <>
             <button type="button" onClick={showOps} title="Ayarlar" className="rounded-md px-1.5 transition-colors hover:bg-white/5">
-              <StatePill tone={pill.tone}>{pillText}</StatePill>
+              <StatePill tone={pill.tone}>{pill.label}</StatePill>
             </button>
             <HeaderButton icon={PencilLine} label="Düzenle" primary onClick={edit} disabled={!editable} />
           </>

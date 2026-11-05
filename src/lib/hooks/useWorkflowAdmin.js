@@ -29,8 +29,6 @@ const fetchRuns = async ({ workflowId, page = 1, pageSize = 20, filter = 0, node
   return request(`/api/admin/workflows/${workflowId}/runs?${params.toString()}`);
 };
 
-const fetchWorkflowVersions = async (workflowId) => request(`/api/admin/workflows/${workflowId}/versions`);
-
 const createWorkflow = async (payload) => request("/api/admin/workflows", { method: "POST", body: payload });
 
 const updateWorkflowIntake = async ({ workflowId, intake }) =>
@@ -57,12 +55,6 @@ export const workflowRunsOverviewQuery = (workflowId) => ({
 export const workflowRunsQuery = (workflowId, { page = 1, pageSize = 20, filter = 0, nodeKey = null, state = null } = {}) => ({
   queryKey: ["workflow-runs", workflowId, page, pageSize, filter, nodeKey, state],
   queryFn: () => fetchRuns({ workflowId, page, pageSize, filter, nodeKey, state }),
-  retry: false,
-});
-
-export const workflowVersionsQuery = (workflowId) => ({
-  queryKey: ["workflow-versions", workflowId],
-  queryFn: () => fetchWorkflowVersions(workflowId),
   retry: false,
 });
 
@@ -127,15 +119,6 @@ export const useWorkflowRunsQuery = (workflowId, options = {}) => {
   });
 };
 
-export const useWorkflowVersionsQuery = (workflowId, options = {}) =>
-  useQuery({
-    queryKey: ["workflow-versions", workflowId],
-    queryFn: () => fetchWorkflowVersions(workflowId),
-    enabled: options.enabled ?? !!workflowId,
-    retry: options.retry ?? false,
-    ...options,
-  });
-
 export const useCreateWorkflowMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -148,10 +131,7 @@ export const useSaveDefinitionMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: saveDefinition,
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["workflows"] });
-      if (variables?.workflowId) queryClient.invalidateQueries({ queryKey: ["workflow-versions", variables.workflowId] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workflows"] }),
   });
 };
 
@@ -163,7 +143,6 @@ export const useSaveWorkflowMutation = () => {
     mutationFn: saveWorkflow,
     onSuccess: (_data, { workflowId }) => {
       queryClient.invalidateQueries({ queryKey: ["workflows"] });
-      queryClient.invalidateQueries({ queryKey: ["workflow-versions", workflowId] });
       queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
     },
   });
