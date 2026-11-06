@@ -1,9 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import { Activity, ArrowRight, ChevronDown, ChevronRight, CircleCheck, History } from "lucide-react";
+import { Activity, ArrowRight, ChevronDown, ChevronRight, CircleCheck, History, Hourglass } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
-import { durationText, formatShortDate, shortDuration } from "@/lib/form-timing";
+import { durationText, formatShortDate, shortDuration, spanText } from "@/lib/form-timing";
 import { TRIGGER } from "../workflow-editor/workflow-graph";
 import { triggerStyle } from "../form-studio/studio-flow";
 import { FINISHED_ROWS, GROUPS, NEUTRAL_STROKE, RUN_STATE, STROKE, endTriggerOf, possessive, runSubtitle } from "./journey-data";
@@ -364,6 +364,15 @@ function StepSheet({ step, narrow, selected, cardSelect, flash, onSelect, onOpen
       </div>
 
       {attempts && attempts.opened > 0 ? <Participation data={attempts} onAnalytics={onAnalytics} /> : null}
+
+      {counts?.timing?.medianSeconds ? (
+        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-2xs text-neutral-500">
+          <Hourglass size={11} className="shrink-0 text-neutral-600" />
+          <span>Adımda geçen süre</span>
+          <span className="tabular-nums text-neutral-200">{spanText(counts.timing.medianSeconds * 1000)}</span>
+          <span className="text-neutral-600">· medyan, {counts.timing.passed} kişi geçti</span>
+        </p>
+      ) : null}
 
       {finishedHere > 0 ? (
         <button type="button" onClick={onFinishedHere} title="Bu adımda biten başvuruları listede göster"
