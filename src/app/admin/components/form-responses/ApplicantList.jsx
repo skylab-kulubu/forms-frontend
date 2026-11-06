@@ -105,7 +105,7 @@ function RowSkeleton() {
 }
 
 export default function ApplicantList({
-  rows, counts, timed, filters, setFilters, search, setSearch, isSelected, onSelect, pagination, onPage, loading = false, error = false, touch = false,
+  rows, counts, timed, filters, setFilters, search, setSearch, isSelected, onSelect, pagination, onPage, loading = false, error = false, touch = false, answerLabel = null,
 }) {
   const [open, setOpen] = useState(false);
   const listRef = useRef(null);
@@ -115,8 +115,9 @@ export default function ApplicantList({
     listRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: "nearest" });
   }, [selectedIndex]);
 
-  const active = [filters.sort !== "desc", filters.status !== "all" && filters.status !== "pending", filters.who !== "all", filters.time !== "all", filters.archived].filter(Boolean).length;
+  const active = [filters.sort !== "desc", filters.status !== "all" && filters.status !== "pending", filters.who !== "all", filters.time !== "all", filters.archived, Boolean(filters.answer)].filter(Boolean).length;
   const chips = [
+    filters.answer && ["answer", answerLabel ?? "Cevap süzgeci", () => setFilters({ ...filters, answer: null })],
     filters.sort === "asc" && ["sort", "Eski önce", () => setFilters({ ...filters, sort: "desc" })],
     filters.status !== "all" && filters.status !== "pending" && ["status", statusFilterOf(filters.status).label, () => setFilters({ ...filters, status: "all" })],
     filters.who !== "all" && ["who", WHO_LABEL[filters.who], () => setFilters({ ...filters, who: "all" })],

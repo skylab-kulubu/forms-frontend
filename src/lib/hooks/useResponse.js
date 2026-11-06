@@ -5,7 +5,7 @@ const fetchResponseById = async (responseId) => {
   return request(`/api/admin/forms/responses/${responseId}`);
 };
 
-const responseListSearch = ({ page, status, attemptStatus, time, responderType, showArchived = false, sortingDirection } = {}) => {
+const responseListSearch = ({ page, status, attemptStatus, time, responderType, showArchived = false, sortingDirection, answerQuestionId = null, answerValue = null } = {}) => {
   const params = new URLSearchParams();
   if (page !== undefined && page !== null) params.set("Page", page);
   if (status !== undefined && status !== null) params.set("Status", status);
@@ -14,6 +14,10 @@ const responseListSearch = ({ page, status, attemptStatus, time, responderType, 
   if (responderType !== undefined && responderType !== null) params.set("ResponderType", responderType);
   if (showArchived !== undefined && showArchived !== null) params.set("ShowArchived", showArchived ? "true" : "false");
   if (sortingDirection) params.set("SortingDirection", sortingDirection);
+  if (answerQuestionId) {
+    params.set("AnswerQuestionId", answerQuestionId);
+    params.set("AnswerValue", answerValue ?? "");
+  }
   const query = params.toString();
   return query ? `?${query}` : "";
 };
@@ -60,15 +64,15 @@ const postAttemptAction = async ({ attemptId, action, body }) => {
   });
 };
 
-export const formResponsesQuery = (formId, { page = 1, status = null, attemptStatus = null, time = null, responderType = 0, showArchived = false, sortingDirection } = {}) => ({
-  queryKey: ["form-responses", formId, page, status, attemptStatus, time, responderType, showArchived, sortingDirection],
-  queryFn: () => fetchFormResponses(formId, { page, status, attemptStatus, time, responderType, showArchived, sortingDirection }),
+export const formResponsesQuery = (formId, { page = 1, status = null, attemptStatus = null, time = null, responderType = 0, showArchived = false, sortingDirection, answerQuestionId = null, answerValue = null } = {}) => ({
+  queryKey: ["form-responses", formId, page, status, attemptStatus, time, responderType, showArchived, sortingDirection, answerQuestionId, answerValue],
+  queryFn: () => fetchFormResponses(formId, { page, status, attemptStatus, time, responderType, showArchived, sortingDirection, answerQuestionId, answerValue }),
   retry: false,
 });
 
-export const responsePageQuery = (formId, responseId, { status = null, attemptStatus = null, time = null, responderType = 0, showArchived = false, sortingDirection } = {}) => ({
-  queryKey: ["form-response-page", formId, responseId, status, attemptStatus, time, responderType, showArchived, sortingDirection],
-  queryFn: () => fetchResponsePage(formId, responseId, { status, attemptStatus, time, responderType, showArchived, sortingDirection }),
+export const responsePageQuery = (formId, responseId, { status = null, attemptStatus = null, time = null, responderType = 0, showArchived = false, sortingDirection, answerQuestionId = null, answerValue = null } = {}) => ({
+  queryKey: ["form-response-page", formId, responseId, status, attemptStatus, time, responderType, showArchived, sortingDirection, answerQuestionId, answerValue],
+  queryFn: () => fetchResponsePage(formId, responseId, { status, attemptStatus, time, responderType, showArchived, sortingDirection, answerQuestionId, answerValue }),
   retry: false,
 });
 

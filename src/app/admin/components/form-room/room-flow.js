@@ -7,7 +7,7 @@ export const ROOM_LINKS = {
 
 const FORM_ROUTES = ["new-form", "all"];
 
-export const EMPTY_ROUTE = { mode: "overview", formId: null, responseId: null, attempt: false, workflowId: null, step: null, focus: null, status: null };
+export const EMPTY_ROUTE = { mode: "overview", formId: null, responseId: null, attempt: false, workflowId: null, step: null, focus: null, status: null, answer: null };
 
 export function roomRouteOf(pathname, search = "") {
   const parts = (pathname ?? "").split("/").filter(Boolean);
@@ -18,7 +18,9 @@ export function roomRouteOf(pathname, search = "") {
     const base = { ...EMPTY_ROUTE, formId: parts[2] };
     if (parts.length === 3) return { ...base, mode: "overview" };
     if (parts[3] === "analytics" && parts.length === 4) return { ...base, mode: "analytics", focus: params.get("q") };
-    if (parts[3] === "responses" && parts.length === 4) return { ...base, mode: "response", status: params.get("status") };
+    if (parts[3] === "responses" && parts.length === 4) {
+      return { ...base, mode: "response", status: params.get("status"), answer: params.get("q") ? { q: params.get("q"), v: params.get("v") ?? "" } : null };
+    }
     if (parts[3] === "responses" && parts.length === 5 && !params.get("token")) {
       return { ...base, mode: "response", responseId: parts[4], attempt: params.get("attempt") === "1" };
     }
@@ -38,7 +40,8 @@ export function hrefOfRoute(route) {
     case "analytics": return `/admin/forms/${route.formId}/analytics`;
     case "response": {
       const base = `/admin/forms/${route.formId}/responses`;
-      return route.responseId ? `${base}/${route.responseId}${route.attempt ? "?attempt=1" : ""}` : base;
+      if (route.responseId) return `${base}/${route.responseId}${route.attempt ? "?attempt=1" : ""}`;
+      return route.answer ? `${base}?${new URLSearchParams({ q: route.answer.q, v: route.answer.v ?? "", ...(route.status ? { status: route.status } : {}) })}` : base;
     }
     case "workflow": return `/admin/workflows/${route.workflowId}${route.step ? `?step=${encodeURIComponent(route.step)}` : ""}`;
     default: return null;

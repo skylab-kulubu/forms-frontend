@@ -40,8 +40,27 @@ const fetchFormMetrics = async (formId) => {
   return request(`/api/admin/forms/${formId}/metrics`);
 };
 
-const fetchFormAnalytics = async (formId) => {
-  return request(`/api/admin/forms/${formId}/analytics`);
+const RESPONSE_STATUS_PARAM = { approved: 2, pending: 1, declined: 3 };
+
+const setAnalyticsFilter = (params, { status = null, sinceDays = null, answer = null } = {}) => {
+  if (status) params.set("Status", RESPONSE_STATUS_PARAM[status]);
+  if (sinceDays) params.set("SinceDays", sinceDays);
+  if (answer?.q) {
+    params.set("AnswerQuestionId", answer.q);
+    params.set("AnswerValue", answer.v ?? "");
+  }
+  return params;
+};
+
+const fetchFormAnalytics = async (formId, filter) => {
+  const query = setAnalyticsFilter(new URLSearchParams(), filter).toString();
+  return request(`/api/admin/forms/${formId}/analytics${query ? `?${query}` : ""}`);
+};
+
+const fetchQuestionAnswers = async (formId, questionId, { page = 1, pageSize = 8, search = "", filter = null } = {}) => {
+  const params = setAnalyticsFilter(new URLSearchParams({ Page: String(page), PageSize: String(pageSize) }), filter ?? {});
+  if (search) params.set("Search", search);
+  return request(`/api/admin/forms/${formId}/analytics/questions/${encodeURIComponent(questionId)}/answers?${params.toString()}`);
 };
 
 const fetchServiceMetrics = async () => {
@@ -99,9 +118,15 @@ export const formMetricsQuery = (formId) => ({
   retry: false,
 });
 
-export const formAnalyticsQuery = (formId) => ({
-  queryKey: ["form-analytics", formId],
-  queryFn: () => fetchFormAnalytics(formId),
+export const formAnalyticsQuery = (formId, { status = null, sinceDays = null, answer = null } = {}) => ({
+  queryKey: ["form-analytics", formId, status, sinceDays, answer?.q ?? null, answer?.v ?? null],
+  queryFn: () => fetchFormAnalytics(formId, { status, sinceDays, answer }),
+  retry: false,
+});
+
+export const questionAnswersQuery = (formId, questionId, { page = 1, search = "", filter = null } = {}) => ({
+  queryKey: ["question-answers", formId, questionId, page, search, filter?.status ?? null, filter?.sinceDays ?? null, filter?.answer?.q ?? null, filter?.answer?.v ?? null],
+  queryFn: () => fetchQuestionAnswers(formId, questionId, { page, search, filter }),
   retry: false,
 });
 

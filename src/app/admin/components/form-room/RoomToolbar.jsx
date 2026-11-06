@@ -31,12 +31,14 @@ function SideButton({ button, compact }) {
   );
 }
 
-export default function RoomToolbar({ mode, onMode, disabledModes = [], inFlow = false, left = null, right = null, compact = false, hideEdit = false, bar = null }) {
+export default function RoomToolbar({ mode, onMode, disabledModes = [], inFlow = false, left = null, right = null, compact = false, hideEdit = false, bar = null, chip = null }) {
   const divider = compact ? null : <span className="mx-1 h-5 w-px bg-white/10" />;
 
   if (bar) return <div className={TOOLBAR_CLASS}>{bar}</div>;
 
   return (
+    <>
+    {chip ? <div className={`absolute left-1/2 z-30 max-w-[calc(100%-1.5rem)] -translate-x-1/2 ${compact ? "bottom-20" : "bottom-16"}`}>{chip}</div> : null}
     <div className={TOOLBAR_CLASS}>
       {left ? <><SideButton button={left} compact={compact} />{divider}</> : null}
       {ROOM_MODES.filter((item) => !(hideEdit && item.id === "edit")).map((item) => (
@@ -58,5 +60,6 @@ export default function RoomToolbar({ mode, onMode, disabledModes = [], inFlow =
       ) : null}
       {right ? <>{divider}<SideButton button={right} compact={compact} /></> : null}
     </div>
+    </>
   );
 }

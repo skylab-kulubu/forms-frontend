@@ -6,7 +6,7 @@ import { Activity, ChartColumn, ChevronDown, CornerDownRight, Timer } from "luci
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { RichText } from "@/app/components/rich-text/RichText";
-import { durationText, shortDuration } from "@/lib/form-timing";
+import { durationText, shortDuration, spanText } from "@/lib/form-timing";
 import { CardShell, DeliverablesHeader, StepBar } from "../form-studio/StudioCard";
 import { QuestionBadge } from "../form-studio/StudioField";
 import { conditionLabel, questionNumbers } from "../form-studio/studio-schema";
@@ -180,10 +180,10 @@ function AnalyticsField({ field, q, number, condText, stats, asked, total, open,
           <p className="mt-1.5 flex items-center gap-1.5 pl-9 text-2xs text-neutral-500">
             <span className="min-w-0 truncate">{plainNote({ field, q, asked, total })}</span>
             {kind === 1 && onRead ? (
-              <button type="button" onClick={(event) => { event.stopPropagation(); onRead(); }}
+              <button type="button" onClick={(event) => { event.stopPropagation(); onRead(field.id); }}
                 className="ml-auto inline-flex min-h-8 shrink-0 items-center gap-1 text-neutral-400 underline decoration-white/20 underline-offset-2 transition-colors hover:text-neutral-100 sm:min-h-0"
               >
-                Cevaplarda oku
+                Cevapları oku
               </button>
             ) : null}
           </p>
@@ -193,7 +193,7 @@ function AnalyticsField({ field, q, number, condText, stats, asked, total, open,
   );
 }
 
-export default function AnalyticsCard({ form, analytics, participation = null, metrics = null, stepInfo = null, phone = false, touch = false, openIds, focus, viewOf, onFocus, onToggle, onRead }) {
+export default function AnalyticsCard({ form, analytics, participation = null, metrics = null, stepInfo = null, phone = false, touch = false, openIds, focus, viewOf, onFocus, onToggle, onRead, filtered = false }) {
   const schema = form?.schema;
   const fields = useMemo(() => (Array.isArray(schema) ? schema : []), [schema]);
   const numbers = useMemo(() => questionNumbers(fields), [fields]);
@@ -243,8 +243,10 @@ export default function AnalyticsCard({ form, analytics, participation = null, m
 
       <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-white/5 px-2 pt-5 text-2xs text-neutral-500 md:px-4">
         <ChartColumn size={12} className="shrink-0 text-neutral-600" />
-        {total} cevap üzerinden
-        {!timed && metrics?.averageCompletionTime != null ? (
+        {total} cevap üzerinden{filtered ? " (süzülmüş)" : ""}
+        {!timed && !filtered && metrics?.medianCompletionTime != null ? (
+          <> · medyan doldurma süresi <span className="tabular-nums text-neutral-300">{spanText(metrics.medianCompletionTime * 1000)}</span></>
+        ) : !timed && !filtered && metrics?.averageCompletionTime != null ? (
           <> · ortalama süre <span className="tabular-nums text-neutral-300">{formatDuration(metrics.averageCompletionTime)}</span></>
         ) : null}
       </div>

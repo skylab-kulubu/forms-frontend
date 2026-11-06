@@ -53,11 +53,21 @@ function detailOf(payload, attempt) {
   return attempt ? payload?.data ?? null : payload?.data ?? payload ?? null;
 }
 
+function answerOf(route) {
+  return route.answer?.q ? { q: route.answer.q, v: route.answer.v ?? "" } : null;
+}
+
+function filtersOf(filters, formId) {
+  return filters.answer && filters.answer.formId !== formId ? { ...filters, answer: null } : filters;
+}
+
 export function prefetchResponses(queryClient, route) {
   if (!route.formId) return Promise.resolve();
   const status = validStatus(route.status);
-  const filters = status ? { ...listMemory.filters, status } : listMemory.filters;
-  const page = status ? 1 : listMemory.pages[route.formId] ?? 1;
+  const answer = answerOf(route);
+  const remembered = filtersOf(listMemory.filters, route.formId);
+  const filters = answer ? { ...remembered, status: status ?? "all", answer } : status ? { ...remembered, status } : remembered;
+  const page = status || answer ? 1 : listMemory.pages[route.formId] ?? 1;
   return Promise.all([
     queryClient.prefetchQuery({ ...formResponsesQuery(route.formId, listParams(filters, page)), staleTime: FRESH }),
     route.responseId && !status ? queryClient.prefetchQuery({ ...detailQueryOf(route), staleTime: FRESH }) : null,
@@ -141,8 +151,10 @@ export default function ResponseMode() {
   }, [filters, pages]);
 
   const routeStatus = validStatus(route.status);
-  const activeFilters = routeStatus ? { ...filters, status: routeStatus } : filters;
-  const page = routeStatus ? 1 : pages[formId] ?? 1;
+  const routeAnswer = answerOf(route);
+  const formFilters = filtersOf(filters, formId);
+  const activeFilters = routeAnswer ? { ...formFilters, status: routeStatus ?? "all", answer: routeAnswer } : routeStatus ? { ...formFilters, status: routeStatus } : formFilters;
+  const page = routeStatus || routeAnswer ? 1 : pages[formId] ?? 1;
   const listResult = useQuery({
     ...formResponsesQuery(formId, listParams(activeFilters, page)),
     enabled: Boolean(formId) && canView,
@@ -170,7 +182,7 @@ export default function ResponseMode() {
   });
   const own = route.responseId ? detailOf(ownResult.data, isAttempt) : null;
 
-  const wantsPlace = Boolean(route.responseId) && !isAttempt && !routeStatus && listReady && !sameId(placed, route.responseId);
+  const wantsPlace = Boolean(route.responseId) && !isAttempt && !routeStatus && !routeAnswer && listReady && !sameId(placed, route.responseId);
   const onPage = rows.some((row) => rowMatches(row, route));
   const placeResult = useQuery({
     ...responsePageQuery(formId, route.responseId, listParams(activeFilters, null)),
@@ -242,11 +254,19 @@ export default function ResponseMode() {
     go({ status: null, responseId: null, attempt: false }, { replace: true });
   }, [route.status, routeStatus, formId, go, setFiltersValue, setPages]);
 
+  useEffect(() => {
+    const answer = answerOf({ answer: route.answer });
+    if (!answer) return;
+    setFiltersValue((current) => ({ ...current, status: routeStatus ?? "all", answer: { ...answer, formId } }));
+    setPages((current) => ({ ...current, [formId]: 1 }));
+    go({ answer: null, responseId: null, attempt: false }, { replace: true });
+  }, [route.answer, routeStatus, formId, go, setFiltersValue, setPages]);
+
   const firstRow = rows[0] ?? null;
   useEffect(() => {
-    if (route.responseId || route.status || !listReady || !firstRow) return;
+    if (route.responseId || route.status || route.answer || !listReady || !firstRow) return;
     go(rowTarget(firstRow), { replace: true });
-  }, [route.responseId, route.status, listReady, firstRow, go]);
+  }, [route.responseId, route.status, route.answer, listReady, firstRow, go]);
 
   useEffect(() => {
     if (!repick.current || !listReady) return;
@@ -455,12 +475,16 @@ export default function ResponseMode() {
     return pending > 0 ? { text: pending, dot: "bg-amber-400", tone: "text-amber-300/80" } : { text: metrics.totalResponses ?? 0, tone: "text-neutral-600" };
   };
 
+  const answerField = activeFilters.answer ? (Array.isArray(form?.schema) ? form.schema : []).find((field) => field.id === activeFilters.answer.q) ?? null : null;
+  const answerNumber = answerField ? questionNumbers(form.schema).get(answerField.id) : null;
+  const answerLabel = activeFilters.answer ? `${answerNumber ? `${answerNumber}. soru` : "Soru"}: ${activeFilters.answer.v || "boş"}` : null;
+
   const outline = (where) => (
     <>
       {room.outlineHead(where)}
       {room.steps(countOf, { keysHint: false })}
       {canView ? (
-        <ApplicantList rows={rows} counts={counts} timed={timed} filters={activeFilters} setFilters={setFilters} search={search} setSearch={setSearch}
+        <ApplicantList rows={rows} counts={counts} timed={timed} filters={activeFilters} setFilters={setFilters} search={search} setSearch={setSearch} answerLabel={answerLabel}
           isSelected={(row) => rowMatches(row, route)} onSelect={selectRow} pagination={pagination}
           onPage={(next) => setPages((current) => ({ ...current, [formId]: next }))}
           loading={listResult.isPending} error={listResult.isError} touch={phone}
@@ -487,6 +511,14 @@ export default function ResponseMode() {
           <span className={`size-1.5 rounded-full ${filterInfo.dot ?? ""}`} />
           {filterInfo.label}
           <X size={10} />
+        </button>
+      ) : null}
+      {answerLabel ? (
+        <button type="button" onClick={() => setFilters({ ...activeFilters, answer: null })} title="Cevap süzgecini kaldır"
+          className="mr-1 hidden h-6 max-w-44 items-center gap-1 rounded-md border border-skylab-400/30 bg-skylab-500/10 px-1.5 text-3xs text-skylab-300 transition-colors hover:text-neutral-50 sm:flex"
+        >
+          <span className="min-w-0 truncate">{answerLabel}</span>
+          <X size={10} className="shrink-0" />
         </button>
       ) : null}
       <NavButton label="Önceki (←)" disabled={atStart} onClick={() => stepResponse(-1)}><ChevronLeft size={15} /></NavButton>

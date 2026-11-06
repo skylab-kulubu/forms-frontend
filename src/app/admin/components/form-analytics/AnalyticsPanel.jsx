@@ -2,20 +2,24 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { ArrowUpRight, X } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { PANEL_SECTION, PANEL_STACK, PanelButton, SectionHeader } from "@/app/admin/components/utils/SidePanel";
 import { durationText, shortDuration } from "@/lib/form-timing";
 import { QuestionBadge } from "../form-studio/StudioField";
 import { conditionLabel, questionNumbers } from "../form-studio/studio-schema";
-import { askedCount, formatNumber, formatPercent, percentOf } from "../form-overview/overview-stats";
+import { MIN_DECIDED, approvalRate, askedCount, formatNumber, formatPercent, percentOf } from "../form-overview/overview-stats";
 import { Bars, KIND_LABEL, dayName, monthName } from "./analytics-charts";
 import { PARTICIPATION } from "./AnalyticsCard";
 import { KV } from "../form-room/RoomParts";
+import TextAnswers from "./TextAnswers";
 
 const FADE = { initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } };
 const TABLE_GRID = "grid grid-cols-[minmax(0,1fr)_3rem_3.5rem] items-center gap-x-2";
+const PICK_GRID = "grid grid-cols-[minmax(0,1fr)_3rem_3.5rem_0.875rem] items-center gap-x-2";
+const RATE_GRID = "grid grid-cols-[minmax(0,1fr)_2.25rem_2.75rem_2.5rem_0.875rem] items-center gap-x-2";
+const PICKABLE = [3, 4, 5, 6];
 
 const personName = (name) =>
   name?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map((word) => word.replace(/^\p{L}/u, (letter) => letter.toLocaleUpperCase("tr-TR"))).join(" ") || "";
@@ -79,29 +83,66 @@ function ParticipationPanel({ data }) {
   );
 }
 
+function AnswerRow({ grid, label, bucket, rate, showRate, selected, onPick, onOpen }) {
+  const cells = (
+    <>
+      <span className={`truncate transition-colors ${selected ? "text-neutral-50" : onPick ? "text-neutral-300 group-hover:text-neutral-50" : "text-neutral-300"}`} title={label}>{label}</span>
+      <span className="text-right tabular-nums text-neutral-200">{bucket.count}</span>
+      <span className="text-right tabular-nums text-neutral-500">{formatPercent(bucket.percentage)}</span>
+      {showRate ? <span className="text-right tabular-nums text-neutral-400">{rate == null ? "—" : `%${rate}`}</span> : null}
+      <span />
+    </>
+  );
+
+  return (
+    <div className={`group relative -mx-1.5 rounded-md transition-colors ${selected ? "bg-skylab-500/10" : onPick ? "hover:bg-white/4" : ""}`}>
+      {onPick ? (
+        <button type="button" onClick={onPick} aria-pressed={selected} title={selected ? "Süzgeci kaldır" : `Soruları bu cevabı veren ${bucket.count} kişiye göre göster`}
+          className={`${grid} w-full rounded-md px-1.5 py-1.5 text-left text-2xs`}
+        >
+          {cells}
+        </button>
+      ) : <div className={`${grid} px-1.5 py-1.5 text-2xs`}>{cells}</div>}
+      {onOpen ? (
+        <button type="button" onClick={onOpen} title={`Bu ${bucket.count} kişiyi Cevaplar modunda aç`} aria-label={`${label} cevabını verenleri Cevaplar modunda aç`}
+          className="absolute inset-y-0 right-1.5 grid place-items-center text-neutral-600 transition-colors hover:text-skylab-300"
+        >
+          <ArrowUpRight size={12} />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function bucketLabel(kind, value) {
   if (kind === 8) return monthName(value);
   return value === "" || value == null ? "—" : String(value);
 }
 
-export default function AnalyticsPanel({ form, analytics, participation = null, focus, view, onView, onClear }) {
+export default function AnalyticsPanel({ form, analytics, wideAnalytics = null, participation = null, focus, view, onView, onClear, answer = null, filter = null, reviewed = false, onAnswer = null, onDrill = null, onOpenResponse = null }) {
   const schema = form?.schema;
   const fields = useMemo(() => (Array.isArray(schema) ? schema : []), [schema]);
   const numbers = useMemo(() => questionNumbers(fields), [fields]);
   const byId = useMemo(() => new Map((analytics?.questions ?? []).map((q) => [q.questionId, q])), [analytics]);
+  const wideById = useMemo(() => new Map((wideAnalytics?.questions ?? []).map((q) => [q.questionId, q])), [wideAnalytics]);
   const total = analytics?.totalResponses ?? 0;
   const questions = (analytics?.questions ?? []).filter((q) => Number(q.kind) !== 0);
+  const openGroup = answer && onDrill ? (
+    <PanelButton touch icon={ArrowUpRight} className="w-full" onClick={() => onDrill(answer.q, answer.v)}>Bu {total} kişiyi Cevaplar&apos;da aç</PanelButton>
+  ) : null;
 
   if (focus === PARTICIPATION && participation) return <ParticipationPanel data={participation} />;
 
   const field = fields.find((item) => item.id === focus);
-  const q = field ? byId.get(focus) : null;
+  const showsGroup = answer?.q === focus && wideById.has(focus);
+  const q = field ? (showsGroup ? wideById.get(focus) : byId.get(focus)) : null;
 
   if (!field || !q) {
     return (
       <div className={PANEL_STACK}>
         <section className={PANEL_SECTION}>
           <SectionHeader title="Analitik" description="Karttaki bir soruya ya da soldaki listeden bir satıra tıklayın; ayrıntısı burada açılır." />
+          {openGroup}
         </section>
       </div>
     );
@@ -119,6 +160,18 @@ export default function AnalyticsPanel({ form, analytics, participation = null, 
     ? [...distribution].sort((a, b) => Number(a.value) - Number(b.value))
     : kind === 8 || kind === 9 ? [...distribution].sort((a, b) => String(a.value).localeCompare(String(b.value))) : distribution;
   const firstColumn = kind === 8 ? "Ay" : kind === 9 ? "Saat" : kind === 6 ? "Değer" : "Seçenek";
+  const pickable = onAnswer && PICKABLE.includes(kind);
+  const otherGroup = Boolean(answer) && answer.q !== field.id;
+  const opensList = onDrill && !otherGroup;
+  const decisions = (showsGroup ? wideAnalytics : analytics)?.decisions;
+  const showRate = pickable && reviewed && rows.some((bucket) => bucket.approvedCount != null);
+  const overallRate = showRate ? approvalRate(decisions?.approved, decisions?.declined) : null;
+  const grid = showRate ? RATE_GRID : pickable ? PICK_GRID : TABLE_GRID;
+  const pickNote = otherGroup
+    ? "Sayılar süzgeçteki gruba göre. Başka bir cevaba göre süzmek için önce süzgeci kaldırın."
+    : answer
+      ? `Seçili satıra yeniden tıklayınca süzgeç kalkar, başka satır seçince değişir.${opensList ? " Ok, kişileri Cevaplar'da açar." : ""}`
+      : `Bir satıra tıklayınca bütün sorular o cevabı verenlere göre yeniden hesaplanır.${opensList ? " Ok, kişileri Cevaplar'da açar." : ""}`;
 
   return (
     <motion.div key={focus} {...FADE} className={PANEL_STACK}>
@@ -144,20 +197,33 @@ export default function AnalyticsPanel({ form, analytics, participation = null, 
 
         {q.aggregatable && kind !== 7 && rows.length > 0 ? (
           <div>
-            <div className={`${TABLE_GRID} border-b border-white/5 pb-1.5 text-3xs text-neutral-600`}>
+            <div className={`${grid} border-b border-white/5 pb-1.5 text-3xs text-neutral-600`}>
               <span>{firstColumn}</span>
               <span className="text-right">Kişi</span>
               <span className="text-right">Oran</span>
+              {showRate ? <span className="text-right">Onay</span> : null}
+              {pickable ? <span /> : null}
             </div>
             <div className="divide-y divide-white/5">
-              {rows.map((bucket, index) => (
-                <div key={`${bucket.value}-${index}`} className={`${TABLE_GRID} py-1.5 text-2xs`}>
+              {rows.map((bucket, index) => (pickable ? (
+                <AnswerRow key={`${bucket.value}-${index}`} grid={grid} label={bucketLabel(kind, bucket.value)} bucket={bucket} showRate={showRate}
+                  rate={approvalRate(bucket.approvedCount, bucket.declinedCount)} selected={answer?.q === field.id && answer.v === String(bucket.value)}
+                  onPick={otherGroup ? null : () => onAnswer(field.id, bucket.value)} onOpen={opensList ? () => onDrill(field.id, bucket.value) : null}
+                />
+              ) : (
+                <div key={`${bucket.value}-${index}`} className={`${grid} py-1.5 text-2xs`}>
                   <span className="truncate text-neutral-300" title={bucketLabel(kind, bucket.value)}>{bucketLabel(kind, bucket.value)}</span>
                   <span className="text-right tabular-nums text-neutral-200">{bucket.count}</span>
                   <span className="text-right tabular-nums text-neutral-500">{formatPercent(bucket.percentage)}</span>
                 </div>
-              ))}
+              )))}
             </div>
+            {pickable ? (
+              <p className="mt-2 text-3xs leading-relaxed text-neutral-600">
+                {pickNote}
+                {showRate ? ` Onay: karar verilen cevapların onaylanma oranı${overallRate != null ? `, ${otherGroup ? "bu grubun geneli" : "formun geneli"} %${overallRate}` : ""}; ${MIN_DECIDED}'ten az kararda gösterilmez.` : ""}
+              </p>
+            ) : null}
           </div>
         ) : null}
 
@@ -200,7 +266,9 @@ export default function AnalyticsPanel({ form, analytics, participation = null, 
           </div>
         ) : null}
 
-        {!q.aggregatable && !condition ? (
+        {kind === 1 ? <TextAnswers key={`${field.id}:${filter?.status}:${filter?.sinceDays}:${filter?.answer?.q}:${filter?.answer?.v}`} formId={form?.id} questionId={field.id} filter={filter} onOpen={onOpenResponse} /> : null}
+
+        {!q.aggregatable && !condition && kind !== 1 ? (
           <p className="text-2xs leading-relaxed text-neutral-500">
             {kind === 2 ? "Dosya soruları analiz edilmez; dosyalar cevaplarda açılır."
               : kind === 10 ? "Tekrarlanan gruplar analiz edilmez; kayıtlar cevaplarda okunur."
@@ -215,6 +283,7 @@ export default function AnalyticsPanel({ form, analytics, participation = null, 
           <KV label="Cevap"><span className="tabular-nums">{total}</span></KV>
           <KV label="Analiz edilen soru"><span className="tabular-nums">{questions.filter((item) => item.aggregatable).length} / {questions.length}</span></KV>
         </div>
+        {openGroup}
         <PanelButton touch icon={X} className="w-full" onClick={onClear}>Seçimi kaldır</PanelButton>
       </section>
     </motion.div>

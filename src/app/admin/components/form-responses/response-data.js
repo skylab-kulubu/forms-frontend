@@ -5,7 +5,7 @@ export const PROVISIONAL = 4;
 export const FLAGGED = 5;
 export const RETURNED = 6;
 
-export const FILTER_DEFAULTS = { sort: "desc", status: "all", who: "all", time: "all", archived: false };
+export const FILTER_DEFAULTS = { sort: "desc", status: "all", who: "all", time: "all", archived: false, answer: null };
 
 const MONTHS = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
 
@@ -76,6 +76,8 @@ export function listParams(filters, page) {
     responderType: filters.who === "registered" ? 1 : filters.who === "anonymous" ? 2 : 0,
     showArchived: Boolean(filters.archived),
     sortingDirection: filters.sort === "asc" ? "ascending" : "descending",
+    answerQuestionId: filters.answer?.q ?? null,
+    answerValue: filters.answer?.v ?? null,
   };
 }
 

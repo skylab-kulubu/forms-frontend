@@ -212,7 +212,7 @@ export default function FormRoom() {
     const current = routeRef.current;
     setSheet(null);
     if (!flow || !targetFormId || sameId(targetFormId, current.formId)) return Promise.resolve();
-    const patch = { formId: targetFormId, responseId: current.mode === "response" ? lastResp[targetFormId] ?? null : null, attempt: false, focus: null, status: null };
+    const patch = { formId: targetFormId, responseId: current.mode === "response" ? lastResp[targetFormId] ?? null : null, attempt: false, focus: null, status: null, answer: null };
     const direction = slideDirection(flow.stages, flow.nodeOfForm(current.formId)?.formId ?? current.formId, targetFormId);
     return slideTo(direction, () => go(patch), () => prefetchRoute({ ...current, ...patch }));
   }, [flow, go, slideTo, prefetchRoute, lastResp]);
@@ -228,7 +228,7 @@ export default function FormRoom() {
     if (!flow) return;
     const current = routeRef.current;
     returnRef.current = current;
-    const next = { ...current, mode: "workflow", workflowId: flow.id, step: flow.nodeOfForm(current.formId)?.nodeKey ?? null, responseId: null, attempt: false, focus: null, status: null };
+    const next = { ...current, mode: "workflow", workflowId: flow.id, step: flow.nodeOfForm(current.formId)?.nodeKey ?? null, responseId: null, attempt: false, focus: null, status: null, answer: null };
     await Promise.race([prefetchRoute(next), wait(MODE_WAIT_MS)]);
     go(next, { transition: "swap", ms: 200 });
   };
@@ -243,7 +243,7 @@ export default function FormRoom() {
     const responseId = nextMode === "response"
       ? (back?.mode === "response" && sameId(back.formId, formTarget) ? back.responseId : lastResp[formTarget] ?? null)
       : null;
-    const next = { ...current, mode: nextMode, formId: formTarget, responseId, attempt: false, step: null, focus: null, status: null, ...patch };
+    const next = { ...current, mode: nextMode, formId: formTarget, responseId, attempt: false, step: null, focus: null, status: null, answer: null, ...patch };
     await Promise.race([prefetchRoute(next), wait(MODE_WAIT_MS)]);
     go(next, { transition: "swap", ms: 200 });
   };
@@ -273,7 +273,7 @@ export default function FormRoom() {
       if (Object.keys(patch).length) go(patch);
       return;
     }
-    const next = { ...current, mode, responseId: mode === "response" ? lastResp[current.formId] ?? null : null, attempt: false, focus: null, status: null, ...patch };
+    const next = { ...current, mode, responseId: mode === "response" ? lastResp[current.formId] ?? null : null, attempt: false, focus: null, status: null, answer: null, ...patch };
     await Promise.race([prefetchRoute(next), wait(MODE_WAIT_MS)]);
     captureCanvasAnchor();
     go(next, { transition: "swap" });
@@ -398,8 +398,8 @@ export default function FormRoom() {
       onClick: () => (leftWide ? setCollapsed(false) : setSheet("left")),
     }),
     rightButton: (label, Icon, buttonTitle) => (rightDocked ? null : { label, Icon, title: buttonTitle, onClick: () => setSheet("right") }),
-    toolbar: ({ left = null, right = null, bar = null } = {}) => (
-      <RoomToolbar mode={route.mode} onMode={switchMode} disabledModes={disabledModes} inFlow={Boolean(flow)} left={left} right={right} bar={bar}
+    toolbar: ({ left = null, right = null, bar = null, chip = null } = {}) => (
+      <RoomToolbar mode={route.mode} onMode={switchMode} disabledModes={disabledModes} inFlow={Boolean(flow)} left={left} right={right} bar={bar} chip={chip}
         compact={compactBar} hideEdit={phone}
       />
     ),
