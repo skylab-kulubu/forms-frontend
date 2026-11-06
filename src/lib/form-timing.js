@@ -32,6 +32,14 @@ export function shortDuration(ms) {
   return rest ? `${hours} sa ${rest} dk` : `${hours} sa`;
 }
 
+export function spanText(ms) {
+  const hours = Math.floor(Math.max(0, ms) / HOUR);
+  if (hours < 24) return shortDuration(ms);
+  const days = Math.floor(hours / 24);
+  const rest = hours % 24;
+  return rest && days < 7 ? `${days} gün ${rest} sa` : `${days} gün`;
+}
+
 export function leftText(ms) {
   if (ms <= 0) return "süre doldu";
   if (ms < HOUR) return `${Math.max(1, Math.ceil(ms / MINUTE))} dk kaldı`;

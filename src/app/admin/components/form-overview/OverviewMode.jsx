@@ -94,6 +94,7 @@ export default function OverviewMode() {
   );
   const inspector = shell ? (
     <OverviewPanel form={form ?? shell} flow={flow} metrics={metrics} attempts={attempts} onReview={reviewPending} onShare={room.openShare}
+      onOpenResponse={(responseId) => room.switchMode("response", { responseId })}
       onFlow={flow ? () => room.switchMode("workflow") : null}
     />
   ) : null;

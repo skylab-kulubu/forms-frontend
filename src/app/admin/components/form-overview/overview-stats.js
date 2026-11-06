@@ -13,6 +13,95 @@ export const formatNumber = (value) => {
 
 export const percentOf = (part, whole) => (whole > 0 ? Math.round((part / whole) * 1000) / 10 : 0);
 
+export const MIN_DECIDED = 5;
+
+export function approvalRate(approved, declined) {
+  const decided = (approved ?? 0) + (declined ?? 0);
+  return decided >= MIN_DECIDED ? Math.round(((approved ?? 0) / decided) * 100) : null;
+}
+
+const DAY_MS = 86_400_000;
+const WEEKS_AFTER_DAYS = 70;
+const RUSH_DAYS = 3;
+const RECENT_DAYS = 7;
+const SHORT_DAY = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", timeZone: "UTC" });
+const LOCAL_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" });
+
+const noonOf = (key) => new Date(`${key}T12:00:00Z`).getTime();
+const shortDay = (key) => SHORT_DAY.format(noonOf(key));
+const localDay = (time) => LOCAL_DAY.format(time);
+const nextDay = (key) => new Date(noonOf(key) + DAY_MS).toISOString().slice(0, 10);
+
+const SPARSE_POINTS = 5;
+
+function byWeek(days) {
+  const weeks = [];
+  for (let index = 0; index < days.length; index += 7) {
+    const chunk = days.slice(index, index + 7);
+    const known = chunk.filter((day) => day.count != null);
+    weeks.push({
+      key: chunk[0].key,
+      label: chunk[0].label,
+      count: known.length ? known.reduce((sum, day) => sum + day.count, 0) : null,
+      total: known.length ? known[known.length - 1].total : null,
+    });
+  }
+  return weeks;
+}
+
+function lifeNote(days, total, closes, ended, now) {
+  const countIn = (after, until) => days.filter((day) => day.count != null && day.key > after && day.key <= until).reduce((sum, day) => sum + day.count, 0);
+  if (ended) {
+    const late = countIn(localDay(closes - RUSH_DAYS * DAY_MS), localDay(closes));
+    return `Kapanıştan önceki ${RUSH_DAYS} günde ${late} cevap geldi (${formatPercent(Math.round((late / total) * 100))}).`;
+  }
+  const left = closes != null && closes > now ? `Kapanışa ${Math.max(1, Math.ceil((closes - now) / DAY_MS))} gün var. ` : "";
+  const recent = countIn(localDay(now - RECENT_DAYS * DAY_MS), localDay(now));
+  if (recent) return `${left}Son ${RECENT_DAYS} günde ${recent} cevap geldi (${formatPercent(Math.round((recent / total) * 100))}).`;
+  const last = days.findLast((day) => day.count > 0);
+  return `${left}Son cevap ${Math.max(1, Math.round((now - noonOf(last.key)) / DAY_MS))} gün önce geldi.`;
+}
+
+export function lifeSeries(lifetime, now) {
+  const counts = Array.isArray(lifetime?.days) ? lifetime.days : [];
+  if (!counts.some((day) => day.count > 0)) return null;
+
+  const closes = lifetime.closesAt ? new Date(lifetime.closesAt).getTime() : null;
+  const closeDay = closes == null ? null : localDay(closes);
+  const ended = closes != null && closes <= now && closeDay >= counts.findLast((day) => day.count > 0).date;
+
+  let total = 0;
+  const days = counts.filter((day) => !ended || day.date <= closeDay).map((day) => {
+    total += day.count;
+    return { key: day.date, label: shortDay(day.date), count: day.count, total };
+  });
+  const note = lifeNote(days, total, closes, ended, now);
+  for (let key = days[days.length - 1].key; closeDay && key < closeDay;) {
+    key = nextDay(key);
+    days.push({ key, label: shortDay(key), count: null, total: null });
+  }
+
+  const span = days.filter((day) => day.count != null).length;
+  const weekly = days.length > WEEKS_AFTER_DAYS;
+  const points = weekly ? byWeek(days) : days;
+  const known = points.filter((point) => point.count != null);
+  const sparse = points.length <= SPARSE_POINTS;
+  const peak = known.reduce((best, point) => (point.count > best.count ? point : best), known[0]);
+  const closeKey = closeDay ? points.findLast((point) => point.key <= closeDay)?.key ?? null : null;
+
+  return { points, closeKey, peak, total, weekly, note, span, ended, sparse };
+}
+
+export function decisionRows(metrics) {
+  const flagged = metrics?.flaggedCount ?? 0;
+  return [
+    ["pending", Math.max(0, (metrics?.pendingCount ?? 0) - flagged)],
+    ...(flagged > 0 ? [["flagged", flagged]] : []),
+    ["approved", metrics?.approvedCount ?? 0],
+    ["declined", metrics?.rejectedCount ?? 0],
+  ];
+}
+
 function topBucket(q) {
   const buckets = q?.distribution ?? [];
   return buckets.reduce((best, bucket) => (!best || bucket.count > best.count ? bucket : best), null);
