@@ -218,7 +218,6 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
               icon: List,
               label: "Formları Görüntüle"
             },
-            ...(isSuperAdmin ? [{ href: "/admin/forms/all", icon: Database, label: "Veritabanı" }] : []),
             ...(activeFormItem ? [activeFormItem] : []),
           ]}
         />
@@ -242,6 +241,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         <div className="space-y-2">
           <SectionLabel>Yönetim</SectionLabel>
           <div className="space-y-1">
+            <NavItem href="/admin/forms/all" icon={Database} label="Veritabanı" active={pathname === "/admin/forms/all"} onClick={onItemClick} />
             <NavItem href="/admin/ownership" icon={UserX} label="Sahipsiz içerikler" active={pathname === "/admin/ownership"} onClick={onItemClick} />
           </div>
         </div>

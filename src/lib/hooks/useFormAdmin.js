@@ -41,6 +41,7 @@ const fetchFormMetrics = async (formId) => {
 };
 
 const RESPONSE_STATUS_PARAM = { approved: 2, pending: 1, declined: 3 };
+const FORM_STATUS_PARAM = { open: 2, closed: 1, deleted: 0 };
 
 const setAnalyticsFilter = (params, { status = null, sinceDays = null, answer = null } = {}) => {
   if (status) params.set("Status", RESPONSE_STATUS_PARAM[status]);
@@ -73,26 +74,42 @@ const deleteForm = async (formId) => {
   });
 };
 
-const fetchAllForms = async ({ page, pageSize, search, allowAnonymous, allowMultiple, requiresManualReview, sortDirection } = {}) => {
+const fetchAllForms = async ({ page, pageSize, search, status, owner, allowAnonymous, allowMultiple, requiresManualReview, sortBy, sortDirection } = {}) => {
   const params = new URLSearchParams();
   if (page !== undefined && page !== null) params.set("Page", page);
   if (pageSize !== undefined && pageSize !== null) params.set("PageSize", pageSize);
   if (search) params.set("Search", search);
+  if (status) params.set("Status", FORM_STATUS_PARAM[status]);
+  if (owner) params.set("Owner", owner);
   if (allowAnonymous !== undefined && allowAnonymous !== null) params.set("AllowAnonymous", allowAnonymous);
   if (allowMultiple !== undefined && allowMultiple !== null) params.set("AllowMultiple", allowMultiple);
   if (requiresManualReview !== undefined && requiresManualReview !== null) params.set("RequiresManualReview", requiresManualReview);
+  if (sortBy) params.set("SortBy", sortBy);
   if (sortDirection) params.set("SortDirection", sortDirection);
   const query = params.toString();
   return request(`/api/admin/forms/all${query ? `?${query}` : ""}`);
 };
 
+const restoreForm = async (formId) => request(`/api/admin/forms/${formId}/restore`, { method: "POST" });
+
 export const useAllFormsQuery = (options = {}) => {
-  const { page = 1, pageSize, search, allowAnonymous, allowMultiple, requiresManualReview, sortDirection, ...queryOptions } = options;
+  const { page = 1, pageSize, search, status, owner, allowAnonymous, allowMultiple, requiresManualReview, sortBy, sortDirection, ...queryOptions } = options;
   return useQuery({
-    queryKey: ["all-forms", page, pageSize, search, allowAnonymous, allowMultiple, requiresManualReview, sortDirection],
-    queryFn: () => fetchAllForms({ page, pageSize, search, allowAnonymous, allowMultiple, requiresManualReview, sortDirection }),
+    queryKey: ["all-forms", page, pageSize, search, status, owner, allowAnonymous, allowMultiple, requiresManualReview, sortBy, sortDirection],
+    queryFn: () => fetchAllForms({ page, pageSize, search, status, owner, allowAnonymous, allowMultiple, requiresManualReview, sortBy, sortDirection }),
     retry: queryOptions.retry ?? false,
     ...queryOptions,
+  });
+};
+
+export const useRestoreFormMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: restoreForm,
+    onSuccess: (_, formId) => {
+      queryClient.invalidateQueries({ queryKey: ["all-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["form", formId] });
+    },
   });
 };
 

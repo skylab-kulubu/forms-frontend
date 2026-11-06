@@ -5,7 +5,9 @@ import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { LayoutTemplate, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
 import ActionButton from "./utils/ActionButton";
-import FormsFilterShell, { DatabaseFilterShell } from "./utils/FormsFilterShell";
+import FormsFilterShell from "./utils/FormsFilterShell";
+import DatabaseFilters from "./form-database/DatabaseFilters";
+import { filterCount } from "./form-database/database-params";
 import WorkflowsFilterShell from "./utils/WorkflowsFilterShell";
 
 const fadeIn = {
@@ -25,15 +27,6 @@ function HeaderSlotPortal({ children }) {
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const target = isMounted ? document.getElementById("admin-header-slot") : null;
   return target ? createPortal(children, target) : null;
-}
-
-function Stat({ label, value }) {
-  return (
-    <div className="text-right">
-      <p className="text-3xs font-medium uppercase tracking-[0.18em] text-neutral-500">{label}</p>
-      <p className="text-sm font-semibold text-neutral-100 tabular-nums">{value ?? "--"}</p>
-    </div>
-  );
 }
 
 function SearchInput({ value, onChange, placeholder = "Ara", compact = false }) {
@@ -213,35 +206,43 @@ export function WorkflowsHeader(toolbarProps) {
   );
 }
 
-export function DatabaseHeader({ searchValue = "", onSearchChange, sortValue = "desc", onSortChange, allowAnonymous = null, onAllowAnonymousChange,
-  allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange,
-  onRefresh, stats = { count: 0 }
-}) {
+function DatabaseToolbar({ compact = false, searchValue = "", onSearchChange, state, onChange, onClear, summary = null, owners = [], onRefresh }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
-  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
+  const active = filterCount(state);
+  const filtersLabel = active ? `Filtreler (${active})` : "Filtreler";
+  const buttonSize = compact ? "sm" : "md";
 
   return (
-    <HeaderShell title="Veritabanı" description="Sistemdeki tüm formları görüntüle.">
-      <SearchInput value={searchValue} onChange={onSearchChange} placeholder="Form ara" />
+    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
+      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Form adı ya da ID" />
       <div className="flex items-center gap-1.5 shrink-0">
         <div ref={filterButtonRef} className="relative">
-          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size="md" tone="header"
-            variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
+          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
+            variant={filtersOpen || active ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
           />
-          <DatabaseFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)}
-            sortValue={sortValue} onSortChange={onSortChange}
-            allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
-            allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
-            requiresManualReview={requiresManualReview} onRequiresManualReviewChange={onRequiresManualReviewChange}
+          {active ? (
+            <span className="pointer-events-none absolute -right-1 -top-1 grid size-3.5 place-items-center rounded-full bg-skylab-400 text-4xs font-semibold text-neutral-900">{active}</span>
+          ) : null}
+          <DatabaseFilters open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)}
+            state={state} onChange={onChange} onClear={onClear} summary={summary} owners={owners}
           />
         </div>
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size="md" tone="header" title="Yenile" aria-label="Yenile" />
+        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
       </div>
-      <div className="ml-auto shrink-0">
-        <Stat label="Toplam Form" value={stats.count} />
+    </div>
+  );
+}
+
+export function DatabaseHeader(toolbarProps) {
+  return (
+    <>
+      <HeaderSlotPortal>
+        <DatabaseToolbar compact {...toolbarProps} />
+      </HeaderSlotPortal>
+      <div className="md:hidden">
+        <DatabaseToolbar {...toolbarProps} />
       </div>
-    </HeaderShell>
+    </>
   );
 }
