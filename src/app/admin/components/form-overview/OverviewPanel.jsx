@@ -286,7 +286,7 @@ function TeamSection({ collaborators }) {
   );
 }
 
-function InfoSection({ form, flow, onFlow }) {
+function InfoSection({ form, flow, onFlow, readOnly = false }) {
   const settings = effectiveFormSettings(form);
   const workflow = form?.workflow ?? null;
   const questionCount = (form?.schema ?? []).filter((field) => field.type !== "separator").length;
@@ -316,17 +316,16 @@ function InfoSection({ form, flow, onFlow }) {
         <KV label={settings.managedByWorkflow ? "Tekrar başlatma" : "Çoklu cevap"} hint={settings.managedByWorkflow ? "Akışta ayarlanır" : null}>
           <span>{settings.allowMultipleResponses ? "Açık" : "Kapalı"}</span>
         </KV>
-        <KV label="Rolün">{role > 0 ? <RoleBadge role={role} /> : <span>Yok</span>}</KV>
+        <KV label="Rolün">{role > 0 ? <RoleBadge role={role} /> : readOnly ? <span className="text-neutral-400">Süper admin · salt okunur</span> : <span>Yok</span>}</KV>
         <KV label="Son güncelleme"><span className="tabular-nums text-neutral-300">{formatUpdatedAt(form?.updatedAt ?? form?.createdAt)}</span></KV>
       </div>
     </section>
   );
 }
 
-export default function OverviewPanel({ form, flow, metrics, attempts, onReview, onShare, onFlow = null, onOpenResponse = null }) {
+export default function OverviewPanel({ form, flow, metrics, attempts, onReview, onShare, onFlow = null, onOpenResponse = null, readOnly = false, canView = Number(form?.userRole) >= 1 }) {
   const settings = effectiveFormSettings(form);
   const stepForm = Boolean(form?.workflow && !form.workflow.isStart);
-  const canView = Number(form?.userRole) >= 1;
   const timed = Number(form?.timeLimitMinutes) > 0;
 
   return (
@@ -337,7 +336,7 @@ export default function OverviewPanel({ form, flow, metrics, attempts, onReview,
       <ShareSection formId={form?.id} metrics={metrics} stepForm={stepForm} canShare={canView} onShare={onShare} reviewed={settings.requiresManualReview} />
       <ParticipationSection metrics={metrics} attempts={attempts} timed={timed} />
       <TeamSection collaborators={form?.collaborators} />
-      <InfoSection form={form} flow={flow} onFlow={onFlow} />
+      <InfoSection form={form} flow={flow} onFlow={onFlow} readOnly={readOnly} />
     </div>
   );
 }

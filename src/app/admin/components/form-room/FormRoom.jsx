@@ -155,8 +155,11 @@ export default function FormRoom() {
   };
 
   const role = Number(shell?.userRole ?? 0);
-  const canView = role >= 1;
-  const canEdit = role >= 2;
+  const access = shell?.access ?? null;
+  const canView = access ? Boolean(access.canViewResponses) : role >= 1;
+  const canHandle = access ? Boolean(access.canHandleResponses) : role >= 1;
+  const canEdit = access ? Boolean(access.canEdit) : role >= 2;
+  const readOnly = canView && !canHandle;
   const editAllowed = route.mode === "workflow" && typeof workflow?.canEdit === "boolean" ? workflow.canEdit : canEdit;
   const disabledModes = [...(editAllowed ? [] : ["edit"]), ...(canView ? [] : ["analytics", "response"])];
   const settings = effectiveFormSettings(shell);
@@ -353,7 +356,7 @@ export default function FormRoom() {
   const room = {
     route, go, switchMode, pickStep, slideTo, enterJourney, leaveJourney, prefetchRoute,
     formId, form, shell, formResult, workflowId, workflow, workflowResult, flow, node, depth, title, stepInfo, stepMetrics,
-    role, canView, canEdit, disabledModes, settings,
+    role, canView, canHandle, canEdit, readOnly, disabledModes, settings,
     phone, leftWide, rightDocked, stacked: !rightDocked, leftDocked, centerWidth, compactBar, cardPhone, cardWidth, device, setDevice,
     sheet, setSheet, toast, openPalette, openShare, setCollapsed,
     store, setStoreValue, modeKeysRef,
@@ -405,7 +408,7 @@ export default function FormRoom() {
     ),
     cardTop: ({ right } = {}) => (
       <CardTop
-        row1={<TitleRow title={title} depth={depth} isStart={Boolean(node?.isStart)} timeLimitMinutes={form?.timeLimitMinutes}
+        row1={<TitleRow title={title} depth={depth} isStart={Boolean(node?.isStart)} timeLimitMinutes={form?.timeLimitMinutes} readOnly={readOnly}
           right={right !== undefined ? right : phone ? null : <DeviceToggle device={device} onChange={setDevice} />}
         />}
         row2={flow ? <FlowChips flow={flow} activeFormId={formId} onPick={(id) => pickStep(id)} /> : null}

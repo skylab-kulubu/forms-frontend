@@ -449,7 +449,7 @@ export default function ResponseMode() {
     }
     if (modifier || event.altKey) return false;
     if (event.key === "Escape") return cancelDecision() || closeNotes();
-    if (DECISION_KEYS[event.key]) return startDecision(DECISION_KEYS[event.key]);
+    if (DECISION_KEYS[event.key] && !room.readOnly) return startDecision(DECISION_KEYS[event.key]);
     if (event.key === "Enter") {
       if (!shownReview.pending || event.target?.closest?.("button, a, summary, [role='button']")) return false;
       event.preventDefault();
@@ -631,12 +631,12 @@ export default function ResponseMode() {
     );
   }
 
-  const panelHead = <PanelHead detail={shown} isAttempt={shownIsAttempt} />;
+  const panelHead = <PanelHead detail={shown} isAttempt={shownIsAttempt} readOnly={room.readOnly} />;
   const panel = shown && !linkedId ? (
     <DecisionPanel key={shown.id} detail={shown} isAttempt={shownIsAttempt} ownKind={isOwnView ? null : sameStage ? "round" : "stage"} numbers={numbers}
       state={shownReview} setState={(patch) => patchReview(shown.id, patch)} onStart={startDecision} onConfirm={confirmDecision} onCancel={cancelDecision}
       nextPending={nextPending ? { ...nextPending, name: personOf(nextPending).name } : null} onOpenNext={() => nextPending && openRow(nextPending, 1)}
-      autoNext={autoNext} setAutoNext={setAutoNext} showAutoNext={isOwnView}
+      autoNext={autoNext} setAutoNext={setAutoNext} showAutoNext={isOwnView} readOnly={room.readOnly}
       onExtended={() => {
         if (shown.attempt?.id) go({ formId: shown.formId ?? formId, responseId: shown.attempt.id, attempt: true }, { replace: true });
       }}

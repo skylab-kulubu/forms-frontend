@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useLayoutEffect, useRef } from "react";
-import { ChevronRight, Monitor, Smartphone, Timer } from "lucide-react";
+import { ChevronRight, Eye, Monitor, Smartphone, Timer } from "lucide-react";
 import { durationText } from "@/lib/form-timing";
 import { EASE_CLASS, boardFits, useBoardPush } from "../form-studio/StudioBoard";
 import { sameId } from "./room-flow";
@@ -98,7 +98,18 @@ export function DeviceToggle({ device, onChange }) {
   );
 }
 
-export function TitleRow({ title, depth = null, isStart = false, timeLimitMinutes = null, right = null }) {
+export function ReadOnlyPill() {
+  return (
+    <span title="Süper admin olarak görüyorsun. Karar, arşiv ve düzenleme formun ekibine açık."
+      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-white/3 px-1.5 py-0.5 text-3xs text-neutral-400"
+    >
+      <Eye size={10} />
+      Salt okunur
+    </span>
+  );
+}
+
+export function TitleRow({ title, depth = null, isStart = false, timeLimitMinutes = null, readOnly = false, right = null }) {
   return (
     <>
       {depth != null ? <StepBadge depth={depth} isStart={isStart} /> : null}
@@ -106,6 +117,7 @@ export function TitleRow({ title, depth = null, isStart = false, timeLimitMinute
       {timeLimitMinutes ? (
         <span className="inline-flex shrink-0 items-center gap-0.5 text-3xs text-amber-300/90"><Timer size={10} />{durationText(timeLimitMinutes)}</span>
       ) : null}
+      {readOnly ? <ReadOnlyPill /> : null}
       {right ? <span className="ml-auto flex shrink-0 items-center gap-2">{right}</span> : null}
     </>
   );

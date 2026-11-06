@@ -146,6 +146,8 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
   };
 
   const activeFormLabel = formLoading ? "..." : (form?.title?.trim() || "...");
+  const canViewResponses = form?.access?.canViewResponses ?? Number(form?.userRole) >= 1;
+  const canEditForm = form?.access?.canEdit ?? Number(form?.userRole) >= 2;
 
   const activeFormItem = formId
   ? {
@@ -153,9 +155,9 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
       icon: FileText,
       label: activeFormLabel,
       children: [
-        ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
-        ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
-        ...(Number(form?.userRole) >= 2 ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
+        ...(canViewResponses ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
+        ...(canViewResponses ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
+        ...(canEditForm ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
       ],
     }
   : null;
