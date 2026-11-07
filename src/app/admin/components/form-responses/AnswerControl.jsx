@@ -147,7 +147,7 @@ function MatrixAnswer({ field, answer }) {
               <td className="px-3 py-2 text-neutral-200">{row}</td>
               {columns.map((column) => (
                 <td key={column} className="px-2 py-2 text-center">
-                  <span className={`inline-block size-3.5 rounded-full border ${picked[row] === column ? "border-skylab-300 bg-skylab-400 shadow-[inset_0_0_0_3px_#1a1a1a]" : "border-white/20"}`} />
+                  <span className={`inline-block size-3.5 rounded-full border ${picked[row] === column ? "border-skylab-300 bg-skylab-400 shadow-[inset_0_0_0_3px_#1c1c1c]" : "border-white/20"}`} />
                 </td>
               ))}
             </tr>

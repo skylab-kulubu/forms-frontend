@@ -622,7 +622,7 @@ export default function StudioMap({
                           echo={node.formId === entry?.formId ? entry.echo ?? null : null}
                         />
                       ) : (
-                        <div className="h-96 rounded-3xl border border-white/10 bg-[#1a1a1a]"><div className="shimmer m-10 h-8 w-64 rounded-lg" /></div>
+                        <div className="h-96 rounded-3xl border border-white/10 bg-[#1c1c1c]"><div className="shimmer m-10 h-8 w-64 rounded-lg" /></div>
                       )}
                       <button type="button" aria-label={`${node.formTitle || "Form"} formunu düzenle`} onClick={() => onOpenForm(node.formId)}
                         className="absolute inset-0 z-10 cursor-pointer rounded-3xl transition-[background-color,box-shadow] hover:bg-white/2 hover:ring-[6px] hover:ring-skylab-400/30"

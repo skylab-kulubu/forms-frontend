@@ -14,7 +14,7 @@ export default function StudioSkeleton() {
       <main className="min-w-0 flex-1 py-2">
         <div className="h-full rounded-xl bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px]">
           <div className="mx-auto w-full max-w-[672px] px-4 pt-16">
-            <div className="space-y-6 rounded-3xl border border-white/10 bg-[#1a1a1a] p-6 sm:p-10">
+            <div className="space-y-6 rounded-3xl border border-white/10 bg-[#1c1c1c] p-6 sm:p-10">
               <Bar className="h-8 w-2/3" />
               <Bar className="h-4 w-1/2" />
               {Array.from({ length: 4 }, (_, index) => <Bar key={index} className="h-20 rounded-xl" />)}
