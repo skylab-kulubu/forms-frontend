@@ -664,13 +664,14 @@ function WorkflowStudioContent({ workflow, seed }) {
         cardDecor={activeNode ? <FlowCardDecor node={activeNode} transitions={state.transitions} /> : null}
         stepInfo={activeNode ? { flowName, stage: stages.depths.get(activeNode.nodeKey) ?? null, total: stages.total, isStart: activeNode.isStart } : null}
         nextBlock={activeNode ? (
-          <FlowNextBlock node={activeNode} nodes={state.nodes} transitions={state.transitions} labelForTransition={wf.labelForTransition}
+          <FlowNextBlock node={activeNode} nodes={state.nodes} transitions={state.transitions}
+            stageOf={(nodeKey) => stages.depths.get(nodeKey) ?? null} conditionOf={wf.conditionForTransition}
             onRoute={(trigger, targetKey) => {
               const result = wf.setSingleRoute(activeNode.nodeKey, trigger, targetKey);
               if (result && !result.ok) studio.toast(result.reason, "red");
             }}
+            onRetarget={(route, targetKey) => wf.dispatch({ type: "UPDATE_TRANSITION", localId: route.localId, patch: { targetNodeKey: targetKey } })}
             onActivate={requestPage}
-            onShowMap={showMap}
             onEditRoutes={() => studio.select({ kind: "routes" })}
             onAddStep={(trigger, anchor) => setStepMenu({ anchor, from: { sourceNodeKey: activeNode.nodeKey, trigger } })}
           />

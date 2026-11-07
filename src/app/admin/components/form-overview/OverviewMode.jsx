@@ -112,7 +112,7 @@ export default function OverviewMode() {
       top={room.cardTop()}
       above={!rightDocked && inspector ? <div className="overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/90">{inspector}</div> : null}
       card={card}
-      below={flow?.node && form ? <OverviewNext flow={flow} schemaOf={schemaOf} onPickStep={(id) => room.pickStep(id)} onShowFlow={() => room.switchMode("workflow")} /> : null}
+      below={flow?.node && form ? <OverviewNext flow={flow} schemaOf={schemaOf} onPickStep={(id) => room.pickStep(id)} /> : null}
     />
   );
 

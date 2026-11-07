@@ -31,6 +31,7 @@ const NOTICE_TONE = {
 const HEADER_ROW = "flex h-10 min-w-0 shrink-0 items-center border-b border-neutral-800 px-4 text-sm font-semibold tracking-wide";
 const ACTION_BASE = `group flex items-center justify-center gap-2 rounded-lg border px-3 text-2xs font-medium transition-colors ${FOCUS_RING} disabled:pointer-events-none disabled:opacity-40`;
 const PILL_BASE = "flex min-w-22 shrink-0 items-center gap-1 rounded-lg border px-2.5 py-1 text-2xs";
+const QUIET_PILL_BASE = "flex min-w-0 max-w-full items-start gap-1.5 rounded-lg border px-2 py-1.5 text-left text-xs";
 
 export function panelShellClass(layout) {
   const size = layout === "drawer" ? "h-full w-full pt-8" : "col-span-4 h-[calc(100dvh-5.5rem)]";
@@ -174,7 +175,7 @@ export function PillBadge({ children }) {
   return <span className={`${PILL_BASE} max-w-36 justify-center border-white/10 bg-white/5 text-neutral-300`}>{children}</span>;
 }
 
-export function MenuPill({ value, options, onSelect, placeholder = "", italic = false, wide = false, onDelete, deleteLabel = "Kaldır", deleteHint, open: controlledOpen, onOpenChange }) {
+export function MenuPill({ value, options, onSelect, placeholder = "", italic = false, wide = false, quiet = false, dim = false, leading = null, onDelete, deleteLabel = "Kaldır", deleteHint, open: controlledOpen, onOpenChange }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
@@ -193,22 +194,23 @@ export function MenuPill({ value, options, onSelect, placeholder = "", italic = 
     <>
       <button ref={anchorRef} type="button" aria-haspopup="menu" aria-expanded={open}
         onClick={(event) => { event.stopPropagation(); setOpen(!open); }} onKeyDown={stop}
-        className={`${PILL_BASE} ${wide ? "max-w-52" : "max-w-36"} justify-between transition-colors ${FOCUS_RING} ${italic ? "italic" : ""} ${
+        className={quiet ? `${QUIET_PILL_BASE} transition-colors ${FOCUS_RING} ${open ? "border-white/20 bg-[#1e1e1e] text-neutral-50" : `border-transparent ${dim ? "text-neutral-400" : "text-neutral-200"} hover:bg-white/5 hover:text-neutral-50`}` : `${PILL_BASE} ${wide ? "max-w-52" : "max-w-36"} justify-between transition-colors ${FOCUS_RING} ${italic ? "italic" : ""} ${
           open ? "border-white/20 bg-[#1e1e1e] text-neutral-50"
             : `border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:text-neutral-50 ${italic ? "text-neutral-400" : "text-neutral-300"}`
         }`}
       >
-        <span className="truncate">{current?.label ?? placeholder}</span>
-        <ChevronDown size={11} className={`shrink-0 opacity-70 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        {leading}
+        <span className={quiet ? "min-w-0" : "truncate"}>{current?.label ?? placeholder}</span>
+        <ChevronDown size={11} className={`shrink-0 transition-transform duration-200 ${quiet ? "mt-0.75 opacity-40" : "opacity-70"} ${open ? "rotate-180" : ""}`} />
       </button>
 
       <AnimatePresence>
         {open && (
-          <Floating anchor={anchorRef} onDismiss={() => setOpen(false)} placement="bottom-end" offset={6}>
+          <Floating anchor={anchorRef} onDismiss={() => setOpen(false)} placement={quiet ? "bottom-start" : "bottom-end"} offset={6}>
             <motion.div role="menu" onClick={stop} onKeyDown={stop}
               initial={{ opacity: 0, y: 4, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }}
               transition={{ duration: 0.1 }}
-              className="max-h-72 min-w-44 max-w-64 overflow-y-auto rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-xl scrollbar"
+              className={`max-h-72 min-w-44 overflow-y-auto rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-xl scrollbar ${quiet ? "max-w-[min(26rem,calc(100vw-2rem))]" : "max-w-64"}`}
             >
               {options.map((option) => {
                 const isSelected = option.value === value;
@@ -220,7 +222,7 @@ export function MenuPill({ value, options, onSelect, placeholder = "", italic = 
                         : "text-neutral-300 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    <span className="truncate">{option.label}</span>
+                    <span className={quiet ? "min-w-0" : "truncate"}>{option.label}</span>
                     {isSelected ? <Check size={12} className="shrink-0" /> : option.hint ? <span className="shrink-0 text-3xs text-neutral-600">{option.hint}</span> : null}
                   </button>
                 );

@@ -9,7 +9,7 @@ import {
 import { EMPTY_RULE, useWorkflowEditor } from "../workflow-editor/WorkflowEditorContext";
 import { TRIGGER, connectionError, groupTransitions, toDefinitionPayload } from "../workflow-editor/workflow-graph";
 import { CONNECTION_COPY, fieldQuestionLabel } from "../workflow-editor/workflow-copy";
-import { transitionLabel } from "./studio-flow";
+import { transitionCondition, transitionLabel } from "./studio-flow";
 
 const DEFINITION_DEBOUNCE_MS = 1200;
 const NO_FORMS = {};
@@ -242,6 +242,11 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     schemaOf: (formId) => schemasByFormId[formId]?.schema,
   }), [state.transitions, state.nodes, schemasByFormId]);
 
+  const conditionForTransition = useCallback((transition) => transitionCondition(transition, {
+    nodes: state.nodes,
+    schemaOf: (formId) => schemasByFormId[formId]?.schema,
+  }), [state.nodes, schemasByFormId]);
+
   const localReads = useMemo(() => questionReads(state.nodes, state.transitions), [state.nodes, state.transitions]);
   const liveReads = useMemo(() => {
     const published = liveWorkflow?.published;
@@ -436,6 +441,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     issues,
     issuesByNode,
     labelForTransition,
+    conditionForTransition,
     lockedHighlights,
     membershipOf,
     save,
