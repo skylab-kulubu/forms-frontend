@@ -122,6 +122,13 @@ function WorkflowStudioContent({ workflow, seed }) {
     { ...(snapshot.form ?? {}), ...snapshot.view, id: formId },
   ])), [stateById]);
 
+  useEffect(() => {
+    const revoked = docList.filter((doc, index) => docStates[index]?.revoked).map((doc) => doc.id);
+    if (revoked.length === 0) return;
+    setFailedIds((current) => new Set([...current, ...revoked]));
+    setDocs((current) => Object.fromEntries(Object.entries(current).filter(([formId]) => !revoked.includes(formId))));
+  }, [docList, docStates]);
+
   const loadDoc = useCallback((formId) => {
     if (!formId) return null;
     return studioSession.load(formId).then(
