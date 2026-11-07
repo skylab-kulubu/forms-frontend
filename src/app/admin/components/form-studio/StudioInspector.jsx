@@ -613,7 +613,7 @@ function PeersNote({ others, fieldId }) {
   );
 }
 
-export function FormInspectorBody({ eventLinked = false, flow = null, focusTiming = 0, managedActions = {}, rootPanel = null }) {
+export function FormInspectorBody({ eventLinked = false, flow = null, focusTiming = 0, managedActions = {} }) {
   const { state } = useFormEditor();
   const actions = useFormActions({ eventLinked });
   const { ui, actions: studio } = useStudio();
@@ -656,8 +656,6 @@ export function FormInspectorBody({ eventLinked = false, flow = null, focusTimin
       </>
     );
   }
-
-  if (rootPanel) return rootPanel;
 
   return (
     <>

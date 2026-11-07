@@ -14,7 +14,7 @@ import { isIdentityField } from "@/lib/event-handoff";
 import { durationText } from "@/lib/form-timing";
 import { useFormEditor } from "../form-editor/FormEditorContext";
 import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
-import { NONE, useStudio } from "./StudioContext";
+import { NONE, showsInspector, useStudio } from "./StudioContext";
 import { FieldBlock, InsertLine, focusEditable } from "./StudioField";
 import { useStudioPresence } from "./StudioPresence";
 import { useStudioSession } from "./StudioSession";
@@ -23,7 +23,7 @@ import { CommentSheet, CommentSide, useCommentBoard } from "./StudioComments";
 import { useMediaQuery } from "./useMediaQuery";
 import StudioTask from "./StudioTask";
 import StudioInsertMenu from "./StudioInsertMenu";
-import { EmptyStart, IntroFields, TemplateName, TemplateStart, previewOf } from "./StudioStart";
+import { EmptyStart, IntroFields, TemplateIntro, TemplateStart, previewOf } from "./StudioStart";
 import { CARD_WIDTH, CardFooter, CardShell, DeliverablesHeader, DisplayFields, StepBar } from "./StudioCard";
 import { conditionLabel, insertIndexOf, missingFieldIds, questionNumbers, requiredFill, visibleFieldsOf } from "./studio-schema";
 import { DROP_ANIMATION, conditionLoss, slotOf, useStudioSensors } from "./studio-dnd";
@@ -150,7 +150,7 @@ export function OverviewButton({ onClick }) {
   );
 }
 
-export function StudioToolbar({ inFlow, empty = false, comments = null, onAdd, onShowMap, onOverview = null }) {
+export function StudioToolbar({ inFlow, empty = false, comments = null, settings = true, onAdd, onShowMap, onOverview = null }) {
   const { ui, actions: studio } = useStudio();
 
   return (
@@ -194,7 +194,7 @@ export function StudioToolbar({ inFlow, empty = false, comments = null, onAdd, o
           </ToolButton>
         </>
       ) : null}
-      <SheetButtons side="end" />
+      {settings ? <SheetButtons side="end" /> : null}
     </div>
   );
 }
@@ -247,6 +247,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
   const { ui, actions: studio } = useStudio();
   const session = useStudioSession();
   const template = ui.template;
+  const inspectorShown = showsInspector(ui, state.schema);
 
   const formKey = ui.activeFormId ?? "new";
   const phone = ui.devices[formKey] === "phone";
@@ -488,9 +489,9 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
   return (
     <div className="relative h-full min-h-0">
       <div ref={scrollRef} data-studio-page data-commenting={board.onBoard ? "true" : undefined} onPointerDown={handleBackgroundDown}
-        className="studio-fade h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar"
+        className={`studio-fade h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar ${inspectorShown ? "" : "mr-[calc(var(--inspector-room)*-1)]"}`}
       >
-        <div ref={pushRef} className="flex min-h-full flex-col transition-transform duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none">
+        <div ref={pushRef} className={`flex min-h-full flex-col transition-transform duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${template ? "w-(--canvas-width)" : ""}`}>
         <div ref={columnRef} data-studio-column className={`relative mx-auto flex w-full flex-1 flex-col px-3 pt-4 sm:px-14 sm:pt-10 ${empty ? "pb-24 sm:pb-20" : "pb-36 sm:pb-40"}`}
           style={{ maxWidth: width + 112 }}
         >
@@ -525,7 +526,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
             </span>
           </div>
 
-          {template ? <TemplateName title={state.title} onTitle={actions.setTitle} setup={fields.length === 0} phone={phone} /> : null}
+          {template ? <TemplateIntro title={state.title} description={state.description} onTitle={actions.setTitle} onDescription={actions.setDescription} setup={fields.length === 0} phone={phone} /> : null}
 
           <div ref={cardRef} className="relative mx-auto flex w-full flex-1 flex-col"
             style={{ maxWidth: width, ...cardMotion }}
@@ -613,7 +614,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
         </div>
       </div>
 
-      <StudioToolbar inFlow={inFlow} empty={empty} onShowMap={onShowMap} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))}
+      <StudioToolbar inFlow={inFlow} empty={empty} settings={inspectorShown} onShowMap={onShowMap} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))}
         comments={state.id && !template ? { open: board.open, count: board.openCount, unseen: board.unseen, onToggle: studio.toggleComments } : null}
       />
 

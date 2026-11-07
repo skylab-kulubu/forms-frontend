@@ -20,7 +20,7 @@ export function previewOf(item) {
 const DESCRIPTION_HIDDEN = { height: 0, opacity: 0, marginTop: 0 };
 const DESCRIPTION_SHOWN = { height: "auto", opacity: 1, marginTop: 12 };
 
-export function TemplateName({ title, onTitle, setup = false, phone = false }) {
+export function TemplateIntro({ title, description, onTitle, onDescription, setup = false, phone = false }) {
   const focused = useRef(false);
 
   useEffect(() => {
@@ -30,9 +30,16 @@ export function TemplateName({ title, onTitle, setup = false, phone = false }) {
   }, [setup, title]);
 
   return (
-    <h1 className={`mb-4 px-1 font-semibold tracking-tight text-neutral-50 ${phone ? "text-xl" : "text-xl sm:text-2xl"}`}>
-      <Editable editKey="form-title" value={title} placeholder="Şablonun adı" onChange={onTitle} className="-mx-1 block rounded-md px-1" />
-    </h1>
+    <div className="mb-4 px-1">
+      <h1 className={`font-semibold tracking-tight text-neutral-50 ${phone ? "text-xl" : "text-xl sm:text-2xl"}`}>
+        <Editable editKey="form-title" value={title} placeholder="Şablonun adı" onChange={onTitle} onEnter={setup ? () => focusEditable("form-description") : undefined}
+          className="-mx-1 block rounded-md px-1"
+        />
+      </h1>
+      <p className="mt-1.5 text-sm text-neutral-400">
+        <Editable editKey="form-description" value={description} placeholder="Açıklama ekle" onChange={onDescription} className="-mx-1 block rounded-md px-1" />
+      </p>
+    </div>
   );
 }
 

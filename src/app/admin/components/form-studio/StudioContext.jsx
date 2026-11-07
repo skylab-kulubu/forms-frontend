@@ -4,6 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 
 export const NONE = { kind: "none" };
 
+export const showsInspector = (ui, fields) =>
+  !ui.template || ui.fill || (ui.selection.kind === "fields" && ui.selection.ids.some((id) => fields.some((field) => field.id === id)));
+
 const TOAST_MS = 2600;
 const TOAST_MS_PER_CHAR = 100;
 

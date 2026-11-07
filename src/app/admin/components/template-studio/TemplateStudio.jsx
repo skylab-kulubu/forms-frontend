@@ -12,7 +12,7 @@ import ApprovalOverlay from "../ApprovalOverlay";
 import ShareOverlay from "../ShareOverlay";
 import { FormEditorProvider, useFormEditor } from "../form-editor/FormEditorContext";
 import { HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
-import { StudioProvider, useStudio } from "../form-studio/StudioContext";
+import { StudioProvider, showsInspector, useStudio } from "../form-studio/StudioContext";
 import { LocalStudioSession } from "../form-studio/StudioSession";
 import StudioLayout from "../form-studio/StudioLayout";
 import StudioPage from "../form-studio/StudioPage";
@@ -25,7 +25,6 @@ import { useFormActions } from "../form-studio/useFormActions";
 import { scrollFieldIntoView } from "../form-studio/StudioPage";
 import FormStart from "./FormStart";
 import TemplatePalette from "./TemplatePalette";
-import TemplatePanel from "./TemplatePanel";
 import { useTemplateDraftAutoSave } from "./useTemplateDraftAutoSave";
 
 const nameOf = (state) => state.title?.trim() || "Adsız şablon";
@@ -50,6 +49,11 @@ function TemplateContent({ doc, initialDraft }) {
   const { syncStatus, draftSavedAt } = useTemplateDraftAutoSave(state, initialDraft);
 
   const name = nameOf(state);
+  const inspectorOpen = showsInspector(ui, state.schema);
+
+  useEffect(() => {
+    if (!inspectorOpen && ui.sheet === "inspector") studio.setSheet(null);
+  }, [inspectorOpen, ui.sheet, studio]);
 
   useEffect(() => {
     setTemplateTitle(name);
@@ -119,7 +123,8 @@ function TemplateContent({ doc, initialDraft }) {
       outline={outline}
       center={<StudioPage onOverview={() => router.push("/admin/templates")} start={(phone) => <FormStart phone={phone} onImport={importFields} />} />}
       inspectorHeader={<Crumbs items={crumbs} />}
-      inspector={<FormInspectorBody rootPanel={<TemplatePanel />} />}
+      inspectorOpen={inspectorOpen}
+      inspector={inspectorOpen ? <FormInspectorBody /> : null}
       overlays={(
         <>
           <FormKeys onSave={handleSave} />
