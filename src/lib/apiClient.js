@@ -5,6 +5,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 export const SESSION_EXPIRED_EVENT = "skyforms:session-expired";
 
 const SESSION_REUSE_MARGIN_MS = 30 * 1000;
+const UNREACHABLE_MESSAGE = "Sunucuya ulaşılamadı. Bağlantıyı kontrol edip tekrar deneyin.";
 
 function tokenExpiry(token) {
   try {
@@ -95,7 +96,12 @@ export async function request(path, options = {}) {
   });
 
   const send = async (authToken) => {
-    const response = await fetch(`${BASE_URL}${path}`, buildOptions(authToken));
+    let response;
+    try {
+      response = await fetch(`${BASE_URL}${path}`, buildOptions(authToken));
+    } catch (error) {
+      throw error?.name === "AbortError" ? error : new Error(UNREACHABLE_MESSAGE);
+    }
     let data = null;
     try { data = await response.json(); } catch { }
     return { response, data };
