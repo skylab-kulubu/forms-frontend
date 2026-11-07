@@ -55,14 +55,16 @@ export function StepBar({ flowName, stage, total, fill = 0, timeLimitMinutes = n
   );
 }
 
-export function CardFooter({ phone = false, userName, onSubmit, submitLabel = "Gönder" }) {
+export function CardFooter({ phone = false, userName, onSubmit, submitLabel = "Gönder", bare = false }) {
   return (
     <div className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
       <div className={`flex gap-4 ${phone ? "flex-col items-stretch" : "flex-col items-stretch sm:flex-row sm:items-center sm:justify-between sm:gap-6"}`}>
-        <p className={`flex min-w-0 items-center gap-1.5 text-2xs text-neutral-500 ${phone ? "order-2" : "order-2 sm:order-1"}`}>
-          <UserRound size={12} className="shrink-0" />
-          <span className="truncate"><span className="text-neutral-300">{userName || "Başvuran"}</span> olarak yanıtlıyorsunuz</span>
-        </p>
+        {bare ? null : (
+          <p className={`flex min-w-0 items-center gap-1.5 text-2xs text-neutral-500 ${phone ? "order-2" : "order-2 sm:order-1"}`}>
+            <UserRound size={12} className="shrink-0" />
+            <span className="truncate"><span className="text-neutral-300">{userName || "Başvuran"}</span> olarak yanıtlıyorsunuz</span>
+          </p>
+        )}
         <button type="button" onClick={onSubmit} onPointerDown={(event) => event.stopPropagation()}
           className={`relative inline-flex min-w-30 items-center justify-center gap-2 whitespace-nowrap rounded-xl border-[1.5px] border-skylab-300/50 bg-skylab-400/40 px-8 py-3 text-sm font-semibold transition-all hover:bg-pink-200/60 ${phone ? "order-1" : "order-1 sm:order-2 sm:ml-auto sm:shrink-0"}`}
         >

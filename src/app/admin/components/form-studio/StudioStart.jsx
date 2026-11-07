@@ -20,6 +20,29 @@ export function previewOf(item) {
 const DESCRIPTION_HIDDEN = { height: 0, opacity: 0, marginTop: 0 };
 const DESCRIPTION_SHOWN = { height: "auto", opacity: 1, marginTop: 12 };
 
+export function TemplateIntro({ title, description, onTitle, onDescription, setup = false, phone = false }) {
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (focused.current) return;
+    focused.current = true;
+    if (setup && !title?.trim() && window.matchMedia("(pointer: fine)").matches) focusEditable("form-title");
+  }, [setup, title]);
+
+  return (
+    <div className="mb-4 px-1">
+      <h1 className={`font-semibold tracking-tight text-neutral-50 ${phone ? "text-xl" : "text-xl sm:text-2xl"}`}>
+        <Editable editKey="form-title" value={title} placeholder="Şablonun adı" onChange={onTitle} onEnter={setup ? () => focusEditable("form-description") : undefined}
+          className="-mx-1 block rounded-md px-1"
+        />
+      </h1>
+      <p className="mt-1.5 text-sm text-neutral-400">
+        <Editable editKey="form-description" value={description} placeholder="Açıklama ekle" onChange={onDescription} className="-mx-1 block rounded-md px-1" />
+      </p>
+    </div>
+  );
+}
+
 export function IntroFields({ title, description, onTitle, onDescription, setup = false, phone = false, collapsed = false }) {
   const descriptionRef = useRef(null);
   const autoFocused = useRef(false);
@@ -71,7 +94,7 @@ export function EmptyStart({ phone = false }) {
         </svg>
         {preview ? <preview.Icon size={26} strokeWidth={1.5} className="relative" /> : <PackagePlus size={26} strokeWidth={1.5} className="relative" />}
       </div>
-      <p className="mt-5 text-base font-semibold tracking-tight text-neutral-100">{preview?.label ?? "Formunuzu oluşturmaya başlayın"}</p>
+      <p className="mt-5 text-base font-semibold tracking-tight text-neutral-100">{preview?.label ?? (ui.template ? "Şablonunuzu oluşturmaya başlayın" : "Formunuzu oluşturmaya başlayın")}</p>
       <p className={`mt-1.5 text-balance text-xs leading-relaxed text-neutral-400 ${phone ? "max-w-64" : "max-w-76"}`}>
         {preview ? preview.note : "Alttaki Ekle ile bir bileşen seçin; ilk soru buraya eklenir."}
       </p>
@@ -79,38 +102,54 @@ export function EmptyStart({ phone = false }) {
   );
 }
 
+export function StartList({ heading, action = null, phone = false, children }) {
+  return (
+    <div>
+      <div className={`flex items-center gap-2 ${phone ? "px-1" : "px-2 md:px-4"}`}>
+        <span className="shrink-0 text-2xs font-medium text-neutral-500">{heading}</span>
+        <span className="h-px flex-1 bg-white/5" />
+        {action}
+      </div>
+      <div className="mt-1 divide-y divide-white/5">{children}</div>
+    </div>
+  );
+}
+
+export function StartRow({ Icon, title, detail = null, meta = null, phone = false, onClick }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`group flex w-full items-center gap-3 py-2.5 text-left transition-colors hover:bg-white/3 focus-visible:bg-white/3 focus-visible:outline-none ${phone ? "px-1" : "px-2 md:px-4"}`}
+    >
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3 text-neutral-400 transition-colors group-hover:text-neutral-200">
+        <Icon size={13} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm text-neutral-200">{title}</span>
+        {detail ? <span className="block truncate text-2xs text-neutral-500">{detail}</span> : null}
+      </span>
+      {meta ? <span className={`shrink-0 text-2xs tabular-nums text-neutral-500 ${phone ? "hidden" : "hidden sm:inline"}`}>{meta}</span> : null}
+      <ChevronRight size={13} className="shrink-0 text-neutral-600 transition-colors group-hover:text-neutral-300" />
+    </button>
+  );
+}
+
 export function TemplateStart({ phone = false, onPick }) {
   const { templates } = useStudioTemplates();
   const shown = templates.slice(0, 3);
   if (shown.length === 0) return null;
-  const pad = phone ? "px-1" : "px-2 md:px-4";
 
   return (
-    <div>
-      <div className={`flex items-center gap-2 ${pad}`}>
-        <span className="text-2xs font-medium text-neutral-500">Şablonla başlayın</span>
-        <span className="h-px flex-1 bg-white/5" />
-      </div>
-      <div className="mt-1 divide-y divide-white/5">
-        {shown.map((template) => {
-          const schema = Array.isArray(template.schema) ? template.schema : [];
-          return (
-            <button key={template.id} type="button" onClick={() => onPick(template)}
-              className={`group flex w-full items-center gap-3 py-2.5 text-left transition-colors hover:bg-white/3 focus-visible:bg-white/3 focus-visible:outline-none ${pad}`}
-            >
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3 text-neutral-400 transition-colors group-hover:text-neutral-200">
-                <LayoutTemplate size={13} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm text-neutral-200">{template.title || "Adsız şablon"}</span>
-                {schema.length ? <span className="block truncate text-2xs text-neutral-500">{schema.map((field) => fieldLabel(field)).join(" · ")}</span> : null}
-              </span>
-              <span className={`shrink-0 text-2xs tabular-nums text-neutral-500 ${phone ? "hidden" : "hidden sm:inline"}`}>{schema.length} bileşen</span>
-              <ChevronRight size={13} className="shrink-0 text-neutral-600 transition-colors group-hover:text-neutral-300" />
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <StartList heading="Şablonla başlayın" phone={phone}>
+      {shown.map((template) => {
+        const schema = Array.isArray(template.schema) ? template.schema : [];
+        return (
+          <StartRow key={template.id} Icon={LayoutTemplate} phone={phone} onClick={() => onPick(template)}
+            title={template.title || "Adsız şablon"}
+            detail={schema.length ? schema.map((field) => fieldLabel(field)).join(" · ") : null}
+            meta={`${schema.length} bileşen`}
+          />
+        );
+      })}
+    </StartList>
   );
 }

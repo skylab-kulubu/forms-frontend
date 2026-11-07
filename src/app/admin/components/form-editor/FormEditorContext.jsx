@@ -14,6 +14,7 @@ function stateOf(snapshot, membership) {
         workflow: membership === undefined ? form?.workflow ?? null : membership,
         publishedVersion: form ? Number(form.publishedVersion ?? 1) : 0,
         neverPublished: snapshot.neverPublished,
+        restored: Boolean(snapshot.restored),
         dirty: snapshot.dirty,
         pending: snapshot.pending,
         isSaved: !snapshot.dirty && !snapshot.pending,

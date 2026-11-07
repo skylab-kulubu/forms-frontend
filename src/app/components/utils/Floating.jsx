@@ -27,7 +27,7 @@ export function Floating({ anchor, onDismiss, placement = "bottom-start", offset
     if (resolved.node && !resolved.node.isConnected) return;
 
     const { rect } = resolved;
-    if (matchWidth) floating.style.width = `${rect.width}px`;
+    if (matchWidth) floating.style.width = `${Math.min(rect.width, window.innerWidth - VIEWPORT_PADDING * 2)}px`;
 
     const width = floating.offsetWidth;
     const height = floating.offsetHeight;

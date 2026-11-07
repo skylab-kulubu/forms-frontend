@@ -29,6 +29,12 @@ const updateGroup = async ({ id, payload }) => {
   });
 };
 
+export const saveGroupDraft = (groupId, draft, { token, keepalive } = {}) =>
+  request(`/api/admin/forms/component-groups/${groupId}/draft`, { method: "POST", body: draft, token, keepalive });
+
+export const deleteGroupDraft = (groupId, { token, keepalive } = {}) =>
+  request(`/api/admin/forms/component-groups/${groupId}/draft`, { method: "DELETE", token, keepalive });
+
 const deleteGroup = async (groupId) => {
   return request(`/api/admin/forms/component-groups/${groupId}`, {
     method: "DELETE",
@@ -51,6 +57,16 @@ export const useGroupQuery = (groupId) =>
     queryFn: () => fetchGroupById(groupId),
     enabled: !!groupId,
     retry: false,
+  });
+
+export const useGroupDraftQuery = (groupId, { enabled = true } = {}) =>
+  useQuery({
+    queryKey: ["group-draft", groupId],
+    queryFn: () => request(`/api/admin/forms/component-groups/${groupId}/draft`),
+    enabled: !!groupId && enabled,
+    retry: false,
+    staleTime: Infinity,
+    gcTime: 0,
   });
 
 export const useGroupMutation = () => {

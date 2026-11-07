@@ -63,7 +63,7 @@ export const APPROVAL_PRESETS = {
         title: "Bu şablonu kalıcı olarak sil",
         highlights: () => [
             "Bu şablona ait tüm bileşenler kalıcı olarak silinecek.",
-            "Bu şablonu kullanan formlar etkilenebilir.",
+            "Bu şablondan soru eklenmiş formlar değişmez.",
             "Bu işlem geri alınamaz.",
         ],
         approveLabel: (ctx) => ctx.isPending ? "Siliniyor..." : "Şablonu sil",
@@ -78,20 +78,6 @@ export const APPROVAL_PRESETS = {
         highlights: (ctx) => [
             `Formun sahibi ${ctx.targetName} olur; siz editör olarak kalırsınız.`,
             "Formu silmek ve düzenleme ekibini yönetmek yeni sahibe geçer.",
-            "Sahipliği yalnız yeni sahip geri devredebilir.",
-        ],
-        approveLabel: (ctx) => ctx.isPending ? "Devrediliyor..." : "Sahipliği devret",
-        rejectLabel: () => "Vazgeç",
-    },
-
-    "transfer-group": {
-        variant: "phrase",
-        requiredPhrase: "Kabul ediyorum",
-        icon: ArrowRightLeft,
-        title: "Şablonun sahipliğini devret",
-        highlights: (ctx) => [
-            `Şablonun sahibi ${ctx.targetName} olur ve şablon listenizden çıkar.`,
-            "Şablonun açık paylaşım bağlantısı iptal edilir.",
             "Sahipliği yalnız yeni sahip geri devredebilir.",
         ],
         approveLabel: (ctx) => ctx.isPending ? "Devrediliyor..." : "Sahipliği devret",
