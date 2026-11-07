@@ -10,7 +10,7 @@ import { formQuery, useExportResponses } from "@/lib/hooks/useFormAdmin";
 import { attemptViewQuery, formResponsesQuery, responsePageQuery, useResponseStatusMutation } from "@/lib/hooks/useResponse";
 import { responsePreviewQuery } from "@/lib/hooks/useResponseShare";
 import RoomFrame, { INSPECTOR_HEADER } from "../form-room/RoomFrame";
-import RoomCanvas, { CardTop } from "../form-room/RoomCanvas";
+import RoomCanvas, { CardTop, fitsBeside } from "../form-room/RoomCanvas";
 import RoomHeader, { HeaderButton, HeaderIcon, HeaderTouch } from "../form-room/RoomHeader";
 import { CardSkeleton } from "../form-room/RoomSkeleton";
 import { useRoom, useRoomKeys, useRoomState } from "../form-room/room-context";
@@ -20,7 +20,7 @@ import { questionNumbers } from "../form-studio/studio-schema";
 import ApplicantList from "./ApplicantList";
 import DecisionPanel, { decisionAccess } from "./DecisionPanel";
 import JourneyChips from "./JourneyChips";
-import MarginRail, { ChangeNote, RAIL_EXTRA, RAIL_GAP, RAIL_MIN_CARD, RAIL_W, RevisionNote } from "./MarginRail";
+import MarginRail, { ChangeNote, RevisionNote } from "./MarginRail";
 import PanelHead from "./PanelHead";
 import ResponseCard, { changedIdsOf, fieldsOf } from "./ResponseCard";
 import useMailTransfer from "./useMailTransfer";
@@ -31,6 +31,7 @@ import {
 
 const FRESH = 30_000;
 const OPEN_WAIT_MS = 700;
+const NOTE_FLASH_MS = 900;
 const EMPTY = {};
 const IDLE = { pending: null, note: "", flags: null, phase: "idle", error: null };
 const DECISION_KEYS = { 1: 2, 2: RETURNED, 3: 3 };
@@ -52,11 +53,21 @@ function detailOf(payload, attempt) {
   return attempt ? payload?.data ?? null : payload?.data ?? payload ?? null;
 }
 
+function answerOf(route) {
+  return route.answer?.q ? { q: route.answer.q, v: route.answer.v ?? "" } : null;
+}
+
+function filtersOf(filters, formId) {
+  return filters.answer && filters.answer.formId !== formId ? { ...filters, answer: null } : filters;
+}
+
 export function prefetchResponses(queryClient, route) {
   if (!route.formId) return Promise.resolve();
   const status = validStatus(route.status);
-  const filters = status ? { ...listMemory.filters, status } : listMemory.filters;
-  const page = status ? 1 : listMemory.pages[route.formId] ?? 1;
+  const answer = answerOf(route);
+  const remembered = filtersOf(listMemory.filters, route.formId);
+  const filters = answer ? { ...remembered, status: status ?? "all", answer } : status ? { ...remembered, status } : remembered;
+  const page = status || answer ? 1 : listMemory.pages[route.formId] ?? 1;
   return Promise.all([
     queryClient.prefetchQuery({ ...formResponsesQuery(route.formId, listParams(filters, page)), staleTime: FRESH }),
     route.responseId && !status ? queryClient.prefetchQuery({ ...detailQueryOf(route), staleTime: FRESH }) : null,
@@ -114,7 +125,7 @@ export default function ResponseMode() {
   const [search, setSearch] = useRoomState("response.search", "");
   const [reviews, setReviews] = useRoomState("response.review", EMPTY);
   const [autoNext, setAutoNext] = useRoomState("response.autoNext", true);
-  const [showChanges, setShowChanges] = useRoomState("response.showChanges", true);
+  const [changesChoice, setChangesChoice] = useRoomState("response.changes", null);
   const [viewKeys, setViewKeys] = useRoomState("response.viewKey", EMPTY);
   const [placed, setPlaced] = useRoomState("response.placed", null);
   const [, setLastResp] = useRoomState("lastResp", EMPTY);
@@ -140,8 +151,10 @@ export default function ResponseMode() {
   }, [filters, pages]);
 
   const routeStatus = validStatus(route.status);
-  const activeFilters = routeStatus ? { ...filters, status: routeStatus } : filters;
-  const page = routeStatus ? 1 : pages[formId] ?? 1;
+  const routeAnswer = answerOf(route);
+  const formFilters = filtersOf(filters, formId);
+  const activeFilters = routeAnswer ? { ...formFilters, status: routeStatus ?? "all", answer: routeAnswer } : routeStatus ? { ...formFilters, status: routeStatus } : formFilters;
+  const page = routeStatus || routeAnswer ? 1 : pages[formId] ?? 1;
   const listResult = useQuery({
     ...formResponsesQuery(formId, listParams(activeFilters, page)),
     enabled: Boolean(formId) && canView,
@@ -169,7 +182,7 @@ export default function ResponseMode() {
   });
   const own = route.responseId ? detailOf(ownResult.data, isAttempt) : null;
 
-  const wantsPlace = Boolean(route.responseId) && !isAttempt && !routeStatus && listReady && !sameId(placed, route.responseId);
+  const wantsPlace = Boolean(route.responseId) && !isAttempt && !routeStatus && !routeAnswer && listReady && !sameId(placed, route.responseId);
   const onPage = rows.some((row) => rowMatches(row, route));
   const placeResult = useQuery({
     ...responsePageQuery(formId, route.responseId, listParams(activeFilters, null)),
@@ -241,11 +254,19 @@ export default function ResponseMode() {
     go({ status: null, responseId: null, attempt: false }, { replace: true });
   }, [route.status, routeStatus, formId, go, setFiltersValue, setPages]);
 
+  useEffect(() => {
+    const answer = answerOf({ answer: route.answer });
+    if (!answer) return;
+    setFiltersValue((current) => ({ ...current, status: routeStatus ?? "all", answer: { ...answer, formId } }));
+    setPages((current) => ({ ...current, [formId]: 1 }));
+    go({ answer: null, responseId: null, attempt: false }, { replace: true });
+  }, [route.answer, routeStatus, formId, go, setFiltersValue, setPages]);
+
   const firstRow = rows[0] ?? null;
   useEffect(() => {
-    if (route.responseId || route.status || !listReady || !firstRow) return;
+    if (route.responseId || route.status || route.answer || !listReady || !firstRow) return;
     go(rowTarget(firstRow), { replace: true });
-  }, [route.responseId, route.status, listReady, firstRow, go]);
+  }, [route.responseId, route.status, route.answer, listReady, firstRow, go]);
 
   useEffect(() => {
     if (!repick.current || !listReady) return;
@@ -343,6 +364,23 @@ export default function ResponseMode() {
     } : null);
   };
 
+  const showChanges = changesChoice ?? (cardPhone || fitsBeside(centerWidth, room.cardWidth));
+  const onBoard = Boolean(previous) && Boolean(shown) && !cardPhone;
+  const returned = Number(previous?.status) === RETURNED;
+  const notesOpen = onBoard && showChanges && (returned || changedIds.length > 0);
+
+  const closeNotes = () => {
+    if (!notesOpen) return false;
+    setChangesChoice(false);
+    return true;
+  };
+
+  const openNote = (questionId) => {
+    setChangesChoice(true);
+    setHover({ id: shown.id, q: questionId });
+    later(() => setHover(null), NOTE_FLASH_MS);
+  };
+
   const shownReview = shown ? reviewOf(shown.id) : IDLE;
   const access = shown ? decisionAccess(shown, shownIsAttempt, shownReview) : null;
   const flagMode = shownReview.pending === RETURNED;
@@ -410,8 +448,8 @@ export default function ResponseMode() {
       return true;
     }
     if (modifier || event.altKey) return false;
-    if (event.key === "Escape") return cancelDecision();
-    if (DECISION_KEYS[event.key]) return startDecision(DECISION_KEYS[event.key]);
+    if (event.key === "Escape") return cancelDecision() || closeNotes();
+    if (DECISION_KEYS[event.key] && !room.readOnly) return startDecision(DECISION_KEYS[event.key]);
     if (event.key === "Enter") {
       if (!shownReview.pending || event.target?.closest?.("button, a, summary, [role='button']")) return false;
       event.preventDefault();
@@ -437,12 +475,16 @@ export default function ResponseMode() {
     return pending > 0 ? { text: pending, dot: "bg-amber-400", tone: "text-amber-300/80" } : { text: metrics.totalResponses ?? 0, tone: "text-neutral-600" };
   };
 
+  const answerField = activeFilters.answer ? (Array.isArray(form?.schema) ? form.schema : []).find((field) => field.id === activeFilters.answer.q) ?? null : null;
+  const answerNumber = answerField ? questionNumbers(form.schema).get(answerField.id) : null;
+  const answerLabel = activeFilters.answer ? `${answerNumber ? `${answerNumber}. soru` : "Soru"}: ${activeFilters.answer.v || "boş"}` : null;
+
   const outline = (where) => (
     <>
       {room.outlineHead(where)}
       {room.steps(countOf, { keysHint: false })}
       {canView ? (
-        <ApplicantList rows={rows} counts={counts} timed={timed} filters={activeFilters} setFilters={setFilters} search={search} setSearch={setSearch}
+        <ApplicantList rows={rows} counts={counts} timed={timed} filters={activeFilters} setFilters={setFilters} search={search} setSearch={setSearch} answerLabel={answerLabel}
           isSelected={(row) => rowMatches(row, route)} onSelect={selectRow} pagination={pagination}
           onPage={(next) => setPages((current) => ({ ...current, [formId]: next }))}
           loading={listResult.isPending} error={listResult.isError} touch={phone}
@@ -471,6 +513,14 @@ export default function ResponseMode() {
           <X size={10} />
         </button>
       ) : null}
+      {answerLabel ? (
+        <button type="button" onClick={() => setFilters({ ...activeFilters, answer: null })} title="Cevap süzgecini kaldır"
+          className="mr-1 hidden h-6 max-w-44 items-center gap-1 rounded-md border border-skylab-400/30 bg-skylab-500/10 px-1.5 text-3xs text-skylab-300 transition-colors hover:text-neutral-50 sm:flex"
+        >
+          <span className="min-w-0 truncate">{answerLabel}</span>
+          <X size={10} className="shrink-0" />
+        </button>
+      ) : null}
       <NavButton label="Önceki (←)" disabled={atStart} onClick={() => stepResponse(-1)}><ChevronLeft size={15} /></NavButton>
       <span className="flex min-w-12 items-center justify-center gap-1 text-2xs tabular-nums text-neutral-500" title="← → ile listedeki sıradaki kişiye geçilir">
         {filterOn ? <span title={`Filtre: ${filterInfo.label}`} className={`size-1.5 rounded-full sm:hidden ${filterInfo.dot ?? ""}`} /> : null}
@@ -497,7 +547,8 @@ export default function ResponseMode() {
     <>
       <JourneyChips steps={steps} viewKey={viewKey} ownKey={ownKey} onPick={pickJourney} />
       {previous ? (
-        <button type="button" onClick={() => setShowChanges((value) => !value)} aria-pressed={showChanges} title={`${previousStep?.round ?? 1}. gönderimden farklı cevapları vurgula`}
+        <button type="button" onClick={() => setChangesChoice(!showChanges)} aria-pressed={showChanges}
+          title={onBoard ? "Önceki cevapları yanda göster" : `${previousStep?.round ?? 1}. gönderimden farklı cevapları vurgula`}
           className={`flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-3xs font-medium transition-colors sm:h-6 sm:px-2 ${
             showChanges ? "border-sky-400/40 bg-sky-400/10 text-sky-200" : "border-white/10 text-neutral-400 hover:text-neutral-200"
           }`}
@@ -540,24 +591,21 @@ export default function ResponseMode() {
   ) : null;
   const above = mailNotice || banner ? <div className="flex flex-col gap-2">{mailNotice}{banner}</div> : null;
 
-  const railRoom = centerWidth - 10 - RAIL_EXTRA;
-  const railOn = Boolean(previous) && Boolean(shown) && showChanges && !cardPhone && railRoom >= RAIL_MIN_CARD;
-  const cardWidth = railOn ? Math.min(room.cardWidth, railRoom) : room.cardWidth;
   const fieldsById = new Map(allFields.map((field) => [field.id, field]));
-  const notes = railOn ? [
-    Number(previous.status) === RETURNED ? { key: `${shown.id}:req`, anchor: null, node: <RevisionNote previous={previous} /> } : null,
+  const notes = onBoard ? [
+    returned ? { key: `${shown.id}:req`, anchor: null, node: <RevisionNote previous={previous} /> } : null,
     ...changedIds.map((id) => ({
       key: `${shown.id}:${id}`,
       anchor: id,
       node: <ChangeNote field={fieldsById.get(id)} number={numbers.get(id)} previous={previous} previousAnswer={previousAnswers?.get(id)} requested={requestedBefore.includes(id)} />,
     })),
   ].filter(Boolean) : [];
-  const hoverQ = railOn && hover?.id === shown?.id ? hover.q : null;
-  const rail = railOn ? {
-    extra: RAIL_EXTRA,
-    gap: RAIL_GAP,
-    width: RAIL_W,
-    render: (cardRef) => <MarginRail cardRef={cardRef} notes={notes} onHover={(q) => setHover(q ? { id: shown.id, q } : null)} />,
+  const hoverQ = notesOpen && hover?.id === shown?.id ? hover.q : null;
+  const side = onBoard ? {
+    open: notesOpen,
+    onClose: closeNotes,
+    Notes: MarginRail,
+    props: { open: notesOpen, notes, onHover: (q) => setHover(q ? { id: shown.id, q } : null) },
   } : null;
 
   let card;
@@ -576,19 +624,19 @@ export default function ResponseMode() {
     card = (
       <ResponseCard form={shownForm} detail={shown} isAttempt={shownIsAttempt} previous={previous} showChanges={showChanges} flagMode={flagMode} flags={flags}
         onFlag={(id) => patchReview(shown.id, { flags: flags.includes(id) ? flags.filter((item) => item !== id) : [...flags, id] })}
-        phone={cardPhone} railOn={railOn} hoverQ={hoverQ} compactHeader={phone} revisionRow={!railOn && Number(previous?.status) === RETURNED}
+        phone={cardPhone} board={onBoard} notesOpen={notesOpen} onOpenNote={openNote} hoverQ={hoverQ} compactHeader={phone} revisionRow={!onBoard && returned}
         onOpenPrevious={previousStep?.responseId ? () => pickJourney(previousStep) : null}
         stepInfo={room.stepInfo && !isOwnView ? { ...room.stepInfo, stage: viewedStep.stage } : room.stepInfo}
       />
     );
   }
 
-  const panelHead = <PanelHead detail={shown} isAttempt={shownIsAttempt} />;
+  const panelHead = <PanelHead detail={shown} isAttempt={shownIsAttempt} readOnly={room.readOnly} />;
   const panel = shown && !linkedId ? (
     <DecisionPanel key={shown.id} detail={shown} isAttempt={shownIsAttempt} ownKind={isOwnView ? null : sameStage ? "round" : "stage"} numbers={numbers}
       state={shownReview} setState={(patch) => patchReview(shown.id, patch)} onStart={startDecision} onConfirm={confirmDecision} onCancel={cancelDecision}
       nextPending={nextPending ? { ...nextPending, name: personOf(nextPending).name } : null} onOpenNext={() => nextPending && openRow(nextPending, 1)}
-      autoNext={autoNext} setAutoNext={setAutoNext} showAutoNext={isOwnView}
+      autoNext={autoNext} setAutoNext={setAutoNext} showAutoNext={isOwnView} readOnly={room.readOnly}
       onExtended={() => {
         if (shown.attempt?.id) go({ formId: shown.formId ?? formId, responseId: shown.attempt.id, attempt: true }, { replace: true });
       }}
@@ -618,10 +666,10 @@ export default function ResponseMode() {
   });
 
   const center = (
-    <RoomCanvas key={`${formId}:${route.responseId ?? ""}:${own ? viewKeys[own.id] ?? "" : ""}`} width={centerWidth} cardWidth={cardWidth}
+    <RoomCanvas key={`${formId}:${route.responseId ?? ""}:${own ? viewKeys[own.id] ?? "" : ""}`} width={centerWidth} cardWidth={room.cardWidth}
       top={own && !linkedId ? <CardTop row1={phone ? null : identity} row2={row2} /> : null}
       sticky={phone && own && !linkedId ? <div className="flex h-12 min-w-0 items-center gap-2">{identity}</div> : null}
-      above={above} card={card} rail={rail} below={decisionBox}
+      above={above} card={card} side={side} below={decisionBox}
     />
   );
 

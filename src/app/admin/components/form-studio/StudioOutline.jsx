@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -14,6 +14,17 @@ import { NONE, useStudio } from "./StudioContext";
 import { conditionPhrase, fieldLabel, fieldTypeOf, insertIndexOf, questionNumbers, visibleFieldsOf } from "./studio-schema";
 import { DragLossNote, REORDER_NOTICE, scrollFieldIntoView } from "./StudioPage";
 import { DROP_ANIMATION, conditionLoss, slotOf, useStudioSensors } from "./studio-dnd";
+import { PresenceDots, useStudioPresence } from "./StudioPresence";
+import { useComments, useStudioSession } from "./StudioSession";
+
+export function CommentMark({ count }) {
+  return (
+    <span title={`${count} açık yorum`} className="inline-flex shrink-0 items-center gap-1 text-3xs tabular-nums text-skylab-300">
+      <span className="h-3 w-0.5 rounded-full bg-skylab-400/60" />
+      {count}
+    </span>
+  );
+}
 
 const emptySubscribe = () => () => {};
 
@@ -48,7 +59,7 @@ export function OutlineHeader({ title, untitled = false, inFlow, onOpenPalette, 
   );
 }
 
-export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCounts, mapActive, onActivate, onToggleMap }) {
+export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCounts, mapActive, peopleByForm = {}, onActivate, onToggleMap }) {
   return (
     <div className="shrink-0 border-b border-neutral-800/60 px-1.5 pb-2 pt-2.5">
       <div className="mb-1 flex items-center gap-2 px-1.5">
@@ -72,6 +83,7 @@ export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCo
               {stages.depths.get(node.nodeKey) ?? "?"}
             </span>
             <span className={`min-w-0 flex-1 truncate text-xs transition-colors ${active ? "text-neutral-100" : "text-neutral-400 group-hover:text-neutral-200"}`}>{node.formTitle || "Adsız form"}</span>
+            {peopleByForm[node.formId]?.length ? <PresenceDots members={peopleByForm[node.formId]} /> : null}
             {dirtyIds.includes(node.formId) ? <span title="Kaydedilmemiş değişiklik var" className="size-1.5 shrink-0 rounded-full bg-skylab-400" /> : null}
             <span className="shrink-0 text-3xs tabular-nums text-neutral-600">{questionCounts[node.formId] ?? ""}</span>
           </button>
@@ -115,7 +127,7 @@ function RowBody({ field, fields, numbers, selected }) {
   );
 }
 
-function OutlineRow({ field, fields, numbers, selected, hidden, disabled, onSelect }) {
+function OutlineRow({ field, fields, numbers, selected, hidden, disabled, others, comments, onSelect }) {
   const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({ id: field.id, disabled });
   const isSeparator = field.type === "separator";
 
@@ -130,6 +142,8 @@ function OutlineRow({ field, fields, numbers, selected, hidden, disabled, onSele
     >
       <div className={`flex items-start gap-2 px-2 ${isSeparator ? "pb-1 pt-3" : "py-1.5"} ${isDragging ? "invisible" : hidden ? "opacity-35" : ""}`}>
         <RowBody field={field} fields={fields} numbers={numbers} selected={selected} />
+        {others?.length ? <span className="mt-px"><PresenceDots members={others} /></span> : null}
+        {comments ? <span className="mt-0.5"><CommentMark count={comments} /></span> : null}
         <GripVertical size={12} className="mt-0.5 shrink-0 text-neutral-700 opacity-0 transition-opacity group-hover:opacity-100" />
       </div>
       {isDragging ? <span className="pointer-events-none absolute inset-0 rounded-md border border-dashed border-skylab-400/40 bg-skylab-500/5" /> : null}
@@ -141,6 +155,16 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
   const { state } = useFormEditor();
   const actions = useFormActions({ eventLinked });
   const { ui, actions: studio } = useStudio();
+  const presence = useStudioPresence();
+  const session = useStudioSession();
+  const { threads } = useComments(session, state.id);
+  const commentCounts = useMemo(() => {
+    const counts = new Map();
+    threads.forEach((thread) => {
+      if (!thread.resolvedAt) counts.set(thread.fieldId, (counts.get(thread.fieldId) ?? 0) + 1);
+    });
+    return counts;
+  }, [threads]);
   const [activeId, setActiveId] = useState(null);
   const [loss, setLoss] = useState(0);
   const sensors = useStudioSensors(4);
@@ -244,7 +268,7 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
           <SortableContext items={fields.map((field) => field.id)} strategy={verticalListSortingStrategy}>
             {fields.map((field) => (
               <OutlineRow key={field.id} field={field} fields={fields} numbers={numbers} selected={selectedIds.includes(field.id)}
-                hidden={ui.fill && !visible.includes(field)} disabled={ui.fill} onSelect={select}
+                hidden={ui.fill && !visible.includes(field)} disabled={ui.fill} others={presence.byField.get(field.id)} comments={commentCounts.get(field.id)} onSelect={select}
               />
             ))}
           </SortableContext>

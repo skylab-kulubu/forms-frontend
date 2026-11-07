@@ -5,7 +5,6 @@ import { WorkflowLockMark, WorkflowManagedRow, WorkflowMembershipSection } from 
 import { TimingSection } from "./TimingSection";
 import { useFormEditor } from "../FormEditorContext";
 import { WORKFLOW_INTAKE, effectiveFormSettings } from "@/lib/form-settings";
-import { fetchFormById } from "@/lib/hooks/useFormAdmin";
 import { PANEL_SECTION, PANEL_STACK, PanelNotice, SectionHeader, ToggleRow } from "@/app/admin/components/utils/SidePanel";
 import { OwnershipTransferSection } from "@/app/admin/components/OwnershipTransfer";
 
@@ -18,12 +17,13 @@ const alertVariants = {
 const PERSONAL_LOCK = "Kişisel süre açıkken kullanılamaz.";
 
 export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMembership = false, managedActions = {} }) {
-    const { state, dispatch } = useFormEditor();
+    const { state, dispatch, doc } = useFormEditor();
     const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt, userRole, editors, isSaved } = state;
     const rootRef = useRef(null);
 
     const isWorkflowLocked = Boolean(workflow?.isPublished);
     const isAnonymousLocked = isWorkflowLocked && !allowAnonymousResponses;
+    const isStatusManaged = isWorkflowLocked && status === 2;
     const isAccepting = effectiveFormSettings(state).isOpen;
     const intake = Number(workflow?.intake ?? WORKFLOW_INTAKE.OPEN);
     const personal = Boolean(timeLimitMinutes);
@@ -47,17 +47,14 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
     const ownerId = editors?.find((editor) => Number(editor.role) === 3)?.user?.id;
 
     // Devirden sonra kişi editör olur; formu yeniden yüklemek sahip kontrollerini hemen kaldırır.
-    const reloadForm = async () => {
-        const response = await fetchFormById(formId);
-        if (response?.data) dispatch({ type: "LOAD_FORM", payload: response.data });
-    };
+    const reloadForm = () => doc.reload();
 
     const handleAnonymousToggle = () => {
         const nextValue = !allowAnonymousResponses;
-        dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowAnonymousResponses", value: nextValue } });
-        if (nextValue) {
-            dispatch({ type: "UPDATE_SETTINGS", payload: { key: "allowMultipleResponses", value: true } });
-        }
+        doc.edit([
+            { op: "set", path: ["allowAnonymousResponses"], value: nextValue },
+            ...(nextValue ? [{ op: "set", path: ["allowMultipleResponses"], value: true }] : []),
+        ], { group: false });
     };
 
     return (
@@ -77,7 +74,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
                 />
 
                 <div className="space-y-3">
-                    {isWorkflowLocked ? (
+                    {isStatusManaged ? (
                         <WorkflowManagedRow title="Cevap kabulü" href={`/admin/workflows/${workflow.id}`} onClick={managedActions.acceptance}
                             description={workflow.isStart
                                 ? `Akış yönetiyor · yeni başvurular ${intake === WORKFLOW_INTAKE.OPEN ? "açık" : "kapalı"}`
@@ -90,7 +87,7 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
                     )}
 
                     <AnimatePresence>
-                        {!isWorkflowLocked && status !== 2 && (
+                        {!isStatusManaged && status !== 2 && (
                             <motion.div key={"status-paused-alert"} variants={alertVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
                                 <PanelNotice className="mb-3">
                                     Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.

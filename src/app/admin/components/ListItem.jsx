@@ -13,7 +13,8 @@ const FORM_GRID = [
   "lg:grid-cols-[1.5rem_minmax(0,1.5fr)_minmax(0,1fr)_7rem_4rem_6.5rem_5rem]",
   "xl:grid-cols-[1.5rem_minmax(0,22rem)_minmax(0,1fr)_7rem_4rem_6.5rem_5rem]",
 ].join(" ");
-const COLUMN_LABEL = "text-3xs font-medium uppercase tracking-[0.18em] text-neutral-600";
+const COLUMN_TYPE = "text-2xs font-medium";
+export const COLUMN_LABEL = `${COLUMN_TYPE} text-neutral-500`;
 
 const FEATURES = [
   { key: "allowMultipleResponses", Icon: Repeat2, on: "Birden fazla cevap açık", managed: "Akışta tekrar başlatma açık" },
@@ -73,13 +74,13 @@ function EventChip({ event }) {
   );
 }
 
-function SortHeader({ label, field, sortField, sortDirection, onSort, align = "center", title, visibility = "flex" }) {
+export function SortHeader({ label, field, sortField, sortDirection, onSort, align = "center", title, visibility = "flex" }) {
   const active = sortField === field;
   const justify = align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start";
 
   return (
     <button type="button" onClick={() => onSort?.(field)} title={title}
-      className={`group/sort ${visibility} ${justify} items-center gap-1 ${COLUMN_LABEL} transition-colors hover:text-neutral-300 ${active ? "text-neutral-300" : ""}`}
+      className={`group/sort ${visibility} ${justify} min-w-0 items-center gap-1 ${COLUMN_TYPE} transition-colors ${active ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
     >
       {label ? <span className="truncate">{label}</span> : null}
       {active ? (

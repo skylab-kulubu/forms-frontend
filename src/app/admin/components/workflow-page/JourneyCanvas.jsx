@@ -1,9 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import { Activity, ArrowRight, ChevronDown, ChevronRight, CircleCheck, History } from "lucide-react";
+import { Activity, ArrowRight, ChevronDown, ChevronRight, CircleCheck, History, Hourglass } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
-import { durationText, formatShortDate, shortDuration } from "@/lib/form-timing";
+import { durationText, formatShortDate, shortDuration, spanText } from "@/lib/form-timing";
 import { TRIGGER } from "../workflow-editor/workflow-graph";
 import { triggerStyle } from "../form-studio/studio-flow";
 import { FINISHED_ROWS, GROUPS, NEUTRAL_STROKE, RUN_STATE, STROKE, endTriggerOf, possessive, runSubtitle } from "./journey-data";
@@ -365,6 +365,15 @@ function StepSheet({ step, narrow, selected, cardSelect, flash, onSelect, onOpen
 
       {attempts && attempts.opened > 0 ? <Participation data={attempts} onAnalytics={onAnalytics} /> : null}
 
+      {counts?.timing?.medianSeconds ? (
+        <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-2xs text-neutral-500">
+          <Hourglass size={11} className="shrink-0 text-neutral-600" />
+          <span>Adımda geçen süre</span>
+          <span className="tabular-nums text-neutral-200">{spanText(counts.timing.medianSeconds * 1000)}</span>
+          <span className="text-neutral-600">· medyan, {counts.timing.passed} kişi geçti</span>
+        </p>
+      ) : null}
+
       {finishedHere > 0 ? (
         <button type="button" onClick={onFinishedHere} title="Bu adımda biten başvuruları listede göster"
           className="flex w-fit flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/5 pt-4 text-left text-2xs text-neutral-500 transition-colors hover:text-neutral-200"
@@ -441,8 +450,8 @@ function RemovedSheet({ steps, selected, onSelect }) {
       <div className="flex items-start gap-3">
         <span className="grid size-6 shrink-0 place-items-center rounded-md border border-white/10 bg-white/5 text-neutral-400"><History size={12} /></span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-neutral-100">Eski sürümdeki adımlar</h2>
-          <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">Yayındaki sürümde olmayan adımlarda bekleyen başvurular. Başladıkları sürümde devam ederler.</p>
+          <h2 className="text-sm font-semibold text-neutral-100">Akıştan çıkarılan adımlar</h2>
+          <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">Akıştan çıkarılan adımlarda bekleyen başvurular. Başladıkları haliyle devam ederler.</p>
         </div>
       </div>
       <div className="divide-y divide-white/5">
@@ -472,7 +481,7 @@ function JourneyHead({ overview, done, pill, versionText, closesText, updatedAt,
         <span className="h-px flex-1 bg-white/5" />
       </div>
       {draft ? (
-        <p className="text-base leading-relaxed text-neutral-300 sm:text-lg">Akış henüz yayınlanmadı. Yayınlanınca başvurular adım adım burada görünür.</p>
+        <p className="text-base leading-relaxed text-neutral-300 sm:text-lg">Akış henüz kaydedilmedi. Kaydedilince başvurular adım adım burada görünür.</p>
       ) : (
         <p className="text-base leading-relaxed text-neutral-300 sm:text-lg">
           {number(active)} kişinin başvurusu sürüyor, {number(waiting, "text-amber-300")}{possessive(waiting)} onay bekliyor. {number(done)} başvuru bitti.

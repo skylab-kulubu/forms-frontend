@@ -103,7 +103,7 @@ function ArchiveButton({ detail }) {
   );
 }
 
-export default function PanelHead({ detail, isAttempt = false }) {
+export default function PanelHead({ detail, isAttempt = false, readOnly = false }) {
   const [shareOpen, setShareOpen] = useState(false);
   const shareMutation = useCreateResponseShareMutation();
   const revokeMutation = useRevokeResponseTokenMutation();
@@ -114,7 +114,7 @@ export default function PanelHead({ detail, isAttempt = false }) {
       <span className="shrink-0 text-neutral-500">Cevaplar</span>
       <ChevronRight size={13} className="shrink-0 text-neutral-600" />
       <span className="min-w-0 truncate text-neutral-200">{detail ? person.name : "..."}</span>
-      {detail && !isAttempt ? (
+      {detail && !isAttempt && !readOnly ? (
         <span className="ml-auto flex shrink-0 items-center gap-0.5 pl-2">
           <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" onClick={() => setShareOpen(true)} className={`${ICON} text-neutral-500 hover:bg-white/5 hover:text-neutral-100`}>
             <Share2 size={15} />

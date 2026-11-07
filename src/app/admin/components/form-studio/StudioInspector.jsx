@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { Activity, ChevronRight, Copy, EyeOff, LayoutTemplate, Lock, PencilLine, RotateCcw, Send, Trash2 } from "lucide-react";
+import { Activity, ChevronRight, Copy, EyeOff, LayoutTemplate, Lock, PencilLine, RotateCcw, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTextarea, SectionHeader, Switch, ToggleRow,
@@ -17,7 +17,8 @@ import { useFormEditor } from "../form-editor/FormEditorContext";
 import { LibrarySettings } from "../form-editor/components/LibrarySettings";
 import { FlowPanel, StepPanel, useRouteFocus } from "../workflow-editor/components/WorkflowInspector";
 import { isTimedNode } from "../workflow-editor/workflow-graph";
-import { useFormActions } from "./useFormActions";
+import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
+import { colorOf, uniquePeople, useStudioPresence } from "./StudioPresence";
 import { NONE, useStudio } from "./StudioContext";
 import { CHOICE_PRESETS } from "./studio-presets";
 import {
@@ -361,13 +362,14 @@ function MultiInspector({ ids, fields, actions, onDuplicate, onRemove }) {
   const questions = selected.filter((field) => field.type !== "separator");
   const allRequired = questions.length > 0 && questions.every((field) => field.props?.required);
   const someRequired = questions.some((field) => field.props?.required);
+  const conditionLost = selected.filter((field) => field.condition?.fieldId && !ids.includes(field.condition.fieldId));
 
   const saveTemplate = () => {
     const title = templateTitle.trim() || `${selected.length} bileşenlik şablon`;
     const schema = selected.map((field) => {
+      if (!conditionLost.includes(field)) return field;
       const { condition, ...rest } = field;
-      const keep = condition && ids.includes(condition.fieldId);
-      return keep ? field : rest;
+      return rest;
     });
     saveGroup({ id: null, isUpdate: false, payload: { Id: null, Title: title, Description: "", Schema: schema } }, {
       onSuccess: () => {
@@ -406,6 +408,9 @@ function MultiInspector({ ids, fields, actions, onDuplicate, onRemove }) {
       </section>
       <section className={PANEL_SECTION}>
         <div className="flex flex-col gap-2">
+          {savingOpen && conditionLost.length > 0 ? (
+            <PanelNotice>Soru {conditionLost.map((field) => numbers.get(field.id)).join(", ")} şablona koşulsuz kaydedilir; koşulun sorusu seçili değil.</PanelNotice>
+          ) : null}
           {savingOpen ? (
             <div className="flex gap-2">
               <input autoFocus value={templateTitle} onChange={(event) => setTemplateTitle(event.target.value)} placeholder="Şablon adı"
@@ -517,7 +522,7 @@ function FlowStepSection({ flow }) {
   const { wf, node, onOpenRoutes } = flow;
   return (
     <section className={PANEL_SECTION}>
-      <SectionHeader title="Akış adımı" pill={wf.isLive ? "Canlı" : "Taslak"} pillTone={wf.isLive ? "emerald" : "neutral"}
+      <SectionHeader title="Akış adımı"
         description={`${wf.state.name || "Bu akış"} akışının ${node.isStart ? "başlangıç adımı" : "bir adımı"}. Yönlendirmeleri kartın altından ya da buradan değiştirirsin.`}
       />
       <ToggleRow title="Manuel onay" checked={node.requiresManualReview}
@@ -536,7 +541,7 @@ function RulesSection({ wf }) {
 
   return (
     <section className={PANEL_SECTION}>
-      <SectionHeader title="Kurallar" pill={wf.isLive ? "Canlı" : "Taslak"} pillTone={wf.isLive ? "emerald" : "neutral"}
+      <SectionHeader title="Kurallar"
         description="Başvuru kabulü, yeni başvurular ve otomatik kapanış akış sayfasında; burada akışın kuralları var."
       />
       <input value={state.name ?? ""} onChange={(event) => dispatch({ type: "SET_META", key: "name", value: event.target.value })}
@@ -553,22 +558,14 @@ function RulesSection({ wf }) {
   );
 }
 
-function PublishSection({ flow }) {
-  const { wf, onRequestPublish, onOpenFlowPage } = flow;
-  const canPublish = Boolean(wf.state.id) && wf.state.nodes.length > 0 && wf.hasDraft;
+function FlowPageSection({ flow }) {
+  const { wf, onOpenFlowPage } = flow;
 
   return (
     <section className={PANEL_SECTION}>
-      <SectionHeader title="Yayın"
-        description={wf.hasDraft
-          ? wf.isLive ? "Yayınlanmamış değişiklik var. Başvuranlar yayınlanana kadar önceki sürümü görür." : "Yayınlanana kadar başvuranlar akışı görmez."
-          : "Yayındaki sürüm güncel."}
-      />
-      <div className="flex flex-col gap-2">
-        <PanelButton icon={Send} onClick={onRequestPublish} disabled={!canPublish}>Akışı yayınla</PanelButton>
-        {wf.state.id ? <PanelButton icon={Activity} onClick={onOpenFlowPage}>Akış sayfasına git</PanelButton> : null}
-      </div>
-      {wf.issues.length > 0 ? <PanelNotice tone="red">Yayınlamayı engelleyen {wf.issues.length} sorun var. Başlıktaki sorun düğmesi listeyi açar.</PanelNotice> : null}
+      <SectionHeader title="Akış sayfası" description={wf.isLive ? null : "Akış ilk kayıtta başvurulara açılır."} />
+      {wf.state.id ? <PanelButton icon={Activity} onClick={onOpenFlowPage}>Akış sayfasına git</PanelButton> : null}
+      {wf.issues.length > 0 ? <PanelNotice tone="red">Kaydı engelleyen {wf.issues.length} sorun var. Başlıktaki sorun düğmesi listeyi açar.</PanelNotice> : null}
     </section>
   );
 }
@@ -576,8 +573,8 @@ function PublishSection({ flow }) {
 export function FlowRootBody({ flow, picker, ownershipControl }) {
   const { wf, onOpenForm } = flow;
   return (
-    <FlowPanel state={wf.state} dispatch={wf.dispatch} schemasByFormId={wf.schemasByFormId} versions={wf.versions} picker={picker}
-      rules={<RulesSection wf={wf} />} footer={<PublishSection flow={flow} />} ownershipControl={ownershipControl}
+    <FlowPanel state={wf.state} dispatch={wf.dispatch} schemasByFormId={wf.schemasByFormId} picker={picker}
+      rules={<RulesSection wf={wf} />} footer={<FlowPageSection flow={flow} />} ownershipControl={ownershipControl}
       onOpenStep={(node) => onOpenForm(node.formId)}
       stepsDescription="Başlangıçtan itibaren akıştaki sırasıyla. Birine tıklayınca formu tuvalde açılır."
     />
@@ -594,10 +591,31 @@ export function RoutesBody({ flow, node }) {
   );
 }
 
+function suffixDa(name) {
+  const vowels = String(name ?? "").toLocaleLowerCase("tr-TR").match(/[aıoueiöü]/g);
+  return vowels && "eiöü".includes(vowels[vowels.length - 1]) ? "de" : "da";
+}
+
+function PeersNote({ others, fieldId }) {
+  const people = uniquePeople(others ?? []);
+  if (people.length === 0) return null;
+  const typing = people.find((member) => member.editing === fieldId);
+  const names = typing ? typing.name : people.map((member) => member.name).join(", ");
+  const doing = typing ? "bu soruyu şu an yazıyor." : `${suffixDa(people[people.length - 1].name)} bu soruda.`;
+
+  return (
+    <div className="mx-4 mt-4 flex items-start gap-2 rounded-lg border border-white/10 bg-white/3 px-2.5 py-2 text-2xs leading-4 text-neutral-300">
+      <span className="mt-1 size-2 shrink-0 rounded-full" style={{ backgroundColor: colorOf((typing ?? people[0]).userId) }} />
+      <span><span className="font-semibold text-neutral-100">{names}</span> {doing} Aynı metni aynı anda yazarsanız son yazılan kalır.</span>
+    </div>
+  );
+}
+
 export function FormInspectorBody({ eventLinked = false, flow = null, focusTiming = 0, managedActions = {} }) {
   const { state } = useFormEditor();
   const actions = useFormActions({ eventLinked });
   const { ui, actions: studio } = useStudio();
+  const presence = useStudioPresence();
   const fields = state.schema;
   const formKey = ui.activeFormId ?? "new";
   const selection = ui.selection;
@@ -610,7 +628,7 @@ export function FormInspectorBody({ eventLinked = false, flow = null, focusTimin
   const remove = (ids) => {
     const result = actions.remove(ids);
     if (result.removed === 0) {
-      if (result.blocked) studio.toast("Bu soru silinemez", "red");
+      if (result.blocked) studio.toast(result.waitsForSave ? LIVE_LOCK_HINT : "Bu soru silinemez", "red");
       return;
     }
     studio.select(NONE);
@@ -628,9 +646,12 @@ export function FormInspectorBody({ eventLinked = false, flow = null, focusTimin
   if (ids.length === 1) {
     const field = fields.find((item) => item.id === ids[0]);
     return (
-      <QuestionInspector key={field.id} field={field} fields={fields} actions={actions} anonymous={state.allowAnonymousResponses}
-        onDuplicate={duplicate} onRemove={remove} onToast={studio.toast}
-      />
+      <>
+        <PeersNote others={presence.byField.get(field.id)} fieldId={field.id} />
+        <QuestionInspector key={field.id} field={field} fields={fields} actions={actions} anonymous={state.allowAnonymousResponses}
+          onDuplicate={duplicate} onRemove={remove} onToast={studio.toast}
+        />
+      </>
     );
   }
 

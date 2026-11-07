@@ -146,6 +146,8 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
   };
 
   const activeFormLabel = formLoading ? "..." : (form?.title?.trim() || "...");
+  const canViewResponses = form?.access?.canViewResponses ?? Number(form?.userRole) >= 1;
+  const canEditForm = form?.access?.canEdit ?? Number(form?.userRole) >= 2;
 
   const activeFormItem = formId
   ? {
@@ -153,9 +155,9 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
       icon: FileText,
       label: activeFormLabel,
       children: [
-        ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
-        ...(Number(form?.userRole) >= 1 ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
-        ...(Number(form?.userRole) >= 2 ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
+        ...(canViewResponses ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
+        ...(canViewResponses ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
+        ...(canEditForm ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
       ],
     }
   : null;
@@ -216,7 +218,6 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
               icon: List,
               label: "Formları Görüntüle"
             },
-            ...(isSuperAdmin ? [{ href: "/admin/forms/all", icon: Database, label: "Veritabanı" }] : []),
             ...(activeFormItem ? [activeFormItem] : []),
           ]}
         />
@@ -240,6 +241,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         <div className="space-y-2">
           <SectionLabel>Yönetim</SectionLabel>
           <div className="space-y-1">
+            <NavItem href="/admin/forms/all" icon={Database} label="Veritabanı" active={pathname === "/admin/forms/all"} onClick={onItemClick} />
             <NavItem href="/admin/ownership" icon={UserX} label="Sahipsiz içerikler" active={pathname === "/admin/ownership"} onClick={onItemClick} />
           </div>
         </div>

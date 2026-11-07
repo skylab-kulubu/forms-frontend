@@ -11,7 +11,7 @@ import { WORKFLOW_INTAKE } from "@/lib/form-settings";
 import { defaultClosesAt, formatDay, isPastDate } from "@/lib/form-timing";
 import { useUpdateWorkflowIntakeMutation, useUpdateWorkflowIntakeScheduleMutation } from "@/lib/hooks/useWorkflowAdmin";
 import { StepBadge } from "../form-room/RoomCanvas";
-import { RUN_STATE, RUN_TABS, elapsed, intakeOf, intakePill, publishedVersion, remainingText } from "./journey-data";
+import { RUN_STATE, RUN_TABS, elapsed, intakeOf, intakePill, remainingText } from "./journey-data";
 
 const MODE_LINKS = [["overview", "Özet", FileText], ["analytics", "Analitik", ChartColumn], ["response", "Cevaplar", List]];
 
@@ -119,7 +119,7 @@ export function RunsList({
         ) : error ? (
           <p className="px-3 py-10 text-center text-2xs text-red-300">Başvuranlar yüklenemedi.</p>
         ) : runs.length === 0 ? (
-          <p className="px-3 py-10 text-center text-2xs text-neutral-500">{live ? "Bu süzgeçte başvuran yok." : "Akış yayınlanınca başvuranlar burada görünür."}</p>
+          <p className="px-3 py-10 text-center text-2xs text-neutral-500">{live ? "Bu süzgeçte başvuran yok." : "Akış kaydedilince başvuranlar burada görünür."}</p>
         ) : (
           <div className="divide-y divide-white/5">
             {runs.map((run) => <RunRow key={run.id} run={run} depthOf={depthOf} showStep={!stepKey} onOpen={onOpenRun} />)}
@@ -135,7 +135,7 @@ export function RunsList({
   );
 }
 
-export function OperationsPanel({ workflow, overview, versions, steps, onMode, onEdit, canEdit }) {
+export function OperationsPanel({ workflow, overview, steps, onMode, onEdit, canEdit }) {
   const [closeOpen, setCloseOpen] = useState(false);
   const intakeMutation = useUpdateWorkflowIntakeMutation();
   const scheduleMutation = useUpdateWorkflowIntakeScheduleMutation();
@@ -146,7 +146,7 @@ export function OperationsPanel({ workflow, overview, versions, steps, onMode, o
   const acceptsNewRuns = intake === WORKFLOW_INTAKE.OPEN;
   const closesAt = workflow.intakeClosesAt ?? null;
   const pending = intakeMutation.isPending || scheduleMutation.isPending;
-  const published = publishedVersion(versions);
+  const published = workflow.published ?? null;
   const pill = intakePill(workflow);
 
   const changeIntake = (next, onDone) => intakeMutation.mutate({ workflowId: workflow.id, intake: next }, { onSettled: onDone });
@@ -160,7 +160,7 @@ export function OperationsPanel({ workflow, overview, versions, steps, onMode, o
     <div className={PANEL_STACK}>
       <section className={PANEL_SECTION}>
         <SectionHeader title="Başvuru durumu" pill={pill.label} pillTone={pill.tone}
-          description={archived ? "Akış arşivlendi; başvuru kabulü artık değişmez." : isLive ? "Akışı tamamen ya da yalnız yeni başvurulara kapatabilirsin." : "Akış yayınlanınca başvuru kabulünü buradan yönetirsin."}
+          description={archived ? "Akış arşivlendi; başvuru kabulü artık değişmez." : isLive ? "Akışı tamamen ya da yalnız yeni başvurulara kapatabilirsin." : "Akış kaydedilince başvuru kabulünü buradan yönetirsin."}
         />
         {isLive && !archived ? (
           <div className="space-y-3">
@@ -193,12 +193,12 @@ export function OperationsPanel({ workflow, overview, versions, steps, onMode, o
       </section>
 
       <section className={PANEL_SECTION}>
-        <SectionHeader title="Sürüm"
+        <SectionHeader title="Düzenleme"
           description={published
-            ? `v${published.version} yayında${published.publishedAt ? ` (${formatDay(published.publishedAt)})` : ""}. Devam eden başvurular başladıkları sürümde kalır.`
-            : "Henüz yayınlanmadı. Adımları ve yönlendirmeleri düzenleme ekranında kurup oradan yayınlarsın."}
+            ? "Değişiklikler yeni başvurulara uygulanır; devam eden başvurular başladıkları haliyle sürer."
+            : "Henüz kaydedilmedi. Adımları ve yönlendirmeleri düzenleme ekranında kurup kaydedersin."}
         />
-        {published && workflow.draft ? <PanelNotice tone="neutral">Düzenleme ekranında yayınlanmamış değişiklik var.</PanelNotice> : null}
+        {published && workflow.draft ? <PanelNotice tone="neutral">Düzenleme ekranında kaydedilmemiş değişiklik var.</PanelNotice> : null}
         <PanelButton touch icon={PencilLine} className="w-full" onClick={onEdit} disabled={!canEdit}>Düzenle</PanelButton>
       </section>
 

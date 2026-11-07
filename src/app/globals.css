@@ -198,11 +198,21 @@ body {
       mask-composite: intersect;
     }
 
+    .studio-fade[data-commenting] {
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 48px), linear-gradient(to bottom, transparent, #000 16px);
+      mask-image: linear-gradient(to right, transparent, #000 48px), linear-gradient(to bottom, transparent, #000 16px);
+    }
+
     .studio-fade-edge {
       -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent), linear-gradient(to bottom, transparent, #000 16px);
       -webkit-mask-composite: source-in;
       mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent), linear-gradient(to bottom, transparent, #000 16px);
       mask-composite: intersect;
+    }
+
+    .studio-fade-edge[data-commenting] {
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 16px), linear-gradient(to bottom, transparent, #000 16px);
+      mask-image: linear-gradient(to right, transparent, #000 16px), linear-gradient(to bottom, transparent, #000 16px);
     }
   }
 

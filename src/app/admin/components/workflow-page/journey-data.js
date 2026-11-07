@@ -47,10 +47,6 @@ export function intakePill(workflow) {
   return { label: "Açık", tone: "emerald", dot: "bg-emerald-400" };
 }
 
-export function publishedVersion(versions) {
-  return (versions ?? []).find((version) => Number(version.status) === 1) ?? null;
-}
-
 export function possessive(value) {
   const number = Math.abs(Math.round(Number(value) || 0));
   if (number === 0) return "'ı";

@@ -329,9 +329,10 @@ function ProvisionalSection({ attempt, onExtended }) {
   );
 }
 
-function AttemptTimeSection({ attempt }) {
+function AttemptTimeSection({ attempt, readOnly = false }) {
   const mutation = useAttemptActionMutation();
   const [extending, setExtending] = useState(false);
+  const canExtend = attempt.canExtend && !readOnly;
   const running = attempt.status === ATTEMPT_STATUS.STARTED;
   const opened = attempt.status === ATTEMPT_STATUS.OPENED;
   const deadline = attempt.deadlineAt ? new Date(attempt.deadlineAt).getTime() : null;
@@ -343,17 +344,19 @@ function AttemptTimeSection({ attempt }) {
         <SectionHeader title="Hatırlatma"
           description={`Aday formu açtı ama görevi başlatmadı. ${attempt.reminderSentAt ? `Son hatırlatma ${formatShortDate(attempt.reminderSentAt)}.` : "Henüz hatırlatma gönderilmedi."}`}
         />
-        <PanelButton touch icon={sent ? FileCheck : Mail} className="w-full" disabled={!attempt.canRemind || mutation.isPending || sent}
-          onClick={() => mutation.mutate({ attemptId: attempt.id, action: "remind" })} title={attempt.canRemind ? undefined : "Hatırlatma şu anda gönderilemiyor"}
-        >
-          {sent ? "Hatırlatma gönderildi" : "Hatırlat"}
-        </PanelButton>
+        {readOnly ? null : (
+          <PanelButton touch icon={sent ? FileCheck : Mail} className="w-full" disabled={!attempt.canRemind || mutation.isPending || sent}
+            onClick={() => mutation.mutate({ attemptId: attempt.id, action: "remind" })} title={attempt.canRemind ? undefined : "Hatırlatma şu anda gönderilemiyor"}
+          >
+            {sent ? "Hatırlatma gönderildi" : "Hatırlat"}
+          </PanelButton>
+        )}
         <ActionError error={mutation.error} />
       </section>
     );
   }
 
-  if (!attempt.canExtend && !running) return null;
+  if (!canExtend && !running) return null;
 
   return (
     <section className={PANEL_SECTION}>
@@ -366,7 +369,7 @@ function AttemptTimeSection({ attempt }) {
         <ExtendForm attempt={attempt} pending={mutation.isPending} onCancel={() => setExtending(false)}
           onConfirm={(body) => mutation.mutate({ attemptId: attempt.id, action: "extend", body }, { onSuccess: () => setExtending(false) })}
         />
-      ) : attempt.canExtend ? (
+      ) : canExtend ? (
         <PanelButton touch icon={ClockPlus} className="w-full" onClick={() => setExtending(true)}>Süre ver</PanelButton>
       ) : null}
       <ActionError error={mutation.error} />
@@ -439,7 +442,7 @@ function RunPanel({ run, instanceId }) {
 
 export default function DecisionPanel({
   detail, isAttempt = false, ownKind = null, numbers, state, setState, onStart, onConfirm, onCancel, nextPending = null, onOpenNext,
-  autoNext = true, setAutoNext, showAutoNext = false, onExtended,
+  autoNext = true, setAutoNext, showAutoNext = false, onExtended, readOnly = false,
 }) {
   const attempt = detail?.attempt ?? null;
   const running = isAttempt && attempt?.status === ATTEMPT_STATUS.STARTED;
@@ -450,7 +453,8 @@ export default function DecisionPanel({
   const person = personOf(detail);
   const kind = kindOfDetail(detail, isAttempt);
   const view = statusView(kind);
-  const access = decisionAccess(detail, isAttempt, state);
+  const decided = decisionAccess(detail, isAttempt, state);
+  const access = readOnly ? { ...decided, canEditReview: false, canReturn: false, deciding: false } : decided;
   const { workflow, round } = workflowFacts(detail);
   const attribution = detail.attribution ?? null;
   const scannedFromQr = attribution?.medium === "qr" && attribution?.source !== "qr";
@@ -492,9 +496,19 @@ export default function DecisionPanel({
         </div>
       </section>
 
-      {isAttempt && attempt ? <AttemptTimeSection key={attempt.id} attempt={attempt} /> : null}
+      {readOnly ? (
+        <section className={PANEL_SECTION}>
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-semibold text-neutral-100">Değerlendirme</p>
+            <StatePill tone="neutral">Salt okunur</StatePill>
+          </div>
+          <p className="text-2xs leading-relaxed text-neutral-400">Bu formu süper admin olarak görüyorsun. Onay, ret, düzeltme isteği, arşiv ve paylaşım formun ekibine açık.</p>
+        </section>
+      ) : null}
 
-      {!isAttempt && Number(detail.status) === PROVISIONAL && attempt?.canDecide && !detail.isArchived ? (
+      {isAttempt && attempt ? <AttemptTimeSection key={attempt.id} attempt={attempt} readOnly={readOnly} /> : null}
+
+      {!readOnly && !isAttempt && Number(detail.status) === PROVISIONAL && attempt?.canDecide && !detail.isArchived ? (
         <ProvisionalSection key={attempt.id} attempt={attempt} onExtended={onExtended} />
       ) : null}
 

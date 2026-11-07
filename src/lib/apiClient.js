@@ -5,6 +5,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
 export const SESSION_EXPIRED_EVENT = "skyforms:session-expired";
 
 const SESSION_REUSE_MARGIN_MS = 30 * 1000;
+const UNREACHABLE_MESSAGE = "Sunucuya ulaşılamadı. Bağlantıyı kontrol edip tekrar deneyin.";
 
 function tokenExpiry(token) {
   try {
@@ -38,9 +39,29 @@ function getSharedSession({ fresh = false } = {}) {
 // tell the UI (SessionExpiredHandler) so it can offer a re-login instead of failing silently.
 // The rejected token rides along so the handler can tell "still the same dead token" apart
 // from "a fresh one arrived in the meantime".
-function announceSessionExpired(rejectedToken) {
+export function announceSessionExpired(rejectedToken) {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: { token: rejectedToken } }));
+  }
+}
+
+export async function sessionEnded() {
+  try {
+    const response = await fetch("/api/auth/session", { cache: "no-store" });
+    if (!response.ok) return false;
+    const session = await response.json();
+    return !session?.user;
+  } catch {
+    return false;
+  }
+}
+
+export async function getAccessToken() {
+  try {
+    const session = await getSharedSession();
+    return session?.error ? null : session?.accessToken ?? null;
+  } catch {
+    return null;
   }
 }
 
@@ -75,7 +96,12 @@ export async function request(path, options = {}) {
   });
 
   const send = async (authToken) => {
-    const response = await fetch(`${BASE_URL}${path}`, buildOptions(authToken));
+    let response;
+    try {
+      response = await fetch(`${BASE_URL}${path}`, buildOptions(authToken));
+    } catch (error) {
+      throw error?.name === "AbortError" ? error : new Error(UNREACHABLE_MESSAGE);
+    }
     let data = null;
     try { data = await response.json(); } catch { }
     return { response, data };

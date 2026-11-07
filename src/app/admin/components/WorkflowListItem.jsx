@@ -66,13 +66,13 @@ function stateOf(workflow) {
   const status = Number(workflow.status);
   const intake = Number(workflow.intake ?? 0);
   if (status === 2) return { dot: STATUS_DOT.archived, label: "Arşivde", subtitle: "Arşivlendi", tone: "text-neutral-500" };
-  if (!workflow.publishedVersion) return { dot: STATUS_DOT.draft, label: "Taslak", subtitle: "Henüz yayınlanmadı", tone: "text-neutral-500" };
+  if (!workflow.publishedVersion) return { dot: STATUS_DOT.draft, label: "Taslak", subtitle: "Henüz kaydedilmedi", tone: "text-neutral-500" };
   if (intake === 2) return { dot: STATUS_DOT.closed, label: "Kapalı", subtitle: "Başvurular kapalı", tone: "text-neutral-500" };
   if (intake === 1) return { dot: STATUS_DOT.live, label: "Yayında", subtitle: "Yeni başvuru alınmıyor", tone: "text-amber-300/80" };
   return {
     dot: STATUS_DOT.live,
     label: "Yayında",
-    subtitle: workflow.hasUnpublishedChanges ? `Yayında · v${workflow.publishedVersion} · yayınlanmamış değişiklik var` : `Yayında · v${workflow.publishedVersion}`,
+    subtitle: workflow.hasUnpublishedChanges ? "Başvurular açık · kaydedilmemiş değişiklik var" : "Başvurular açık",
     tone: "text-neutral-500",
   };
 }
@@ -123,7 +123,7 @@ export default function WorkflowListItem({ workflow, className = "" }) {
           {steps.map((step, index) => (
             <Fragment key={step.nodeKey}>
               {index > 0 ? <ChevronRight size={12} className="shrink-0 text-neutral-700" /> : null}
-              <span className="inline-flex min-w-0 items-center gap-1.5 text-2xs" title={step.isRemoved ? `${step.formTitle} (eski sürümde)` : step.formTitle}>
+              <span className="inline-flex min-w-0 items-center gap-1.5 text-2xs" title={step.isRemoved ? `${step.formTitle} (akıştan çıkarıldı)` : step.formTitle}>
                 <span className="grid size-4 shrink-0 place-items-center rounded border border-white/10 bg-white/5 text-4xs font-semibold text-neutral-400">{step.isRemoved ? "–" : step.depth || index + 1}</span>
                 <span className="max-w-24 truncate text-neutral-400">{step.formTitle}</span>
                 <span className={`font-medium tabular-nums ${draft ? "text-neutral-600" : "text-neutral-100"}`}>{draft ? "—" : step.count}</span>

@@ -144,6 +144,7 @@ function WeeklyTrend({ title, data, trendPercentage, gradientId }) {
       <div className="mb-3 flex items-center gap-2">
         <SectionTitle>{title}</SectionTitle>
         <span className="-mt-3"><TrendBadge value={trendPercentage} /></span>
+        <span className="-mt-3 ml-auto text-3xs text-neutral-600">son 7 gün, önceki 7 güne göre</span>
       </div>
 
       {hasData ? (

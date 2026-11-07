@@ -155,8 +155,11 @@ export default function FormRoom() {
   };
 
   const role = Number(shell?.userRole ?? 0);
-  const canView = role >= 1;
-  const canEdit = role >= 2;
+  const access = shell?.access ?? null;
+  const canView = access ? Boolean(access.canViewResponses) : role >= 1;
+  const canHandle = access ? Boolean(access.canHandleResponses) : role >= 1;
+  const canEdit = access ? Boolean(access.canEdit) : role >= 2;
+  const readOnly = canView && !canHandle;
   const editAllowed = route.mode === "workflow" && typeof workflow?.canEdit === "boolean" ? workflow.canEdit : canEdit;
   const disabledModes = [...(editAllowed ? [] : ["edit"]), ...(canView ? [] : ["analytics", "response"])];
   const settings = effectiveFormSettings(shell);
@@ -212,7 +215,7 @@ export default function FormRoom() {
     const current = routeRef.current;
     setSheet(null);
     if (!flow || !targetFormId || sameId(targetFormId, current.formId)) return Promise.resolve();
-    const patch = { formId: targetFormId, responseId: current.mode === "response" ? lastResp[targetFormId] ?? null : null, attempt: false, focus: null, status: null };
+    const patch = { formId: targetFormId, responseId: current.mode === "response" ? lastResp[targetFormId] ?? null : null, attempt: false, focus: null, status: null, answer: null };
     const direction = slideDirection(flow.stages, flow.nodeOfForm(current.formId)?.formId ?? current.formId, targetFormId);
     return slideTo(direction, () => go(patch), () => prefetchRoute({ ...current, ...patch }));
   }, [flow, go, slideTo, prefetchRoute, lastResp]);
@@ -228,7 +231,7 @@ export default function FormRoom() {
     if (!flow) return;
     const current = routeRef.current;
     returnRef.current = current;
-    const next = { ...current, mode: "workflow", workflowId: flow.id, step: flow.nodeOfForm(current.formId)?.nodeKey ?? null, responseId: null, attempt: false, focus: null, status: null };
+    const next = { ...current, mode: "workflow", workflowId: flow.id, step: flow.nodeOfForm(current.formId)?.nodeKey ?? null, responseId: null, attempt: false, focus: null, status: null, answer: null };
     await Promise.race([prefetchRoute(next), wait(MODE_WAIT_MS)]);
     go(next, { transition: "swap", ms: 200 });
   };
@@ -243,7 +246,7 @@ export default function FormRoom() {
     const responseId = nextMode === "response"
       ? (back?.mode === "response" && sameId(back.formId, formTarget) ? back.responseId : lastResp[formTarget] ?? null)
       : null;
-    const next = { ...current, mode: nextMode, formId: formTarget, responseId, attempt: false, step: null, focus: null, status: null, ...patch };
+    const next = { ...current, mode: nextMode, formId: formTarget, responseId, attempt: false, step: null, focus: null, status: null, answer: null, ...patch };
     await Promise.race([prefetchRoute(next), wait(MODE_WAIT_MS)]);
     go(next, { transition: "swap", ms: 200 });
   };
@@ -273,7 +276,7 @@ export default function FormRoom() {
       if (Object.keys(patch).length) go(patch);
       return;
     }
-    const next = { ...current, mode, responseId: mode === "response" ? lastResp[current.formId] ?? null : null, attempt: false, focus: null, status: null, ...patch };
+    const next = { ...current, mode, responseId: mode === "response" ? lastResp[current.formId] ?? null : null, attempt: false, focus: null, status: null, answer: null, ...patch };
     await Promise.race([prefetchRoute(next), wait(MODE_WAIT_MS)]);
     captureCanvasAnchor();
     go(next, { transition: "swap" });
@@ -353,7 +356,7 @@ export default function FormRoom() {
   const room = {
     route, go, switchMode, pickStep, slideTo, enterJourney, leaveJourney, prefetchRoute,
     formId, form, shell, formResult, workflowId, workflow, workflowResult, flow, node, depth, title, stepInfo, stepMetrics,
-    role, canView, canEdit, disabledModes, settings,
+    role, canView, canHandle, canEdit, readOnly, disabledModes, settings,
     phone, leftWide, rightDocked, stacked: !rightDocked, leftDocked, centerWidth, compactBar, cardPhone, cardWidth, device, setDevice,
     sheet, setSheet, toast, openPalette, openShare, setCollapsed,
     store, setStoreValue, modeKeysRef,
@@ -398,14 +401,14 @@ export default function FormRoom() {
       onClick: () => (leftWide ? setCollapsed(false) : setSheet("left")),
     }),
     rightButton: (label, Icon, buttonTitle) => (rightDocked ? null : { label, Icon, title: buttonTitle, onClick: () => setSheet("right") }),
-    toolbar: ({ left = null, right = null, bar = null } = {}) => (
-      <RoomToolbar mode={route.mode} onMode={switchMode} disabledModes={disabledModes} inFlow={Boolean(flow)} left={left} right={right} bar={bar}
+    toolbar: ({ left = null, right = null, bar = null, chip = null } = {}) => (
+      <RoomToolbar mode={route.mode} onMode={switchMode} disabledModes={disabledModes} inFlow={Boolean(flow)} left={left} right={right} bar={bar} chip={chip}
         compact={compactBar} hideEdit={phone}
       />
     ),
     cardTop: ({ right } = {}) => (
       <CardTop
-        row1={<TitleRow title={title} depth={depth} isStart={Boolean(node?.isStart)} timeLimitMinutes={form?.timeLimitMinutes}
+        row1={<TitleRow title={title} depth={depth} isStart={Boolean(node?.isStart)} timeLimitMinutes={form?.timeLimitMinutes} readOnly={readOnly}
           right={right !== undefined ? right : phone ? null : <DeviceToggle device={device} onChange={setDevice} />}
         />}
         row2={flow ? <FlowChips flow={flow} activeFormId={formId} onPick={(id) => pickStep(id)} /> : null}

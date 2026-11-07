@@ -5,9 +5,9 @@ export const APPROVAL_PRESETS = {
         variant: "delayed",
         delaySeconds: 2,
         icon: Workflow,
-        title: "Akışı yayınla",
+        title: "Akışı başvurulara aç",
         highlights: (ctx) => ctx.highlights ?? [],
-        approveLabel: (ctx) => ctx.isPending ? "Yayınlanıyor..." : "Yayınla",
+        approveLabel: (ctx) => ctx.isPending ? "Kaydediliyor..." : "Kaydet ve aç",
         rejectLabel: () => "Vazgeç",
     },
 
@@ -35,7 +35,7 @@ export const APPROVAL_PRESETS = {
         title: "Bu akışı arşivle",
         highlights: () => [
             "Akış yayından kalkar, yeni başvuru başlatılamaz.",
-            "Devam eden başvurular bulundukları sürümde kalmaya devam eder.",
+            "Başvuranı bekleyen başvurular durur; onay bekleyen cevaplar yine incelenebilir.",
             "Akıştaki formlar ve cevapları silinmez.",
         ],
         approveLabel: (ctx) => ctx.isPending ? "Arşivleniyor..." : "Akışı arşivle",

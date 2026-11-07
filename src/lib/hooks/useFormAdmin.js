@@ -40,8 +40,28 @@ const fetchFormMetrics = async (formId) => {
   return request(`/api/admin/forms/${formId}/metrics`);
 };
 
-const fetchFormAnalytics = async (formId) => {
-  return request(`/api/admin/forms/${formId}/analytics`);
+const RESPONSE_STATUS_PARAM = { approved: 2, pending: 1, declined: 3 };
+const FORM_STATUS_PARAM = { open: 2, closed: 1, deleted: 0 };
+
+const setAnalyticsFilter = (params, { status = null, sinceDays = null, answer = null } = {}) => {
+  if (status) params.set("Status", RESPONSE_STATUS_PARAM[status]);
+  if (sinceDays) params.set("SinceDays", sinceDays);
+  if (answer?.q) {
+    params.set("AnswerQuestionId", answer.q);
+    params.set("AnswerValue", answer.v ?? "");
+  }
+  return params;
+};
+
+const fetchFormAnalytics = async (formId, filter) => {
+  const query = setAnalyticsFilter(new URLSearchParams(), filter).toString();
+  return request(`/api/admin/forms/${formId}/analytics${query ? `?${query}` : ""}`);
+};
+
+const fetchQuestionAnswers = async (formId, questionId, { page = 1, pageSize = 8, search = "", filter = null } = {}) => {
+  const params = setAnalyticsFilter(new URLSearchParams({ Page: String(page), PageSize: String(pageSize) }), filter ?? {});
+  if (search) params.set("Search", search);
+  return request(`/api/admin/forms/${formId}/analytics/questions/${encodeURIComponent(questionId)}/answers?${params.toString()}`);
 };
 
 const fetchServiceMetrics = async () => {
@@ -54,26 +74,42 @@ const deleteForm = async (formId) => {
   });
 };
 
-const fetchAllForms = async ({ page, pageSize, search, allowAnonymous, allowMultiple, requiresManualReview, sortDirection } = {}) => {
+const fetchAllForms = async ({ page, pageSize, search, status, owner, allowAnonymous, allowMultiple, requiresManualReview, sortBy, sortDirection } = {}) => {
   const params = new URLSearchParams();
   if (page !== undefined && page !== null) params.set("Page", page);
   if (pageSize !== undefined && pageSize !== null) params.set("PageSize", pageSize);
   if (search) params.set("Search", search);
+  if (status) params.set("Status", FORM_STATUS_PARAM[status]);
+  if (owner) params.set("Owner", owner);
   if (allowAnonymous !== undefined && allowAnonymous !== null) params.set("AllowAnonymous", allowAnonymous);
   if (allowMultiple !== undefined && allowMultiple !== null) params.set("AllowMultiple", allowMultiple);
   if (requiresManualReview !== undefined && requiresManualReview !== null) params.set("RequiresManualReview", requiresManualReview);
+  if (sortBy) params.set("SortBy", sortBy);
   if (sortDirection) params.set("SortDirection", sortDirection);
   const query = params.toString();
   return request(`/api/admin/forms/all${query ? `?${query}` : ""}`);
 };
 
+const restoreForm = async (formId) => request(`/api/admin/forms/${formId}/restore`, { method: "POST" });
+
 export const useAllFormsQuery = (options = {}) => {
-  const { page = 1, pageSize, search, allowAnonymous, allowMultiple, requiresManualReview, sortDirection, ...queryOptions } = options;
+  const { page = 1, pageSize, search, status, owner, allowAnonymous, allowMultiple, requiresManualReview, sortBy, sortDirection, ...queryOptions } = options;
   return useQuery({
-    queryKey: ["all-forms", page, pageSize, search, allowAnonymous, allowMultiple, requiresManualReview, sortDirection],
-    queryFn: () => fetchAllForms({ page, pageSize, search, allowAnonymous, allowMultiple, requiresManualReview, sortDirection }),
+    queryKey: ["all-forms", page, pageSize, search, status, owner, allowAnonymous, allowMultiple, requiresManualReview, sortBy, sortDirection],
+    queryFn: () => fetchAllForms({ page, pageSize, search, status, owner, allowAnonymous, allowMultiple, requiresManualReview, sortBy, sortDirection }),
     retry: queryOptions.retry ?? false,
     ...queryOptions,
+  });
+};
+
+export const useRestoreFormMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: restoreForm,
+    onSuccess: (_, formId) => {
+      queryClient.invalidateQueries({ queryKey: ["all-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["form", formId] });
+    },
   });
 };
 
@@ -99,9 +135,15 @@ export const formMetricsQuery = (formId) => ({
   retry: false,
 });
 
-export const formAnalyticsQuery = (formId) => ({
-  queryKey: ["form-analytics", formId],
-  queryFn: () => fetchFormAnalytics(formId),
+export const formAnalyticsQuery = (formId, { status = null, sinceDays = null, answer = null } = {}) => ({
+  queryKey: ["form-analytics", formId, status, sinceDays, answer?.q ?? null, answer?.v ?? null],
+  queryFn: () => fetchFormAnalytics(formId, { status, sinceDays, answer }),
+  retry: false,
+});
+
+export const questionAnswersQuery = (formId, questionId, { page = 1, search = "", filter = null } = {}) => ({
+  queryKey: ["question-answers", formId, questionId, page, search, filter?.status ?? null, filter?.sinceDays ?? null, filter?.answer?.q ?? null, filter?.answer?.v ?? null],
+  queryFn: () => fetchQuestionAnswers(formId, questionId, { page, search, filter }),
   retry: false,
 });
 

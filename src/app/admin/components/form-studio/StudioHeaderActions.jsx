@@ -4,12 +4,13 @@ import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeft, CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, MoreHorizontal, PencilLine, Send, Share2, TriangleAlert, Undo2,
+  ArrowLeft, CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, MoreHorizontal, PencilLine, Redo2, Share2, TriangleAlert, Undo2,
 } from "lucide-react";
 import Popover from "@/app/components/utils/Popover";
 import { Floating } from "@/app/components/utils/Floating";
 import Tip from "@/app/admin/components/utils/Tip";
 import { POPOVER_MOTION } from "./studio-motion";
+import { PeopleCount, PeopleStack } from "./StudioPresence";
 
 const emptySubscribe = () => () => {};
 
@@ -31,7 +32,7 @@ function SaveButton({ onSave, isSaving, isError, error, saveLabel, saveExtra, dr
   );
 }
 
-function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, canUndo, issues, secondary, publish, onSave, ...save }) {
+function FullActions({ saveStatus, returnHref, people = [], onGoToPerson, fill, onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, onSave, ...save }) {
   return (
     <div className="flex items-center gap-1 text-neutral-500">
       {returnHref ? (
@@ -42,6 +43,7 @@ function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, can
           Etkinliğe dön
         </a>
       ) : null}
+      <PeopleStack people={people} onGo={onGoToPerson} />
       {saveStatus ? <div className="mr-2 hidden sm:block">{saveStatus}</div> : null}
 
       {fill ? (
@@ -72,6 +74,12 @@ function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, can
         <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo} className={ICON_BUTTON}><Undo2 size={16} /></button>
       </Tip>
 
+      {onRedo ? (
+        <Tip label="İleri al (Ctrl+Shift+Z)">
+          <button type="button" aria-label="İleri al" onClick={onRedo} disabled={!canRedo} className={ICON_BUTTON}><Redo2 size={16} /></button>
+        </Tip>
+      ) : null}
+
       {secondary ? (
         <Tip label={secondary.label}>
           <button type="button" aria-label={secondary.label} onClick={secondary.onClick} disabled={secondary.disabled} className={ICON_BUTTON}>
@@ -81,7 +89,7 @@ function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, can
       ) : null}
 
       {issues?.count > 0 ? (
-        <Tip label="Yayınlamayı engelleyen sorunlar">
+        <Tip label="Kaydı engelleyen sorunlar">
           <button type="button" onClick={issues.onShow} aria-label="Sorunlar"
             className="ml-1 inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2 py-1 text-2xs font-medium text-red-200 transition-colors hover:bg-red-500/20"
           >
@@ -91,36 +99,26 @@ function FullActions({ saveStatus, returnHref, fill, onShare, draft, onUndo, can
         </Tip>
       ) : null}
 
-      {publish ? (
-        <Popover open={Boolean(publish.isError)} error={publish.error} variant="error" align="bottom-right">
-          <button type="button" onClick={publish.onClick} disabled={publish.disabled || publish.pending} title={publish.title}
-            className="ml-1 flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-semibold text-neutral-200 transition-colors hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300 disabled:opacity-50"
-          >
-            {publish.pending ? <CircleGauge size={14} className="animate-spin" /> : null}
-            Yayınla
-          </button>
-        </Popover>
-      ) : null}
-
       {onSave ? <SaveButton onSave={onSave} {...save} /> : null}
     </div>
   );
 }
 
-function CompactActions({ returnHref, onShare, draft, onUndo, canUndo, issues, secondary, publish, onSave, ...save }) {
+function CompactActions({ returnHref, people = [], onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, onSave, ...save }) {
   const [anchor, setAnchor] = useState(null);
 
   const items = [
     returnHref ? { key: "return", label: "Etkinliğe dön", icon: ArrowLeft, onClick: () => window.location.assign(returnHref) } : null,
-    publish ? { key: "publish", label: publish.pending ? "Yayınlanıyor..." : "Akışı yayınla", icon: Send, onClick: publish.onClick, disabled: publish.disabled || publish.pending, hint: publish.disabled ? publish.title : null } : null,
-    issues?.count > 0 ? { key: "issues", label: `Yayını engelleyen ${issues.count} sorun`, icon: TriangleAlert, onClick: issues.onShow, tone: "text-red-200" } : null,
+    issues?.count > 0 ? { key: "issues", label: `Kaydı engelleyen ${issues.count} sorun`, icon: TriangleAlert, onClick: issues.onShow, tone: "text-red-200" } : null,
     onShare ? { key: "share", label: "Formu paylaş", icon: Share2, onClick: onShare } : null,
+    onRedo ? { key: "redo", label: "İleri al", icon: Redo2, onClick: onRedo, disabled: !canRedo } : null,
     draft?.has ? { key: "draft", label: "Taslağı sil", icon: ClipboardX, onClick: draft.onDiscard, disabled: draft.discarding } : null,
     secondary ? { key: "secondary", label: secondary.label, icon: secondary.icon, onClick: secondary.onClick, disabled: secondary.disabled, tone: "text-red-300" } : null,
   ].filter(Boolean);
 
   return (
     <div className="flex items-center gap-0.5 text-neutral-500">
+      <PeopleCount people={people} />
       <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo} className={`${ICON_BUTTON} p-2`}><Undo2 size={17} /></button>
       {items.length > 0 ? (
         <button type="button" aria-label="Diğer işlemler" aria-expanded={Boolean(anchor)} onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { cloneSchema, ensureEventIdentityFields, hasEventIdentity, identityKeyOf, isIdentityField, IDENTITY_EMAIL } from "@/lib/event-handoff";
 import { REGISTRY } from "@/app/components/form-registry";
 import { genFieldId } from "../form-editor/fieldId";
@@ -9,32 +9,29 @@ import { dropInvalidDependents, newFieldOf, pruneConditions, retypeField } from 
 
 function lockedMapOf(workflow) {
   if (!workflow?.isPublished) return new Map();
-  return new Map((workflow.lockedQuestions ?? []).map((question) => [question.id, { values: Array.isArray(question.values) ? question.values : [] }]));
+  return new Map((workflow.lockedQuestions ?? []).map((question) => [question.id, { values: Array.isArray(question.values) ? question.values : [], liveOnly: Boolean(question.liveOnly) }]));
 }
 
-export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) {
-  const { state, dispatch } = useFormEditor();
-  const schemaRef = useRef(state.schema);
+const TITLE_MAX_LENGTH = 100;
 
-  useLayoutEffect(() => {
-    schemaRef.current = state.schema;
-  }, [state.schema]);
+export const LIVE_LOCK_HINT = "Kayıtlı akış bu soruyu hâlâ okuyor; önce kaydedin, sonra silebilirsiniz.";
+
+export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) {
+  const { state, doc } = useFormEditor();
 
   const eventLinked = forcedEventLinked || hasEventIdentity(state.schema);
   const lockedById = useMemo(() => lockedMapOf(state.workflow), [state.workflow]);
 
   const commit = useCallback((next) => {
-    const wrapped = eventLinked ? ensureEventIdentityFields(next) : next;
-    schemaRef.current = wrapped;
-    dispatch({ type: "SET_SCHEMA", payload: wrapped });
-  }, [dispatch, eventLinked]);
+    doc.setSchema(eventLinked ? ensureEventIdentityFields(next) : next);
+  }, [doc, eventLinked]);
 
   const isProtected = useCallback((field) => Boolean(field) && (lockedById.has(field.id) || (eventLinked && isIdentityField(field))), [lockedById, eventLinked]);
 
   const isLockedChoice = useCallback((field, value) => (lockedById.get(field?.id)?.values ?? []).includes(value), [lockedById]);
 
   return useMemo(() => {
-    const current = () => schemaRef.current;
+    const current = () => doc.getView().schema;
     const find = (id) => current().find((field) => field.id === id);
 
     const updateField = (id, updates) => {
@@ -90,7 +87,8 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
       const fields = current();
       const blocked = fields.filter((field) => ids.includes(field.id) && isProtected(field)).map((field) => field.id);
       const removable = ids.filter((id) => !blocked.includes(id));
-      if (removable.length === 0) return { removed: 0, cleared: 0, blocked: blocked.length };
+      const waitsForSave = blocked.some((id) => lockedById.get(id)?.liveOnly);
+      if (removable.length === 0) return { removed: 0, cleared: 0, blocked: blocked.length, waitsForSave };
 
       let cleared = 0;
       const next = fields.filter((field) => !removable.includes(field.id)).map((field) => {
@@ -100,7 +98,7 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
         return rest;
       });
       commit(next);
-      return { removed: removable.length, cleared, blocked: blocked.length };
+      return { removed: removable.length, cleared, blocked: blocked.length, waitsForSave };
     };
 
     const move = (ids, direction) => {
@@ -261,10 +259,10 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
       updateChild,
       addChild,
       removeChild,
-      setTitle: (value) => dispatch({ type: "SET_TITLE", payload: value }),
-      setDescription: (value) => dispatch({ type: "SET_DESCRIPTION", payload: value }),
-      setTask: (task) => dispatch({ type: "SET_TASK", payload: task }),
-      setSetting: (key, value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key, value } }),
+      setTitle: (value) => doc.set(["title"], (value ?? "").slice(0, TITLE_MAX_LENGTH)),
+      setDescription: (value) => doc.set(["description"], value),
+      setTask: (task) => doc.set(["task"], task),
+      setSetting: (key, value) => doc.set([key], value),
     };
-  }, [commit, dispatch, eventLinked, isLockedChoice, isProtected, lockedById]);
+  }, [commit, doc, eventLinked, isLockedChoice, isProtected, lockedById]);
 }

@@ -7,7 +7,7 @@ import { ConditionSelector } from "../../admin/components/form-editor/components
 
 export const LOCKED_OPTION_HINT = "Akış koşulu bu seçeneği karşılaştırıyor; adı değiştirilemez ve silinemez.";
 
-const LOCKED_QUESTION_HINT = "Yayındaki bir akışın koşulu bu soruyu okuyor; soru silinemez.";
+const LOCKED_QUESTION_HINT = "Akıştaki bir yönlendirme koşulu bu soruyu okuyor; soru silinemez.";
 
 export function FieldShell({ number, title, required, onRequiredChange, children, condition, onConditionChange, availableFields, hideRequired = false, compact = false, workflowLock = null }) {
   const [showLogic, setShowLogic] = useState(false);

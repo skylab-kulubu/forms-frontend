@@ -8,6 +8,8 @@ import { StaticCard } from "./StudioCard";
 import { OverviewButton, SheetButtons, TOOLBAR_CLASS, TOOL_DIVIDER, ToolButton, pageCardRect } from "./StudioPage";
 import { triggerStyle } from "./studio-flow";
 import { prefersReducedMotion } from "./studio-motion";
+import { PresenceDots } from "./StudioPresence";
+import { CommentMark } from "./StudioOutline";
 
 const FRAME_WIDTH = 672;
 const OUT_WIDTH = 132;
@@ -185,7 +187,7 @@ function FrameMeasure({ formId, onHeight, children }) {
 }
 
 export default function StudioMap({
-  wf, flowName, activeFormId, liveForm, selectedKey, entry = null, exitTo = null, onExitDone, onOpenForm, onSelectNode, onBack, onAddStep, onToast, onOverview = null,
+  wf, flowName, activeFormId, selectedKey, entry = null, exitTo = null, onExitDone, onOpenForm, onSelectNode, onBack, onAddStep, onToast, onOverview = null, peopleByForm = {}, commentCounts = {},
 }) {
   const { nodes, transitions } = wf.state;
   const canvasRef = useRef(null);
@@ -517,7 +519,7 @@ export default function StudioMap({
 
   const z = view.z;
   const inverse = 1 / z;
-  const formOf = (node) => (node.formId === activeFormId && liveForm ? liveForm : wf.formsById[node.formId]);
+  const formOf = (node) => wf.formsById[node.formId];
 
   return (
     <div className="@container relative h-full min-h-0">
@@ -608,6 +610,8 @@ export default function StudioMap({
                     <span className="inline-flex shrink-0 items-center gap-0.5 text-3xs text-amber-300/90"><Timer size={10} />{shortDuration(node.timeLimitMinutes * 60_000)}</span>
                   ) : null}
                   {issues.length > 0 ? <span className="size-1.5 shrink-0 rounded-full bg-red-400" title={`${issues.length} sorun`} /> : null}
+                  {commentCounts[node.formId] ? <CommentMark count={commentCounts[node.formId]} /> : null}
+                  {peopleByForm[node.formId]?.length ? <PresenceDots members={peopleByForm[node.formId]} /> : null}
                 </div>
 
                 <div data-map-frame={node.nodeKey} className="absolute" style={{ left: position.x, top: position.y, width: frameWidth }}>
