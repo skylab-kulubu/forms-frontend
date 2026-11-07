@@ -362,13 +362,14 @@ function MultiInspector({ ids, fields, actions, onDuplicate, onRemove }) {
   const questions = selected.filter((field) => field.type !== "separator");
   const allRequired = questions.length > 0 && questions.every((field) => field.props?.required);
   const someRequired = questions.some((field) => field.props?.required);
+  const conditionLost = selected.filter((field) => field.condition?.fieldId && !ids.includes(field.condition.fieldId));
 
   const saveTemplate = () => {
     const title = templateTitle.trim() || `${selected.length} bileşenlik şablon`;
     const schema = selected.map((field) => {
+      if (!conditionLost.includes(field)) return field;
       const { condition, ...rest } = field;
-      const keep = condition && ids.includes(condition.fieldId);
-      return keep ? field : rest;
+      return rest;
     });
     saveGroup({ id: null, isUpdate: false, payload: { Id: null, Title: title, Description: "", Schema: schema } }, {
       onSuccess: () => {
@@ -407,6 +408,9 @@ function MultiInspector({ ids, fields, actions, onDuplicate, onRemove }) {
       </section>
       <section className={PANEL_SECTION}>
         <div className="flex flex-col gap-2">
+          {savingOpen && conditionLost.length > 0 ? (
+            <PanelNotice>Soru {conditionLost.map((field) => numbers.get(field.id)).join(", ")} şablona koşulsuz kaydedilir; koşulun sorusu seçili değil.</PanelNotice>
+          ) : null}
           {savingOpen ? (
             <div className="flex gap-2">
               <input autoFocus value={templateTitle} onChange={(event) => setTemplateTitle(event.target.value)} placeholder="Şablon adı"
