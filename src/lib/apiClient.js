@@ -44,6 +44,17 @@ export function announceSessionExpired(rejectedToken) {
   }
 }
 
+export async function sessionEnded() {
+  try {
+    const response = await fetch("/api/auth/session", { cache: "no-store" });
+    if (!response.ok) return false;
+    const session = await response.json();
+    return !session?.user;
+  } catch {
+    return false;
+  }
+}
+
 export async function getAccessToken() {
   try {
     const session = await getSharedSession();

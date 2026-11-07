@@ -12,6 +12,8 @@ export const HUB_PATH = "/hubs/studio";
 
 const offlineError = () => Object.assign(new Error("Bağlantı yok"), { offline: true });
 
+const isUnauthorized = (error) => Number(error?.statusCode) === 401 || String(error?.message).includes("Status code '401'");
+
 const NO_MEMBERS = [];
 
 function createPresence() {
@@ -201,7 +203,7 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
       })
       .catch((error) => {
         setStatus("offline");
-        if (Number(error?.statusCode) === 401) onSessionExpired(lastToken);
+        if (isUnauthorized(error)) onSessionExpired(lastToken);
         clearTimeout(restartTimer);
         if (!stopped) restartTimer = setTimeout(start, RESTART_DELAY_MS);
       })

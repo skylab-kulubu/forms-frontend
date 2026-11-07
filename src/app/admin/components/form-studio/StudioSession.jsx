@@ -1,15 +1,21 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useSession } from "next-auth/react";
-import { announceSessionExpired, getAccessToken } from "@/lib/apiClient";
+import { announceSessionExpired, getAccessToken, sessionEnded } from "@/lib/apiClient";
 import { SESSION_RESTORED_EVENT } from "@/lib/session-recovery";
 import { createStudioSession } from "@/lib/studio/studio-session";
 import { studioApi } from "@/lib/studio/studio-api";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+const SESSION_RETRY_MS = 30 * 1000;
 
 const StudioSessionContext = createContext(null);
+
+const expireSession = (token) => {
+  if (token) announceSessionExpired(token);
+  else sessionEnded().then((ended) => { if (ended) announceSessionExpired(); });
+};
 
 const noSubscribe = () => () => {};
 const noSnapshot = () => null;
@@ -44,16 +50,41 @@ function presenceListsStore(session, ids) {
 }
 
 export function StudioSessionProvider({ onNotice, fallback = null, children }) {
-  const { data: auth } = useSession();
-  const userId = auth?.user?.id ?? null;
+  const { data: auth, update } = useSession();
+  const signedInId = auth?.user?.id ?? null;
+  const [userId, setUserId] = useState(signedInId);
+  if (signedInId && signedInId !== userId) setUserId(signedInId);
+  const lostSession = Boolean(userId) && !signedInId;
+  const updateRef = useRef(update);
+  useEffect(() => { updateRef.current = update; });
 
   const session = useMemo(() => (userId
-    ? createStudioSession({ baseUrl: BASE_URL, userId, http: studioApi, getToken: getAccessToken, onSessionExpired: announceSessionExpired })
+    ? createStudioSession({ baseUrl: BASE_URL, userId, http: studioApi, getToken: getAccessToken, onSessionExpired: expireSession })
     : null), [userId]);
 
   useEffect(() => {
     session?.setNoticeHandler(onNotice);
   });
+
+  useEffect(() => {
+    if (!session || !lostSession) return undefined;
+    let active = true;
+    const restore = async () => {
+      if (session.status() !== "connected" || await updateRef.current()) return;
+      if (await sessionEnded() && active) {
+        announceSessionExpired();
+        setUserId(null);
+      }
+    };
+    restore();
+    const stop = session.onStatus(restore);
+    const retry = setInterval(restore, SESSION_RETRY_MS);
+    return () => {
+      active = false;
+      stop();
+      clearInterval(retry);
+    };
+  }, [session, lostSession]);
 
   useEffect(() => {
     if (!session) return undefined;
@@ -68,7 +99,7 @@ export function StudioSessionProvider({ onNotice, fallback = null, children }) {
 
   if (!session) return fallback;
 
-  return <StudioSessionContext.Provider value={session}>{children}</StudioSessionContext.Provider>;
+  return <StudioSessionContext.Provider key={userId} value={session}>{children}</StudioSessionContext.Provider>;
 }
 
 export function useStudioSession() {
