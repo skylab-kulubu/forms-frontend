@@ -11,6 +11,7 @@ import { FormEditorProvider, useOptionalFormEditor } from "../form-editor/FormEd
 import { HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
 import { WorkflowEditorProvider, useWorkflowEditor } from "../workflow-editor/WorkflowEditorContext";
 import { validationMessage } from "../workflow-editor/workflow-copy";
+import { triggersForNode } from "../workflow-editor/workflow-graph";
 import ApprovalOverlay from "../ApprovalOverlay";
 import FormShareDialog from "../share/FormShareDialog";
 import { formInfoQuery } from "@/lib/hooks/useFormContext";
@@ -19,7 +20,7 @@ import { NONE, StudioProvider, useStudio } from "./StudioContext";
 import { StudioSessionProvider, useDocStates, useOpenThreadCounts, usePresenceBroadcast, usePresenceMembers, useStudioSession } from "./StudioSession";
 import { RemoteCursors, StudioPresenceProvider, colorOf, revealField, uniquePeople, useCursorBroadcast, useTypingField, whereOf } from "./StudioPresence";
 import StudioLayout from "./StudioLayout";
-import StudioPage, { pageCardRect } from "./StudioPage";
+import StudioPage, { measureCard, pageCardRect } from "./StudioPage";
 import StudioMap, { FlowCardDecor } from "./StudioMap";
 import StudioFlowList from "./StudioFlowList";
 import StudioPalette from "./StudioPalette";
@@ -32,7 +33,7 @@ import { Crumbs, FlowRootBody, FormInspectorBody, RoutesBody, formCrumb, selecti
 import { FlowKeys, FormKeys } from "./StudioKeys";
 import { useWorkflowStudio } from "./useWorkflowStudio";
 import { useMediaQuery } from "./useMediaQuery";
-import { slideDirection, stagesOf } from "./studio-flow";
+import { slideDirection, stagesOf, triggerStyle } from "./studio-flow";
 import { SLIDE_IN_EASING, SLIDE_IN_MS, SLIDE_OUT_EASING, SLIDE_OUT_MS, SLIDE_PX, prefersReducedMotion, swapView } from "./studio-motion";
 import { publishedQueries, studioStatusOf } from "./studio-save";
 
@@ -103,7 +104,7 @@ function FormArea({ children }) {
   return editor ? children(editor) : children(null);
 }
 
-function WorkflowStudioContent({ workflow, seed }) {
+function WorkflowStudioContent({ workflow, seed, initialEntry = null, onLeave = null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -169,10 +170,10 @@ function WorkflowStudioContent({ workflow, seed }) {
   const [saveFailed, setSaveFailed] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [savedFlash, setSavedFlash] = useState(false);
-  const [mapEntry, setMapEntry] = useState(null);
+  const [mapEntry, setMapEntry] = useState(initialEntry?.entry ?? null);
   const [mapExit, setMapExit] = useState(null);
   const [arrival, setArrival] = useState(null);
-  const pageCardRef = useRef(null);
+  const pageCardRef = useRef(initialEntry?.page ?? null);
   const exitRef = useRef(null);
   const swappingRef = useRef(false);
   const switchRef = useRef(null);
@@ -198,7 +199,7 @@ function WorkflowStudioContent({ workflow, seed }) {
     return () => clearTimeout(timer);
   }, [savedFlash]);
 
-  const unsaved = docStates.some((snapshot) => snapshot.pending) || !state.isSaved || wf.metaDirty;
+  const unsaved = docStates.some((snapshot) => snapshot.pending) || (!wf.pendingStart && (!state.isSaved || wf.metaDirty));
 
   useEffect(() => {
     if (!unsaved) return undefined;
@@ -229,6 +230,10 @@ function WorkflowStudioContent({ workflow, seed }) {
   const dirtyIds = state.nodes
     .filter((node) => stateById[node.formId]?.dirty || stateById[node.formId]?.pending)
     .map((node) => node.formId);
+
+  useEffect(() => {
+    if (wf.pendingStart && state.nodes.length === 0) onLeave?.();
+  }, [wf.pendingStart, state.nodes.length, onLeave]);
 
   useEffect(() => {
     if (activeFormId && !state.nodes.some((node) => node.formId === activeFormId)) {
@@ -270,27 +275,20 @@ function WorkflowStudioContent({ workflow, seed }) {
       setMapExit(null);
       studio.setMode("map");
     };
-    const box = document.querySelector("[data-studio-center]")?.getBoundingClientRect();
-    const page = current.mode === "page" ? document.querySelector("[data-studio-page]") : null;
-    const card = page?.querySelector(".studio-card")?.getBoundingClientRect();
-    if (isPhone && card) {
+    const formId = current.activeFormId;
+    const measured = current.mode === "page" && formId ? measureCard(formId, current.devices[formId] === "phone") : null;
+    if (isPhone && measured) {
       swappingRef.current = true;
       swapView(() => open(null), { duration: 320, variant: "morph-out" }).then(() => { swappingRef.current = false; });
       return;
     }
-    if (!box || !card || !current.activeFormId || isPhone || prefersReducedMotion()) {
+    if (!measured || isPhone || prefersReducedMotion()) {
       open(null);
       return;
     }
-    const formId = current.activeFormId;
-    const rect = { left: card.left - box.left, top: card.top - box.top, width: card.width };
-    pageCardRef.current = { ...rect, baseTop: rect.top + page.scrollTop, containerWidth: box.width, phone: current.devices[formId] === "phone" };
-    const frameWidth = pageCardRect(box.width).width;
-    const scale = rect.width / frameWidth;
-    const gap = page.querySelector("[data-description-gap]");
-    const echo = { height: card.height / scale, gap: gap ? (gap.offsetHeight + parseFloat(getComputedStyle(gap).marginTop)) / scale : 0 };
+    pageCardRef.current = measured.page;
     swappingRef.current = true;
-    swapView(() => open({ formId, rect, frameWidth, echo }), { duration: 120 }).then(() => { swappingRef.current = false; });
+    swapView(() => open(measured.entry), { duration: 120 }).then(() => { swappingRef.current = false; });
   }, [isPhone, studio]);
 
   const backToPage = useCallback(() => {
@@ -354,7 +352,8 @@ function WorkflowStudioContent({ workflow, seed }) {
       return;
     }
     if (isPhone) {
-      openFromList(formId);
+      if (wf.pendingStart && formId === current.activeFormId) onLeave?.();
+      else openFromList(formId);
       return;
     }
     const box = document.querySelector("[data-studio-center]")?.getBoundingClientRect();
@@ -368,19 +367,23 @@ function WorkflowStudioContent({ workflow, seed }) {
     const exit = { formId, rect, ready: prefetchStudioForm(formId) };
     exitRef.current = exit;
     setMapExit(exit);
-  }, [isPhone, openFromList, prefetchStudioForm, studio, switchPage]);
+  }, [isPhone, onLeave, openFromList, prefetchStudioForm, studio, switchPage, wf.pendingStart]);
 
   const finishExit = useCallback(async (exit) => {
     if (exit.ready) await exit.ready.catch(() => null);
     if (exitRef.current !== exit) return;
     exitRef.current = null;
+    if (wf.pendingStart && onLeave) {
+      swapView(() => onLeave(), { duration: 120 });
+      return;
+    }
     swapView((done) => {
       setMapExit(null);
       setArrival({ formId: exit.formId, settle: done });
       if (exit.formId === uiRef.current.activeFormId) backToPage();
       else activateForm(exit.formId);
     });
-  }, [activateForm, backToPage]);
+  }, [activateForm, backToPage, onLeave, wf.pendingStart]);
 
   const clearArrival = useCallback(() => setArrival(null), []);
 
@@ -477,6 +480,10 @@ function WorkflowStudioContent({ workflow, seed }) {
 
   const requestSave = useCallback(() => {
     if (savingAll) return;
+    if (wf.pendingStart) {
+      saveForms();
+      return;
+    }
     if (!canSaveFlow) {
       saveForms();
       return;
@@ -487,7 +494,7 @@ function WorkflowStudioContent({ workflow, seed }) {
       return;
     }
     saveFlow();
-  }, [canSaveFlow, changedDocs, saveFlow, saveForms, savingAll, wf.flowDirty, wf.isLive]);
+  }, [canSaveFlow, changedDocs, saveFlow, saveForms, savingAll, wf.flowDirty, wf.isLive, wf.pendingStart]);
 
   const discardFlowDraft = async () => {
     setDiscardingFlow(true);
@@ -524,6 +531,11 @@ function WorkflowStudioContent({ workflow, seed }) {
   const { data: availableData, isLoading: availableLoading } = useAvailableFormsQuery(state.id, { enabled: Boolean(stepMenu) && Boolean(state.id) });
   const { data: candidateData, isLoading: candidateLoading } = useCandidateFormsQuery({ enabled: Boolean(stepMenu) && !state.id });
   const pickerForms = state.id ? listOf(availableData) : listOf(candidateData);
+
+  const startRoute = wf.pendingStart && state.nodes[0]
+    ? { sourceNodeKey: state.nodes[0].nodeKey, trigger: triggersForNode(state.nodes[0], state.transitions)[0] }
+    : null;
+  const openStepMenu = (anchor) => setStepMenu({ anchor, from: startRoute });
 
   const addStep = async (choice) => {
     const menu = stepMenu;
@@ -574,7 +586,7 @@ function WorkflowStudioContent({ workflow, seed }) {
   const flowContext = { wf, onOpenForm: requestPage, onOpenFlowPage: () => state.id && router.push(`/admin/workflows/${state.id}`) };
   const picker = {
     open: Boolean(stepMenu),
-    onOpen: (event) => setStepMenu({ anchor: event?.currentTarget ?? null }),
+    onOpen: (event) => openStepMenu(event?.currentTarget ?? null),
     render: () => null,
   };
   const ownershipControl = state.id && isOwner ? { workflowId: state.id, ownerId: workflow.owner.id, onTransferred: () => router.push("/admin/workflows") } : null;
@@ -635,7 +647,9 @@ function WorkflowStudioContent({ workflow, seed }) {
         <OutlineSteps nodes={stages.ordered} stages={stages} activeFormId={activeFormId} dirtyIds={dirtyIds} mapActive={ui.mode === "map"} peopleByForm={peopleByForm}
           questionCounts={questionCounts} onActivate={requestPage} onToggleMap={flowKeys.onToggleMap}
         />
-        {formState ? (
+        {wf.pendingStart ? (
+          <p className="px-3 pt-3 text-2xs text-neutral-500">Soruları düzenlemek için forma dön.</p>
+        ) : formState ? (
           <OutlineQuestions onShowPage={() => { if (ui.mode === "map") backToPage(); }}
             onAdd={(anchor, index, options) => { if (ui.mode === "map") backToPage(); studio.openMenu({ anchor, index, ...options }); }}
           />
@@ -648,13 +662,13 @@ function WorkflowStudioContent({ workflow, seed }) {
     const center = ui.mode === "map" || !activeFormId ? (
       isPhone ? (
         <StudioFlowList nodes={state.nodes} transitions={state.transitions} stages={stages} questionCounts={questionCounts} dirtyIds={dirtyIds}
-          activeFormId={activeFormId} onOpenForm={requestPage} onBack={() => requestPage(activeFormId)} onAddStep={(anchor) => setStepMenu({ anchor })}
+          activeFormId={activeFormId} onOpenForm={requestPage} onBack={() => requestPage(activeFormId)} onAddStep={openStepMenu}
         />
       ) : (
         <StudioMap wf={wf} flowName={flowName} activeFormId={activeFormId} selectedKey={state.selectedKey} peopleByForm={peopleByForm} commentCounts={commentCounts}
           onOpenForm={requestPage} onSelectNode={(nodeKey) => dispatch({ type: "SELECT", nodeKey })} onBack={() => requestPage(activeFormId)}
           entry={mapEntry} exitTo={mapExit} onExitDone={finishExit}
-          onAddStep={(anchor) => setStepMenu({ anchor })} onToast={studio.toast}
+          onAddStep={openStepMenu} onToast={studio.toast}
           onOverview={overviewFormId ? () => router.push(`/admin/forms/${overviewFormId}`) : null}
         />
       )
@@ -726,7 +740,7 @@ function WorkflowStudioContent({ workflow, seed }) {
               canRedo={Boolean(formState?.canRedo)}
               secondary={state.id ? { label: "Akışı arşivle", icon: Archive, onClick: () => setArchiveOpen(true), disabled: wf.archiveState.isPending } : null}
               issues={{ count: wf.issues.length, onShow: () => setIssuesOpen((open) => !open) }}
-              onSave={requestSave} isSaving={savingAll} isError={saveFailed} saveExtra={dirtyCount > 1 ? `${dirtyCount} form` : null}
+              onSave={wf.pendingStart ? null : requestSave} isSaving={savingAll} isError={saveFailed} saveExtra={dirtyCount > 1 ? `${dirtyCount} form` : null}
             />
             <AnimatePresence>
             {ui.palette ? (
@@ -745,7 +759,7 @@ function WorkflowStudioContent({ workflow, seed }) {
             </AnimatePresence>
             <AnimatePresence>
             {stepMenu ? (
-              <StudioFormPicker key="step-picker" anchor={stepMenu.anchor} heading={stepMenu.from ? "Bu çıkıştan hangi form açılsın?" : "Akışa hangi form eklensin?"}
+              <StudioFormPicker key="step-picker" anchor={stepMenu.anchor} heading={stepMenu.from ? `${triggerStyle(stepMenu.from.trigger).label} hangi form açılsın?` : "Akışa hangi form eklensin?"}
                 forms={pickerForms} isLoading={state.id ? availableLoading : candidateLoading} usedIds={state.nodes.map((node) => node.formId)}
                 onPick={addStep} onClose={() => setStepMenu(null)}
               />
@@ -790,7 +804,7 @@ function WorkflowStudioSession(props) {
   );
 }
 
-export default function WorkflowStudio({ workflow, initialFormId = null, initialView = "page", seed = null }) {
+export default function WorkflowStudio({ workflow, initialFormId = null, initialView = "page", seed = null, initialEntry = null, onLeave = null }) {
   const definition = workflow?.draft ?? workflow?.published ?? null;
   const nodes = definition?.nodes ?? [];
   const requested = initialFormId && nodes.some((node) => node.formId === initialFormId) ? initialFormId : null;
@@ -800,7 +814,7 @@ export default function WorkflowStudio({ workflow, initialFormId = null, initial
   return (
     <WorkflowEditorProvider workflow={workflow}>
       <StudioProvider initialFormId={startFormId} initialMode={mode}>
-        <WorkflowStudioSession workflow={workflow} seed={seed && seed.form?.id === requested ? seed : null} />
+        <WorkflowStudioSession workflow={workflow} seed={seed && seed.form?.id === requested ? seed : null} initialEntry={initialEntry} onLeave={onLeave} />
       </StudioProvider>
     </WorkflowEditorProvider>
   );

@@ -141,7 +141,8 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     [state.name, state.description, state.allowMultipleRuns],
   );
   const metaDirty = !sameMeta(currentMeta, savedMeta);
-  const flowDirty = !isLive || hasDraft || !state.isSaved || metaDirty;
+  const pendingStart = !state.id && state.nodes.length < 2;
+  const flowDirty = !pendingStart && (!isLive || hasDraft || !state.isSaved || metaDirty);
 
   useEffect(() => {
     if (!state.id) return;
@@ -157,7 +158,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
   }, [state.id, currentMeta, savedMeta, dispatch]);
 
   useEffect(() => {
-    if (state.id || state.isSaved) return undefined;
+    if (state.id || state.isSaved || state.nodes.length < 2) return undefined;
     const timer = setTimeout(() => { ensureWorkflow().catch(() => {}); }, DEFINITION_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [state.id, state.isSaved, state.name, state.description, state.allowMultipleRuns, state.nodes, state.transitions, ensureWorkflow]);
@@ -435,6 +436,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     hasDraft,
     metaDirty,
     flowDirty,
+    pendingStart,
     formsById,
     schemasByFormId,
     loadingFormIds,

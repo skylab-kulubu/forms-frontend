@@ -565,7 +565,7 @@ function FlowPageSection({ flow }) {
 
   return (
     <section className={PANEL_SECTION}>
-      <SectionHeader title="Akış sayfası" description={wf.isLive ? null : "Akış ilk kayıtta başvurulara açılır."} />
+      <SectionHeader title="Akış sayfası" description={wf.isLive ? null : wf.pendingStart ? "Henüz bir şey kaydedilmedi. Sonraki adımı ekleyince akış taslak olarak oluşur; forma dönersen form olduğu gibi kalır." : "Akış ilk kayıtta başvurulara açılır."} />
       {wf.state.id ? <PanelButton icon={Activity} onClick={onOpenFlowPage}>Akış sayfasına git</PanelButton> : null}
       {wf.issues.length > 0 ? <PanelNotice tone="red">Kaydı engelleyen {wf.issues.length} sorun var. Başlıktaki sorun düğmesi listeyi açar.</PanelNotice> : null}
     </section>

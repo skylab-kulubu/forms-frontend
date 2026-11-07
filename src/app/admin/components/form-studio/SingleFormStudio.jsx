@@ -10,7 +10,6 @@ import { useFormContext } from "../../providers";
 import { FormEditorProvider, useFormEditor } from "../form-editor/FormEditorContext";
 import { EventReturnBar, HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
 import { useDeleteFormMutation } from "@/lib/hooks/useFormAdmin";
-import { saveDefinition, useCandidateFormsQuery, useCreateWorkflowMutation } from "@/lib/hooks/useWorkflowAdmin";
 import { request } from "@/lib/apiClient";
 import { studioApi } from "@/lib/studio/studio-api";
 import { schemaOps } from "@/lib/studio/schema-ops";
@@ -18,29 +17,29 @@ import { FORM_STATUS_OPEN, cloneSchema, ensureEventIdentityFields, hasEventIdent
 import { editPathWithReturnTo, eventRefFromForm, returnToEventHref, sanitizeReturnTo } from "@/lib/return-to";
 import ApprovalOverlay from "../ApprovalOverlay";
 import FormShareDialog from "../share/FormShareDialog";
-import { TRIGGER, autoLayout, slugifyNodeKey, toDefinitionPayload } from "../workflow-editor/workflow-graph";
 import { StudioProvider, useStudio } from "./StudioContext";
 import { StudioSessionProvider, usePresenceBroadcast, usePresenceMembers, useStudioSession } from "./StudioSession";
 import { RemoteCursors, StudioPresenceProvider, colorOf, revealField, uniquePeople, useCursorBroadcast, useTypingField, whereOf } from "./StudioPresence";
 import StudioLayout from "./StudioLayout";
-import StudioPage from "./StudioPage";
+import StudioPage, { measureCard } from "./StudioPage";
 import StudioPalette from "./StudioPalette";
 import StudioHeaderActions from "./StudioHeaderActions";
-import StudioFormPicker, { NEW_FORM } from "./StudioFormPicker";
 import StudioSkeleton from "./StudioSkeleton";
 import { SingleNextBlock } from "./StudioNextBlock";
 import { OutlineHeader, OutlineQuestions } from "./StudioOutline";
 import { Crumbs, FormInspectorBody, formCrumb, selectionCrumb } from "./StudioInspector";
 import { FormKeys } from "./StudioKeys";
 import { newFormDataOf, publishedQueries, studioStatusOf } from "./studio-save";
+import { startFlowBlocker } from "./studio-flow";
 
 const emptySubscribe = () => () => {};
 
 const readReturnTo = () => sanitizeReturnTo(new URLSearchParams(window.location.search).get("returnTo"));
 
 const NO_MEMBERS = [];
+const START_SYNC_MS = 5000;
 
-function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }) {
+function SingleStudioContent({ doc, legacyDraft, onRefresh, onStartFlow, handoff, formEvent }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -55,11 +54,8 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [draftNotice, setDraftNotice] = useState(false);
-  const [nextMenu, setNextMenu] = useState(null);
 
   const { mutate: deleteForm, isPending: isDeletePending } = useDeleteFormMutation();
-  const createWorkflowMutation = useCreateWorkflowMutation();
-  const { data: candidatesData, isLoading: candidatesLoading } = useCandidateFormsQuery({ enabled: Boolean(nextMenu) });
 
   const isNewForm = !state.id;
   const rawReturnTo = useSyncExternalStore(emptySubscribe, () => new URLSearchParams(window.location.search).get("returnTo"), () => null);
@@ -180,48 +176,6 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
     if (doc.discard()) studio.toast("Taslak silindi. Ctrl+Z geri alır.");
   };
 
-  const createFlow = async (choice) => {
-    setNextMenu(null);
-    try {
-      let target = choice;
-      if (choice === NEW_FORM) {
-        const response = await request("/api/admin/forms", {
-          method: "POST",
-          body: {
-            Id: null, Title: "Yeni Form", Description: "", Schema: [], Status: 2, AllowMultipleResponses: false, AllowAnonymousResponses: false,
-            RequiresManualReview: false, Collaborators: [], Task: null, ClosesAt: null, TimeLimitMinutes: null,
-          },
-        });
-        const created = response?.data ?? response ?? {};
-        target = { id: created.id, title: created.title ?? "Yeni Form", requiresManualReview: false };
-      }
-
-      const reviewed = Boolean(state.requiresManualReview);
-      const startKey = slugifyNodeKey(state.title, []);
-      const targetKey = slugifyNodeKey(target.title, [startKey]);
-      const nodes = [
-        { nodeKey: startKey, formId: state.id, isStart: true, requiresManualReview: reviewed, position: null },
-        { nodeKey: targetKey, formId: target.id, isStart: false, requiresManualReview: Boolean(target.requiresManualReview), position: null },
-      ];
-      const transitions = [{ localId: "t-start", sourceNodeKey: startKey, targetNodeKey: targetKey, trigger: reviewed ? TRIGGER.APPROVED : TRIGGER.SUBMITTED, priority: 0, condition: null }];
-      const layout = autoLayout(nodes, transitions);
-      const positioned = nodes.map((node) => ({ ...node, position: layout[node.nodeKey] }));
-
-      const workflowResponse = await createWorkflowMutation.mutateAsync({ name: `${state.title || "Yeni Form"} akışı`, description: null, allowMultipleRuns: false });
-      const workflowId = (workflowResponse?.data ?? workflowResponse)?.id;
-      if (!workflowId) throw new Error("Akış oluşturulamadı");
-      await saveDefinition({ workflowId, definition: toDefinitionPayload(positioned, transitions) });
-      await onRefresh?.();
-    } catch {
-      studio.toast("Akış oluşturulamadı. Tekrar deneyin.", "red");
-    }
-  };
-
-  const candidates = (() => {
-    const payload = candidatesData?.data ?? candidatesData;
-    return Array.isArray(payload) ? payload : payload?.items ?? [];
-  })();
-
   const isWorkflowLocked = Boolean(state.workflow?.isPublished);
   const fields = state.schema;
   const crumb = selectionCrumb(ui.selection, fields);
@@ -247,11 +201,15 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
     </>
   );
 
+  const startBlocked = isNewForm ? "Önce formu kaydet; akış kayıtlı bir formla başlar." : startFlowBlocker(state);
+
+  const startFlow = async () => {
+    await doc.whenSynced(START_SYNC_MS);
+    await onStartFlow(() => measureCard(state.id, ui.devices[state.id] === "phone"));
+  };
+
   const nextBlock = state.workflow || fields.length === 0 ? null : (
-    <SingleNextBlock reviewed={Boolean(state.requiresManualReview)}
-      disabledReason={isNewForm ? "Önce formu kaydet; sonraki adım kayıtlı bir formla eklenir." : null}
-      onAddStep={async (anchor) => setNextMenu({ anchor })}
-    />
+    <SingleNextBlock reviewed={Boolean(state.requiresManualReview)} disabledReason={startBlocked} onStartFlow={startFlow} />
   );
 
   return (
@@ -261,7 +219,7 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
       outline={outline}
       center={(
         <>
-          <StudioPage eventLinked={eventLinked} userName={session?.user?.fullName} nextBlock={nextBlock} onOverview={!isNewForm ? () => router.push(`/admin/forms/${state.id}`) : null} />
+          <StudioPage eventLinked={eventLinked} userName={session?.user?.fullName} nextBlock={nextBlock} onStartFlow={state.workflow || startBlocked ? null : startFlow} onOverview={!isNewForm ? () => router.push(`/admin/forms/${state.id}`) : null} />
           <RemoteCursors session={studioSession} formId={state.id} members={others} />
         </>
       )}
@@ -294,13 +252,6 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
               />
             ) : null}
           </AnimatePresence>
-          <AnimatePresence>
-            {nextMenu ? (
-              <StudioFormPicker key="next-picker" anchor={nextMenu.anchor} heading={`${state.requiresManualReview ? "Onaylanınca" : "Gönderilince"} hangi form açılsın?`}
-                forms={candidates} isLoading={candidatesLoading} excludeIds={[state.id]} onPick={createFlow} onClose={() => setNextMenu(null)}
-              />
-            ) : null}
-          </AnimatePresence>
           <ApprovalOverlay open={deleteOpen} preset="delete-form" context={{ isPending: isDeletePending }}
             onApprove={() => deleteForm(state.id, { onSuccess: () => router.push("/admin/forms"), onError: () => setDeleteOpen(false) })}
             onReject={() => setDeleteOpen(false)}
@@ -315,7 +266,7 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
   );
 }
 
-function SingleStudioDoc({ snapshot, onRefresh, handoff }) {
+function SingleStudioDoc({ snapshot, onRefresh, onStartFlow, handoff }) {
   const studioSession = useStudioSession();
   const queryClient = useQueryClient();
   const { data: auth } = useSession();
@@ -337,7 +288,7 @@ function SingleStudioDoc({ snapshot, onRefresh, handoff }) {
 
   return (
     <FormEditorProvider doc={doc}>
-      <SingleStudioContent doc={doc} legacyDraft={snapshot?.legacyDraft ?? null} onRefresh={onRefresh} handoff={handoff} formEvent={snapshot?.form?.event ?? null} />
+      <SingleStudioContent doc={doc} legacyDraft={snapshot?.legacyDraft ?? null} onRefresh={onRefresh} onStartFlow={onStartFlow} handoff={handoff} formEvent={snapshot?.form?.event ?? null} />
     </FormEditorProvider>
   );
 }
@@ -352,10 +303,10 @@ function SingleStudioSession(props) {
   );
 }
 
-export default function SingleFormStudio({ snapshot = null, onRefresh, handoff = null }) {
+export default function SingleFormStudio({ snapshot = null, onRefresh, onStartFlow = null, handoff = null }) {
   return (
     <StudioProvider initialFormId={snapshot?.form?.id ?? null}>
-      <SingleStudioSession snapshot={snapshot} onRefresh={onRefresh} handoff={handoff} />
+      <SingleStudioSession snapshot={snapshot} onRefresh={onRefresh} onStartFlow={onStartFlow} handoff={handoff} />
     </StudioProvider>
   );
 }

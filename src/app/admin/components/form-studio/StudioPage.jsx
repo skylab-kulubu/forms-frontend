@@ -150,7 +150,25 @@ export function OverviewButton({ onClick }) {
   );
 }
 
-export function StudioToolbar({ inFlow, empty = false, comments = null, settings = true, onAdd, onShowMap, onOverview = null }) {
+export function measureCard(formId, phone = false) {
+  const box = document.querySelector("[data-studio-center]")?.getBoundingClientRect();
+  const page = document.querySelector("[data-studio-page]");
+  const card = page?.querySelector(".studio-card")?.getBoundingClientRect();
+  if (!box || !card) return null;
+
+  const rect = { left: card.left - box.left, top: card.top - box.top, width: card.width };
+  const frameWidth = pageCardRect(box.width).width;
+  const scale = rect.width / frameWidth;
+  const gap = page.querySelector("[data-description-gap]");
+  const echo = { height: card.height / scale, gap: gap ? (gap.offsetHeight + parseFloat(getComputedStyle(gap).marginTop)) / scale : 0 };
+
+  return {
+    entry: { formId, rect, frameWidth, echo },
+    page: { ...rect, baseTop: rect.top + page.scrollTop, containerWidth: box.width, phone },
+  };
+}
+
+export function StudioToolbar({ inFlow, empty = false, comments = null, settings = true, onAdd, onShowMap, onStartFlow = null, onOverview = null }) {
   const { ui, actions: studio } = useStudio();
 
   return (
@@ -191,6 +209,15 @@ export function StudioToolbar({ inFlow, empty = false, comments = null, settings
           <ToolButton label="Akış haritası (M)" onClick={onShowMap}>
             <MapIcon size={15} />
             Harita
+          </ToolButton>
+        </>
+      ) : onStartFlow && !empty ? (
+        <>
+          <span className={TOOL_DIVIDER} />
+          <ToolButton label="Akış başlat" onClick={onStartFlow}>
+            <MapIcon size={15} />
+            <span className="sm:hidden">Akış</span>
+            <span className="hidden sm:inline">Akış başlat</span>
           </ToolButton>
         </>
       ) : null}
@@ -240,7 +267,7 @@ function LogicLayer({ fields, anchors, selectedIds }) {
   );
 }
 
-export default function StudioPage({ eventLinked = false, stepInfo = null, inFlow = false, nextBlock = null, cardDecor = null, arrival = null, userName, onShowMap, onArrived, onOverview = null, start = null }) {
+export default function StudioPage({ eventLinked = false, stepInfo = null, inFlow = false, nextBlock = null, cardDecor = null, arrival = null, userName, onShowMap, onStartFlow = null, onArrived, onOverview = null, start = null }) {
   const { state } = useFormEditor();
   const actions = useFormActions({ eventLinked });
   const insertItem = useInsertItem({ eventLinked });
@@ -614,7 +641,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
         </div>
       </div>
 
-      <StudioToolbar inFlow={inFlow} empty={empty} settings={inspectorShown} onShowMap={onShowMap} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))}
+      <StudioToolbar inFlow={inFlow} empty={empty} settings={inspectorShown} onShowMap={onShowMap} onStartFlow={onStartFlow} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))}
         comments={state.id && !template ? { open: board.open, count: board.openCount, unseen: board.unseen, onToggle: studio.toggleComments } : null}
       />
 

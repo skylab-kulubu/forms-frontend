@@ -1,5 +1,5 @@
 import { ArrowRight, Check, TimerOff, X } from "lucide-react";
-import { TRIGGER, connectionError, depthMap, flowOrder, groupTransitions } from "../workflow-editor/workflow-graph";
+import { TRIGGER, connectionError, depthMap, flowOrder, groupTransitions, slugifyNodeKey } from "../workflow-editor/workflow-graph";
 import { COMPARISON, COMPARISON_SYMBOL, CONNECTION_COPY, VALUELESS_COMPARISONS, fieldQuestionLabel } from "../workflow-editor/workflow-copy";
 
 export const END_TARGET = "__end";
@@ -85,6 +85,37 @@ export function targetOptions(sourceKey, nodes, transitions, { allowNew = false 
     { value: END_TARGET, label: "Akış biter" },
     ...(allowNew ? [{ value: NEW_TARGET, label: "Yeni adım ekle…" }] : []),
   ];
+}
+
+const START_BLOCKED = {
+  formNotOwned: "Akışı yalnız formun sahibi başlatabilir.",
+  formAnonymous: "Anonim cevaba açık form akışa giremez.",
+  formClosed: "Cevap kabul etmeyen form akışa giremez.",
+};
+
+export function startFlowBlocker({ userRole, allowAnonymousResponses, status }) {
+  if (Number(userRole) !== 3) return START_BLOCKED.formNotOwned;
+  if (allowAnonymousResponses) return START_BLOCKED.formAnonymous;
+  if (Number(status) !== 2) return START_BLOCKED.formClosed;
+  return null;
+}
+
+export function firstFlowOf({ form, working }) {
+  const { title, requiresManualReview, timeLimitMinutes } = working.document;
+  return {
+    id: null,
+    name: `${title?.trim() || "Yeni Form"} akışı`,
+    description: "",
+    allowMultipleRuns: false,
+    published: null,
+    draft: {
+      nodes: [{
+        nodeKey: slugifyNodeKey(title, []), formId: form.id, formTitle: title, isStart: true,
+        requiresManualReview: Boolean(requiresManualReview), position: null, timeLimitMinutes: timeLimitMinutes ?? null,
+      }],
+      transitions: [],
+    },
+  };
 }
 
 export function stagesOf(nodes, transitions) {

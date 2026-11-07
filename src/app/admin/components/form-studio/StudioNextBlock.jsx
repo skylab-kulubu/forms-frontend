@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useRef, useState } from "react";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight, Map as MapIcon } from "lucide-react";
 import { MenuPill, actionClass } from "@/app/admin/components/utils/SidePanel";
 import { groupTransitions, triggersForNode } from "../workflow-editor/workflow-graph";
 import { END_TARGET, NEW_TARGET, TRIGGER_LABEL, answerText, sharedQuestion, targetOptions, triggerStyle } from "./studio-flow";
@@ -178,27 +178,25 @@ export function FlowNextBlock({ node, nodes, transitions, stageOf, conditionOf, 
   );
 }
 
-export function SingleNextBlock({ reviewed, disabledReason = null, onAddStep }) {
-  const buttonRef = useRef(null);
+export function SingleNextBlock({ reviewed, disabledReason = null, onStartFlow }) {
   const [busy, setBusy] = useState(false);
 
   return (
     <div className="px-4">
       <Heading>Bu formdan sonra</Heading>
       <p className="mt-1 text-2xs leading-relaxed text-neutral-500">
-        Form tek başına. {reviewed ? "Onaylanınca" : "Gönderilince"} başka bir form açılsın istersen sonraki adımı ekle; form o zaman bir akışın ilk adımı olur.
+        Form tek başına. {disabledReason ?? `${reviewed ? "Onaylanınca" : "Gönderilince"} başka bir form açılsın istersen akış başlat. Sonraki adımı ekleyene kadar form değişmez.`}
       </p>
-      <button ref={buttonRef} type="button" disabled={Boolean(disabledReason) || busy} title={disabledReason ?? undefined}
+      <button type="button" disabled={Boolean(disabledReason) || busy}
         onClick={async () => {
           setBusy(true);
-          try { await onAddStep(buttonRef.current); } finally { setBusy(false); }
+          try { await onStartFlow(); } finally { setBusy(false); }
         }}
         className={`${actionClass()} mt-3 w-fit`}
       >
-        <Plus size={13} className="opacity-70" />
-        Sonraki adım ekle
+        <MapIcon size={13} className="opacity-70" />
+        Akış başlat
       </button>
-      {disabledReason ? <p className="mt-1.5 text-3xs text-neutral-600">{disabledReason}</p> : null}
     </div>
   );
 }
