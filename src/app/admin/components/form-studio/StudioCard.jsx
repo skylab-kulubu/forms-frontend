@@ -16,7 +16,7 @@ export const CARD_WIDTH = { desktop: 672, phone: 358 };
 
 export function CardShell({ phone = false, active = false, className = "", ref, children }) {
   return (
-    <div ref={ref} className={`studio-card flex w-full flex-col rounded-3xl border shadow-xl shadow-black/30 ${active ? "border-white/15" : "border-white/10"} ${className}`}>
+    <div ref={ref} className={`studio-card flex w-full flex-col rounded-3xl border text-neutral-200 shadow-xl shadow-black/30 ${active ? "border-white/15" : "border-white/10"} ${className}`}>
       <div className={`flex flex-1 flex-col gap-6 ${phone ? "p-6" : "p-6 sm:p-10"}`}>{children}</div>
     </div>
   );
