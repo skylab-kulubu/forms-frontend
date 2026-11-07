@@ -28,12 +28,12 @@ export function CommentMark({ count }) {
 
 const emptySubscribe = () => () => {};
 
-export function OutlineHeader({ title, untitled = false, inFlow, onOpenPalette, onOpenFlowPage, onCollapse }) {
-  const SwitchIcon = inFlow ? Workflow : FileText;
+export function OutlineHeader({ title, untitled = false, inFlow, icon = null, switchTitle = "Akış ya da form aç (Ctrl+K)", onOpenPalette, onOpenFlowPage, onCollapse }) {
+  const SwitchIcon = icon ?? (inFlow ? Workflow : FileText);
 
   return (
     <div className="relative flex h-10 shrink-0 items-center border-b border-neutral-800 px-1.5">
-      <button type="button" data-palette-anchor onClick={onOpenPalette} title="Akış ya da form aç (Ctrl+K)"
+      <button type="button" data-palette-anchor onClick={onOpenPalette} title={switchTitle}
         className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/5"
       >
         <SwitchIcon size={14} className="shrink-0 text-neutral-500" />
@@ -211,18 +211,20 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div ref={buttonsRef} className="flex shrink-0 flex-col gap-1.5 px-3 pt-3">
-        <PanelButton compact icon={ClipboardList} className="w-full" disabled={ui.fill || Boolean(state.task)} onClick={addTask}
-          title={state.task ? "Formda zaten bir görev var" : "Formun başına görev ekle"}
-        >
-          Görev ekle
-        </PanelButton>
-        <PanelButton compact icon={LayoutTemplate} className="w-full" disabled={ui.fill} active={ui.menu?.source === "outline-templates"}
-          onClick={() => toggleMenu(buttonsRef.current, insertIndexOf(fields, ui.selection), { view: "templates", source: "outline-templates" })}
-        >
-          Şablon ekle
-        </PanelButton>
-      </div>
+      {ui.template ? null : (
+        <div ref={buttonsRef} className="flex shrink-0 flex-col gap-1.5 px-3 pt-3">
+          <PanelButton compact icon={ClipboardList} className="w-full" disabled={ui.fill || Boolean(state.task)} onClick={addTask}
+            title={state.task ? "Formda zaten bir görev var" : "Formun başına görev ekle"}
+          >
+            Görev ekle
+          </PanelButton>
+          <PanelButton compact icon={LayoutTemplate} className="w-full" disabled={ui.fill} active={ui.menu?.source === "outline-templates"}
+            onClick={() => toggleMenu(buttonsRef.current, insertIndexOf(fields, ui.selection), { view: "templates", source: "outline-templates" })}
+          >
+            Şablon ekle
+          </PanelButton>
+        </div>
+      )}
 
       <div ref={headingRef} className="flex shrink-0 items-center gap-2 px-3 pb-1 pt-3">
         <span className="text-2xs font-medium text-neutral-500">Sorular</span>

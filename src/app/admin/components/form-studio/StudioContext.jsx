@@ -87,7 +87,7 @@ function reducer(state, action) {
 
 const StudioContext = createContext(null);
 
-export function StudioProvider({ initialFormId = null, initialMode = "page", children }) {
+export function StudioProvider({ initialFormId = null, initialMode = "page", template = false, children }) {
   const [state, dispatch] = useReducer(reducer, {
     activeFormId: initialFormId,
     mode: initialMode,
@@ -103,6 +103,7 @@ export function StudioProvider({ initialFormId = null, initialMode = "page", chi
     preview: null,
     toast: null,
     comments: NO_COMMENTS,
+    template,
   });
 
   const memoryRef = useRef({});

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { logout } from "@/lib/authActions";
-import { useFormContext, useWorkflowContext } from "../providers";
+import { useFormContext, useTemplateContext, useWorkflowContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow, UserX } from "lucide-react";
@@ -263,9 +263,14 @@ export default function Sidebar({ user, children }) {
 
   const { formId, form, loading: formLoading } = useFormContext();
   const { workflowId, workflow, loading: workflowLoading } = useWorkflowContext();
+  const { title: templateTitle } = useTemplateContext();
 
   const dynamicBreadcrumbLabels = useMemo(() => {
     let labels = breadcrumbLabels;
+
+    if (pathname?.startsWith("/admin/templates/") && templateTitle) {
+      labels = { ...labels, [pathname]: templateTitle };
+    }
 
     if (formId) {
       const title = (form?.title || "...").trim();
@@ -287,7 +292,7 @@ export default function Sidebar({ user, children }) {
     }
 
     return labels;
-  }, [formId, form?.title, formLoading, workflowId, workflow?.name, workflowLoading]);
+  }, [formId, form?.title, formLoading, workflowId, workflow?.name, workflowLoading, pathname, templateTitle]);
 
   return (
     <div className="min-h-dvh md:h-dvh md:bg-neutral-950 md:pl-66 md:pr-2 md:py-2">

@@ -195,7 +195,7 @@ export function FormKeys({ eventLinked = false, flow = null, onSave }) {
       if (modifier) return;
       if (key === "l") control.toggleLogic();
       else if (key === "p") control.toggleFill();
-      else if (key === "c" && context.formId) control.toggleComments();
+      else if (key === "c" && context.formId && !current.template) control.toggleComments();
     };
 
     window.addEventListener("keydown", onKey);

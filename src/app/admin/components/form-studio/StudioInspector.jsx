@@ -13,6 +13,7 @@ import { LOCKED_OPTION_HINT } from "@/app/components/form-components/FieldShell"
 import { isIdentityField } from "@/lib/event-handoff";
 import { durationText, formatLongDate } from "@/lib/form-timing";
 import { useGroupMutation } from "@/lib/hooks/useGroupAdmin";
+import { templateFieldsOf } from "@/lib/studio/template-doc";
 import { useFormEditor } from "../form-editor/FormEditorContext";
 import { LibrarySettings } from "../form-editor/components/LibrarySettings";
 import { FlowPanel, StepPanel, useRouteFocus } from "../workflow-editor/components/WorkflowInspector";
@@ -204,6 +205,7 @@ function FileSection({ field, actions, anonymous }) {
 }
 
 function VisibilitySection({ field, fields, actions, disabledReason }) {
+  const { ui } = useStudio();
   const index = fields.findIndex((item) => item.id === field.id);
   const previous = fields.slice(0, index).filter((item) => item.type !== "separator");
   const condition = field.condition?.fieldId ? field.condition : null;
@@ -233,7 +235,7 @@ function VisibilitySection({ field, fields, actions, disabledReason }) {
   }
 
   const description = disabledReason
-    ?? (!previous.length ? "Formun ilk sorusu bir koşula bağlanamaz."
+    ?? (!previous.length ? `${ui.template ? "Şablonun" : "Formun"} ilk sorusu bir koşula bağlanamaz.`
       : condition ? `Soru yalnız ${numbers.get(condition.fieldId)}. soruda ${conditionPhrase(condition, fields) ?? "koşul sağlanınca"} görünür; öbür başvuranlar hiç görmez.`
         : "Soru herkese görünür.");
 
@@ -366,11 +368,11 @@ function MultiInspector({ ids, fields, actions, onDuplicate, onRemove }) {
 
   const saveTemplate = () => {
     const title = templateTitle.trim() || `${selected.length} bileşenlik şablon`;
-    const schema = selected.map((field) => {
+    const schema = templateFieldsOf(selected.map((field) => {
       if (!conditionLost.includes(field)) return field;
       const { condition, ...rest } = field;
       return rest;
-    });
+    }));
     saveGroup({ id: null, isUpdate: false, payload: { Id: null, Title: title, Description: "", Schema: schema } }, {
       onSuccess: () => {
         studio.toast(`${title} şablonu kaydedildi; Ekle menüsünden eklersin`);
@@ -480,7 +482,7 @@ function TaskInspector({ task, timeLimitMinutes, closesAt, actions, onOpenTiming
 }
 
 function FillInspector({ fields, values }) {
-  const { actions: studio } = useStudio();
+  const { ui, actions: studio } = useStudio();
   const numbers = questionNumbers(fields);
   const visible = visibleFieldsOf(fields, values);
   const hidden = fields.filter((field) => !visible.includes(field));
@@ -489,7 +491,7 @@ function FillInspector({ fields, values }) {
   return (
     <div className={PANEL_STACK}>
       <section className={PANEL_SECTION}>
-        <SectionHeader title="Doldurma" description="Form başvuran gibi doldurulur. Cevaplar hiçbir yere kaydedilmez, dosya yüklenmez." />
+        <SectionHeader title="Doldurma" description={`${ui.template ? "Sorular" : "Form"} başvuran gibi doldurulur. Cevaplar hiçbir yere kaydedilmez, dosya yüklenmez.`} />
         <div className="divide-y divide-white/5">
           <KV label="Görünen soru"><span className="text-xs tabular-nums text-neutral-300">{visibleQuestions}</span></KV>
           <KV label="Koşul yüzünden gizli"><span className="text-xs tabular-nums text-neutral-300">{hidden.length}</span></KV>
@@ -611,7 +613,7 @@ function PeersNote({ others, fieldId }) {
   );
 }
 
-export function FormInspectorBody({ eventLinked = false, flow = null, focusTiming = 0, managedActions = {} }) {
+export function FormInspectorBody({ eventLinked = false, flow = null, focusTiming = 0, managedActions = {}, rootPanel = null }) {
   const { state } = useFormEditor();
   const actions = useFormActions({ eventLinked });
   const { ui, actions: studio } = useStudio();
@@ -654,6 +656,8 @@ export function FormInspectorBody({ eventLinked = false, flow = null, focusTimin
       </>
     );
   }
+
+  if (rootPanel) return rootPanel;
 
   return (
     <>

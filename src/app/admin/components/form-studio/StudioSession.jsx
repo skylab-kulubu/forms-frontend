@@ -102,6 +102,16 @@ export function StudioSessionProvider({ onNotice, fallback = null, children }) {
   return <StudioSessionContext.Provider key={userId} value={session}>{children}</StudioSessionContext.Provider>;
 }
 
+const NO_COMMENTS = { threads: [], unseen: false };
+const LOCAL_SESSION = {
+  userId: null,
+  comments: { get: () => NO_COMMENTS, subscribe: () => () => {}, seen: () => {} },
+};
+
+export function LocalStudioSession({ children }) {
+  return <StudioSessionContext.Provider value={LOCAL_SESSION}>{children}</StudioSessionContext.Provider>;
+}
+
 export function useStudioSession() {
   const session = useContext(StudioSessionContext);
   if (!session) throw new Error("useStudioSession must be used within a StudioSessionProvider");

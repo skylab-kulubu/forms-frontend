@@ -40,12 +40,12 @@ export function useStudioTemplates() {
   return { templates, isLoading };
 }
 
-function itemsOf({ templates, view }) {
+function itemsOf({ templates, view, allowTemplates }) {
   if (view === "templates") return templates.map(templateItem);
-  return [...CATEGORY_ITEMS, TEMPLATES_ITEM, REPEATER_ITEM];
+  return allowTemplates ? [...CATEGORY_ITEMS, TEMPLATES_ITEM, REPEATER_ITEM] : [...CATEGORY_ITEMS, REPEATER_ITEM];
 }
 
-export default function StudioInsertMenu({ anchor, initialView = "root", placement = "bottom", matchWidth = false, onPick, onHover, onClose }) {
+export default function StudioInsertMenu({ anchor, initialView = "root", placement = "bottom", matchWidth = false, allowTemplates = true, onPick, onHover, onClose }) {
   const [search, setSearch] = useState("");
   const [view, setView] = useState(initialView);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -57,7 +57,7 @@ export default function StudioInsertMenu({ anchor, initialView = "root", placeme
     return () => cancelAnimationFrame(frame);
   }, [view]);
 
-  const items = matchItems(itemsOf({ templates, view }), search);
+  const items = matchItems(itemsOf({ templates, view, allowTemplates }), search);
 
   const activate = (index) => {
     setActiveIndex(index);

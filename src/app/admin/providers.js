@@ -95,3 +95,16 @@ export function useWorkflowContext() {
     if (!ctx) throw new Error("useWorkflowContext must be used within <WorkflowProvider>");
     return ctx;
 }
+const TemplateContext = createContext(null);
+
+export function TemplateProvider({ children }) {
+    const [title, setTitle] = useState("");
+    const value = useMemo(() => ({ title, setTitle }), [title]);
+    return <TemplateContext.Provider value={value}>{children}</TemplateContext.Provider>;
+}
+
+export function useTemplateContext() {
+    const ctx = useContext(TemplateContext);
+    if (!ctx) throw new Error("useTemplateContext must be used within <TemplateProvider>");
+    return ctx;
+}

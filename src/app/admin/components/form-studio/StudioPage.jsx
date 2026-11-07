@@ -7,7 +7,7 @@ import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS as DndCSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { FileText, GitBranch, ListTree, Map as MapIcon, MessageSquare, Monitor, PencilLine, Play, Plus, SlidersHorizontal, Smartphone, Timer, TriangleAlert } from "lucide-react";
+import { FileText, GitBranch, LayoutTemplate, List, ListTree, Map as MapIcon, MessageSquare, Monitor, PencilLine, Play, Plus, SlidersHorizontal, Smartphone, Timer, TriangleAlert } from "lucide-react";
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { isIdentityField } from "@/lib/event-handoff";
@@ -23,7 +23,7 @@ import { CommentSheet, CommentSide, useCommentBoard } from "./StudioComments";
 import { useMediaQuery } from "./useMediaQuery";
 import StudioTask from "./StudioTask";
 import StudioInsertMenu from "./StudioInsertMenu";
-import { EmptyStart, IntroFields, TemplateStart, previewOf } from "./StudioStart";
+import { EmptyStart, IntroFields, TemplateName, TemplateStart, previewOf } from "./StudioStart";
 import { CARD_WIDTH, CardFooter, CardShell, DeliverablesHeader, DisplayFields, StepBar } from "./StudioCard";
 import { conditionLabel, insertIndexOf, missingFieldIds, questionNumbers, requiredFill, visibleFieldsOf } from "./studio-schema";
 import { DROP_ANIMATION, conditionLoss, slotOf, useStudioSensors } from "./studio-dnd";
@@ -137,11 +137,13 @@ export function SheetButtons({ side }) {
 }
 
 export function OverviewButton({ onClick }) {
+  const { ui } = useStudio();
+
   return (
     <>
-      <ToolButton label="Özete dön" onClick={onClick}>
-        <FileText size={15} />
-        Özet
+      <ToolButton label={ui.template ? "Şablonlara dön" : "Özete dön"} onClick={onClick}>
+        {ui.template ? <List size={15} /> : <FileText size={15} />}
+        {ui.template ? "Şablonlar" : "Özet"}
       </ToolButton>
       <span className={TOOL_DIVIDER} />
     </>
@@ -238,12 +240,13 @@ function LogicLayer({ fields, anchors, selectedIds }) {
   );
 }
 
-export default function StudioPage({ eventLinked = false, stepInfo = null, inFlow = false, nextBlock = null, cardDecor = null, arrival = null, userName, onShowMap, onArrived, onOverview = null }) {
+export default function StudioPage({ eventLinked = false, stepInfo = null, inFlow = false, nextBlock = null, cardDecor = null, arrival = null, userName, onShowMap, onArrived, onOverview = null, start = null }) {
   const { state } = useFormEditor();
   const actions = useFormActions({ eventLinked });
   const insertItem = useInsertItem({ eventLinked });
   const { ui, actions: studio } = useStudio();
   const session = useStudioSession();
+  const template = ui.template;
 
   const formKey = ui.activeFormId ?? "new";
   const phone = ui.devices[formKey] === "phone";
@@ -439,7 +442,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
       studio.toast(`${ids.length} zorunlu soru boş`, "red");
       setTimeout(() => document.querySelector(`[data-studio-page] [data-fill-id="${CSS.escape(ids[0])}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }), 40);
     } else {
-      studio.toast("Gönderildi gibi davranıldı; hiçbir şey kaydedilmedi");
+      studio.toast(template ? "Zorunlu sorular dolu; hiçbir şey kaydedilmedi" : "Gönderildi gibi davranıldı; hiçbir şey kaydedilmedi");
     }
   };
 
@@ -478,7 +481,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
       others: presence.byField.get(field.id),
       commentCount: ui.fill ? 0 : board.counts.get(field.id) ?? 0,
       commentActive: board.open && board.activeField === field.id,
-      commentable: Boolean(state.id) && state.canEdit && !ui.fill,
+      commentable: Boolean(state.id) && state.canEdit && !ui.fill && !template,
     };
   };
 
@@ -497,7 +500,14 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
                 {stepInfo.stage ?? "?"}
               </span>
             ) : null}
-            <span className="min-w-0 truncate text-2xs font-medium text-neutral-400">{state.title || "Adsız form"}</span>
+            {template ? (
+              <span className="inline-flex min-w-0 items-center gap-1.5 text-2xs font-medium text-neutral-400">
+                <LayoutTemplate size={12} className="shrink-0 text-neutral-500" />
+                <span className="truncate">Şablon · başvuran yalnız kartı görür</span>
+              </span>
+            ) : (
+              <span className="min-w-0 truncate text-2xs font-medium text-neutral-400">{state.title || "Adsız form"}</span>
+            )}
             {state.timeLimitMinutes ? (
               <span className="inline-flex shrink-0 items-center gap-0.5 text-3xs text-amber-300/90"><Timer size={10} />{durationText(state.timeLimitMinutes)}</span>
             ) : null}
@@ -515,13 +525,15 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
             </span>
           </div>
 
+          {template ? <TemplateName title={state.title} onTitle={actions.setTitle} setup={fields.length === 0} phone={phone} /> : null}
+
           <div ref={cardRef} className="relative mx-auto flex w-full flex-1 flex-col"
             style={{ maxWidth: width, ...cardMotion }}
           >
             {ui.fill ? (
-              <CardShell phone={phone} active className="flex-1">
+              <CardShell phone={phone} active className={template ? "" : "flex-1"}>
                 {stepInfo ? <StepBar flowName={stepInfo.flowName} stage={stepInfo.stage} total={stepInfo.total} fill={fill} timeLimitMinutes={state.timeLimitMinutes} /> : null}
-                <FormDisplayerHeader title={state.title} description={state.description} />
+                {template ? null : <FormDisplayerHeader title={state.title} description={state.description} />}
                 {task?.content?.trim() ? <TaskBlock task={task} title={state.title} /> : null}
                 {task && fields.length > 0 ? <DeliverablesHeader phone={phone} /> : null}
                 {visible.length > 0 ? (
@@ -529,16 +541,18 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
                     onChange={(id, value) => studio.setFillValue(formKey, id, value)}
                   />
                 ) : (
-                  <p className="flex min-h-[20vh] items-center justify-center text-sm text-neutral-400">Bu formda gösterilecek soru yok.</p>
+                  <p className="flex min-h-[20vh] items-center justify-center text-sm text-neutral-400">{template ? "Bu şablonda" : "Bu formda"} gösterilecek soru yok.</p>
                 )}
-                <CardFooter phone={phone} userName={userName} onSubmit={submitFill} />
+                <CardFooter phone={phone} userName={userName} onSubmit={submitFill} bare={template} submitLabel={template ? "Kontrol et" : undefined} />
               </CardShell>
             ) : (
-              <CardShell phone={phone} active className="flex-1">
+              <CardShell phone={phone} active className={template && fields.length > 0 ? "" : "flex-1"}>
                 {stepInfo ? <StepBar flowName={stepInfo.flowName} stage={stepInfo.stage} total={stepInfo.total} timeLimitMinutes={state.timeLimitMinutes} /> : null}
-                <IntroFields title={state.title} description={state.description} onTitle={actions.setTitle} onDescription={actions.setDescription}
-                  setup={fields.length === 0} phone={phone} collapsed={!settled}
-                />
+                {template ? null : (
+                  <IntroFields title={state.title} description={state.description} onTitle={actions.setTitle} onDescription={actions.setDescription}
+                    setup={fields.length === 0} phone={phone} collapsed={!settled}
+                  />
+                )}
 
                 {task ? (
                   <StudioTask task={task} timeLimitMinutes={state.timeLimitMinutes} selected={taskSelected} phone={phone}
@@ -575,14 +589,14 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
                       document.body,
                     ) : null}
                   </DndContext>
-                ) : (
+                ) : start ? start(phone) : (
                   <>
                     <EmptyStart phone={phone} />
-                    <TemplateStart phone={phone} onPick={(template) => insertItem({ kind: "template", template }, fields.length)} />
+                    <TemplateStart phone={phone} onPick={(item) => insertItem({ kind: "template", template: item }, fields.length)} />
                   </>
                 )}
 
-                {fields.length > 0 ? <CardFooter phone={phone} userName={userName} /> : null}
+                {fields.length > 0 && !template ? <CardFooter phone={phone} userName={userName} /> : null}
               </CardShell>
             )}
             {ui.fill ? null : cardDecor}
@@ -594,20 +608,20 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
             <div data-next-block className="mx-auto mt-7 w-full" style={{ maxWidth: width }}>{nextBlock}</div>
           ) : null}
 
-          {state.id ? <CommentSide board={board} sideRef={sideRef} columnRef={columnRef} fields={fields} userId={session.userId} canWrite={state.canEdit} isOwner={Number(state.userRole) === 3} /> : null}
+          {state.id && !template ? <CommentSide board={board} sideRef={sideRef} columnRef={columnRef} fields={fields} userId={session.userId} canWrite={state.canEdit} isOwner={Number(state.userRole) === 3} /> : null}
         </div>
         </div>
       </div>
 
       <StudioToolbar inFlow={inFlow} empty={empty} onShowMap={onShowMap} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))}
-        comments={state.id ? { open: board.open, count: board.openCount, unseen: board.unseen, onToggle: studio.toggleComments } : null}
+        comments={state.id && !template ? { open: board.open, count: board.openCount, unseen: board.unseen, onToggle: studio.toggleComments } : null}
       />
 
-      {state.id ? <CommentSheet board={board} fields={fields} numbers={numbers} userId={session.userId} canWrite={state.canEdit} isOwner={Number(state.userRole) === 3} /> : null}
+      {state.id && !template ? <CommentSheet board={board} fields={fields} numbers={numbers} userId={session.userId} canWrite={state.canEdit} isOwner={Number(state.userRole) === 3} /> : null}
 
       <AnimatePresence>
         {ui.menu && !ui.fill ? (
-          <StudioInsertMenu key="insert-menu" anchor={ui.menu.anchor} initialView={ui.menu.view} onPick={pickFromMenu} onClose={studio.closeMenu}
+          <StudioInsertMenu key="insert-menu" anchor={ui.menu.anchor} initialView={ui.menu.view} allowTemplates={!template} onPick={pickFromMenu} onClose={studio.closeMenu}
             placement={ui.menu.align === "panel" ? "bottom-start" : "bottom"} matchWidth={ui.menu.align === "panel"}
             onHover={empty ? (item) => studio.setPreview(previewOf(item)) : undefined}
           />

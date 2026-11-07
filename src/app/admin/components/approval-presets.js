@@ -63,7 +63,7 @@ export const APPROVAL_PRESETS = {
         title: "Bu şablonu kalıcı olarak sil",
         highlights: () => [
             "Bu şablona ait tüm bileşenler kalıcı olarak silinecek.",
-            "Bu şablonu kullanan formlar etkilenebilir.",
+            "Bu şablondan soru eklenmiş formlar değişmez.",
             "Bu işlem geri alınamaz.",
         ],
         approveLabel: (ctx) => ctx.isPending ? "Siliniyor..." : "Şablonu sil",

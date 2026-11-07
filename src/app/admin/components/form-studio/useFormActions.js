@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { cloneSchema, ensureEventIdentityFields, hasEventIdentity, identityKeyOf, isIdentityField, IDENTITY_EMAIL } from "@/lib/event-handoff";
 import { REGISTRY } from "@/app/components/form-registry";
+import { templateFieldsOf } from "@/lib/studio/template-doc";
 import { genFieldId } from "../form-editor/fieldId";
 import { useFormEditor } from "../form-editor/FormEditorContext";
 import { dropInvalidDependents, newFieldOf, pruneConditions, retypeField } from "./studio-schema";
@@ -61,7 +62,7 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
 
     const insertFields = (index, fields) => {
       const copies = cloneSchema(
-        (fields ?? []).map((field) => ({ ...field, props: field.props ?? REGISTRY[field.type]?.defaults ?? {} })),
+        templateFieldsOf((fields ?? []).map((field) => ({ ...field, props: field.props ?? REGISTRY[field.type]?.defaults ?? {} }))),
         genFieldId,
       );
       if (copies.length === 0) return [];

@@ -17,13 +17,13 @@ const emptySubscribe = () => () => {};
 const ICON_BUTTON = "rounded-lg p-1.5 transition-colors hover:bg-neutral-800/70 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-inherit";
 const SAVE_BUTTON = "flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-60";
 
-function SaveButton({ onSave, isSaving, isError, error, saveLabel, saveExtra, draftNotice, onDraftNoticeClose }) {
+function SaveButton({ onSave, isSaving, isError, error, saveLabel, saveExtra, draftNotice, onDraftNoticeClose, noun }) {
   return (
     <Popover open={isError || (draftNotice && !isError)} error={isError ? error : null}
       message={!isError && draftNotice ? "Veriler taslaklardan geldi" : null} variant={isError ? "error" : "info"} align="bottom-right"
       onClose={!isError && draftNotice ? onDraftNoticeClose : undefined}
     >
-      <button onClick={onSave} disabled={isSaving} type="button" aria-label="Formu kaydet" title="Kaydet (Ctrl+S)" className={`ml-1 ${SAVE_BUTTON}`}>
+      <button onClick={onSave} disabled={isSaving} type="button" aria-label={`${noun}u kaydet`} title="Kaydet (Ctrl+S)" className={`ml-1 ${SAVE_BUTTON}`}>
         {isSaving ? <CircleGauge size={14} className="animate-spin" /> : isError ? <CircleAlert size={14} className="text-red-400" /> : <CheckCircle2 size={14} />}
         {saveLabel}
         {saveExtra ? <span className="rounded bg-skylab-400/15 px-1 text-3xs font-medium">{saveExtra}</span> : null}
@@ -57,8 +57,8 @@ function FullActions({ saveStatus, returnHref, people = [], onGoToPerson, fill, 
       ) : null}
 
       {onShare ? (
-        <Tip label="Formu paylaş">
-          <button type="button" aria-label="Formu paylaş" onClick={onShare} className={ICON_BUTTON}><Share2 size={16} /></button>
+        <Tip label={`${save.noun}u paylaş`}>
+          <button type="button" aria-label={`${save.noun}u paylaş`} onClick={onShare} className={ICON_BUTTON}><Share2 size={16} /></button>
         </Tip>
       ) : null}
 
@@ -110,7 +110,7 @@ function CompactActions({ returnHref, people = [], onShare, draft, onUndo, canUn
   const items = [
     returnHref ? { key: "return", label: "Etkinliğe dön", icon: ArrowLeft, onClick: () => window.location.assign(returnHref) } : null,
     issues?.count > 0 ? { key: "issues", label: `Kaydı engelleyen ${issues.count} sorun`, icon: TriangleAlert, onClick: issues.onShow, tone: "text-red-200" } : null,
-    onShare ? { key: "share", label: "Formu paylaş", icon: Share2, onClick: onShare } : null,
+    onShare ? { key: "share", label: `${save.noun}u paylaş`, icon: Share2, onClick: onShare } : null,
     onRedo ? { key: "redo", label: "İleri al", icon: Redo2, onClick: onRedo, disabled: !canRedo } : null,
     draft?.has ? { key: "draft", label: "Taslağı sil", icon: ClipboardX, onClick: draft.onDiscard, disabled: draft.discarding } : null,
     secondary ? { key: "secondary", label: secondary.label, icon: secondary.icon, onClick: secondary.onClick, disabled: secondary.disabled, tone: "text-red-300" } : null,
@@ -154,15 +154,15 @@ function CompactActions({ returnHref, people = [], onShare, draft, onUndo, canUn
   );
 }
 
-export default function StudioHeaderActions({ saveLabel = "Kaydet", ...props }) {
+export default function StudioHeaderActions({ saveLabel = "Kaydet", noun = "Form", ...props }) {
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const desktop = isMounted ? document.getElementById("admin-header-slot") : null;
   const mobile = isMounted ? document.getElementById("admin-header-slot-mobile") : null;
 
   return (
     <>
-      {desktop ? createPortal(<FullActions saveLabel={saveLabel} {...props} />, desktop, desktop.id) : null}
-      {mobile ? createPortal(<CompactActions saveLabel={saveLabel} {...props} />, mobile, mobile.id) : null}
+      {desktop ? createPortal(<FullActions saveLabel={saveLabel} noun={noun} {...props} />, desktop, desktop.id) : null}
+      {mobile ? createPortal(<CompactActions saveLabel={saveLabel} noun={noun} {...props} />, mobile, mobile.id) : null}
     </>
   );
 }

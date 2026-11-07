@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import StudioSkeleton from "../../components/form-studio/StudioSkeleton";
 
-const GroupEditor = dynamic(() => import("../../components/component-group-editor/GroupEditor"), { ssr: false });
+const TemplateStudio = dynamic(() => import("../../components/template-studio/TemplateStudio"), { ssr: false, loading: () => <StudioSkeleton /> });
 
 export default function NewGroupPage() {
-    return <GroupEditor />;
+  return <TemplateStudio />;
 }
