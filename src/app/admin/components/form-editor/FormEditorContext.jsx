@@ -24,6 +24,7 @@ function stateOf(snapshot, membership) {
         syncedAt: snapshot.syncedAt,
         publishedAt: snapshot.publishedAt,
         failure: snapshot.failure,
+        revoked: snapshot.revoked,
     };
 }
 

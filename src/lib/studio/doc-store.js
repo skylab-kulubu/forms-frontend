@@ -43,6 +43,7 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
   let syncedAt = snapshot?.working.updatedAt ? new Date(snapshot.working.updatedAt) : null;
   let publishedAt = null;
   let failure = null;
+  let revoked = false;
   let creating = null;
   let catching = null;
   let flushTimer = null;
@@ -67,7 +68,7 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
   function getSnapshot() {
     if (!cached) {
       cached = {
-        id, view, version, dirty, form, team, canEdit, online, syncedAt, publishedAt, failure,
+        id, view, version, dirty, form, team, canEdit, online, syncedAt, publishedAt, failure, revoked,
         pending: pending(),
         canUndo: canEdit && history.canUndo(),
         canRedo: canEdit && history.canRedo(),
@@ -103,6 +104,20 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     inflight = { batchId: newBatchId(), ops: ops.slice(0, MAX_OPS_PER_BATCH) };
     queue = ops.slice(MAX_OPS_PER_BATCH);
     send(inflight);
+  }
+
+  function loseAccess(message) {
+    inflight = null;
+    queue = [];
+    canEdit = false;
+    failure = message;
+    onNotice(failure, "red");
+    rebuild();
+    transport.snapshot(id).catch((error) => {
+      if (![403, 404].includes(Number(error?.status))) return;
+      revoked = true;
+      emit();
+    });
   }
 
   function retryLater() {
@@ -155,12 +170,7 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     }
 
     if (status === 403 || status === 404) {
-      inflight = null;
-      queue = [];
-      canEdit = false;
-      failure = result.message ?? "Bu formu düzenleme yetkiniz yok.";
-      onNotice(failure, "red");
-      rebuild();
+      loseAccess(result.message ?? "Bu formu düzenleme yetkiniz yok.");
       return;
     }
 
@@ -213,14 +223,7 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
 
   async function joined(reply) {
     if (Number(reply?.status) !== 200) {
-      if ([403, 404].includes(Number(reply?.status))) {
-        inflight = null;
-        queue = [];
-        canEdit = false;
-        failure = reply.message ?? "Bu formu açma yetkiniz yok.";
-        onNotice(failure, "red");
-        rebuild();
-      }
+      if ([403, 404].includes(Number(reply?.status))) loseAccess(reply.message ?? "Bu formu açma yetkiniz yok.");
       return;
     }
 
@@ -384,11 +387,7 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     const role = Number(mine?.role ?? 0);
     form = form ? { ...form, collaborators: team, userRole: role } : form;
     if (role < EDIT_ROLE && canEdit && form) {
-      canEdit = false;
-      queue = [];
-      failure = role === 0 ? "Bu formun düzenleme ekibinden çıkarıldınız." : "Bu formu artık düzenleyemezsiniz.";
-      onNotice(failure, "red");
-      rebuild();
+      loseAccess(role === 0 ? "Bu formun düzenleme ekibinden çıkarıldınız." : "Bu formu artık düzenleyemezsiniz.");
       return;
     }
     emit();

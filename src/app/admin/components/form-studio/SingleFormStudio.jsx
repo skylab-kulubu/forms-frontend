@@ -90,6 +90,10 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, handoff, formEvent }
   }, [eventLinked, state.schema, state.allowAnonymousResponses, state.id, state.canEdit, doc]);
 
   useEffect(() => {
+    if (state.revoked) onRefresh?.();
+  }, [state.revoked, onRefresh]);
+
+  useEffect(() => {
     if (!legacyDraft || !state.id) return;
     if (doc.adoptLegacyDraft(legacyDraft)) setDraftNotice(true);
     studioApi.deleteLegacyDraft(state.id);
