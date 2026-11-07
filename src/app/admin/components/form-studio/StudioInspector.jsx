@@ -600,7 +600,7 @@ function PeersNote({ others, fieldId }) {
   const doing = typing ? "bu soruyu şu an yazıyor." : `${suffixDa(people[people.length - 1].name)} bu soruda.`;
 
   return (
-    <div className="mx-4 mt-4 flex items-start gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-2 text-2xs leading-4 text-neutral-300">
+    <div className="mx-4 mt-4 flex items-start gap-2 rounded-lg border border-white/10 bg-white/3 px-2.5 py-2 text-2xs leading-4 text-neutral-300">
       <span className="mt-1 size-2 shrink-0 rounded-full" style={{ backgroundColor: colorOf((typing ?? people[0]).userId) }} />
       <span><span className="font-semibold text-neutral-100">{names}</span> {doing} Aynı metni aynı anda yazarsanız son yazılan kalır.</span>
     </div>
