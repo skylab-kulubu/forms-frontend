@@ -6,6 +6,7 @@ const TYPING_FLUSH_MS = 300;
 const GAP_WAIT_MS = 400;
 const RETRY_DELAYS_MS = [1000, 2000, 5000, 10000, 30000];
 const MAX_OPS_PER_BATCH = 200;
+const REFRESH_AFTER_OFFLINE_MS = 5000;
 
 export const EDIT_ROLE = 2;
 
@@ -26,6 +27,7 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
   let team = form?.collaborators ?? [];
   let canEdit = form ? Number(form.userRole) >= EDIT_ROLE : true;
   let online = false;
+  let offlineAt = null;
   let inflight = null;
   let queue = [];
   let view = confirmed;
@@ -203,10 +205,12 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
   async function joined(reply) {
     if (Number(reply?.status) !== 200) {
       if ([403, 404].includes(Number(reply?.status))) {
+        inflight = null;
+        queue = [];
         canEdit = false;
         failure = reply.message ?? "Bu formu açma yetkiniz yok.";
         onNotice(failure, "red");
-        emit();
+        rebuild();
       }
       return;
     }
@@ -214,9 +218,15 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     online = true;
     canEdit = Boolean(reply.data.canEdit);
     const resend = inflight;
+    const missedEvents = offlineAt !== null && Date.now() - offlineAt >= REFRESH_AFTER_OFFLINE_MS;
+    offlineAt = null;
 
-    if (reply.data.snapshotRequired) await reload();
-    else reply.data.edits.forEach(receive);
+    if (reply.data.snapshotRequired) {
+      await reload();
+    } else {
+      reply.data.edits.forEach(receive);
+      if (missedEvents) await reload({ quiet: true });
+    }
 
     if (resend && inflight === resend) send(resend);
     else flush();
@@ -231,13 +241,15 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     return catching;
   }
 
-  async function reload() {
+  async function reload({ quiet = false } = {}) {
     if (!id) return;
     try {
       const next = await transport.snapshot(id);
-      confirmed = next.working.document;
-      version = next.working.version;
-      dirty = Boolean(next.working.dirty);
+      if (next.working.version >= version) {
+        confirmed = next.working.document;
+        version = next.working.version;
+        dirty = Boolean(next.working.dirty);
+      }
       published = next.published ?? published;
       form = next.form ?? form;
       team = form?.collaborators ?? team;
@@ -245,7 +257,7 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
       early.clear();
       rebuild();
     } catch {
-      onNotice("Form yeniden yüklenemedi. Sayfayı yenileyin.", "red");
+      if (!quiet) onNotice("Form yeniden yüklenemedi. Sayfayı yenileyin.", "red");
     }
   }
 
@@ -409,7 +421,10 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
   function setOnline(value) {
     if (online === value) return;
     online = value;
-    if (!value) clearTimeout(retryTimer);
+    if (!value) {
+      clearTimeout(retryTimer);
+      offlineAt = Date.now();
+    }
     emit();
   }
 
