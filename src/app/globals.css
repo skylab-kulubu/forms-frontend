@@ -185,9 +185,16 @@ body {
 
   .studio-card {
     background:
-      radial-gradient(620px 380px at 86% -8%, rgba(224, 200, 229, 0.1), transparent 62%),
-      radial-gradient(520px 360px at 2% 108%, rgba(170, 140, 200, 0.065), transparent 60%),
-      #1a1a1a;
+      radial-gradient(
+        600px 380px at 100% -30px,
+        color-mix(in srgb, oklch(0.84 0.07 318) 12%, transparent) 0%,
+        color-mix(in srgb, oklch(0.84 0.07 318) 10.32%, transparent) 20%,
+        color-mix(in srgb, oklch(0.84 0.07 318) 6.6%, transparent) 40%,
+        color-mix(in srgb, oklch(0.84 0.07 318) 3.12%, transparent) 60%,
+        color-mix(in srgb, oklch(0.84 0.07 318) 0.96%, transparent) 80%,
+        color-mix(in srgb, oklch(0.84 0.07 318) 0%, transparent) 100%
+      ),
+      #1c1c1c;
   }
 
   @media (width >= 64rem) {

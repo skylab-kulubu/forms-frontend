@@ -102,7 +102,7 @@ export default function OverviewMode() {
   const card = form ? (
     <OverviewCard form={form} analytics={analytics} stepInfo={room.stepInfo} phone={room.cardPhone} touch={phone} onOpenQuestion={canView ? openQuestion : null} />
   ) : room.formResult.isError ? (
-    <div className="rounded-3xl border border-white/10 bg-[#1a1a1a] p-10">
+    <div className="rounded-3xl border border-white/10 bg-[#1c1c1c] p-10">
       <StateCard title="Bu adımın formu açılamadı" Icon={FileXCorner} description="Form silinmiş olabilir ya da görüntüleme yetkiniz yok." />
     </div>
   ) : <CardSkeleton />;

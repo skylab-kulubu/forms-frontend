@@ -85,9 +85,9 @@ function PageLoading({ error }) {
     <div className="studio-fade h-full overflow-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px]">
       <div className="mx-auto w-full max-w-[672px] px-4 pt-16">
         {error ? (
-          <div className="rounded-3xl border border-red-400/20 bg-[#1a1a1a] p-10 text-sm text-red-200">Form yüklenemedi. Silinmiş olabilir ya da düzenleme yetkiniz yok.</div>
+          <div className="rounded-3xl border border-red-400/20 bg-[#1c1c1c] p-10 text-sm text-red-200">Form yüklenemedi. Silinmiş olabilir ya da düzenleme yetkiniz yok.</div>
         ) : (
-          <div className="space-y-6 rounded-3xl border border-white/10 bg-[#1a1a1a] p-10">
+          <div className="space-y-6 rounded-3xl border border-white/10 bg-[#1c1c1c] p-10">
             <div className="shimmer h-8 w-2/3 rounded-lg" />
             <div className="shimmer h-4 w-1/2 rounded-md" />
             {Array.from({ length: 4 }, (_, index) => <div key={index} className="shimmer h-20 rounded-xl" />)}

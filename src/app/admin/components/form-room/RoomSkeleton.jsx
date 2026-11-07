@@ -4,7 +4,7 @@ function Bar({ className = "" }) {
 
 export function CardSkeleton() {
   return (
-    <div className="space-y-6 rounded-3xl border border-white/10 bg-[#1a1a1a] p-6 sm:p-10" aria-hidden="true">
+    <div className="space-y-6 rounded-3xl border border-white/10 bg-[#1c1c1c] p-6 sm:p-10" aria-hidden="true">
       <Bar className="h-8 w-2/3" />
       <Bar className="h-4 w-1/2" />
       {Array.from({ length: 4 }, (_, index) => <Bar key={index} className="h-20 rounded-xl" />)}
