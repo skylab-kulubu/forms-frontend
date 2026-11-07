@@ -84,20 +84,6 @@ export const APPROVAL_PRESETS = {
         rejectLabel: () => "Vazgeç",
     },
 
-    "transfer-group": {
-        variant: "phrase",
-        requiredPhrase: "Kabul ediyorum",
-        icon: ArrowRightLeft,
-        title: "Şablonun sahipliğini devret",
-        highlights: (ctx) => [
-            `Şablonun sahibi ${ctx.targetName} olur ve şablon listenizden çıkar.`,
-            "Şablonun açık paylaşım bağlantısı iptal edilir.",
-            "Sahipliği yalnız yeni sahip geri devredebilir.",
-        ],
-        approveLabel: (ctx) => ctx.isPending ? "Devrediliyor..." : "Sahipliği devret",
-        rejectLabel: () => "Vazgeç",
-    },
-
     "transfer-workflow": {
         variant: "phrase",
         requiredPhrase: "Kabul ediyorum",
