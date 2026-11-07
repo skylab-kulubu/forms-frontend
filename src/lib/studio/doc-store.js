@@ -5,6 +5,7 @@ import { schemaOps } from "./schema-ops.js";
 const TYPING_FLUSH_MS = 300;
 const GAP_WAIT_MS = 400;
 const RETRY_DELAYS_MS = [1000, 2000, 5000, 10000, 30000];
+const MAX_OPS_PER_BATCH = 200;
 
 export const EDIT_ROLE = 2;
 
@@ -87,8 +88,9 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     }
     if (!online || !canEdit) return;
 
-    inflight = { batchId: newBatchId(), ops: compact(queue) };
-    queue = [];
+    const ops = compact(queue);
+    inflight = { batchId: newBatchId(), ops: ops.slice(0, MAX_OPS_PER_BATCH) };
+    queue = ops.slice(MAX_OPS_PER_BATCH);
     send(inflight);
   }
 
