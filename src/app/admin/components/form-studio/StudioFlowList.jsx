@@ -61,7 +61,7 @@ function StepCard({ node, depth, nodes, transitions, questionCount, active, dirt
   );
 }
 
-export default function StudioFlowList({ nodes, transitions, stages, questionCounts, dirtyIds, activeFormId, onOpenForm, onBack, onAddStep }) {
+export default function StudioFlowList({ nodes, transitions, stages, questionCounts, dirtyIds, activeFormId, nextTrigger = null, onOpenForm, onBack, onAddStep }) {
   const connected = stages.ordered.filter((node) => stages.depths.has(node.nodeKey));
   const detached = stages.ordered.filter((node) => !stages.depths.has(node.nodeKey));
 
@@ -93,6 +93,17 @@ export default function StudioFlowList({ nodes, transitions, stages, questionCou
                 <span className="text-3xs text-neutral-600">Açmak için bir adıma dokun</span>
               </div>
               <ol className="space-y-2">{connected.map(card)}</ol>
+              {nextTrigger != null ? (
+                <button type="button" onClick={(event) => onAddStep(event.currentTarget)}
+                  className="mt-2 flex w-full items-center gap-2.5 rounded-xl border border-dashed border-white/15 p-3 text-left transition-colors hover:border-white/25"
+                >
+                  <span className="grid size-6 shrink-0 place-items-center rounded-md border border-dashed border-white/20 text-neutral-400"><Plus size={13} /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-neutral-200">Sonraki adım</span>
+                    <span className="block truncate text-3xs text-neutral-500">{triggerStyle(nextTrigger).label} hangi form açılsın?</span>
+                  </span>
+                </button>
+              ) : null}
               {detached.length > 0 ? (
                 <>
                   <div className="mb-2 mt-5 flex items-center gap-2 px-1">

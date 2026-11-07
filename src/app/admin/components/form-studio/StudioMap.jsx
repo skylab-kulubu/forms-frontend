@@ -1,10 +1,12 @@
 "use client";
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Maximize2, Minus, Plus, Timer } from "lucide-react";
 import { shortDuration } from "@/lib/form-timing";
 import { depthMap, flowOrder, groupTransitions, isTimedNode, triggersForNode } from "../workflow-editor/workflow-graph";
 import { StaticCard } from "./StudioCard";
+import { FormPickerList } from "./StudioFormPicker";
 import { OverviewButton, SheetButtons, TOOLBAR_CLASS, TOOL_DIVIDER, ToolButton, pageCardRect } from "./StudioPage";
 import { triggerStyle } from "./studio-flow";
 import { prefersReducedMotion } from "./studio-motion";
@@ -29,6 +31,9 @@ const MAX_ZOOM = 1.6;
 const ZOOM_OUT_MS = 520;
 const ZOOM_IN_MS = 440;
 const MAX_FRAME_MS = 34;
+const GHOST_MIN_WIDTH = 256;
+const GHOST_MIN_HEIGHT = 380;
+const GHOST_HEIGHT = 520;
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const easeOut = (t) => 1 - (1 - t) ** 3;
@@ -186,8 +191,42 @@ function FrameMeasure({ formId, onHeight, children }) {
   return <div ref={ref}>{children}</div>;
 }
 
+function NextStepGhost({ x, y, z, frameWidth, height, step }) {
+  const style = triggerStyle(step.trigger);
+  const inverse = 1 / z;
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} transition={{ duration: 0.2, delay: 0.3 }}>
+      <div data-map-ui className="absolute flex items-center gap-2 whitespace-nowrap"
+        style={{ left: x, top: y - 10, transform: `translateY(-100%) scale(${inverse})`, transformOrigin: "0 100%" }}
+      >
+        <span className="grid size-5 shrink-0 place-items-center rounded border border-dashed border-white/20 text-3xs font-semibold text-neutral-500">2</span>
+        <span className="text-xs font-medium text-neutral-500">Sonraki adım</span>
+      </div>
+
+      <div data-map-ui className="absolute flex flex-col border border-dashed border-white/15 bg-neutral-900/70 p-3"
+        style={{
+          left: x, top: y, width: Math.max(frameWidth * z, GHOST_MIN_WIDTH), height: Math.max(height * z, GHOST_MIN_HEIGHT),
+          borderRadius: Math.max(24 * z, 14), transform: `scale(${inverse})`, transformOrigin: "0 0",
+        }}
+      >
+        <p className="flex shrink-0 items-center gap-1.5 px-1 pb-2.5 pt-1 text-xs font-medium text-neutral-200">
+          <style.Icon size={13} className={`shrink-0 ${style.icon}`} />
+          {style.label} hangi form açılsın?
+        </p>
+        <FormPickerList forms={step.forms} isLoading={step.isLoading} usedIds={step.usedIds} onPick={step.onPick} onlyEligible className="min-h-0 flex-1" />
+        <p className="shrink-0 px-1 pt-2 text-3xs text-neutral-500">Form seçince akış taslak olarak oluşur.</p>
+      </div>
+
+      <span className="absolute size-2.5 rounded-full border-[1.5px] border-neutral-600 bg-neutral-900"
+        style={{ left: x, top: y + IN_Y, transform: `translate(-50%, -50%) scale(${inverse})` }}
+      />
+    </motion.div>
+  );
+}
+
 export default function StudioMap({
-  wf, flowName, activeFormId, selectedKey, entry = null, exitTo = null, onExitDone, onOpenForm, onSelectNode, onBack, onAddStep, onToast, onOverview = null, peopleByForm = {}, commentCounts = {},
+  wf, flowName, activeFormId, selectedKey, entry = null, exitTo = null, onExitDone, onOpenForm, onSelectNode, onBack, onAddStep, onToast, onOverview = null, peopleByForm = {}, commentCounts = {}, nextStep = null,
 }) {
   const { nodes, transitions } = wf.state;
   const canvasRef = useRef(null);
@@ -228,9 +267,14 @@ export default function StudioMap({
 
   const { positions, depths } = useMemo(() => layoutOf(nodes, transitions, heights, frameWidth), [nodes, transitions, heights, frameWidth]);
   const total = Math.max(1, ...nodes.map((node) => depths.get(node.nodeKey) ?? 1));
+  const nextColumn = nextStep ? frameWidth + OUT_WIDTH + GAP_X : null;
+
+  const [initialKeys] = useState(() => new Set(nodes.map((node) => node.nodeKey)));
 
   const bounds = useMemo(() => {
     if (nodes.length === 0) return null;
+    const measured = Object.values(heights);
+    const unmeasured = measured.length > 0 ? Math.max(...measured) : DEFAULT_HEIGHT;
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -241,19 +285,23 @@ export default function StudioMap({
       minX = Math.min(minX, position.x - 40);
       minY = Math.min(minY, position.y - 40);
       maxX = Math.max(maxX, position.x + frameWidth + OUT_WIDTH + 160);
-      maxY = Math.max(maxY, position.y + (heights[node.formId] ?? DEFAULT_HEIGHT));
+      maxY = Math.max(maxY, position.y + (heights[node.formId] ?? unmeasured));
     });
+    const ghostSource = nextColumn ? positions[nodes[0].nodeKey] : null;
+    if (ghostSource) maxX = Math.max(maxX, ghostSource.x + nextColumn + frameWidth + OUT_WIDTH + 160);
     return { minX, minY, maxX, maxY };
-  }, [nodes, positions, heights, frameWidth]);
+  }, [nodes, positions, heights, frameWidth, nextColumn]);
 
   const fitView = useCallback(() => {
     const element = canvasRef.current;
     if (!element || !bounds) return null;
     const width = element.clientWidth;
     const height = element.clientHeight;
-    const z = clamp(Math.min((width - 64) / (bounds.maxX - bounds.minX), (height - 120) / (bounds.maxY - bounds.minY)), MIN_ZOOM, 1);
+    const fitHeight = (height - 120) / (bounds.maxY - bounds.minY);
+    const fitGhost = nextColumn ? (width - 64 - GHOST_MIN_WIDTH) / (nextColumn + 40) : Infinity;
+    const z = clamp(Math.min((width - 64) / (bounds.maxX - bounds.minX), fitHeight, fitGhost), MIN_ZOOM, 1);
     return { z, x: (width - (bounds.maxX - bounds.minX) * z) / 2 - bounds.minX * z, y: 48 - bounds.minY * z };
-  }, [bounds]);
+  }, [bounds, nextColumn]);
 
   useEffect(() => {
     positionsRef.current = positions;
@@ -344,6 +392,8 @@ export default function StudioMap({
     const element = canvasRef.current;
     if (!element) return undefined;
     const onWheel = (event) => {
+      const list = event.target.closest?.("[data-map-scroll]");
+      if (list && !event.ctrlKey && !event.metaKey && list.scrollHeight > list.clientHeight) return;
       event.preventDefault();
       stopTween();
       userMovedRef.current = true;
@@ -468,7 +518,7 @@ export default function StudioMap({
 
       if (group.length > 0) routedPorts.add(`${node.nodeKey}:${trigger}`);
 
-      if (group.length === 0 || ending.length > 0) {
+      if (!(nextStep && trigger === nextStep.trigger) && (group.length === 0 || ending.length > 0)) {
         const route = ending[0] ?? null;
         const isFallback = ending.length === 1 && !route.condition && hasConditional;
         const focusId = route ? route.localId : node.nodeKey === selectedKey ? `implicit-${trigger}` : null;
@@ -520,6 +570,9 @@ export default function StudioMap({
   const z = view.z;
   const inverse = 1 / z;
   const formOf = (node) => wf.formsById[node.formId];
+  const ghostSource = nextStep ? nodes.find((node) => positions[node.nodeKey]) ?? null : null;
+  const ghost = ghostSource ? { ...positions[ghostSource.nodeKey], x: positions[ghostSource.nodeKey].x + nextColumn, height: heights[ghostSource.formId] ?? GHOST_HEIGHT } : null;
+  const ghostPort = ghostSource ? portPosition(ghostSource, nextStep.trigger) : null;
 
   return (
     <div className="@container relative h-full min-h-0">
@@ -548,6 +601,11 @@ export default function StudioMap({
                 />
               </g>
             ))}
+            {ghost ? (
+              <path d={pathOf(curve({ x: ghostPort.x + PORT_GAP, y: ghostPort.y }, { x: ghost.x, y: ghost.y + IN_Y }))} fill="none" vectorEffect="non-scaling-stroke"
+                stroke={triggerStyle(nextStep.trigger).stroke} strokeWidth={1.4} strokeDasharray="4 4" opacity={0.6}
+              />
+            ) : null}
             {connecting ? (
               <path d={pathOf(curve({ x: connecting.from.x + PORT_GAP, y: connecting.from.y }, connecting.to))} fill="none" vectorEffect="non-scaling-stroke"
                 stroke="#ebd5ee" strokeWidth={1.5} strokeDasharray="5 4"
@@ -584,6 +642,10 @@ export default function StudioMap({
             </button>
           ))}
 
+          <AnimatePresence>
+            {ghost ? <NextStepGhost key="next-step" x={ghost.x} y={ghost.y} z={z} frameWidth={frameWidth} height={ghost.height} step={nextStep} /> : null}
+          </AnimatePresence>
+
           {nodes.map((node) => {
             const position = positions[node.nodeKey];
             if (!position) return null;
@@ -594,7 +656,7 @@ export default function StudioMap({
             const sources = incomingByKey.get(node.nodeKey) ?? [];
 
             return (
-              <div key={node.nodeKey}>
+              <motion.div key={node.nodeKey} initial={initialKeys.has(node.nodeKey) ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}>
                 <div data-map-ui className="absolute flex items-center gap-2 whitespace-nowrap"
                   style={{ left: position.x, top: position.y - 10, maxWidth: Math.max(96, (frameWidth + OUT_WIDTH / 2) * z), transform: `translateY(-100%) scale(${inverse})`, transformOrigin: "0 100%" }}
                 >
@@ -648,7 +710,7 @@ export default function StudioMap({
                     />
                   ))}
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>

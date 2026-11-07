@@ -9,7 +9,7 @@ import {
 import { EMPTY_RULE, useWorkflowEditor } from "../workflow-editor/WorkflowEditorContext";
 import { TRIGGER, connectionError, groupTransitions, toDefinitionPayload } from "../workflow-editor/workflow-graph";
 import { CONNECTION_COPY, fieldQuestionLabel } from "../workflow-editor/workflow-copy";
-import { transitionLabel } from "./studio-flow";
+import { transitionCondition, transitionLabel } from "./studio-flow";
 
 const DEFINITION_DEBOUNCE_MS = 1200;
 const NO_FORMS = {};
@@ -141,7 +141,8 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     [state.name, state.description, state.allowMultipleRuns],
   );
   const metaDirty = !sameMeta(currentMeta, savedMeta);
-  const flowDirty = !isLive || hasDraft || !state.isSaved || metaDirty;
+  const pendingStart = !state.id && state.nodes.length < 2;
+  const flowDirty = !pendingStart && (!isLive || hasDraft || !state.isSaved || metaDirty);
 
   useEffect(() => {
     if (!state.id) return;
@@ -157,7 +158,7 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
   }, [state.id, currentMeta, savedMeta, dispatch]);
 
   useEffect(() => {
-    if (state.id || state.isSaved) return undefined;
+    if (state.id || state.isSaved || state.nodes.length < 2) return undefined;
     const timer = setTimeout(() => { ensureWorkflow().catch(() => {}); }, DEFINITION_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [state.id, state.isSaved, state.name, state.description, state.allowMultipleRuns, state.nodes, state.transitions, ensureWorkflow]);
@@ -241,6 +242,11 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     transitions: state.transitions,
     schemaOf: (formId) => schemasByFormId[formId]?.schema,
   }), [state.transitions, state.nodes, schemasByFormId]);
+
+  const conditionForTransition = useCallback((transition) => transitionCondition(transition, {
+    nodes: state.nodes,
+    schemaOf: (formId) => schemasByFormId[formId]?.schema,
+  }), [state.nodes, schemasByFormId]);
 
   const localReads = useMemo(() => questionReads(state.nodes, state.transitions), [state.nodes, state.transitions]);
   const liveReads = useMemo(() => {
@@ -430,12 +436,14 @@ export function useWorkflowStudio({ workflow, forms = NO_FORMS, loadingFormIds =
     hasDraft,
     metaDirty,
     flowDirty,
+    pendingStart,
     formsById,
     schemasByFormId,
     loadingFormIds,
     issues,
     issuesByNode,
     labelForTransition,
+    conditionForTransition,
     lockedHighlights,
     membershipOf,
     save,

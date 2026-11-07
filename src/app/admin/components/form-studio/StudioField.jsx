@@ -509,7 +509,7 @@ export const FieldBlock = memo(function FieldBlock({
     <div data-fid={field.id} className={`relative ${!isLast && !isSeparator ? "border-b border-white/5 pb-6" : ""}`}>
       <div onPointerDown={api.pressField} onClick={(event) => api.selectField(event, field.id)} style={peerShadow ? { boxShadow: peerShadow } : undefined}
         className={`group/q relative flex flex-col rounded-xl transition-[box-shadow,background-color] duration-150 ${phone ? "p-2" : "p-4"} ${
-          selected ? "bg-skylab-500/[0.04] ring-2 ring-skylab-400/50" : hoverable ? "hover:ring-1 hover:ring-white/15" : ""
+          selected ? "bg-skylab-500/4 ring-2 ring-skylab-400/50" : hoverable ? "hover:ring-1 hover:ring-white/15" : ""
         }`}
       >
         {solo ? <ActionStrip field={field} canUp={canUp} canDown={canDown} protectedReason={protectedReason} phone={phone} api={api} /> : null}

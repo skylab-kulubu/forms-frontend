@@ -1,6 +1,6 @@
 import { ArrowRight, Check, TimerOff, X } from "lucide-react";
-import { TRIGGER, connectionError, depthMap, flowOrder, groupTransitions } from "../workflow-editor/workflow-graph";
-import { COMPARISON_SYMBOL, CONNECTION_COPY, VALUELESS_COMPARISONS, fieldQuestionLabel } from "../workflow-editor/workflow-copy";
+import { TRIGGER, connectionError, depthMap, flowOrder, groupTransitions, slugifyNodeKey } from "../workflow-editor/workflow-graph";
+import { COMPARISON, COMPARISON_SYMBOL, CONNECTION_COPY, VALUELESS_COMPARISONS, fieldQuestionLabel } from "../workflow-editor/workflow-copy";
 
 export const END_TARGET = "__end";
 export const NEW_TARGET = "__new";
@@ -19,29 +19,55 @@ export const TRIGGER_LABEL = {
   [TRIGGER.TIMED_OUT]: "süre dolunca",
 };
 
-export function transitionLabel(transition, { nodes, transitions, schemaOf }) {
-  const group = groupTransitions(transitions, transition.sourceNodeKey, transition.trigger);
-  const hasConditional = group.some((item) => item.condition);
-
-  if (!transition.condition) return hasConditional ? "aksi halde" : TRIGGER_LABEL[transition.trigger];
-
-  const rules = transition.condition.rules ?? [];
+export function transitionCondition(transition, { nodes, schemaOf }) {
+  const rules = transition.condition?.rules ?? [];
   const rule = rules[0];
-  if (!rule?.questionId) return "koşul eksik";
+  if (!rule?.questionId) return null;
 
   const sourceNode = rule.nodeKey
     ? nodes.find((node) => node.nodeKey === rule.nodeKey)
     : nodes.find((node) => node.nodeKey === transition.sourceNodeKey);
 
   const field = schemaOf(sourceNode?.formId)?.find((item) => item.id === rule.questionId);
-  const question = field ? fieldQuestionLabel(field) : rule.questionId;
-  const comparison = Number(rule.comparison);
   const value = Array.isArray(rule.values) && rule.values.length > 0 ? rule.values.join(", ") : rule.value;
+
+  return {
+    key: `${rule.nodeKey ?? ""}:${rule.questionId}`,
+    question: field ? fieldQuestionLabel(field) : rule.questionId,
+    comparison: Number(rule.comparison),
+    value: value || "?",
+    more: rules.length - 1,
+  };
+}
+
+export function transitionLabel(transition, { nodes, transitions, schemaOf }) {
+  const group = groupTransitions(transitions, transition.sourceNodeKey, transition.trigger);
+  const hasConditional = group.some((item) => item.condition);
+
+  if (!transition.condition) return hasConditional ? "aksi halde" : TRIGGER_LABEL[transition.trigger];
+
+  const condition = transitionCondition(transition, { nodes, schemaOf });
+  if (!condition) return "koşul eksik";
+
+  const { question, comparison, value, more } = condition;
   const summary = VALUELESS_COMPARISONS.includes(comparison)
     ? `${question} ${COMPARISON_SYMBOL[comparison]}`
-    : `${question} ${COMPARISON_SYMBOL[comparison]} ${value || "?"}`;
+    : `${question} ${COMPARISON_SYMBOL[comparison]} ${value}`;
 
-  return rules.length > 1 ? `${summary} +${rules.length - 1}` : summary;
+  return more > 0 ? `${summary} +${more}` : summary;
+}
+
+export function answerText({ comparison, value }) {
+  if (VALUELESS_COMPARISONS.includes(comparison)) return COMPARISON_SYMBOL[comparison];
+  if (comparison === COMPARISON.EQUALS || comparison === COMPARISON.IN) return value;
+  if (comparison === COMPARISON.NOT_IN) return `${COMPARISON_SYMBOL[COMPARISON.NOT_EQUALS]} ${value}`;
+  return `${COMPARISON_SYMBOL[comparison]} ${value}`;
+}
+
+export function sharedQuestion(conditions) {
+  const known = conditions.filter(Boolean);
+  if (known.length === 0) return null;
+  return known.every((item) => item.key === known[0].key) ? known[0].question : null;
 }
 
 export function triggerStyle(trigger) {
@@ -59,6 +85,37 @@ export function targetOptions(sourceKey, nodes, transitions, { allowNew = false 
     { value: END_TARGET, label: "Akış biter" },
     ...(allowNew ? [{ value: NEW_TARGET, label: "Yeni adım ekle…" }] : []),
   ];
+}
+
+const START_BLOCKED = {
+  formNotOwned: "Akışı yalnız formun sahibi başlatabilir.",
+  formAnonymous: "Anonim cevaba açık form akışa giremez.",
+  formClosed: "Cevap kabul etmeyen form akışa giremez.",
+};
+
+export function startFlowBlocker({ userRole, allowAnonymousResponses, status }) {
+  if (Number(userRole) !== 3) return START_BLOCKED.formNotOwned;
+  if (allowAnonymousResponses) return START_BLOCKED.formAnonymous;
+  if (Number(status) !== 2) return START_BLOCKED.formClosed;
+  return null;
+}
+
+export function firstFlowOf({ form, working }) {
+  const { title, requiresManualReview, timeLimitMinutes } = working.document;
+  return {
+    id: null,
+    name: `${title?.trim() || "Yeni Form"} akışı`,
+    description: "",
+    allowMultipleRuns: false,
+    published: null,
+    draft: {
+      nodes: [{
+        nodeKey: slugifyNodeKey(title, []), formId: form.id, formTitle: title, isStart: true,
+        requiresManualReview: Boolean(requiresManualReview), position: null, timeLimitMinutes: timeLimitMinutes ?? null,
+      }],
+      transitions: [],
+    },
+  };
 }
 
 export function stagesOf(nodes, transitions) {

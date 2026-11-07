@@ -9,15 +9,16 @@ import { POPOVER_MOTION } from "./studio-motion";
 
 export const NEW_FORM = "__new-form";
 
-export default function StudioFormPicker({ anchor, heading, forms = [], isLoading = false, excludeIds = [], usedIds = [], onPick, onClose, placement = "bottom" }) {
+export function FormPickerList({ forms = [], isLoading = false, excludeIds = [], usedIds = [], onPick, autoFocus = false, onlyEligible = false, className = "max-h-72" }) {
   const [search, setSearch] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(autoFocus ? 0 : -1);
   const inputRef = useRef(null);
 
   useEffect(() => {
+    if (!autoFocus) return undefined;
     const frame = requestAnimationFrame(() => inputRef.current?.focus());
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [autoFocus]);
 
   const items = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("tr-TR");
@@ -28,9 +29,10 @@ export default function StudioFormPicker({ anchor, heading, forms = [], isLoadin
         const used = usedIds.includes(form.id) || form.isUsedInThisWorkflow;
         return { ...form, disabled: used || form.isEligible === false, hint: used ? "Bu akışta zaten var" : form.isEligible === false ? eligibilityReason(form.reason) : null };
       })
+      .filter((form) => !onlyEligible || query || !form.disabled)
       .sort((a, b) => Number(a.disabled) - Number(b.disabled));
     return [{ id: NEW_FORM, title: "Yeni boş form", isNew: true }, ...list];
-  }, [forms, search, excludeIds, usedIds]);
+  }, [forms, search, excludeIds, usedIds, onlyEligible]);
 
   const choose = (item) => {
     if (!item || item.disabled) return;
@@ -51,37 +53,45 @@ export default function StudioFormPicker({ anchor, heading, forms = [], isLoadin
   };
 
   return (
+    <>
+      <div className="relative mb-1 shrink-0">
+        <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
+        <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(autoFocus ? 0 : -1); }} onKeyDown={handleKeyDown}
+          placeholder="Form ara..." aria-label="Form ara"
+          className="h-8 w-full rounded-md border border-white/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
+        />
+      </div>
+      <div data-map-scroll onMouseLeave={() => { if (!autoFocus) setActiveIndex(-1); }} className={`overflow-y-auto scrollbar ${className}`}>
+        {items.map((item, index) => (
+          <div key={item.id}>
+            {index === 1 ? <div className="mx-1 my-1 h-px bg-white/10" /> : null}
+            {index === 1 ? <p className="px-2 pb-1 pt-1 text-3xs text-neutral-500">Var olan formlar</p> : null}
+            <button type="button" role="menuitem" disabled={item.disabled} onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(item)}
+              className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${
+                item.disabled ? "cursor-not-allowed text-neutral-600" : index === activeIndex ? "bg-white/6 text-white" : "text-neutral-300"
+              }`}
+            >
+              {item.isNew ? <FilePlus size={13} className="shrink-0 text-neutral-500" /> : <FileText size={13} className="shrink-0 text-neutral-500" />}
+              <span className="min-w-0 flex-1 truncate">{item.title || "Adsız form"}</span>
+              {item.requiresManualReview && !item.disabled ? <ClipboardCheck size={11} className="shrink-0 text-amber-300" /> : null}
+              {item.hint ? <span className="shrink-0 text-3xs text-neutral-600">{item.hint}</span> : null}
+            </button>
+          </div>
+        ))}
+        {isLoading ? <p className="px-2 py-2 text-2xs text-neutral-600">Formlar yükleniyor...</p> : null}
+      </div>
+    </>
+  );
+}
+
+export default function StudioFormPicker({ anchor, heading, onClose, placement = "bottom", ...list }) {
+  return (
     <Floating anchor={anchor} onDismiss={onClose} placement={placement} offset={8}>
       <motion.div data-studio-menu role="menu" onPointerDown={(event) => event.stopPropagation()} {...POPOVER_MOTION}
         className="w-72 rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-2xl shadow-black/50"
       >
         {heading ? <p className="px-2 pb-1.5 pt-1 text-3xs text-neutral-500">{heading}</p> : null}
-        <div className="relative mb-1">
-          <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-          <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); }} onKeyDown={handleKeyDown}
-            placeholder="Form ara..." aria-label="Form ara"
-            className="h-8 w-full rounded-md border border-white/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
-          />
-        </div>
-        <div className="max-h-72 overflow-y-auto scrollbar">
-          {items.map((item, index) => (
-            <div key={item.id}>
-              {index === 1 ? <div className="mx-1 my-1 h-px bg-white/10" /> : null}
-              {index === 1 ? <p className="px-2 pb-1 pt-1 text-3xs text-neutral-500">Var olan formlar</p> : null}
-              <button type="button" role="menuitem" disabled={item.disabled} onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(item)}
-                className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${
-                  item.disabled ? "cursor-not-allowed text-neutral-600" : index === activeIndex ? "bg-white/[0.06] text-white" : "text-neutral-300"
-                }`}
-              >
-                {item.isNew ? <FilePlus size={13} className="shrink-0 text-neutral-500" /> : <FileText size={13} className="shrink-0 text-neutral-500" />}
-                <span className="min-w-0 flex-1 truncate">{item.title || "Adsız form"}</span>
-                {item.requiresManualReview && !item.disabled ? <ClipboardCheck size={11} className="shrink-0 text-amber-300" /> : null}
-                {item.hint ? <span className="shrink-0 text-3xs text-neutral-600">{item.hint}</span> : null}
-              </button>
-            </div>
-          ))}
-          {isLoading ? <p className="px-2 py-2 text-2xs text-neutral-600">Formlar yükleniyor...</p> : null}
-        </div>
+        <FormPickerList {...list} autoFocus />
       </motion.div>
     </Floating>
   );
