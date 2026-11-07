@@ -1,7 +1,7 @@
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import { createStudioDoc } from "./doc-store.js";
 
-const RECONNECT_DELAYS_MS = [0, 2000, 5000, 10000, 30000];
+const RECONNECT_DELAYS_MS = [0, 2000, 5000, 5000, 5000];
 const RESTART_DELAY_MS = 5000;
 const PRESENCE_INTERVAL_MS = 250;
 const CURSOR_INTERVAL_MS = 50;
