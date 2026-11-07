@@ -529,7 +529,7 @@ function WorkflowStudioContent({ workflow, seed, initialEntry = null, onLeave = 
   };
 
   const { data: availableData, isLoading: availableLoading } = useAvailableFormsQuery(state.id, { enabled: Boolean(stepMenu) && Boolean(state.id) });
-  const { data: candidateData, isLoading: candidateLoading } = useCandidateFormsQuery({ enabled: Boolean(stepMenu) && !state.id });
+  const { data: candidateData, isLoading: candidateLoading } = useCandidateFormsQuery({ enabled: (Boolean(stepMenu) || wf.pendingStart) && !state.id });
   const pickerForms = state.id ? listOf(availableData) : listOf(candidateData);
 
   const startRoute = wf.pendingStart && state.nodes[0]
@@ -537,18 +537,33 @@ function WorkflowStudioContent({ workflow, seed, initialEntry = null, onLeave = 
     : null;
   const openStepMenu = (anchor) => setStepMenu({ anchor, from: startRoute });
 
-  const addStep = async (choice) => {
-    const menu = stepMenu;
+  const addingRef = useRef(false);
+  const addStep = async (choice, from = stepMenu?.from ?? null, { quiet = false } = {}) => {
+    if (addingRef.current) return;
+    addingRef.current = true;
     setStepMenu(null);
     try {
       const form = choice === NEW_FORM ? await wf.createBlankForm(blankTitle(state.nodes)) : choice;
-      dispatch({ type: "ADD_NODE", form, from: menu?.from ?? null });
+      const ready = choice === NEW_FORM ? null : prefetchStudioForm(form.id);
+      if (ready) await Promise.race([ready.catch(() => null), new Promise((resolve) => setTimeout(resolve, SWITCH_WAIT_MS))]);
+      dispatch({ type: "ADD_NODE", form, from });
+      if (quiet) dispatch({ type: "SELECT", nodeKey: null });
       if (choice === NEW_FORM) requestPage(form.id);
       else studio.toast(`${form.title || "Form"} adımı eklendi`);
     } catch {
       studio.toast("Adım eklenemedi. Tekrar deneyin.", "red");
+    } finally {
+      addingRef.current = false;
     }
   };
+
+  const nextStep = startRoute ? {
+    trigger: startRoute.trigger,
+    forms: pickerForms,
+    isLoading: candidateLoading,
+    usedIds: state.nodes.map((node) => node.formId),
+    onPick: (choice) => addStep(choice, startRoute, { quiet: true }),
+  } : null;
 
   useEffect(() => {
     const reveal = revealRef.current;
@@ -662,14 +677,14 @@ function WorkflowStudioContent({ workflow, seed, initialEntry = null, onLeave = 
     const center = ui.mode === "map" || !activeFormId ? (
       isPhone ? (
         <StudioFlowList nodes={state.nodes} transitions={state.transitions} stages={stages} questionCounts={questionCounts} dirtyIds={dirtyIds}
-          activeFormId={activeFormId} onOpenForm={requestPage} onBack={() => requestPage(activeFormId)} onAddStep={openStepMenu}
+          activeFormId={activeFormId} nextTrigger={startRoute?.trigger ?? null} onOpenForm={requestPage} onBack={() => requestPage(activeFormId)} onAddStep={openStepMenu}
         />
       ) : (
         <StudioMap wf={wf} flowName={flowName} activeFormId={activeFormId} selectedKey={state.selectedKey} peopleByForm={peopleByForm} commentCounts={commentCounts}
           onOpenForm={requestPage} onSelectNode={(nodeKey) => dispatch({ type: "SELECT", nodeKey })} onBack={() => requestPage(activeFormId)}
           entry={mapEntry} exitTo={mapExit} onExitDone={finishExit}
           onAddStep={openStepMenu} onToast={studio.toast}
-          onOverview={overviewFormId ? () => router.push(`/admin/forms/${overviewFormId}`) : null}
+          onOverview={overviewFormId ? () => router.push(`/admin/forms/${overviewFormId}`) : null} nextStep={nextStep}
         />
       )
     ) : formState ? (
