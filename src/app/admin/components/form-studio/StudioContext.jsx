@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer,
 export const NONE = { kind: "none" };
 
 const TOAST_MS = 2600;
+const TOAST_MS_PER_CHAR = 100;
 
 const NO_COMMENTS = { open: false, active: null, draftFor: null, compose: false, showResolved: false };
 
@@ -109,7 +110,7 @@ export function StudioProvider({ initialFormId = null, initialMode = "page", chi
   useEffect(() => {
     if (!state.toast) return undefined;
     const id = state.toast.id;
-    const timer = setTimeout(() => dispatch({ type: "CLEAR_TOAST", id }), TOAST_MS);
+    const timer = setTimeout(() => dispatch({ type: "CLEAR_TOAST", id }), Math.max(TOAST_MS, String(state.toast.text).length * TOAST_MS_PER_CHAR));
     return () => clearTimeout(timer);
   }, [state.toast]);
 

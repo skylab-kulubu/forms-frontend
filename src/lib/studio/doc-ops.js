@@ -260,6 +260,23 @@ export function compact(ops) {
   }, []);
 }
 
+const overlaps = (path, other) => path.every((part, index) => index >= other.length || part === other[index]);
+
+export function overwrittenPaths(ops, theirs, document) {
+  const latest = new Map();
+  ops.forEach((op) => {
+    if (op.op === "set") latest.set(op.path.join("/"), op);
+  });
+
+  return [...latest.values()]
+    .filter(({ path, value }) => {
+      const current = valueAt(document, path);
+      if (current === undefined || deepEqual(current ?? null, value ?? null)) return false;
+      return theirs.some((op) => op.op === "replace" || op.op === "reset" || (op.op === "set" && overlaps(path, op.path)));
+    })
+    .map(({ path }) => path);
+}
+
 export function isTrustedOp(op) {
   switch (op?.op) {
     case "set":

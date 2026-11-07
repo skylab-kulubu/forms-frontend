@@ -1,4 +1,4 @@
-import { applyAll, applyTracked, compact, isTrustedOp, normalizeDocument, normalizeOpValue } from "./doc-ops.js";
+import { applyAll, applyTracked, compact, isTrustedOp, normalizeDocument, normalizeOpValue, overwrittenPaths } from "./doc-ops.js";
 import { createHistory } from "./doc-history.js";
 import { schemaOps } from "./schema-ops.js";
 
@@ -11,6 +11,15 @@ const REFRESH_AFTER_OFFLINE_MS = 5000;
 export const EDIT_ROLE = 2;
 
 const newBatchId = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
+function clashTarget(paths, schema) {
+  const ids = [...new Set(paths.filter((path) => path.length > 1).map((path) => path[1]))];
+  if (ids.length === 0) return "Form ayarlarını";
+  if (paths.some((path) => path.length === 1)) return "Bazı yerleri";
+  if (ids.length > 1) return `${ids.length} soruyu`;
+  const number = schema.filter((field) => field.type !== "separator").findIndex((field) => field.id === ids[0]) + 1;
+  return number ? `${number}. soruyu` : "Bir ayıracı";
+}
 
 export function createStudioDoc({ snapshot = null, initial = null, userId = null, transport, onNotice = () => {}, onCreated = () => {} }) {
   const listeners = new Set();
@@ -219,6 +228,7 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
     canEdit = Boolean(reply.data.canEdit);
     const resend = inflight;
     const missedEvents = offlineAt !== null && Date.now() - offlineAt >= REFRESH_AFTER_OFFLINE_MS;
+    const theirs = offlineAt === null ? [] : (reply.data.edits ?? []).filter((edit) => edit.userId !== userId).flatMap((edit) => edit.ops ?? []);
     offlineAt = null;
 
     if (reply.data.snapshotRequired) {
@@ -227,6 +237,9 @@ export function createStudioDoc({ snapshot = null, initial = null, userId = null
       reply.data.edits.forEach(receive);
       if (missedEvents) await reload({ quiet: true });
     }
+
+    const clashed = overwrittenPaths([...(inflight?.ops ?? []), ...queue], theirs, confirmed);
+    if (clashed.length) onNotice(`${clashTarget(clashed, view.schema)} bu sırada başkası da değiştirdi; sizinki geçerli oldu.`, "neutral");
 
     if (resend && inflight === resend) send(resend);
     else flush();
