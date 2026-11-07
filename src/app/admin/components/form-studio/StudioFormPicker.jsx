@@ -68,7 +68,7 @@ export function FormPickerList({ forms = [], isLoading = false, excludeIds = [],
             {index === 1 ? <p className="px-2 pb-1 pt-1 text-3xs text-neutral-500">Var olan formlar</p> : null}
             <button type="button" role="menuitem" disabled={item.disabled} onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(item)}
               className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${
-                item.disabled ? "cursor-not-allowed text-neutral-600" : index === activeIndex ? "bg-white/[0.06] text-white" : "text-neutral-300"
+                item.disabled ? "cursor-not-allowed text-neutral-600" : index === activeIndex ? "bg-white/6 text-white" : "text-neutral-300"
               }`}
             >
               {item.isNew ? <FilePlus size={13} className="shrink-0 text-neutral-500" /> : <FileText size={13} className="shrink-0 text-neutral-500" />}
