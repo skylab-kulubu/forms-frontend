@@ -18,4 +18,6 @@ export const studioApi = {
   editComment: (formId, commentId, body) => request(`${commentsPath(formId)}/${commentId}`, { method: "PUT", body: { body } }).then(dataOf),
   deleteComment: (formId, commentId) => request(`${commentsPath(formId)}/${commentId}`, { method: "DELETE" }).then(dataOf),
   resolveThread: (formId, threadId, resolved) => request(`${commentsPath(formId)}/${threadId}/${resolved ? "resolve" : "reopen"}`, { method: "POST" }).then(dataOf),
+  commentReads: (formId) => request(`${commentsPath(formId)}/reads`).then(dataOf),
+  readThread: (formId, threadId, commentId) => request(`${commentsPath(formId)}/${threadId}/read`, { method: "POST", body: { commentId } }).then(dataOf),
 };

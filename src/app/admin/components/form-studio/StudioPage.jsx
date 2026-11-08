@@ -19,7 +19,7 @@ import { FieldBlock, InsertLine, focusEditable } from "./StudioField";
 import { useStudioPresence } from "./StudioPresence";
 import { useStudioSession } from "./StudioSession";
 import { useBoardPush } from "./StudioBoard";
-import { CommentSheet, CommentSide, useCommentBoard } from "./StudioComments";
+import { CommentNotice, CommentSheet, CommentSide, useCommentBoard } from "./StudioComments";
 import { useMediaQuery } from "./useMediaQuery";
 import StudioTask from "./StudioTask";
 import StudioInsertMenu from "./StudioInsertMenu";
@@ -197,8 +197,10 @@ export function StudioToolbar({ inFlow, empty = false, comments = null, settings
               <span className="flex items-center gap-1">
                 Yorumlar
                 {comments.count > 0 ? <span className="tabular-nums opacity-70">{comments.count}</span> : null}
+                {comments.unread > 0 ? (
+                  <span title={`${comments.unread} yorumda okunmamış mesaj var`} className="grid h-3.5 min-w-3.5 place-items-center rounded-full bg-skylab-400 px-1 text-[9px] font-semibold leading-none tabular-nums text-neutral-950">{comments.unread}</span>
+                ) : null}
               </span>
-              {comments.unseen ? <span className="absolute right-1 top-1 size-1.5 rounded-full bg-skylab-500 ring-2 ring-neutral-900" /> : null}
             </ToolButton>
           ) : null}
         </>
@@ -509,6 +511,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
       others: presence.byField.get(field.id),
       commentCount: ui.fill ? 0 : board.counts.get(field.id) ?? 0,
       commentActive: board.open && board.activeField === field.id,
+      commentUnread: board.unreadFields.has(field.id),
       commentable: Boolean(state.id) && state.canEdit && !ui.fill && !template,
     };
   };
@@ -642,8 +645,10 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
       </div>
 
       <StudioToolbar inFlow={inFlow} empty={empty} settings={inspectorShown} onShowMap={onShowMap} onStartFlow={onStartFlow} onOverview={onOverview} onAdd={(anchor) => openMenu(anchor, insertIndexOf(fields, ui.selection))}
-        comments={state.id && !template ? { open: board.open, count: board.openCount, unseen: board.unseen, onToggle: studio.toggleComments } : null}
+        comments={state.id && !template ? { open: board.open, count: board.openCount, unread: board.news.length, onToggle: studio.toggleComments } : null}
       />
+
+      {state.id && !template && !ui.fill ? <CommentNotice board={board} numbers={numbers} /> : null}
 
       {state.id && !template ? <CommentSheet board={board} fields={fields} numbers={numbers} userId={session.userId} canWrite={state.canEdit} isOwner={Number(state.userRole) === 3} /> : null}
 

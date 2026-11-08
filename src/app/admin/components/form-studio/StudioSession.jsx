@@ -102,7 +102,7 @@ export function StudioSessionProvider({ onNotice, fallback = null, children }) {
   return <StudioSessionContext.Provider key={userId} value={session}>{children}</StudioSessionContext.Provider>;
 }
 
-const NO_COMMENTS = { threads: [], unseen: false };
+const NO_COMMENTS = { threads: [], news: [] };
 const LOCAL_SESSION = {
   userId: null,
   comments: { get: () => NO_COMMENTS, subscribe: () => () => {}, seen: () => {} },
@@ -144,6 +144,13 @@ export function usePresenceBroadcast(session, formId, selection, editing = null)
     if (!formId) return undefined;
     return () => session.sendPresence(formId, { selection: [], editing: null, here: false });
   }, [session, formId]);
+}
+
+const NO_MEMBERS_LIST = [];
+
+export function useAllMembers(session, formId) {
+  const read = () => (formId ? session.presence.get(formId) : NO_MEMBERS_LIST);
+  return useSyncExternalStore(session.presence.subscribe, read, read);
 }
 
 export function useComments(session, formId) {

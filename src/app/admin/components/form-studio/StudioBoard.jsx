@@ -81,6 +81,7 @@ export function placeBoardNotes(side, column, anchorOf, fallback = 0) {
     .filter((element) => element.dataset.leaving !== "true")
     .map((element) => {
       const block = element.dataset.anchor ? anchorOf(element.dataset.anchor) : null;
+      if (block) element.style.setProperty("--anchor-h", `${Math.round(block.offsetHeight)}px`);
       return {
         element,
         desired: block ? block.getBoundingClientRect().top - base + BLOCK_INSET : fallback,

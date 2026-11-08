@@ -17,11 +17,14 @@ import { DROP_ANIMATION, conditionLoss, slotOf, useStudioSensors } from "./studi
 import { PresenceDots, useStudioPresence } from "./StudioPresence";
 import { useComments, useStudioSession } from "./StudioSession";
 
-export function CommentMark({ count }) {
+export function CommentMark({ count, unread = false }) {
   return (
-    <span title={`${count} açık yorum`} className="inline-flex shrink-0 items-center gap-1 text-3xs tabular-nums text-skylab-300">
-      <span className="h-3 w-0.5 rounded-full bg-skylab-400/60" />
+    <span title={unread ? `${count} açık yorum, yeni mesaj var` : `${count} açık yorum`}
+      className={`inline-flex shrink-0 items-center gap-1 text-3xs tabular-nums ${unread ? "font-semibold text-white" : "text-skylab-300"}`}
+    >
+      <span className={`h-3 w-0.5 rounded-full ${unread ? "bg-skylab-400" : "bg-skylab-400/60"}`} />
       {count}
+      {unread ? <span className="size-1.5 rounded-full bg-skylab-400" /> : null}
     </span>
   );
 }
@@ -77,7 +80,7 @@ export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCo
         const active = node.formId === activeFormId;
         return (
           <button key={node.nodeKey} type="button" onClick={() => onActivate(node.formId)}
-            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"}`}
+            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-white/6" : "hover:bg-white/3"}`}
           >
             <span className={`grid size-5 shrink-0 place-items-center rounded-md border text-3xs font-semibold ${node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"}`}>
               {stages.depths.get(node.nodeKey) ?? "?"}
@@ -127,7 +130,7 @@ function RowBody({ field, fields, numbers, selected }) {
   );
 }
 
-function OutlineRow({ field, fields, numbers, selected, hidden, disabled, others, comments, onSelect }) {
+function OutlineRow({ field, fields, numbers, selected, hidden, disabled, others, comments, unread = false, onSelect }) {
   const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({ id: field.id, disabled });
   const isSeparator = field.type === "separator";
 
@@ -143,7 +146,7 @@ function OutlineRow({ field, fields, numbers, selected, hidden, disabled, others
       <div className={`flex items-start gap-2 px-2 ${isSeparator ? "pb-1 pt-3" : "py-1.5"} ${isDragging ? "invisible" : hidden ? "opacity-35" : ""}`}>
         <RowBody field={field} fields={fields} numbers={numbers} selected={selected} />
         {others?.length ? <span className="mt-px"><PresenceDots members={others} /></span> : null}
-        {comments ? <span className="mt-0.5"><CommentMark count={comments} /></span> : null}
+        {comments ? <span className="mt-0.5"><CommentMark count={comments} unread={unread} /></span> : null}
         <GripVertical size={12} className="mt-0.5 shrink-0 text-neutral-700 opacity-0 transition-opacity group-hover:opacity-100" />
       </div>
       {isDragging ? <span className="pointer-events-none absolute inset-0 rounded-md border border-dashed border-skylab-400/40 bg-skylab-500/5" /> : null}
@@ -157,7 +160,8 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
   const { ui, actions: studio } = useStudio();
   const presence = useStudioPresence();
   const session = useStudioSession();
-  const { threads } = useComments(session, state.id);
+  const { threads, news } = useComments(session, state.id);
+  const unreadFields = useMemo(() => new Set(news.map((item) => item.fieldId)), [news]);
   const commentCounts = useMemo(() => {
     const counts = new Map();
     threads.forEach((thread) => {
@@ -242,7 +246,7 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2 scrollbar">
         {state.task ? (
           <button type="button" onClick={() => !ui.fill && studio.select({ kind: "task" })}
-            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${ui.selection.kind === "task" ? "bg-skylab-500/10 text-skylab-300" : "text-neutral-400 hover:bg-white/[0.04]"}`}
+            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${ui.selection.kind === "task" ? "bg-skylab-500/10 text-skylab-300" : "text-neutral-400 hover:bg-white/4"}`}
           >
             <span className="w-4" />
             <ClipboardList size={13} className="text-neutral-500" />
@@ -270,7 +274,7 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
           <SortableContext items={fields.map((field) => field.id)} strategy={verticalListSortingStrategy}>
             {fields.map((field) => (
               <OutlineRow key={field.id} field={field} fields={fields} numbers={numbers} selected={selectedIds.includes(field.id)}
-                hidden={ui.fill && !visible.includes(field)} disabled={ui.fill} others={presence.byField.get(field.id)} comments={commentCounts.get(field.id)} onSelect={select}
+                hidden={ui.fill && !visible.includes(field)} disabled={ui.fill} others={presence.byField.get(field.id)} comments={commentCounts.get(field.id)} unread={unreadFields.has(field.id)} onSelect={select}
               />
             ))}
           </SortableContext>

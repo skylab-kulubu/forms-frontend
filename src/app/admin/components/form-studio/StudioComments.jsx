@@ -11,6 +11,7 @@ import { PresenceAvatar, firstName, useStudioPresence } from "./StudioPresence";
 import StudioSheet from "./StudioSheet";
 
 const DISARM_MS = 3000;
+const NOTICE_MS = 5000;
 const MAX_COMMENT_LENGTH = 2000;
 const COMMENT_KEY_PREFIX = "comment:";
 
@@ -35,7 +36,7 @@ function grow(element) {
 export function useCommentBoard({ formId, fields, selectedIds, phoneViewport }) {
   const session = useStudioSession();
   const { ui, actions: studio } = useStudio();
-  const { threads, unseen } = useComments(session, formId);
+  const { threads, news } = useComments(session, formId);
   const { open, active, draftFor, compose, showResolved } = ui.comments;
   const onBoard = open && !phoneViewport;
 
@@ -59,9 +60,12 @@ export function useCommentBoard({ formId, fields, selectedIds, phoneViewport }) 
     openThreadsRef.current = openThreads;
   });
 
+  const unreadThreads = useMemo(() => new Set(news.map((item) => item.threadId)), [news]);
+  const unreadFields = useMemo(() => new Set(news.map((item) => item.fieldId)), [news]);
+
   useEffect(() => {
-    if (open && unseen) session.comments.seen(formId);
-  }, [open, unseen, session, formId]);
+    if (open && active && unreadThreads.has(active)) session.comments.seen(formId, active);
+  }, [open, active, unreadThreads, session, formId]);
 
   useEffect(() => {
     if (!open || (selectedField && draftFor === selectedField)) return;
@@ -82,7 +86,7 @@ export function useCommentBoard({ formId, fields, selectedIds, phoneViewport }) 
   }, [studio]);
 
   return {
-    session, formId, open, onBoard, phoneViewport, active, draftFor, compose, showResolved, unseen, counts,
+    session, formId, open, onBoard, phoneViewport, active, draftFor, compose, showResolved, counts, news, unreadThreads, unreadFields,
     activeField: draftFor ?? activeThread?.fieldId ?? null,
     shown: showResolved ? placed : openThreads,
     openCount: openThreads.length,
@@ -202,11 +206,19 @@ function Fold({ open, children }) {
 
 function CommentThread({ thread, index, focused, inline, label, board, userId, canWrite, isOwner, guard, onResize }) {
   const presence = useStudioPresence();
+  const listRef = useRef(null);
+  const [scrolled, setScrolled] = useState(false);
+  const unread = board.unreadThreads.has(thread.id);
   const typingKey = `${COMMENT_KEY_PREFIX}${thread.id}`;
   const typing = presence.members.find((member) => member.editing === typingKey) ?? null;
   const last = thread.comments[thread.comments.length - 1];
   const replies = thread.comments.length - 1;
   const lastName = typing ? typing.name : nameOf(last?.author);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (focused && list) list.scrollTop = list.scrollHeight;
+  }, [focused, thread.comments.length]);
 
   return (
     <ThreadShell fieldId={thread.fieldId} focused={focused} index={index} inline={inline} onResize={onResize}
@@ -220,15 +232,18 @@ function CommentThread({ thread, index, focused, inline, label, board, userId, c
         <Fold open={!focused}>
           <div className="flex min-w-0 items-center gap-2 py-px">
             <PresenceAvatar member={{ userId: typing?.userId ?? last?.author?.id, name: lastName }} small />
-            <span className="min-w-0 flex-1 truncate text-xs leading-[17px] text-neutral-400">
-              <span className="mr-1.5 font-medium text-neutral-200">{firstName(lastName)}</span>
+            <span className={`min-w-0 flex-1 truncate text-xs leading-[17px] ${unread ? "text-neutral-200" : "text-neutral-400"}`}>
+              <span className={`mr-1.5 ${unread ? "font-semibold text-neutral-50" : "font-medium text-neutral-200"}`}>{firstName(lastName)}</span>
               {typing ? "yazıyor" : last?.body}
             </span>
-            {replies > 0 ? <span className="shrink-0 text-3xs tabular-nums text-neutral-600">{replies} cevap</span> : null}
+            {unread ? <span className="shrink-0 rounded-full bg-skylab-400 px-1.5 text-3xs font-semibold leading-4 text-neutral-950">yeni</span>
+              : replies > 0 ? <span className="shrink-0 text-3xs tabular-nums text-neutral-600">{replies} cevap</span> : null}
           </div>
         </Fold>
         <Fold open={focused}>
-          <div className="flex flex-col gap-2.5">
+          <div ref={listRef} onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 2)}
+            className={`flex flex-col gap-2.5 overflow-y-auto overscroll-contain pr-1 scrollbar ${inline ? "" : "max-h-[max(9rem,calc(var(--anchor-h,26rem)-4.75rem))]"} ${scrolled ? "mask-[linear-gradient(to_bottom,transparent,black_18px)]" : ""}`}
+          >
             {thread.comments.map((comment) => (
               <CommentMessage key={comment.id} comment={comment} board={board} guard={guard}
                 canEdit={canWrite && comment.author?.id === userId} canDelete={canWrite && (comment.author?.id === userId || isOwner)}
@@ -283,6 +298,51 @@ function useGuard() {
     studio.toast(error?.message ?? "Yorum kaydedilemedi", "red");
     throw error;
   }), [studio]);
+}
+
+export function CommentNotice({ board, numbers }) {
+  const latest = board.news[board.news.length - 1] ?? null;
+  const [closedId, setClosedId] = useState(null);
+  const watching = Boolean(latest) && board.open && board.active === latest.threadId;
+  const visible = Boolean(latest) && latest.commentId !== closedId && !watching;
+  const more = board.news.length - 1;
+
+  useEffect(() => {
+    if (!visible) return undefined;
+    const timer = setTimeout(() => setClosedId(latest.commentId), NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [visible, latest]);
+
+  const show = () => {
+    setClosedId(latest.commentId);
+    board.openFor(latest.fieldId);
+    document.querySelector(`[data-studio-page] [data-fid="${CSS.escape(latest.fieldId)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+  };
+
+  const name = latest ? nameOf(latest.author) : "";
+  const number = latest ? numbers.get(latest.fieldId) : null;
+
+  return (
+    <AnimatePresence>
+      {visible ? (
+        <motion.button key={latest.commentId} type="button" onClick={show} onPointerDown={(event) => event.stopPropagation()}
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: EASE } }} exit={{ opacity: 0, y: 4, transition: { duration: 0.15 } }}
+          className="absolute bottom-17 left-1/2 z-30 flex w-[min(21rem,calc(100%-2rem))] -translate-x-1/2 gap-2.5 rounded-xl border border-white/10 bg-[#1e1e1e] py-2.5 pl-3 pr-3.5 text-left shadow-2xl shadow-black/50 sm:bottom-19"
+        >
+          <span className="w-0.5 shrink-0 self-stretch rounded-full bg-skylab-400" />
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5 text-2xs leading-4 text-neutral-500">
+              <PresenceAvatar member={{ userId: latest.author?.id, name }} small />
+              <span className="min-w-0 truncate font-medium text-neutral-100">{name}</span>
+              <span className="shrink-0">{number ? `${number}. soruya yorum yazdı` : "yorum yazdı"}</span>
+            </span>
+            <span className="mt-1 line-clamp-2 block text-xs leading-[17px] text-neutral-300">{latest.body}</span>
+            <span className="mt-1.5 block text-3xs text-skylab-300">{more > 0 ? `Göster · ${more} yeni yorum daha` : "Göster"}</span>
+          </span>
+        </motion.button>
+      ) : null}
+    </AnimatePresence>
+  );
 }
 
 export function CommentSide({ board, sideRef, columnRef, fields, userId, canWrite, isOwner }) {
