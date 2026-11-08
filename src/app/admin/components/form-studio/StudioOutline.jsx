@@ -80,7 +80,7 @@ export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCo
         const active = node.formId === activeFormId;
         return (
           <button key={node.nodeKey} type="button" onClick={() => onActivate(node.formId)}
-            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"}`}
+            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-white/6" : "hover:bg-white/3"}`}
           >
             <span className={`grid size-5 shrink-0 place-items-center rounded-md border text-3xs font-semibold ${node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"}`}>
               {stages.depths.get(node.nodeKey) ?? "?"}
@@ -246,7 +246,7 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2 scrollbar">
         {state.task ? (
           <button type="button" onClick={() => !ui.fill && studio.select({ kind: "task" })}
-            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${ui.selection.kind === "task" ? "bg-skylab-500/10 text-skylab-300" : "text-neutral-400 hover:bg-white/[0.04]"}`}
+            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${ui.selection.kind === "task" ? "bg-skylab-500/10 text-skylab-300" : "text-neutral-400 hover:bg-white/4"}`}
           >
             <span className="w-4" />
             <ClipboardList size={13} className="text-neutral-500" />
