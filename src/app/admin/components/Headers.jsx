@@ -83,11 +83,12 @@ function HeaderShell({ title, description, label, labelType = 1, actions, childr
 export default HeaderShell;
 
 function FormsToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange, allowAnonymous = null,
-  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange, onRefresh, onCreate
+  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange, onRefresh, onCreate,
+  stateOptions = null, stateCounts = null, stateValue = "all", onStateChange
 }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
+  const activeFilters = [stateValue !== "all", sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
   const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
   const buttonSize = compact ? "sm" : "md";
 
@@ -97,9 +98,9 @@ function FormsToolbar({ compact = false, searchValue = "", onSearchChange, sortV
       <div className="flex items-center gap-1.5 shrink-0">
         <div ref={filterButtonRef} className="relative">
           <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
-            variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
+            variant={filtersOpen || activeFilters > 0 ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
           />
-          <FormsFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
+          <FormsFilterShell stateOptions={stateOptions} stateCounts={stateCounts} stateValue={stateValue} onStateChange={onStateChange} open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
             sortValue={sortValue} onSortChange={onSortChange} roleValue={roleValue} onRoleChange={onRoleChange}
             allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
             allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}

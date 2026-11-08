@@ -50,6 +50,25 @@ function TriStateIconButton({ value, onChange, icon: Icon, label }) {
   );
 }
 
+function StateOptions({ options, counts, value, onChange }) {
+  return (
+    <div className="grid w-full gap-0.5 rounded-lg border border-white/10 bg-neutral-900/60 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+      {options.map((option) => {
+        const active = option.id === value;
+        const count = counts?.[option.id] ?? 0;
+        return (
+          <button key={option.id} type="button" onClick={() => onChange?.(option.id)} aria-pressed={active}
+            className={`flex min-w-0 flex-col items-center gap-px rounded-md border py-1 text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-transparent text-neutral-400 hover:text-neutral-100"}`}
+          >
+            <span className="max-w-full truncate">{option.label}</span>
+            <span className={`text-3xs tabular-nums ${option.id === "pending" && count ? "text-amber-300/90" : "text-neutral-500"}`}>{count}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export const panelVariants = {
   hidden: { opacity: 0, y: -8, scale: 0.98 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
@@ -87,11 +106,23 @@ export function useDismissPanel({ open, anchorRef, panelRef, onClose }) {
 
 export default function FormsFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange,
   allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange,
-  requiresManualReview = null, onRequiresManualReviewChange, className = "", align = "center"
+  requiresManualReview = null, onRequiresManualReviewChange, className = "", align = "center", stateOptions = null, stateCounts = null, stateValue = "all", onStateChange
 }) {
   const panelRef = useRef(null);
 
   useDismissPanel({ open, anchorRef, panelRef, onClose });
+
+  const sortOptions = [
+    { value: "desc", label: "Azalan", icon: ArrowDown },
+    { value: "asc", label: "Artan", icon: ArrowUp },
+  ];
+
+  const roleOptions = [
+    { value: "all", label: "Hepsi", icon: Users },
+    { value: "viewer", label: "Okuyucu", icon: Eye },
+    { value: "editor", label: "Editör", icon: PencilLine },
+    { value: "owner", label: "Sahip", icon: Crown },
+  ];
 
   return (
     <AnimatePresence>
@@ -99,9 +130,20 @@ export default function FormsFilterShell({ open, anchorRef, onClose, sortValue =
         <motion.div ref={panelRef} role="dialog" aria-label="Forms filters" layout
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
           transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2 max-md:fixed max-md:inset-x-2 max-md:top-29 max-md:w-auto max-md:max-w-none max-md:translate-x-0"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
           <motion.div variants={contentVariants} className="flex flex-col p-4 text-center">
+            {stateOptions ? (
+              <motion.div variants={itemVariants} className="overflow-hidden">
+                <div className="space-y-2 pb-4">
+                  <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                    Form Durumu
+                  </p>
+                  <StateOptions options={stateOptions} counts={stateCounts} value={stateValue} onChange={onStateChange} />
+                </div>
+              </motion.div>
+            ) : null}
+
             <motion.div variants={itemVariants} className="overflow-hidden">
               <div className="space-y-2">
                 <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">

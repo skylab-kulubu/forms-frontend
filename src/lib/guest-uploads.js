@@ -89,8 +89,6 @@ export function accountFileRules(acceptedFiles, maxSize) {
   return guestFileRules(acceptedFiles, maxSize, ACCOUNT_UPLOADS);
 }
 
-export const ACCOUNT_MAX_BYTES = ACCOUNT_UPLOADS.maxBytes;
-
 export function fileMatchesGuestTypes(file, types) {
   const name = (file?.name || "").toLowerCase();
   const extension = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";

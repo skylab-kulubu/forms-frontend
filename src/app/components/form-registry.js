@@ -4,13 +4,13 @@ import { CreateFormCombobox, DisplayFormCombobox } from "@/app/components/form-c
 import { CreateFormMultiChoice, DisplayFormMultiChoice } from "@/app/components/form-components/FormMultiChoice";
 import { CreateFormDatePicker, DisplayFormDatePicker } from "@/app/components/form-components/FormDatePicker";
 import { CreateFormTimePicker, DisplayFormTimePicker } from "@/app/components/form-components/FormTimePicker";
-import { CreateFormFileUpload, DisplayFormFileUpload } from "@/app/components/form-components/FormFileUpload";
-import { CreateFormLink, DisplayFormLink } from "@/app/components/form-components/FormLink";
-import { CreateFormSlider, DisplayFormSlider } from "@/app/components/form-components/FormSlider";
-import { CreateFormMatrix, DisplayFormMatrix } from "@/app/components/form-components/FormMatrix";
+import { DisplayFormFileUpload } from "@/app/components/form-components/FormFileUpload";
+import { DisplayFormLink } from "@/app/components/form-components/FormLink";
+import { DisplayFormSlider } from "@/app/components/form-components/FormSlider";
+import { DisplayFormMatrix } from "@/app/components/form-components/FormMatrix";
 import { CreateFormToggle, DisplayFormToggle } from "@/app/components/form-components/FormToggle";
-import { CreateFormSeparator, DisplayFormSeparator } from "@/app/components/form-components/FormSeparator";
-import { CreateFormRepeater, DisplayFormRepeater } from "@/app/components/form-components/FormRepeater";
+import { DisplayFormSeparator } from "@/app/components/form-components/FormSeparator";
+import { DisplayFormRepeater } from "@/app/components/form-components/FormRepeater";
 
 import { Type, AlignLeft, ChevronsUpDown, ListChecks, Calendar, Clock, Paperclip, SlidersHorizontal, Grid3X3, ToggleRight, SeparatorHorizontal } from "lucide-react";
 
@@ -61,31 +61,31 @@ export const REGISTRY = {
     label: "Dosya",
     svg: "/assets/components/file-upload.svg",
     defaults: { question: "", description: "", required: false, acceptedFiles: ".pdf,.jpg,.png", maxSize: 0 },
-    Create: CreateFormFileUpload, Display: DisplayFormFileUpload
+    Display: DisplayFormFileUpload
   },
   link: {
     label: "Bağlantı",
     svg: "/assets/components/link.svg",
     defaults: { question: "", description: "", required: false, allowMultiple: false },
-    Create: CreateFormLink, Display: DisplayFormLink
+    Display: DisplayFormLink
   },
   slider: {
     label: "Aralık",
     svg: "/assets/components/slider.svg",
     defaults: { question: "", description: "", required: false, min: 0, max: 100, step: 1 },
-    Create: CreateFormSlider, Display: DisplayFormSlider
+    Display: DisplayFormSlider
   },
   matrix: {
     label: "Matris / Tablo",
     svg: "/assets/components/matrix.svg",
     defaults: { question: "", description: "", required: false, rows: ["Satır 1", "Satır 2", "Satır 3"], columns: ["Sütun 1", "Sütun 2", "Sütun 3"] },
-    Create: CreateFormMatrix, Display: DisplayFormMatrix
+    Display: DisplayFormMatrix
   },
   separator: {
     label: "Ayıraç",
     svg: "/assets/components/separator.svg",
     defaults: { title: "", description: "" },
-    Create: CreateFormSeparator, Display: DisplayFormSeparator
+    Display: DisplayFormSeparator
   },
   repeater: {
     label: "Tekrarlanan Grup",
@@ -95,7 +95,7 @@ export const REGISTRY = {
         { id: "f-1", type: "short_text", props: { question: "İsim", description: "", required: false, inputType: "name" } }
       ]
     },
-    Create: CreateFormRepeater, Display: DisplayFormRepeater
+    Display: DisplayFormRepeater
   }
 };
 

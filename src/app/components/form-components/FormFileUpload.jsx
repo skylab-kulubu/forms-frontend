@@ -2,15 +2,11 @@
 
 import { useContext, useMemo, useRef, useState, useEffect } from "react";
 import { CircleAlert, CloudOff, Hourglass, Upload, X, File as FileIcon, Loader2, LockKeyhole, ShieldAlert } from "lucide-react";
-import { FieldShell } from "./FieldShell";
-import { AutoResizeTextarea } from "./AutoResizeTextarea";
-import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { useOptionalFormEditor } from "@/app/admin/components/form-editor/FormEditorContext";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { GuestUploadContext } from "@/app/components/form-displayer/GuestUploadContext";
 import { LoginConfirm, useLoginPrompt } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import { request, uploadWithProgress } from "@/lib/apiClient";
-import { ACCOUNT_MAX_BYTES, accountFileRules, fileMatchesGuestTypes, fileStatusOfReason, guestFileRules, guestReasonOf, scanResultCopy, waitCopy } from "@/lib/guest-uploads";
+import { accountFileRules, fileMatchesGuestTypes, fileStatusOfReason, guestFileRules, guestReasonOf, scanResultCopy, waitCopy } from "@/lib/guest-uploads";
 import { useGuestUploadCapabilityQuery } from "@/lib/hooks/useGuestUploadCapability";
 import { POLL_LIMIT, pollDelay } from "@/app/components/form-displayer/hooks/useGuestUploads";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
@@ -63,62 +59,6 @@ export function GuestUploadHint({ acceptedFiles, maxSize }) {
     <span className="px-0.5 text-2xs text-neutral-500">
       Giriş yapmadan yanıtlayanlar yalnız {rules.label} yükleyebilir, dosya başına en çok {formatMegabytes(rules.maxBytes)}. Dosyalar virüs taramasından geçer.
     </span>
-  );
-}
-
-export function CreateFormFileUpload({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
-  const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
-  const editor = useOptionalFormEditor();
-  const anonymous = Boolean(editor?.state?.allowAnonymousResponses);
-
-  return (
-    <FieldShell number={questionNumber} title="Dosya Yükleme" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="file-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Soru Metni
-        </label>
-        <AutoResizeTextarea id="file-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Sorunuzu buraya yazın."
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="file-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Açıklama
-        </label>
-        <AutoResizeTextarea id="file-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Açıklamanızı buraya yazın."
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="file-accept" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-            İzin verilen dosya türleri
-          </label>
-          <input id="file-accept" type="text" {...bind("acceptedFiles")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-            placeholder="Örn: .pdf,.jpg,.png veya image/*"
-          />
-          <span className="px-0.5 text-2xs text-neutral-500">Virgülle ayırın. Boş bırakılırsa PDF, JPG, PNG ve DOCX kabul edilir.</span>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="file-maxsize" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-            Maksimum dosya boyutu (MB)
-          </label>
-          <input id="file-maxsize" type="number" min={0} {...bind("maxSize")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-            placeholder={`0 = ${formatMegabytes(ACCOUNT_MAX_BYTES)}`}
-          />
-          <span className="px-0.5 text-2xs text-neutral-500">En çok {formatMegabytes(ACCOUNT_MAX_BYTES)}; 0 bırakılırsa {formatMegabytes(ACCOUNT_MAX_BYTES)} uygulanır.</span>
-        </div>
-      </div>
-
-      <AccountUploadHint acceptedFiles={prop.acceptedFiles} />
-      {anonymous && <GuestUploadHint acceptedFiles={prop.acceptedFiles} maxSize={prop.maxSize} />}
-    </FieldShell>
   );
 }
 

@@ -62,7 +62,7 @@ function WorkflowChip({ workflow }) {
   );
 }
 
-function EventChip({ event }) {
+export function EventChip({ event }) {
   if (!event?.href) return null;
   return (
     <a href={event.href} target="_blank" rel="noreferrer" title={`Etkinliği aç: ${event.name || event.id}`}
