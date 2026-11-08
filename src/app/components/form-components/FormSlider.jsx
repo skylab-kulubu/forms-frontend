@@ -1,63 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FieldShell } from "./FieldShell";
-import { AutoResizeTextarea } from "./AutoResizeTextarea";
-import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
-
-export function CreateFormSlider({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
-  const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
-
-  const min = prop.min ?? 0;
-  const max = prop.max ?? 100;
-
-  return (
-    <FieldShell number={questionNumber} title="Aralık" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="slider-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Soru Metni
-        </label>
-        <AutoResizeTextarea id="slider-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Sorunuzu buraya yazın."
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="slider-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Açıklama
-        </label>
-        <AutoResizeTextarea id="slider-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Açıklamanızı buraya yazın."
-        />
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Min. Değer</label>
-          <input type="number" {...bind("min")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-skylab-400/50"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Max. Değer</label>
-          <input type="number" {...bind("max")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-skylab-400/50"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Artış (Step)</label>
-          <input type="number" {...bind("step")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 outline-none transition focus:border-skylab-400/50"
-          />
-        </div>
-      </div>
-    </FieldShell>
-  );
-}
 
 export function DisplayFormSlider({ question, questionNumber, description, required = false, min = 0, max = 100, step = 1, value, onChange, missing = false }) {
   const [internalValue, setInternalValue] = useState(value !== undefined ? value : (Number(min) + (Number(max) - Number(min)) / 2));

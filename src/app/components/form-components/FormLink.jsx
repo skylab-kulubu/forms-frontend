@@ -3,9 +3,6 @@
 import { useState, createElement } from "react";
 import { Link as LinkIcon, Github, Linkedin, Instagram, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FieldShell } from "./FieldShell";
-import { AutoResizeTextarea } from "./AutoResizeTextarea";
-import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
@@ -153,50 +150,6 @@ export function LinkAnswerInput({ allowMultiple = false, required = false, value
   return allowMultiple
     ? <MultiLinkInput required={required} value={value} onChange={onChange} missing={missing} />
     : <SingleLinkInput required={required} value={value} onChange={onChange} missing={missing} />;
-}
-
-export function CreateFormLink({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
-  const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
-
-  return (
-    <FieldShell number={questionNumber} title="Bağlantı" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="link-question" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Soru Metni
-        </label>
-        <AutoResizeTextarea id="link-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Sorunuzu buraya yazın."
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="link-description" className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
-          Açıklama
-        </label>
-        <AutoResizeTextarea id="link-description" {...bind("description")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
-          placeholder="Açıklamanızı buraya yazın."
-        />
-      </div>
-
-      <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-        <span className="text-xs text-neutral-300">Birden fazla linke izin ver</span>
-        <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
-          <button type="button" aria-pressed={!prop.allowMultiple} onClick={() => toggle("allowMultiple", false)}
-            className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!prop.allowMultiple ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
-          >
-            Hayır
-          </button>
-          <button type="button" aria-pressed={prop.allowMultiple} onClick={() => toggle("allowMultiple", true)}
-            className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${prop.allowMultiple ? "bg-emerald-500/20 text-emerald-200" : "text-neutral-300 hover:text-neutral-200"}`}
-          >
-            Evet
-          </button>
-        </div>
-      </div>
-    </FieldShell>
-  );
 }
 
 export function DisplayFormLink({ question, questionNumber, description, required = false, allowMultiple = false, value, onChange, missing = false }) {

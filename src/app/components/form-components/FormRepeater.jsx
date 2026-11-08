@@ -3,9 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, X, ArrowUp, ArrowDown, Type, AlignLeft, ToggleRight, ChevronsUpDown, ListChecks, Calendar, Clock } from "lucide-react";
-import { FieldShell } from "./FieldShell";
-import { AutoResizeTextarea } from "./AutoResizeTextarea";
-import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { REGISTRY } from "../form-registry";
 import { formatFieldAnswer } from "../form-answer-format";
@@ -117,26 +114,6 @@ function ChildPicker({ onAdd }) {
         <Plus size={14} /> Bileşen Ekle
       </button>
     </div>
-  );
-}
-
-export function CreateFormRepeater({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
-  const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
-
-  return (
-    <FieldShell number={questionNumber} title="Tekrarlanan Grup" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
-      <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
-        <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20" placeholder="Sorunuzu buraya yazın." />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
-        <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20" placeholder="Açıklamanızı buraya yazın." />
-      </div>
-
-      <RepeaterFieldsEditor fields={prop.fields} onChange={(next) => patch({ fields: next })} />
-    </FieldShell>
   );
 }
 

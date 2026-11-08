@@ -1,61 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { X, Plus } from "lucide-react";
-import { FieldShell } from "./FieldShell";
-import { AutoResizeTextarea } from "./AutoResizeTextarea";
-import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
+import { X } from "lucide-react";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
-
-export function CreateFormMatrix({ questionNumber, props, onPropsChange, readOnly, ...rest }) {
-    const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
-
-    const manageList = (key, action, index, value) => {
-        const list = prop[key] ?? [];
-        let next = [...list];
-        if (action === "add") next.push(`${key === 'rows' ? 'Satır' : 'Sütun'} ${list.length + 1}`);
-        if (action === "update") next[index] = value;
-        if (action === "remove") next = list.length > 1 ? list.filter((_, i) => i !== index) : list;
-        patch({ [key]: next });
-    };
-
-    const rows = prop.rows ?? ["Satır 1", "Satır 2"];
-    const cols = prop.columns ?? ["Sütun 1", "Sütun 2"];
-
-    return (
-        <FieldShell number={questionNumber} title="Matris / Tablo" required={!!prop.required} onRequiredChange={(v) => toggle("required", v)} {...rest}>
-            <div className="flex flex-col gap-1.5">
-                <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
-                <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Sorunuzu buraya yazın." />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-                <div className="flex flex-col gap-2">
-                    <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400 border-b border-white/5 pb-1">Satırlar (Sorular)</label>
-                    {rows.map((row, idx) => (
-                        <div key={`row-${idx}`} className="flex items-center gap-2">
-                            <input type="text" className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-1.5 text-sm text-neutral-100 outline-none focus:border-skylab-400/50" value={row} onChange={(e) => manageList('rows', 'update', idx, e.target.value)} />
-                            <button type="button" className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-neutral-400 hover:text-neutral-100 disabled:opacity-50" disabled={rows.length <= 1} onClick={() => manageList('rows', 'remove', idx)}><X size={14} /></button>
-                        </div>
-                    ))}
-                    <button type="button" onClick={() => manageList('rows', 'add')} className="flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-2xs text-neutral-300 hover:bg-white/10 mt-1"><Plus size={12} /> Satır Ekle</button>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400 border-b border-white/5 pb-1">Sütunlar (Seçenekler)</label>
-                    {cols.map((col, idx) => (
-                        <div key={`col-${idx}`} className="flex items-center gap-2">
-                            <input type="text" className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-1.5 text-sm text-neutral-100 outline-none focus:border-skylab-400/50" value={col} onChange={(e) => manageList('columns', 'update', idx, e.target.value)} />
-                            <button type="button" className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-neutral-400 hover:text-neutral-100 disabled:opacity-50" disabled={cols.length <= 1} onClick={() => manageList('columns', 'remove', idx)}><X size={14} /></button>
-                        </div>
-                    ))}
-                    <button type="button" onClick={() => manageList('columns', 'add')} className="flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-2xs text-neutral-300 hover:bg-white/10 mt-1"><Plus size={12} /> Sütun Ekle</button>
-                </div>
-            </div>
-        </FieldShell>
-    );
-}
 
 export function DisplayFormMatrix({ question, questionNumber, description, required = false, rows = [], columns = [], value, onChange, missing = false }) {
     const [internalValue, setInternalValue] = useState(value || {});
