@@ -102,7 +102,7 @@ export function StudioSessionProvider({ onNotice, fallback = null, children }) {
   return <StudioSessionContext.Provider key={userId} value={session}>{children}</StudioSessionContext.Provider>;
 }
 
-const NO_COMMENTS = { threads: [], unseen: false };
+const NO_COMMENTS = { threads: [], news: [] };
 const LOCAL_SESSION = {
   userId: null,
   comments: { get: () => NO_COMMENTS, subscribe: () => () => {}, seen: () => {} },

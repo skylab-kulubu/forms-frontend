@@ -66,7 +66,10 @@ function createCursors() {
   };
 }
 
-const NO_COMMENTS = { threads: [], unseen: false };
+const NO_COMMENTS = { threads: [], news: [] };
+
+const lastOf = (thread) => thread?.comments?.[thread.comments.length - 1] ?? null;
+const newsOf = (thread, comment) => ({ threadId: thread.id, fieldId: thread.fieldId, commentId: comment.id, author: comment.author, body: comment.body });
 
 function createComments(userId) {
   const forms = new Map();
@@ -79,17 +82,25 @@ function createComments(userId) {
 
   return {
     get: read,
-    load: (formId, threads) => write(formId, { ...read(formId), threads: Array.isArray(threads) ? threads : [] }),
-    merge(formId, thread, fromHub = false) {
-      const { threads, unseen } = read(formId);
-      const lastOf = (item) => item?.comments?.[item.comments.length - 1] ?? null;
-      const last = lastOf(thread);
-      const isNews = fromHub && Boolean(last) && last.author?.id !== userId && lastOf(threads.find((item) => item.id === thread.id))?.id !== last.id;
-      const rest = threads.filter((item) => item.id !== thread.id);
-      write(formId, { threads: thread.comments?.length ? [...rest, thread] : rest, unseen: unseen || isNews });
+    load(formId, threads) {
+      const list = Array.isArray(threads) ? threads : [];
+      const news = read(formId).news.filter((item) => list.some((thread) => thread.id === item.threadId && !thread.resolvedAt && thread.comments?.some((comment) => comment.id === item.commentId)));
+      write(formId, { threads: list, news });
     },
-    seen(formId) {
-      if (read(formId).unseen) write(formId, { ...read(formId), unseen: false });
+    merge(formId, thread, fromHub = false) {
+      const { threads, news } = read(formId);
+      const last = lastOf(thread);
+      const before = threads.find((item) => item.id === thread.id);
+      const isNews = fromHub && Boolean(last) && !thread.resolvedAt && last.author?.id !== userId && !before?.comments?.some((comment) => comment.id === last.id);
+      const rest = threads.filter((item) => item.id !== thread.id);
+      const kept = news.filter((item) => item.threadId !== thread.id || (!thread.resolvedAt && thread.comments?.some((comment) => comment.id === item.commentId)));
+      const next = isNews ? [...kept.filter((item) => item.threadId !== thread.id), newsOf(thread, last)] : kept;
+      write(formId, { threads: thread.comments?.length ? [...rest, thread] : rest, news: next });
+    },
+    seen(formId, threadId) {
+      const current = read(formId);
+      const news = current.news.filter((item) => item.threadId !== threadId);
+      if (news.length !== current.news.length) write(formId, { ...current, news });
     },
     subscribe(listener) {
       listeners.add(listener);
