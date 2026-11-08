@@ -93,13 +93,25 @@ export default function FormsFilterShell({ open, anchorRef, onClose, sortValue =
 
   useDismissPanel({ open, anchorRef, panelRef, onClose });
 
+  const sortOptions = [
+    { value: "desc", label: "Azalan", icon: ArrowDown },
+    { value: "asc", label: "Artan", icon: ArrowUp },
+  ];
+
+  const roleOptions = [
+    { value: "all", label: "Hepsi", icon: Users },
+    { value: "viewer", label: "Okuyucu", icon: Eye },
+    { value: "editor", label: "Editör", icon: PencilLine },
+    { value: "owner", label: "Sahip", icon: Crown },
+  ];
+
   return (
     <AnimatePresence>
       {open ? (
         <motion.div ref={panelRef} role="dialog" aria-label="Forms filters" layout
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
           transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2 max-md:fixed max-md:inset-x-2 max-md:top-29 max-md:w-auto max-md:max-w-none max-md:translate-x-0"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
           <motion.div variants={contentVariants} className="flex flex-col p-4 text-center">
             <motion.div variants={itemVariants} className="overflow-hidden">
