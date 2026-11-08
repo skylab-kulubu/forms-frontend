@@ -17,7 +17,7 @@ import FormShareDialog from "../share/FormShareDialog";
 import { formInfoQuery } from "@/lib/hooks/useFormContext";
 import { useAvailableFormsQuery, useCandidateFormsQuery } from "@/lib/hooks/useWorkflowAdmin";
 import { NONE, StudioProvider, useStudio } from "./StudioContext";
-import { StudioSessionProvider, useDocStates, useOpenThreadCounts, usePresenceBroadcast, usePresenceMembers, useStudioSession } from "./StudioSession";
+import { StudioSessionProvider, useAllMembers, useDocStates, useOpenThreadCounts, usePresenceBroadcast, usePresenceMembers, useStudioSession } from "./StudioSession";
 import { RemoteCursors, StudioPresenceProvider, colorOf, revealField, uniquePeople, useCursorBroadcast, useTypingField, whereOf } from "./StudioPresence";
 import StudioLayout from "./StudioLayout";
 import StudioPage, { measureCard, pageCardRect } from "./StudioPage";
@@ -225,6 +225,7 @@ function WorkflowStudioContent({ workflow, seed, initialEntry = null, onLeave = 
   const peopleByForm = usePresenceMembers(studioSession, docList.map((doc) => doc.id));
   const commentCounts = useOpenThreadCounts(studioSession, docList.map((doc) => doc.id));
   const activeOthers = (activeFormId && peopleByForm[activeFormId]) || NO_MEMBERS;
+  const activeEveryone = useAllMembers(studioSession, activeFormId);
   const revealRef = useRef(null);
 
   const dirtyIds = state.nodes
@@ -724,7 +725,7 @@ function WorkflowStudioContent({ workflow, seed, initialEntry = null, onLeave = 
     const formUndo = Boolean(formState) && inPage && formState.canUndo;
 
     return (
-      <StudioPresenceProvider members={activeOthers}>
+      <StudioPresenceProvider members={activeOthers} everyone={activeEveryone}>
       <StudioLayout
         outline={outline}
         center={(

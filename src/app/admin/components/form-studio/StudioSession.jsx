@@ -146,6 +146,13 @@ export function usePresenceBroadcast(session, formId, selection, editing = null)
   }, [session, formId]);
 }
 
+const NO_MEMBERS_LIST = [];
+
+export function useAllMembers(session, formId) {
+  const read = () => (formId ? session.presence.get(formId) : NO_MEMBERS_LIST);
+  return useSyncExternalStore(session.presence.subscribe, read, read);
+}
+
 export function useComments(session, formId) {
   const read = () => session.comments.get(formId);
   return useSyncExternalStore(session.comments.subscribe, read, read);

@@ -18,7 +18,7 @@ import { editPathWithReturnTo, eventRefFromForm, returnToEventHref, sanitizeRetu
 import ApprovalOverlay from "../ApprovalOverlay";
 import FormShareDialog from "../share/FormShareDialog";
 import { StudioProvider, useStudio } from "./StudioContext";
-import { StudioSessionProvider, usePresenceBroadcast, usePresenceMembers, useStudioSession } from "./StudioSession";
+import { StudioSessionProvider, useAllMembers, usePresenceBroadcast, usePresenceMembers, useStudioSession } from "./StudioSession";
 import { RemoteCursors, StudioPresenceProvider, colorOf, revealField, uniquePeople, useCursorBroadcast, useTypingField, whereOf } from "./StudioPresence";
 import StudioLayout from "./StudioLayout";
 import StudioPage, { measureCard } from "./StudioPage";
@@ -74,6 +74,7 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, onStartFlow, handoff
   useCursorBroadcast(studioSession, state.id);
   const presenceByForm = usePresenceMembers(studioSession, [state.id]);
   const others = presenceByForm[state.id] ?? NO_MEMBERS;
+  const everyone = useAllMembers(studioSession, state.id);
 
   useEffect(() => {
     if (!eventLinked || !state.canEdit) return;
@@ -213,7 +214,7 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, onStartFlow, handoff
   );
 
   return (
-    <StudioPresenceProvider members={others}>
+    <StudioPresenceProvider members={others} everyone={everyone}>
     <StudioLayout
       top={<EventReturnBar returnHref={returnHref} pending={hasReturnTo && !returnHref} eventHref={eventRef?.href} eventName={eventRef?.name} />}
       outline={outline}
