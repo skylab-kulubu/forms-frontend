@@ -202,11 +202,18 @@ function Fold({ open, children }) {
 
 function CommentThread({ thread, index, focused, inline, label, board, userId, canWrite, isOwner, guard, onResize }) {
   const presence = useStudioPresence();
+  const listRef = useRef(null);
+  const [scrolled, setScrolled] = useState(false);
   const typingKey = `${COMMENT_KEY_PREFIX}${thread.id}`;
   const typing = presence.members.find((member) => member.editing === typingKey) ?? null;
   const last = thread.comments[thread.comments.length - 1];
   const replies = thread.comments.length - 1;
   const lastName = typing ? typing.name : nameOf(last?.author);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (focused && list) list.scrollTop = list.scrollHeight;
+  }, [focused, thread.comments.length]);
 
   return (
     <ThreadShell fieldId={thread.fieldId} focused={focused} index={index} inline={inline} onResize={onResize}
@@ -228,7 +235,9 @@ function CommentThread({ thread, index, focused, inline, label, board, userId, c
           </div>
         </Fold>
         <Fold open={focused}>
-          <div className="flex flex-col gap-2.5">
+          <div ref={listRef} onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 2)}
+            className={`flex flex-col gap-2.5 overflow-y-auto overscroll-contain pr-1 scrollbar ${inline ? "" : "max-h-[max(9rem,calc(var(--anchor-h,26rem)-4.75rem))]"} ${scrolled ? "mask-[linear-gradient(to_bottom,transparent,black_18px)]" : ""}`}
+          >
             {thread.comments.map((comment) => (
               <CommentMessage key={comment.id} comment={comment} board={board} guard={guard}
                 canEdit={canWrite && comment.author?.id === userId} canDelete={canWrite && (comment.author?.id === userId || isOwner)}
