@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react";
 import { Activity, ChevronRight, Copy, EyeOff, LayoutTemplate, Lock, PencilLine, RotateCcw, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTextarea, SectionHeader, Switch, ToggleRow,
 } from "@/app/admin/components/utils/SidePanel";
@@ -27,6 +28,14 @@ import {
 } from "./studio-schema";
 
 const SMALL_INPUT = "h-8 rounded-lg border border-white/10 bg-neutral-900/60 px-2.5 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20 [color-scheme:dark]";
+
+const REVEAL = {
+  className: "-mx-1 overflow-hidden px-1",
+  initial: { height: 0, opacity: 0 },
+  animate: { height: "auto", opacity: 1 },
+  exit: { height: 0, opacity: 0 },
+  transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+};
 
 export function Crumbs({ items }) {
   return (
@@ -243,27 +252,39 @@ function VisibilitySection({ field, fields, actions, disabledReason }) {
     <section className={PANEL_SECTION}>
       <SectionHeader title="Görünürlük" description={description} />
       {previous.length && !disabledReason ? (
-        <div className="divide-y divide-white/5">
+        <div>
           <KV label="Sadece belirli cevaplarda">
             <Switch checked={Boolean(condition)} label="Sadece belirli cevaplarda"
               onChange={() => actions.setCondition(field.id, condition ? null : defaultCondition([...previous].reverse().find((item) => item.type === "combobox" || item.type === "multi_choice") ?? previous[previous.length - 1]))}
             />
           </KV>
-          {condition ? (
-            <>
-              <KV label="Soru">
-                <MenuPill wide value={condition.fieldId} options={previous.map((item) => ({ value: item.id, label: `${numbers.get(item.id)} · ${fieldLabel(item)}` }))}
-                  onSelect={(id) => actions.setCondition(field.id, defaultCondition(fields.find((item) => item.id === id)))}
-                />
-              </KV>
-              <KV label="Koşul">
-                <MenuPill wide value={condition.operator} options={operators.map((operator) => ({ value: operator.value, label: operator.label }))}
-                  onSelect={(operator) => update({ operator, value: NO_VALUE_OPERATORS.includes(operator) ? "" : condition.value })}
-                />
-              </KV>
-              {needsValue ? <KV label="Değer">{valueControl}</KV> : null}
-            </>
-          ) : null}
+          <AnimatePresence initial={false}>
+            {condition ? (
+              <motion.div key="condition" {...REVEAL}>
+                <div className="border-t border-white/5">
+                  <div className="divide-y divide-white/5">
+                    <KV label="Soru">
+                      <MenuPill wide value={condition.fieldId} options={previous.map((item) => ({ value: item.id, label: `${numbers.get(item.id)} · ${fieldLabel(item)}` }))}
+                        onSelect={(id) => actions.setCondition(field.id, defaultCondition(fields.find((item) => item.id === id)))}
+                      />
+                    </KV>
+                    <KV label="Koşul">
+                      <MenuPill wide value={condition.operator} options={operators.map((operator) => ({ value: operator.value, label: operator.label }))}
+                        onSelect={(operator) => update({ operator, value: NO_VALUE_OPERATORS.includes(operator) ? "" : condition.value })}
+                      />
+                    </KV>
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {needsValue ? (
+                      <motion.div key="value" {...REVEAL}>
+                        <div className="border-t border-white/5"><KV label="Değer">{valueControl}</KV></div>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
       ) : null}
     </section>

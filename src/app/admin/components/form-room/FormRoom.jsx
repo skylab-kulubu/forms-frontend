@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
@@ -35,9 +35,28 @@ const PREFETCH = { overview: prefetchOverview, analytics: prefetchAnalytics, res
 const COLLAPSE_KEY = "skyforms:room-left-collapsed";
 const STEP_WAIT_MS = 1500;
 const MODE_WAIT_MS = 700;
+const SHEET_WAIT_MS = 800;
+const SHEET_GONE_PX = 6;
 const FRESH = 30_000;
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function sheetGone() {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const check = () => {
+      const panel = document.querySelector("[data-room] [data-room-sheet]");
+      const rect = panel?.getBoundingClientRect();
+      const box = panel?.parentElement?.getBoundingClientRect();
+      const seen = rect && box
+        ? Math.min(Math.min(rect.bottom, box.bottom) - Math.max(rect.top, box.top), Math.min(rect.right, box.right) - Math.max(rect.left, box.left))
+        : 0;
+      if (seen < SHEET_GONE_PX || performance.now() - start > SHEET_WAIT_MS) resolve();
+      else requestAnimationFrame(check);
+    };
+    check();
+  });
+}
 
 function readCollapsed() {
   try {
@@ -82,7 +101,7 @@ export default function FormRoom() {
   const toastTimer = useRef(null);
   const keysRef = useRef(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     routeRef.current = route;
   }, [route]);
 
@@ -165,16 +184,24 @@ export default function FormRoom() {
   const settings = effectiveFormSettings(shell);
   const lastResp = useMemo(() => store.lastResp ?? {}, [store.lastResp]);
 
+  const openSheetRef = useRef(sheet);
+  useLayoutEffect(() => {
+    openSheetRef.current = sheet;
+  }, [sheet]);
+
   const go = useCallback((patch, { replace = false, transition = "none", ms = 180 } = {}) => {
-    const next = { ...routeRef.current, ...patch };
-    const href = hrefOfRoute(next);
     const apply = () => {
+      const next = { ...routeRef.current, ...patch };
+      const href = hrefOfRoute(next);
       routeRef.current = next;
       setRoute(next);
       setSheet(null);
       if (href && href !== currentHref()) window.history[replace ? "replaceState" : "pushState"](null, "", href);
     };
-    if (transition === "swap") return swapView(() => apply(), { duration: ms });
+    if (transition === "swap") {
+      const swap = () => swapView(() => apply(), { duration: ms });
+      return openSheetRef.current || prefersReducedMotion() ? swap() : sheetGone().then(swap);
+    }
     apply();
     return Promise.resolve();
   }, []);

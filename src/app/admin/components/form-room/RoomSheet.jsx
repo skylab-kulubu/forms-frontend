@@ -38,7 +38,7 @@ export default function RoomSheet({ open, onClose, label, side = "bottom", fill 
           <motion.div className="absolute inset-0 bg-black/50" onClick={onClose}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
           />
-          <motion.div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={label} {...drag}
+          <motion.div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={label} data-room-sheet {...drag}
             initial={away} animate={home} exit={away} transition={bottom ? BOTTOM_MOTION : SIDE_MOTION}
             className={bottom
               ? `relative mx-auto flex ${fill ? "h-[86%]" : "max-h-[86%]"} w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-b-0 border-white/10 bg-neutral-900 shadow-2xl shadow-black/60 outline-none`
