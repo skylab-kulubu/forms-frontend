@@ -123,7 +123,7 @@ export default function AnalyticsMode() {
     const same = filter.answer?.q === questionId && filter.answer?.v === text;
     setFilter({ answer: same ? null : { q: questionId, v: text } });
   };
-  const openAnswer = (questionId, value) => room.switchMode("response", { answer: { q: questionId, v: String(value) }, status: LIST_STATUS[filter.status] ?? null });
+  const openAnswer = (questionId, value) => room.switchMode("response", { responseId: null, answer: { q: questionId, v: String(value) }, status: LIST_STATUS[filter.status] ?? null });
   const canOpenList = room.canView && !filter.sinceDays;
 
   const consumeRef = useRef(null);

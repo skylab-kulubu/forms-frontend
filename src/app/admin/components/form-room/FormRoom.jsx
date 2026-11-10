@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
@@ -82,7 +82,7 @@ export default function FormRoom() {
   const toastTimer = useRef(null);
   const keysRef = useRef(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     routeRef.current = route;
   }, [route]);
 
