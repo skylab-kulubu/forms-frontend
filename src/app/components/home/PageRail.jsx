@@ -5,7 +5,7 @@ import { useHome } from "./HomeContext";
 import { scrollToSection } from "./usePager";
 
 function sectionsOf(box) {
-  return [...box.querySelectorAll("[data-page]")].filter((el) => !el.classList.contains("sf") && el.getClientRects().length > 0);
+  return [...box.querySelectorAll("[data-page]")].filter((el) => el.getClientRects().length > 0);
 }
 
 function labelOf(el) {

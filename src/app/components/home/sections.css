@@ -46,6 +46,7 @@
 }
 @media (min-width: 1024px) and (min-height: 700px) and (max-height: 1100px) {
   .a2-sec, .at-sec { min-height: 100dvh; }
+  .a2-wrap > .a2-sec:last-child, .at-wrap > .at-sec:last-child { min-height: calc(100dvh - var(--sf-h)); }
 }
 @media (min-width: 1024px) and (min-height: 700px) and (max-height: 800px) {
   .a2-sec, .at-sec { padding: 88px 0 28px; }
