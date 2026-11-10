@@ -7,7 +7,7 @@ import { useMediaQuery } from "../form-studio/useMediaQuery";
 const SIDE_MOTION = { type: "tween", duration: 0.3, ease: [0.22, 1, 0.36, 1] };
 const BOTTOM_MOTION = { type: "spring", stiffness: 420, damping: 42, mass: 0.8 };
 
-export default function RoomSheet({ open, onClose, label, side = "bottom", header = null, children }) {
+export default function RoomSheet({ open, onClose, label, side = "bottom", fill = false, header = null, children }) {
   const wide = useMediaQuery("(min-width: 768px)");
   const placement = wide && side !== "bottom" ? side : "bottom";
   const bottom = placement === "bottom";
@@ -41,7 +41,7 @@ export default function RoomSheet({ open, onClose, label, side = "bottom", heade
           <motion.div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={label} {...drag}
             initial={away} animate={home} exit={away} transition={bottom ? BOTTOM_MOTION : SIDE_MOTION}
             className={bottom
-              ? "relative mx-auto flex max-h-[86%] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-b-0 border-white/10 bg-neutral-900 shadow-2xl shadow-black/60 outline-none"
+              ? `relative mx-auto flex ${fill ? "h-[86%]" : "max-h-[86%]"} w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-b-0 border-white/10 bg-neutral-900 shadow-2xl shadow-black/60 outline-none`
               : `absolute inset-y-2 flex w-[min(22rem,calc(100%-3rem))] flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-900 shadow-2xl shadow-black/60 outline-none ${placement === "left" ? "left-2" : "right-2"}`}
           >
             {bottom ? (

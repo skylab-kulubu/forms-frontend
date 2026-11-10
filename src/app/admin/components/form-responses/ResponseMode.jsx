@@ -685,7 +685,7 @@ export default function ResponseMode() {
         )}
         mobile={<HeaderTouch icon={exporting ? Spinner : Download} label="Excel İndir" onClick={exportToExcel} disabled={exporting || !canView} />}
       />
-      <RoomFrame {...room.frameProps} outline={outline} center={center} toolbar={toolbar}
+      <RoomFrame {...room.frameProps} outline={outline} outlineFill center={center} toolbar={toolbar}
         inspectorHeader={panelHead} inspector={rightDocked ? inspector : null} inspectorWidth="flex-[0_1_340px]"
       />
     </>

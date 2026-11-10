@@ -21,7 +21,7 @@ function RoomToast({ toast }) {
 }
 
 export default function RoomFrame({
-  centerRef, outline, center, toolbar, inspectorHeader = null, inspector = null, inspectorWidth = "flex-[0_1_440px]",
+  centerRef, outline, outlineFill = false, center, toolbar, inspectorHeader = null, inspector = null, inspectorWidth = "flex-[0_1_440px]",
   leftDocked = false, rightDocked = false, sheet = null, onCloseSheet, toast = null, overlays = null,
 }) {
   const blocked = Boolean(sheet);
@@ -54,9 +54,9 @@ export default function RoomFrame({
           </aside>
         ) : null}
 
-        <RoomSheet open={sheet === "left" && !leftDocked} onClose={onCloseSheet} label="Sol panel" side="left">{outline("sheet")}</RoomSheet>
+        <RoomSheet open={sheet === "left" && !leftDocked} onClose={onCloseSheet} label="Sol panel" side="left" fill={outlineFill}>{outline("sheet")}</RoomSheet>
         {inspector ? (
-          <RoomSheet open={sheet === "right" && !rightDocked} onClose={onCloseSheet} label="Sağ panel" side="right"
+          <RoomSheet open={sheet === "right" && !rightDocked} onClose={onCloseSheet} label="Sağ panel" side="right" fill
             header={<div className={INSPECTOR_HEADER}>{inspectorHeader}</div>}
           >
             {inspectorBody}
