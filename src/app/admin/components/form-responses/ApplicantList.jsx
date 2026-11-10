@@ -112,7 +112,13 @@ export default function ApplicantList({
   const selectedIndex = rows.findIndex((row) => isSelected(row));
 
   useLayoutEffect(() => {
-    listRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: "nearest" });
+    const list = listRef.current;
+    const row = list?.querySelector('[data-selected="true"]');
+    if (!row) return;
+    const box = list.getBoundingClientRect();
+    const { top, bottom } = row.getBoundingClientRect();
+    if (top < box.top) list.scrollTop -= box.top - top;
+    else if (bottom > box.bottom) list.scrollTop += bottom - box.bottom;
   }, [selectedIndex]);
 
   const active = [filters.sort !== "desc", filters.status !== "all" && filters.status !== "pending", filters.who !== "all", filters.time !== "all", filters.archived, Boolean(filters.answer)].filter(Boolean).length;

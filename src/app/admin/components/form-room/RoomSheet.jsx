@@ -34,7 +34,7 @@ export default function RoomSheet({ open, onClose, label, side = "bottom", heade
   return (
     <AnimatePresence>
       {open ? (
-        <div key="room-sheet" className={`absolute inset-0 z-50 overflow-hidden ${bottom ? "flex flex-col justify-end" : ""}`}>
+        <div key="room-sheet" className={`absolute inset-0 z-50 overflow-clip ${bottom ? "flex flex-col justify-end" : ""}`}>
           <motion.div className="absolute inset-0 bg-black/50" onClick={onClose}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
           />
