@@ -11,7 +11,7 @@ function RoomToast({ toast }) {
       {toast ? (
         <motion.div key={toast.id} role="status"
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}
-          className="pointer-events-none absolute left-1/2 top-3 z-[70] max-w-[90%] -translate-x-1/2 truncate rounded-lg border border-white/10 bg-neutral-800 px-3 py-1.5 text-2xs text-neutral-200 shadow-xl"
+          className="pointer-events-none absolute left-1/2 top-3 z-70 max-w-[90%] -translate-x-1/2 truncate rounded-lg border border-white/10 bg-neutral-800 px-3 py-1.5 text-2xs text-neutral-200 shadow-xl"
         >
           {toast.text}
         </motion.div>
