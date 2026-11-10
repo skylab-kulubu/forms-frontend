@@ -74,7 +74,7 @@ export function Editable({ editKey, value, onChange, placeholder, className = ""
         }
         document.execCommand("insertText", false, singleLine ? text.replace(/\r?\n/g, " ") : text);
       }}
-      className={`studio-editable ${className}`}
+      className={`studio-editable ${singleLine ? "" : "block"} ${className}`}
     />
   );
 }
