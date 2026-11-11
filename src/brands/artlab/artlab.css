@@ -14,20 +14,6 @@
   --al-cyan-hover: #8fe8f7;
   --al-on-cyan: #04232a;
 
-  --color-white: #dce6f2;
-
-  --color-neutral-50: #f6f8fa;
-  --color-neutral-100: #edf1f5;
-  --color-neutral-200: #e3e8ee;
-  --color-neutral-300: #b9c2cd;
-  --color-neutral-400: #8a95a5;
-  --color-neutral-500: #6b7685;
-  --color-neutral-600: #4f5a6a;
-  --color-neutral-700: #2a3544;
-  --color-neutral-800: #1c2430;
-  --color-neutral-900: #141a23;
-  --color-neutral-950: #0b0e13;
-
   --color-skylab-300: oklch(0.93 0.035 210);
   --color-skylab-400: oklch(0.89 0.05 210);
   --color-skylab-500: oklch(0.85 0.07 210);
@@ -58,7 +44,26 @@
   --font-sans: var(--font-artlab-sans), system-ui, sans-serif;
   --font-display: var(--font-artlab-display), var(--font-artlab-sans), sans-serif;
 
+  --studio-glow: var(--color-skylab-500);
+
   font-family: var(--font-sans);
+}
+
+[data-brand="artlab"]:not([data-brand-paper]) {
+  --color-white: #dce6f2;
+
+  --color-neutral-50: #f6f8fa;
+  --color-neutral-100: #edf1f5;
+  --color-neutral-200: #e3e8ee;
+  --color-neutral-300: #b9c2cd;
+  --color-neutral-400: #8a95a5;
+  --color-neutral-500: #6b7685;
+  --color-neutral-600: #4f5a6a;
+  --color-neutral-700: #2a3544;
+  --color-neutral-800: #1c2430;
+  --color-neutral-900: #141a23;
+  --color-neutral-950: #0b0e13;
+
   background-color: var(--al-bg);
   color-scheme: dark;
 }
@@ -120,17 +125,34 @@
   backdrop-filter: blur(10px);
 }
 
+[data-brand="artlab"] .studio-card[data-slot="form-card"]::before {
+  background: color-mix(in oklab, var(--color-white) 15%, transparent);
+}
+
+[data-brand="artlab"] .studio-card[data-slot="form-card"]::after {
+  background: var(--studio-paper);
+  backdrop-filter: none;
+}
+
 [data-brand="artlab"] [data-slot="form-title"],
 [data-brand="artlab"] [data-slot="screen-title"] {
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+[data-brand="artlab"]:not([data-brand-paper]) [data-slot="form-title"],
+[data-brand="artlab"]:not([data-brand-paper]) [data-slot="screen-title"] {
   color: var(--al-ink);
 }
 
 [data-brand="artlab"] [data-slot="form-title"] {
   font-size: 1.625rem;
   line-height: 1.2;
+}
+
+[data-brand="artlab"] [data-slot="form-card"][data-phone] [data-slot="form-title"] {
+  font-size: 1.375rem;
 }
 
 @media (width < 40rem) {
@@ -174,7 +196,7 @@
   border-radius: 0;
 }
 
-[data-brand="artlab"] .checkbox {
+[data-brand="artlab"]:not([data-brand-paper]) .checkbox {
   border-color: color-mix(in oklab, var(--al-ink) 25%, transparent);
   background-color: var(--al-surface-2);
 }

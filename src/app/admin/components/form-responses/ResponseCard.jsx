@@ -270,7 +270,7 @@ export default function ResponseCard({
   };
 
   return (
-    <CardShell phone={phone} active>
+    <CardShell phone={phone} active brand={form?.brand}>
       {stepInfo ? <StepBar flowName={stepInfo.flowName} stage={stepInfo.stage} total={stepInfo.total} fill={isAttempt ? 0 : 100} timeLimitMinutes={form?.timeLimitMinutes} /> : null}
       {compactHeader ? <CompactHeader title={title} description={form?.description ?? ""} /> : <FormDisplayerHeader title={title} description={form?.description ?? ""} />}
 
