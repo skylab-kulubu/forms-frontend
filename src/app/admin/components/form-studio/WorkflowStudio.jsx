@@ -29,7 +29,7 @@ import StudioFormPicker, { NEW_FORM } from "./StudioFormPicker";
 import StudioSkeleton from "./StudioSkeleton";
 import { FlowNextBlock } from "./StudioNextBlock";
 import { OutlineHeader, OutlineQuestions, OutlineSteps } from "./StudioOutline";
-import { Crumbs, FlowRootBody, FormInspectorBody, RoutesBody, formCrumb, selectionCrumb } from "./StudioInspector";
+import { Crumbs, FlowRootBody, FormInspectorBody, RoutesBody, formCrumb, selectionCrumbs } from "./StudioInspector";
 import { FlowKeys, FormKeys } from "./StudioKeys";
 import { useWorkflowStudio } from "./useWorkflowStudio";
 import { useMediaQuery } from "./useMediaQuery";
@@ -638,8 +638,7 @@ function WorkflowStudioContent({ workflow, seed, initialEntry = null, onLeave = 
       crumbs = [flowCrumb, { label: formState ? formCrumb(formState) : activeNode.formTitle, onClick: () => studio.select(NONE) }, { label: "Yönlendirme" }];
       inspector = <RoutesBody key={activeNode.nodeKey} flow={flowContext} node={activeNode} />;
     } else if (formState) {
-      const crumb = ui.fill ? "Doldurma" : selectionCrumb(ui.selection, fields);
-      crumbs = [flowCrumb, { label: formCrumb(formState), onClick: () => studio.select(NONE) }, ...(crumb ? [{ label: crumb }] : [])];
+      crumbs = [flowCrumb, { label: formCrumb(formState), onClick: () => studio.select(NONE) }, ...(ui.fill ? [{ label: "Doldurma" }] : selectionCrumbs(ui.selection, fields, studio.select))];
       inspector = (
         <FormInspectorBody flow={activeNode ? { wf, node: activeNode, onOpenRoutes: () => studio.select({ kind: "routes" }) } : null}
           managedActions={{

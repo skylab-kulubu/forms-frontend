@@ -234,6 +234,34 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
       updateField(id, { props: { ...field.props, fields: childrenOf(field).filter((child) => child.id !== childId) } });
     };
 
+    const moveChild = (id, childId, direction) => {
+      const field = find(id);
+      const fields = [...childrenOf(field)];
+      const from = fields.findIndex((child) => child.id === childId);
+      const to = from + direction;
+      if (!field || from < 0 || to < 0 || to >= fields.length) return;
+      [fields[from], fields[to]] = [fields[to], fields[from]];
+      updateField(id, { props: { ...field.props, fields } });
+    };
+
+    const duplicateChild = (id, childId) => {
+      const field = find(id);
+      const fields = [...childrenOf(field)];
+      const index = fields.findIndex((child) => child.id === childId);
+      if (!field || index < 0) return null;
+      const copy = { ...structuredClone(fields[index]), id: genFieldId() };
+      fields.splice(index + 1, 0, copy);
+      updateField(id, { props: { ...field.props, fields } });
+      return copy.id;
+    };
+
+    const retypeChild = (id, childId, type) => {
+      const field = find(id);
+      if (!field) return;
+      const fields = childrenOf(field).map((child) => (child.id === childId && child.type !== type ? retypeField(child, type) : child));
+      updateField(id, { props: { ...field.props, fields } });
+    };
+
     return {
       eventLinked,
       lockedById,
@@ -260,6 +288,9 @@ export function useFormActions({ eventLinked: forcedEventLinked = false } = {}) 
       updateChild,
       addChild,
       removeChild,
+      moveChild,
+      duplicateChild,
+      retypeChild,
       setTitle: (value) => doc.set(["title"], (value ?? "").slice(0, TITLE_MAX_LENGTH)),
       setDescription: (value) => doc.set(["description"], value),
       setTask: (task) => doc.set(["task"], task),

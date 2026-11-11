@@ -107,12 +107,12 @@ export function SectionHeader({ title, description, pill, pillTone = "skylab", d
   );
 }
 
-export function Switch({ checked, onChange, label, disabled = false, className = "" }) {
+export function Switch({ checked, onChange, label, disabled = false, small = false, className = "" }) {
   return (
     <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={onChange} disabled={disabled}
-      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border px-1 transition disabled:cursor-not-allowed ${checked ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"} ${className}`}
+      className={`relative inline-flex shrink-0 items-center rounded-full border transition disabled:cursor-not-allowed ${small ? "h-5 w-9 px-0.5" : "h-7 w-12 px-1"} ${checked ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"} ${className}`}
     >
-      <span className={`h-5 w-5 rounded-full bg-white/90 shadow transition-transform duration-200 ${checked ? "translate-x-5" : "translate-x-0"}`} />
+      <span className={`rounded-full bg-white/90 shadow transition-transform duration-200 ${small ? "size-3.5" : "size-5"} ${checked ? (small ? "translate-x-4" : "translate-x-5") : "translate-x-0"}`} />
     </button>
   );
 }

@@ -28,6 +28,7 @@ function handleShared(event, context) {
     if (ui.comments.open) { studio.closeComments(); return true; }
     if (ui.fill) { studio.toggleFill(); return true; }
     if (ui.mode === "map" && flow?.hasActiveForm) { flow.onBackToPage(); return true; }
+    if (ui.selection.childId) { studio.select({ kind: "fields", ids: ui.selection.ids }); return true; }
     if (ui.selection.kind !== "none") { studio.select(NONE); return true; }
     return false;
   }
@@ -130,6 +131,33 @@ export function FormKeys({ eventLinked = false, flow = null, onSave }) {
       if (current.fill) {
         if (!modifier && key === "p") control.toggleFill();
         return;
+      }
+
+      const childId = selected.length === 1 ? current.selection.childId : null;
+      if (childId) {
+        const groupId = selected[0];
+        if (modifier && key === "d") {
+          event.preventDefault();
+          const copy = form.duplicateChild(groupId, childId);
+          if (copy) control.select({ kind: "fields", ids: [groupId], childId: copy });
+          return;
+        }
+        if (event.key === "Delete" || event.key === "Backspace") {
+          event.preventDefault();
+          form.removeChild(groupId, childId);
+          control.select({ kind: "fields", ids: [groupId] });
+          return;
+        }
+        if (event.altKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+          event.preventDefault();
+          form.moveChild(groupId, childId, event.key === "ArrowUp" ? -1 : 1);
+          return;
+        }
+        if (event.key === "Enter") {
+          event.preventDefault();
+          focusEditable(`rc-${groupId}-${childId}`);
+          return;
+        }
       }
 
       if (modifier && key === "d") {

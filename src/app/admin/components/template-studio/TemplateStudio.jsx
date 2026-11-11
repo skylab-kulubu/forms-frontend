@@ -18,7 +18,7 @@ import StudioLayout from "../form-studio/StudioLayout";
 import StudioPage from "../form-studio/StudioPage";
 import StudioHeaderActions from "../form-studio/StudioHeaderActions";
 import { OutlineHeader, OutlineQuestions } from "../form-studio/StudioOutline";
-import { Crumbs, FormInspectorBody, selectionCrumb } from "../form-studio/StudioInspector";
+import { Crumbs, FormInspectorBody, selectionCrumbs } from "../form-studio/StudioInspector";
 import { FormKeys } from "../form-studio/StudioKeys";
 import { studioStatusOf } from "../form-studio/studio-save";
 import { useFormActions } from "../form-studio/useFormActions";
@@ -105,10 +105,9 @@ function TemplateContent({ doc, initialDraft }) {
     scrollFieldIntoView(ids[0]);
   };
 
-  const crumb = selectionCrumb(ui.selection, state.schema);
   const crumbs = [
     { label: name, placeholder: !state.title?.trim(), onClick: () => studio.select({ kind: "none" }) },
-    ...(ui.fill ? [{ label: "Doldurma" }] : crumb ? [{ label: crumb }] : []),
+    ...(ui.fill ? [{ label: "Doldurma" }] : selectionCrumbs(ui.selection, state.schema, studio.select)),
   ];
 
   const outline = (

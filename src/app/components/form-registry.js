@@ -90,9 +90,9 @@ export const REGISTRY = {
   repeater: {
     label: "Tekrarlanan Grup",
     defaults: {
-      question: "", description: "", required: false,
+      question: "", description: "", required: false, recordRule: "marked",
       fields: [
-        { id: "f-1", type: "short_text", props: { question: "İsim", description: "", required: false, inputType: "name" } }
+        { id: "f-1", type: "short_text", props: { question: "İsim", description: "", required: true, inputType: "name" } }
       ]
     },
     Display: DisplayFormRepeater
