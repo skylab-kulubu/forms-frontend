@@ -357,8 +357,8 @@ body {
 .bg-layers {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background:
-    radial-gradient(1200px 760px at 78% 10%, rgba(224, 200, 229, 0.10), transparent 60%),
-    radial-gradient(900px 700px at 8% 80%, rgba(170, 140, 200, 0.055), transparent 60%),
+    radial-gradient(1200px 760px at 78% 10%, rgba(var(--bg-tint, 224, 200, 229), 0.10), transparent 60%),
+    radial-gradient(900px 700px at 8% 80%, rgba(var(--bg-tint-deep, 170, 140, 200), 0.055), transparent 60%),
     var(--sl-bg);
   opacity: 0; animation: bg-bloom 2.4s cubic-bezier(.2,.7,.3,1) .05s forwards;
 }
@@ -372,7 +372,7 @@ body {
 .bg-iris {
   position: fixed; left: 50%; top: -10%; width: 100vw; height: 80vh; z-index: 0; pointer-events: none;
   transform: translate3d(-50%, 0, 0) scale(.2); opacity: 0;
-  background: radial-gradient(ellipse at top, rgba(224,200,229,.18), transparent 65%);
+  background: radial-gradient(ellipse at top, rgba(var(--bg-tint, 224, 200, 229), .18), transparent 65%);
   animation: bg-iris-in 2.6s cubic-bezier(.16,1,.3,1) .05s forwards;
   will-change: transform, opacity;
 }
@@ -390,10 +390,10 @@ body {
   background-image:
     radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.4), transparent 50%),
     radial-gradient(1px 1px at 28% 62%, rgba(255,255,255,.35), transparent 50%),
-    radial-gradient(1.4px 1.4px at 62% 8%, rgba(224,200,229,.5), transparent 50%),
+    radial-gradient(1.4px 1.4px at 62% 8%, rgba(var(--bg-tint, 224, 200, 229), .5), transparent 50%),
     radial-gradient(1px 1px at 80% 48%, rgba(255,255,255,.4), transparent 50%),
     radial-gradient(1px 1px at 92% 78%, rgba(255,255,255,.3), transparent 50%),
-    radial-gradient(1.2px 1.2px at 44% 88%, rgba(224,200,229,.4), transparent 50%),
+    radial-gradient(1.2px 1.2px at 44% 88%, rgba(var(--bg-tint, 224, 200, 229), .4), transparent 50%),
     radial-gradient(1px 1px at 18% 92%, rgba(255,255,255,.3), transparent 50%),
     radial-gradient(1.4px 1.4px at 72% 28%, rgba(255,255,255,.4), transparent 50%);
   animation: bg-stars-drift 60s linear infinite;
@@ -402,7 +402,7 @@ body {
   background-image:
     radial-gradient(1px 1px at 32% 22%, rgba(255,255,255,.3), transparent 50%),
     radial-gradient(1px 1px at 58% 58%, rgba(255,255,255,.4), transparent 50%),
-    radial-gradient(1px 1px at 8% 48%, rgba(224,200,229,.35), transparent 50%),
+    radial-gradient(1px 1px at 8% 48%, rgba(var(--bg-tint, 224, 200, 229), .35), transparent 50%),
     radial-gradient(1.4px 1.4px at 88% 18%, rgba(255,255,255,.35), transparent 50%),
     radial-gradient(1px 1px at 50% 78%, rgba(255,255,255,.25), transparent 50%);
   animation: bg-stars-drift 90s linear infinite reverse; opacity: .7;
