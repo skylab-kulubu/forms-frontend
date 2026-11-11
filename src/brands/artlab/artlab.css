@@ -1,5 +1,5 @@
 [data-brand="artlab"] {
-  --al-bg: #0b0e13;
+  --al-bg: #05070b;
   --al-surface: #141a23;
   --al-surface-2: #0e1218;
   --al-line: #2a3544;
@@ -13,6 +13,7 @@
   --al-cyan: #3ed6f0;
   --al-cyan-hover: #8fe8f7;
   --al-on-cyan: #04232a;
+  --al-path: #3a4656;
 
   --color-skylab-300: oklch(0.93 0.035 210);
   --color-skylab-400: oklch(0.89 0.05 210);
@@ -61,8 +62,12 @@
   --color-neutral-600: #4f5a6a;
   --color-neutral-700: #2a3544;
   --color-neutral-800: #1c2430;
-  --color-neutral-900: #141a23;
-  --color-neutral-950: #0b0e13;
+  --color-neutral-900: #12161d;
+  --color-neutral-950: #07090d;
+
+  --sl-bg: var(--al-bg);
+  --bg-tint: 62, 214, 240;
+  --bg-tint-deep: 62, 214, 240;
 
   background-color: var(--al-bg);
   color-scheme: dark;
@@ -73,35 +78,16 @@
   color: var(--al-ink);
 }
 
-[data-brand="artlab"] .al-cho {
-  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
-  background: color-mix(in oklab, var(--al-ink) 18%, transparent);
-  padding: 1px;
-}
-
-[data-brand="artlab"] .al-chi {
-  clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-  background: color-mix(in oklab, var(--al-surface-2) 70%, transparent);
-  backdrop-filter: blur(12px);
-}
-
-[data-brand="artlab"] .al-display {
-  font-family: var(--font-display);
-}
-
-[data-brand="artlab"] .al-label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
 [data-brand="artlab"] [data-slot="form-card"] {
   position: relative;
   isolation: isolate;
   border-color: transparent;
   background: none;
   box-shadow: none;
+}
+
+[data-brand="artlab"]:not([data-brand-paper]) [data-slot="form-card"] {
+  margin-top: 2.5rem;
 }
 
 [data-brand="artlab"] [data-slot="form-card"]::before,
@@ -114,15 +100,14 @@
 
 [data-brand="artlab"] [data-slot="form-card"]::before {
   inset: -1px;
-  clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px);
-  background: color-mix(in oklab, var(--al-ink) 16%, transparent);
+  clip-path: polygon(evenodd, 24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px, 24px 0, 24.6px 1px, 1px 24.6px, 1px calc(100% - 1px), calc(100% - 24.6px) calc(100% - 1px), calc(100% - 1px) calc(100% - 24.6px), calc(100% - 1px) 1px, 24.6px 1px);
+  background: color-mix(in oklab, var(--al-ink) 12%, transparent);
 }
 
 [data-brand="artlab"] [data-slot="form-card"]::after {
   inset: 0;
   clip-path: polygon(23.6px 0, 100% 0, 100% calc(100% - 23.6px), calc(100% - 23.6px) 100%, 0 100%, 0 23.6px);
-  background: color-mix(in oklab, var(--al-surface-2) 82%, transparent);
-  backdrop-filter: blur(10px);
+  background: rgb(255 255 255 / 0.035);
 }
 
 [data-brand="artlab"] .studio-card[data-slot="form-card"]::before {
@@ -131,7 +116,6 @@
 
 [data-brand="artlab"] .studio-card[data-slot="form-card"]::after {
   background: var(--studio-paper);
-  backdrop-filter: none;
 }
 
 [data-brand="artlab"] [data-slot="form-title"],
@@ -210,48 +194,67 @@
   box-shadow: inset 1em 1em var(--al-on-cyan);
 }
 
-[data-brand="artlab"] .al-stars {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
+[data-brand="artlab"] .al-guide,
+[data-brand="artlab"] .al-orbit {
+  display: none;
+  position: absolute;
   pointer-events: none;
-  background-image:
-    radial-gradient(1.4px 1.4px at 14% 22%, rgba(245, 184, 46, 0.75), transparent 60%),
-    radial-gradient(1px 1px at 41% 9%, rgba(245, 184, 46, 0.55), transparent 60%),
-    radial-gradient(1.2px 1.2px at 63% 31%, rgba(245, 184, 46, 0.6), transparent 60%),
-    radial-gradient(1px 1px at 86% 14%, rgba(245, 184, 46, 0.5), transparent 60%),
-    radial-gradient(1px 1px at 29% 57%, rgba(245, 184, 46, 0.45), transparent 60%),
-    radial-gradient(1.3px 1.3px at 77% 66%, rgba(245, 184, 46, 0.55), transparent 60%),
-    radial-gradient(1px 1px at 52% 80%, rgba(233, 237, 242, 0.4), transparent 60%),
-    radial-gradient(1px 1px at 8% 74%, rgba(233, 237, 242, 0.35), transparent 60%),
-    radial-gradient(1.5px 1.5px at 93% 46%, rgba(62, 214, 240, 0.7), transparent 60%),
-    radial-gradient(1.2px 1.2px at 22% 38%, rgba(62, 214, 240, 0.55), transparent 60%);
-  background-size: 380px 340px;
-  opacity: 0.55;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
 }
 
-[data-brand="artlab"] .al-stars::after {
+@media (width >= 64rem) {
+  [data-brand="artlab"] .al-guide {
+    display: block;
+    top: -6rem;
+    bottom: 0;
+    left: -2.75rem;
+    border-left: 1px dashed var(--al-path);
+  }
+
+  [data-brand="artlab"] .al-guide::before,
+  [data-brand="artlab"] .al-guide::after {
+    content: "";
+    position: absolute;
+    top: 6rem;
+  }
+
+  [data-brand="artlab"] .al-guide::before {
+    left: 0;
+    width: calc(2.75rem + 24px);
+    height: 1px;
+    background: color-mix(in oklab, var(--al-ink) 16%, transparent);
+  }
+
+  [data-brand="artlab"] .al-guide::after {
+    left: -5.5px;
+    width: 12px;
+    height: 12px;
+    translate: 0 -6px;
+    rotate: 45deg;
+    border: 1.5px solid var(--al-amber);
+    background: var(--al-bg);
+  }
+}
+
+@media (width >= 72rem) {
+  [data-brand="artlab"] .al-orbit {
+    display: block;
+    top: -5.5rem;
+    left: calc(100% + 1.5rem);
+    width: min(460px, calc((100vw - 42rem) / 2 - 4rem));
+    aspect-ratio: 42 / 17;
+    background: url("./orbit.svg") center / contain no-repeat;
+  }
+}
+
+[data-brand="artlab"] [data-slot="status-screen"]::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 33% 18%, rgba(245, 184, 46, 0.5), transparent 60%),
-    radial-gradient(1px 1px at 71% 42%, rgba(233, 237, 242, 0.35), transparent 60%),
-    radial-gradient(1.2px 1.2px at 12% 61%, rgba(245, 184, 46, 0.45), transparent 60%),
-    radial-gradient(1px 1px at 88% 83%, rgba(62, 214, 240, 0.5), transparent 60%),
-    radial-gradient(1px 1px at 47% 93%, rgba(245, 184, 46, 0.4), transparent 60%);
-  background-size: 530px 470px;
-}
-
-[data-brand="artlab"] .al-horizon {
-  position: fixed;
-  inset: auto 0 0 0;
-  height: 42vh;
-  z-index: 0;
+  z-index: -1;
+  top: 13vh;
+  left: 50%;
+  width: min(78vw, 46vh);
+  aspect-ratio: 42 / 17;
+  translate: -50% 0;
+  background: url("./orbit.svg") center / contain no-repeat;
   pointer-events: none;
-  background:
-    radial-gradient(90% 100% at 50% 100%, rgba(18, 52, 62, 0.55), transparent 70%),
-    linear-gradient(to top, rgba(14, 34, 42, 0.35), transparent);
 }

@@ -422,7 +422,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
           <motion.div key="background-layer" className="fixed inset-0 z-0 pointer-events-none"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
           >
-            <BrandSlot name="Backdrop" fallback={<Background />} />
+            <Background />
           </motion.div>
         )}
       </AnimatePresence>
@@ -442,7 +442,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
-            {!embedded && <BrandSlot name="Header" fallback={<div className="h-12 w-full shrink-0" />} />}
+            {!embedded && <div className="h-12 w-full shrink-0" />}
 
             <div data-slot="form-card" className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
               <BrandSlot name="CardTop" />

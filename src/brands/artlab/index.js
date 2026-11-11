@@ -1,6 +1,6 @@
 import "./artlab.css";
 import { artlabDisplay, artlabSans } from "./fonts";
-import { Backdrop, CardTop, Header } from "./slots";
+import { CardTop } from "./slots";
 
 const artlab = {
   scopeClass: `${artlabSans.variable} ${artlabDisplay.variable}`,
@@ -9,7 +9,7 @@ const artlab = {
     `400 16px ${artlabSans.style.fontFamily}`,
     `600 16px ${artlabSans.style.fontFamily}`,
   ],
-  slots: { Backdrop, Header, CardTop },
+  slots: { CardTop },
 };
 
 export default artlab;

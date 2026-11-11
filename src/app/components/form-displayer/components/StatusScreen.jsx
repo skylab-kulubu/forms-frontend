@@ -8,7 +8,6 @@ import { formatJourneyDate, hasJourney, journeyTimeline, singleResponseTimeline 
 import { formatLongDate } from "@/lib/form-timing";
 import LoginButton from "../../utils/LoginButton";
 import JourneyTimeline, { ReviewNote } from "./JourneyTimeline";
-import { BrandSlot, useHasBrandSlot } from "@/brands/BrandContext";
 
 const REPORT_MAILTO = "mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "/";
@@ -211,14 +210,12 @@ export default function StatusScreen({ onRerun = null, ...props }) {
   const base = buildScreen({ ...props, isLastRun: Boolean(onRerun) });
   const screen = onRerun ? { ...base, action: { label: base.rerunLabel ?? "Yeniden başvur", onClick: onRerun }, hint: "Yeni başvuru ilk adımdan başlar." } : base;
   const { Icon } = screen;
-  const hasBrandHeader = useHasBrandSlot("Header");
 
   return (
-    <motion.div className={`relative z-10 flex min-h-full w-full flex-col items-center px-5 pb-7 ${hasBrandHeader ? "" : "pt-14"}`}
+    <motion.div data-slot="status-screen" className="relative z-10 flex min-h-full w-full flex-col items-center px-5 pb-7 pt-14"
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12, transition: { duration: 0.15, ease: [0.22, 1, 0.36, 1] } }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
-      <BrandSlot name="Header" />
       <div className="flex w-full flex-1 items-center justify-center">
         <div className="flex w-full max-w-104 flex-col items-center text-center">
           <Icon className={`size-8 ${ICON_TONE[screen.tone] ?? ICON_TONE.neutral}`} strokeWidth={1.6} />
