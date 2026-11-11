@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LibrarySettingsEditors } from "./LibrarySettingsEditors";
 import { WorkflowLockMark, WorkflowManagedRow, WorkflowMembershipSection } from "./WorkflowMembership";
 import { TimingSection } from "./TimingSection";
+import { BrandSection } from "./BrandSection";
 import { useFormEditor } from "../FormEditorContext";
 import { WORKFLOW_INTAKE, effectiveFormSettings } from "@/lib/form-settings";
 import { PANEL_SECTION, PANEL_STACK, PanelNotice, SectionHeader, ToggleRow } from "@/app/admin/components/utils/SidePanel";
@@ -18,7 +19,7 @@ const PERSONAL_LOCK = "Kişisel süre açıkken kullanılamaz.";
 
 export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMembership = false, managedActions = {} }) {
     const { state, dispatch, doc } = useFormEditor();
-    const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt, userRole, editors, isSaved } = state;
+    const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt, brand, userRole, editors, isSaved } = state;
     const rootRef = useRef(null);
 
     const isWorkflowLocked = Boolean(workflow?.isPublished);
@@ -128,6 +129,8 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
                     )}
                 </div>
             </section>
+
+            <BrandSection value={brand} onChange={(value) => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "brand", value } })} />
 
             {isOwner ? (
                 <OwnershipTransferSection kind="form" itemId={formId} preset="transfer-form" excludeIds={ownerId ? [ownerId] : []}

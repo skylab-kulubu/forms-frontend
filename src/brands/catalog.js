@@ -7,3 +7,5 @@ export const BRAND_CATALOG = {
     themeColor: "#0b0e13",
   },
 };
+
+export const brandOptions = Object.entries(BRAND_CATALOG).map(([key, brand]) => ({ key, ...brand }));

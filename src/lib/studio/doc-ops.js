@@ -1,10 +1,11 @@
 export const SETTING_KEYS = [
-  "title", "description", "status", "allowAnonymousResponses", "allowMultipleResponses", "requiresManualReview", "task", "closesAt", "timeLimitMinutes",
+  "title", "description", "status", "allowAnonymousResponses", "allowMultipleResponses", "requiresManualReview", "task", "closesAt", "timeLimitMinutes", "brand",
 ];
 
 const FIELD_PARTS = new Set(["type", "props", "condition"]);
 const RESERVED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 const MAX_KEY_LENGTH = 64;
+const BRAND_KEY = /^[a-z0-9-]{1,32}$/;
 
 export const isKey = (key) => typeof key === "string" && key.length > 0 && key.length <= MAX_KEY_LENGTH && !RESERVED_KEYS.has(key);
 
@@ -53,6 +54,8 @@ export function normalizeSetting(key, value) {
       return normalizeDate(value);
     case "timeLimitMinutes":
       return Number.isInteger(value) ? value : null;
+    case "brand":
+      return typeof value === "string" && BRAND_KEY.test(value) ? value : null;
     default:
       return value ?? null;
   }
