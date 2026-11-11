@@ -19,7 +19,7 @@ function QuestionSkeleton({ divided }) {
 export default function FormSkeleton() {
   return (
     <div className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6" aria-busy="true" aria-label="Form yükleniyor">
-      <BrandSlot name="Header" fallback={<div className="h-12 w-full shrink-0" />} />
+      <div className="h-12 w-full shrink-0" />
       <div data-slot="form-card" className="flex w-full max-w-2xl flex-1 flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
         <BrandSlot name="CardTop" />
         <div className="flex flex-col gap-6 p-6 sm:p-10">

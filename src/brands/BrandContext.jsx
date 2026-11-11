@@ -19,10 +19,6 @@ export function BrandProvider({ brandKey, scopeClass = "", slots, children }) {
   return <BrandSlots.Provider value={slots}>{children}</BrandSlots.Provider>;
 }
 
-export function useHasBrandSlot(name) {
-  return Boolean(useContext(BrandSlots)?.[name]);
-}
-
 export function BrandSlot({ name, fallback = null }) {
   return useContext(BrandSlots)?.[name] ?? fallback;
 }

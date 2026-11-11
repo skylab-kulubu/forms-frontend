@@ -1,29 +1,6 @@
-import { ArrowUpRight } from "lucide-react";
-
 const AMBER = "var(--al-amber)";
 const CYAN = "var(--al-cyan)";
 const BG = "var(--al-bg)";
-
-function Mark() {
-  return (
-    <svg viewBox="0 0 30 30" aria-hidden="true" className="size-7">
-      <g fill="none" stroke={AMBER}>
-        <circle cx="15" cy="17" r="10" strokeWidth="1.6" />
-        <path d="M7.2 14 Q15 8.8 22.8 14" strokeWidth="1.1" opacity="0.45" />
-        <circle cx="5.4" cy="17.8" r="3" strokeWidth="1.6" />
-        <circle cx="5.4" cy="17.8" r="1.3" strokeWidth="1" opacity="0.7" />
-        <circle cx="24.6" cy="17.8" r="3" strokeWidth="1.6" />
-        <circle cx="24.6" cy="17.8" r="1.3" strokeWidth="1" opacity="0.7" />
-        <circle cx="15" cy="18" r="4.7" fill={BG} strokeWidth="1.2" />
-      </g>
-      <g fill="none" stroke={CYAN}>
-        <circle cx="15" cy="18" r="3.4" strokeWidth="1.6" />
-        <circle cx="15" cy="18" r="2" strokeWidth="1" opacity="0.6" />
-      </g>
-      <circle cx="15" cy="18" r="1.6" fill={CYAN} />
-    </svg>
-  );
-}
 
 export function Backdrop() {
   return (
@@ -31,25 +8,6 @@ export function Backdrop() {
       <div className="al-horizon" />
       <div className="al-stars" />
     </>
-  );
-}
-
-export function Header({ brand }) {
-  return (
-    <header className="relative z-10 w-full max-w-2xl shrink-0 pt-4 pb-18 sm:pt-6">
-      <div className="al-cho">
-        <div className="al-chi flex h-14 items-center justify-between gap-4 pl-4 pr-4 sm:pl-5">
-          <a href={brand.siteUrl} className="flex items-center gap-2.5 text-neutral-100">
-            <Mark />
-            <span className="al-display text-sm font-extrabold tracking-[0.06em]">ARTLAB</span>
-          </a>
-          <a href={brand.siteUrl} className="group inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-400 transition-colors hover:text-sky-400">
-            <span className="hidden min-[380px]:inline">{brand.siteLabel}</span>
-            <ArrowUpRight size={14} className="transition-transform group-hover:-translate-y-px group-hover:translate-x-px" />
-          </a>
-        </div>
-      </div>
-    </header>
   );
 }
 

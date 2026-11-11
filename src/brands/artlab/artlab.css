@@ -73,35 +73,16 @@
   color: var(--al-ink);
 }
 
-[data-brand="artlab"] .al-cho {
-  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
-  background: color-mix(in oklab, var(--al-ink) 18%, transparent);
-  padding: 1px;
-}
-
-[data-brand="artlab"] .al-chi {
-  clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-  background: color-mix(in oklab, var(--al-surface-2) 70%, transparent);
-  backdrop-filter: blur(12px);
-}
-
-[data-brand="artlab"] .al-display {
-  font-family: var(--font-display);
-}
-
-[data-brand="artlab"] .al-label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
-
 [data-brand="artlab"] [data-slot="form-card"] {
   position: relative;
   isolation: isolate;
   border-color: transparent;
   background: none;
   box-shadow: none;
+}
+
+[data-brand="artlab"]:not([data-brand-paper]) [data-slot="form-card"] {
+  margin-top: 2.5rem;
 }
 
 [data-brand="artlab"] [data-slot="form-card"]::before,
