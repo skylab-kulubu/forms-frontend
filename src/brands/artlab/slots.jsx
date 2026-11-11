@@ -4,15 +4,6 @@ const AMBER = "var(--al-amber)";
 const CYAN = "var(--al-cyan)";
 const BG = "var(--al-bg)";
 
-export function Backdrop() {
-  return (
-    <>
-      <div className="al-horizon" />
-      <div className="al-stars" />
-    </>
-  );
-}
-
 export function CardTop({ brand }) {
   return (
     <>
@@ -40,6 +31,8 @@ export function CardTop({ brand }) {
         <span className="hidden min-[380px]:inline">{brand.siteLabel}</span>
         <ArrowUpRight size={14} className="transition-transform group-hover:-translate-y-px group-hover:translate-x-px" />
       </a>
+      <span aria-hidden="true" className="al-guide" />
+      <span aria-hidden="true" className="al-orbit" />
     </>
   );
 }
