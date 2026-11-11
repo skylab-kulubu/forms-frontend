@@ -413,8 +413,16 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
         studio.select(next.length ? { kind: "fields", ids: next } : NONE);
         return;
       }
-      if (current.kind === "fields" && current.ids.length === 1 && current.ids[0] === id) return;
+      if (current.kind === "fields" && current.ids.length === 1 && current.ids[0] === id && !current.childId) return;
       studio.select({ kind: "fields", ids: [id] });
+    },
+    selectChild: (event, id, childId) => {
+      if (event.shiftKey || event.metaKey || event.ctrlKey) return;
+      event.stopPropagation();
+      if (event.target.closest?.("button, a, input")) return;
+      const current = selectionRef.current;
+      if (current.kind === "fields" && current.ids.length === 1 && current.ids[0] === id && current.childId === childId) return;
+      studio.select({ kind: "fields", ids: [id], childId });
     },
     updateProps: actions.updateProps,
     setChoice: actions.setChoice,
@@ -433,10 +441,13 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
     addChild: (id, type) => {
       const childId = actions.addChild(id, type);
       if (!childId) return;
-      studio.select({ kind: "fields", ids: [id] });
+      studio.select({ kind: "fields", ids: [id], childId });
       focusEditable(`rc-${id}-${childId}`);
     },
-    removeChild: actions.removeChild,
+    removeChild: (id, childId) => {
+      actions.removeChild(id, childId);
+      if (selectionRef.current.childId === childId) studio.select({ kind: "fields", ids: [id] });
+    },
     move: (ids, direction) => {
       if (actions.move(ids, direction) > 0) studio.toast(REORDER_NOTICE);
       scrollFieldIntoView(ids[0]);
@@ -501,6 +512,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
       number: numbers.get(field.id),
       selected: selectedIds.includes(field.id),
       solo: !activeId && selectedIds.length === 1 && selectedIds[0] === field.id,
+      childId: selectedIds.length === 1 && selectedIds[0] === field.id ? ui.selection.childId ?? null : null,
       condText: conditionLabel(field, fields, numbers),
       canUp: index > 0,
       canDown: index < fields.length - 1,

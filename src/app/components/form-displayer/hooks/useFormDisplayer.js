@@ -9,7 +9,7 @@ import { FORM_ACCESS_STATUS, WORKFLOW_STATE, getSubmitErrorState } from "../../F
 import { getVisibleFields } from "../components/conditionChecker";
 import { useDeadline } from "../components/TimedParts";
 import { migrateSchema } from "@/app/components/form-migrate";
-import { isRepeaterComplete, serializeRepeater } from "@/app/components/form-components/FormRepeater";
+import { isRepeaterMissing, serializeRepeater } from "@/app/components/form-components/FormRepeater";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { readAttribution } from "@/lib/attribution";
 import { valuesFromAnswers } from "@/lib/revision-answers";
@@ -78,10 +78,10 @@ function knownAnswers(values, schema) {
 }
 
 export function isFieldMissing(field, value) {
+  if (field.type === "repeater") return isRepeaterMissing(field.props, value, Boolean(field.props?.required));
   if (field.type === "separator" || !field.props?.required) return false;
   if (value === undefined || value === null) return true;
   if (field.type === "toggle") return value !== true;
-  if (field.type === "repeater") return !isRepeaterComplete(field.props?.fields, value);
   if (typeof value === "string") return value.trim() === "";
   if (Array.isArray(value)) return value.length === 0;
   if (field.type === "matrix" && typeof value === "object") return Object.keys(value).length < (field.props.rows?.length || 0);

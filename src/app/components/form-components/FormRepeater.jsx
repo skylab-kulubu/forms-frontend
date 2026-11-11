@@ -1,26 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, X, ArrowUp, ArrowDown, Type, AlignLeft, ToggleRight, ChevronsUpDown, ListChecks, Calendar, Clock } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { REGISTRY } from "../form-registry";
 import { formatFieldAnswer } from "../form-answer-format";
 import { QuestionNumber } from "./QuestionParts";
-
-const CHILD_TYPES = [
-  { type: "short_text", label: "Kısa Yanıt", icon: Type },
-  { type: "long_text", label: "Uzun Yanıt", icon: AlignLeft },
-  { type: "toggle", label: "Aç / Kapat", icon: ToggleRight },
-  { type: "combobox", label: "Açılır Liste", icon: ChevronsUpDown },
-  { type: "multi_choice", label: "Çoklu Seçim", icon: ListChecks },
-  { type: "date", label: "Tarih", icon: Calendar },
-  { type: "time", label: "Saat", icon: Clock },
-];
-
-function genId() {
-  return "f" + Math.random().toString(36).slice(2, 9);
-}
 
 function emptyCellFor(type) {
   if (type === "multi_choice") return [];
@@ -62,132 +48,62 @@ export function serializeRepeater(fields, value) {
   return out.length ? JSON.stringify(out) : "";
 }
 
-export function isRepeaterComplete(fields, value) {
+export const RECORD_RULES = ["marked", "all", "any"];
+
+export function recordRuleOf(props) {
+  return RECORD_RULES.includes(props?.recordRule) ? props.recordRule : "all";
+}
+
+export function isChildRequired(props, child) {
+  const rule = recordRuleOf(props);
+  return rule === "all" || (rule === "marked" && Boolean(child?.props?.required));
+}
+
+function isAnswered(child, value) {
+  if (child.type === "toggle") return value === true;
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value).length > 0;
+  return value != null && String(value).trim() !== "";
+}
+
+function missingInRecord(props, row) {
+  const cols = Array.isArray(props?.fields) ? props.fields : [];
+  const rule = recordRuleOf(props);
+  if (rule === "any") return [];
+  return cols.filter((child) => {
+    if (!isChildRequired(props, child)) return false;
+    const value = row?.[child.id];
+    if (rule === "all" && child.type === "toggle") return typeof value !== "boolean";
+    return !isAnswered(child, value);
+  }).map((child) => child.id);
+}
+
+export function repeaterMissing(props, value, required = false) {
+  const cols = Array.isArray(props?.fields) ? props.fields : [];
+  const rows = Array.isArray(value) && value.length ? value : [{}];
+  const missing = new Map();
+  if (!cols.length) return missing;
+  const started = rows.map((row) => cols.some((child) => isAnswered(child, row?.[child.id])));
+  rows.forEach((row, index) => {
+    if (!started[index]) return;
+    const ids = missingInRecord(props, row);
+    if (ids.length) missing.set(index, ids);
+  });
+  if (required && !started.some(Boolean)) {
+    const marked = recordRuleOf(props) === "marked" ? cols.filter((child) => isChildRequired(props, child)) : [];
+    const fillable = cols.filter((child) => child.type !== "toggle");
+    missing.set(0, (marked.length ? marked : fillable.length ? fillable : cols).map((child) => child.id));
+  }
+  return missing;
+}
+
+export function isRepeaterMissing(props, value, required = false) {
+  return repeaterMissing(props, value, required).size > 0;
+}
+
+export function DisplayFormRepeater({ question, questionNumber, description, required = false, fields = [], recordRule, value, onChange, missing = false }) {
   const cols = Array.isArray(fields) ? fields : [];
-  const rows = Array.isArray(value) ? value : [];
-  if (!cols.length) return false;
-  return rows.some((row) => cols.every((child) => {
-    const v = row?.[child.id];
-    if (child.type === "toggle") return v === true || v === false;
-    if (Array.isArray(v)) return v.length > 0;
-    if (v && typeof v === "object") return Object.keys(v).length > 0;
-    return v != null && String(v).trim() !== "";
-  }));
-}
-
-function ChildPicker({ onAdd }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div initial={{ opacity: 0, height: 0, scale: 0.98 }} animate={{ opacity: 1, height: "auto", scale: 1 }} exit={{ opacity: 0, height: 0, scale: 0.98 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden"
-          >
-            <div className="mb-2 flex flex-wrap items-center justify-center gap-1 rounded-lg border border-white/10 bg-neutral-900 px-2 py-1.5 shadow-lg">
-              {CHILD_TYPES.map((c) => (
-                <button key={c.type} type="button" aria-label={c.label} onClick={() => { onAdd(c.type); setOpen(false); }}
-                  className="flex w-18 flex-col items-center gap-1 rounded-md px-1 py-1.5 text-neutral-400 transition-colors hover:bg-white/10 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-                >
-                  <c.icon size={15} />
-                  <span className="w-full truncate text-center text-3xs leading-none">{c.label}</span>
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <button type="button" onClick={() => setOpen((o) => !o)}
-        className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-white/15 bg-white/3 px-3 py-2 text-xs font-medium text-neutral-300 transition hover:bg-white/8 hover:text-neutral-100"
-      >
-        <Plus size={14} /> Bileşen Ekle
-      </button>
-    </div>
-  );
-}
-
-export function RepeaterFieldsEditor({ fields: value, onChange, heading = true }) {
-  const fields = Array.isArray(value) ? value : [];
-
-  const updateChild = (id, changes) => onChange(fields.map((f) => (f.id === id ? { ...f, ...changes } : f)));
-  const addChild = (type) => onChange([...fields, { id: genId(), type, props: structuredClone(REGISTRY[type]?.defaults ?? {}) }]);
-  const removeChild = (id) => onChange(fields.filter((f) => f.id !== id));
-  const moveChild = (id, dir) => {
-    const i = fields.findIndex((f) => f.id === id);
-    const j = i + dir;
-    if (i < 0 || j < 0 || j >= fields.length) return;
-    const next = [...fields];
-    [next[i], next[j]] = [next[j], next[i]];
-    onChange(next);
-  };
-
-  return (
-    <div className="flex flex-col gap-2 pt-1">
-      {heading && (
-        <div className="flex items-center gap-2 px-0.5">
-          <label className="text-2xs font-medium uppercase tracking-wide text-neutral-400">Her Kayıtta Tekrar Eden Alanlar</label>
-          <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-3xs font-semibold text-neutral-300">{fields.length}</span>
-          <span className="h-px flex-1 bg-white/5" />
-        </div>
-      )}
-
-      {fields.length === 0 && (
-        <p className="px-0.5 text-2xs italic text-neutral-500">Aşağıdan bileşen ekleyin; her kayıt bu alanların bir kopyası olur.</p>
-      )}
-
-      {fields.map((child, idx) => {
-        const entry = REGISTRY[child.type];
-        const ChildCreate = entry?.Create;
-        return (
-          <div key={child.id} className="flex flex-col gap-1.5 rounded-lg border border-white/10 bg-white/2 p-2">
-            <div className="flex items-center justify-between px-0.5">
-              <span className="text-3xs font-medium text-neutral-500">Alan {idx + 1} &middot; {entry?.label ?? child.type}</span>
-              <div className="flex items-center gap-0.5">
-                <button type="button" onClick={() => moveChild(child.id, -1)} disabled={idx === 0} aria-label="Yukarı taşı"
-                  className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
-                >
-                  <ArrowUp size={13} />
-                </button>
-                <button type="button" onClick={() => moveChild(child.id, 1)} disabled={idx === fields.length - 1} aria-label="Aşağı taşı"
-                  className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
-                >
-                  <ArrowDown size={13} />
-                </button>
-                <button type="button" onClick={() => removeChild(child.id)} aria-label="Alanı kaldır"
-                  className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-red-500/10 hover:text-red-300"
-                >
-                  <X size={13} />
-                </button>
-              </div>
-            </div>
-            {ChildCreate ? (
-              <ChildCreate questionNumber={idx + 1} props={child.props}
-                onPropsChange={(next) => updateChild(child.id, { props: next })}
-                compact
-              />
-            ) : null}
-          </div>
-        );
-      })}
-
-      <ChildPicker onAdd={addChild} />
-    </div>
-  );
-}
-
-export function DisplayFormRepeater({ question, questionNumber, description, required = false, fields = [], value, onChange, missing = false }) {
-  const cols = Array.isArray(fields) ? fields : [];
+  const rules = { fields: cols, recordRule };
   const normalize = (v) => (Array.isArray(v) ? v : []);
   const [internal, setInternal] = useState(normalize(value));
   const committed = value !== undefined ? normalize(value) : internal;
@@ -205,6 +121,7 @@ export function DisplayFormRepeater({ question, questionNumber, description, req
   const removeRow = (rowIdx) => commit(rows.filter((_, i) => i !== rowIdx));
 
   const hasFields = cols.length > 0;
+  const missingCells = missing ? repeaterMissing(rules, rows, required) : new Map();
 
   return (
     <div className="mx-auto w-full max-w-2xl rounded-xl">
@@ -248,9 +165,9 @@ export function DisplayFormRepeater({ question, questionNumber, description, req
                       const ChildDisplay = entry?.Display;
                       if (!ChildDisplay) return null;
                       return (
-                        <ChildDisplay key={child.id} {...child.props} disableAutoFill compact questionNumber={null}
+                        <ChildDisplay key={child.id} {...child.props} required={isChildRequired(rules, child)} disableAutoFill compact questionNumber={null}
                           value={row[child.id]} onChange={(e) => updateCell(rowIdx, child.id, e.target.value)}
-                          missing={missing && rowIdx === 0}
+                          missing={Boolean(missingCells.get(rowIdx)?.includes(child.id))}
                         />
                       );
                     })}

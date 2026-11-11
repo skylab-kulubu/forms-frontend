@@ -42,7 +42,7 @@ export const REGISTRY = {
   multi_choice: {
     label: "Çoklu Seçim",
     svg: "/assets/components/multi-choice.svg",
-    defaults: { question: "", description: "", required: false, choices: ["Seçenek 1", "Seçenek 2"] },
+    defaults: { question: "", description: "", required: false, allowMultiple: true, choices: ["Seçenek 1", "Seçenek 2"] },
     Create: CreateFormMultiChoice, Display: DisplayFormMultiChoice
   },
   date: {
@@ -90,9 +90,9 @@ export const REGISTRY = {
   repeater: {
     label: "Tekrarlanan Grup",
     defaults: {
-      question: "", description: "", required: false,
+      question: "", description: "", required: false, recordRule: "marked",
       fields: [
-        { id: "f-1", type: "short_text", props: { question: "İsim", description: "", required: false, inputType: "name" } }
+        { id: "f-1", type: "short_text", props: { question: "İsim", description: "", required: true, inputType: "name" } }
       ]
     },
     Display: DisplayFormRepeater

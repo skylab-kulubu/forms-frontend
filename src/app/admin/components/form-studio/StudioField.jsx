@@ -1,14 +1,16 @@
 "use client";
 
-import { memo, useLayoutEffect, useRef, useState } from "react";
+import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown, ArrowUp, Calendar, ChevronsUpDown, Clock, Copy, CornerDownRight, GripVertical, Lock, Plus, Trash2, Upload, X,
 } from "lucide-react";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
+import { sliderRange } from "@/app/components/form-components/FormSlider";
 import { Floating } from "@/app/components/utils/Floating";
 import { accountFileRules } from "@/lib/guest-uploads";
 import { REGISTRY } from "@/app/components/form-registry";
+import { isChildRequired } from "@/app/components/form-components/FormRepeater";
 import { CHOICE_PRESET_LABELS } from "./studio-presets";
 import { FIELD_TYPES, REPEATER_CHILD_TYPES } from "./studio-schema";
 import { POPOVER_MOTION } from "./studio-motion";
@@ -107,7 +109,7 @@ function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
         const locked = lockedValues.includes(choice);
         return (
           <div key={index} className={`group/opt flex items-center gap-3 rounded-md border border-white/10 bg-neutral-900/60 p-2`}>
-            <input type="checkbox" disabled tabIndex={-1} className="checkbox shrink-0" />
+            <input type={field.props?.allowMultiple === false ? "radio" : "checkbox"} disabled tabIndex={-1} className="checkbox shrink-0" />
             <Editable editKey={`o-${field.id}-${index}`} value={choice} placeholder={`Seçenek ${index + 1}`} readOnly={locked || readOnly}
               title={locked ? "Akış koşulu bu seçeneği karşılaştırıyor; adı değiştirilemez." : undefined}
               className={`min-w-0 flex-1 text-sm ${locked ? "text-neutral-400" : "text-neutral-200"}`}
@@ -267,6 +269,33 @@ function MatrixPreview({ field, selected, api }) {
   );
 }
 
+export function ChildTypeMenu({ anchor, onPick, onDismiss }) {
+  return (
+    <AnimatePresence>
+      {anchor ? (
+        <Floating key="child-types" anchor={anchor} onDismiss={onDismiss} placement="bottom" offset={6}>
+          <motion.div data-studio-menu role="menu" onPointerDown={(event) => event.stopPropagation()} {...POPOVER_MOTION}
+            className="w-48 rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-2xl shadow-black/50"
+          >
+            <p className="px-2 pb-1 pt-1 text-3xs text-neutral-500">Gruba alan ekle</p>
+            {REPEATER_CHILD_TYPES.map((type) => {
+              const { label, Icon } = FIELD_TYPES[type];
+              return (
+                <button key={type} type="button" role="menuitem" onClick={() => { onDismiss(); onPick(type); }}
+                  className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs text-neutral-300 transition-colors hover:bg-white/6 hover:text-white"
+                >
+                  <Icon size={14} className="text-neutral-500" />
+                  {label}
+                </button>
+              );
+            })}
+          </motion.div>
+        </Floating>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
 function AddChildButton({ onPick }) {
   const [anchor, setAnchor] = useState(null);
 
@@ -280,64 +309,92 @@ function AddChildButton({ onPick }) {
         <Plus size={14} />
         Alan ekle
       </button>
-      <AnimatePresence>
-        {anchor ? (
-          <Floating key="child-types" anchor={anchor} onDismiss={() => setAnchor(null)} placement="bottom" offset={6}>
-            <motion.div data-studio-menu role="menu" onPointerDown={(event) => event.stopPropagation()} {...POPOVER_MOTION}
-              className="w-48 rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-2xl shadow-black/50"
-            >
-              <p className="px-2 pb-1 pt-1 text-3xs text-neutral-500">Gruba alan ekle</p>
-              {REPEATER_CHILD_TYPES.map((type) => {
-                const { label, Icon } = FIELD_TYPES[type];
-                return (
-                  <button key={type} type="button" role="menuitem" onClick={() => { setAnchor(null); onPick(type); }}
-                    className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs text-neutral-300 transition-colors hover:bg-white/6 hover:text-white"
-                  >
-                    <Icon size={14} className="text-neutral-500" />
-                    {label}
-                  </button>
-                );
-              })}
-            </motion.div>
-          </Floating>
-        ) : null}
-      </AnimatePresence>
+      <ChildTypeMenu anchor={anchor} onPick={onPick} onDismiss={() => setAnchor(null)} />
     </>
   );
 }
 
-function RepeaterPreview({ field, selected, readOnly = false, api }) {
+function childApiOf(api, fieldId, child) {
+  const choices = () => child.props?.choices ?? [];
+  const setChoices = (next) => api.updateChild(fieldId, child.id, { choices: next, preset: null });
+  return {
+    ...api,
+    setChoice: (_, index, value) => setChoices(choices().map((choice, position) => (position === index ? value : choice))),
+    addChoice: (_, at) => {
+      const next = [...choices()];
+      next.splice(at, 0, `Seçenek ${next.length + 1}`);
+      setChoices(next);
+      focusEditable(`o-${child.id}-${at}`);
+    },
+    removeChoice: (_, index, focusPrevious) => {
+      if (choices().length <= 1) return;
+      setChoices(choices().filter((__, position) => position !== index));
+      if (focusPrevious) focusEditable(`o-${child.id}-${Math.max(0, index - 1)}`);
+    },
+    pasteChoices: (_, index, lines) => {
+      const next = [...choices()];
+      next.splice(index, 1, ...lines);
+      setChoices(next);
+    },
+  };
+}
+
+function RepeaterChild({ field, child, groupSelected, active, api }) {
+  const childApi = useMemo(() => childApiOf(api, field.id, child), [api, field.id, child]);
+
+  return (
+    <div onClick={(event) => api.selectChild(event, field.id, child.id)}
+      className={`group/child -mx-2 flex min-w-0 cursor-pointer flex-col rounded-lg px-2 py-1.5 transition-[background-color,box-shadow] duration-150 [&>*:last-child]:mt-1.5 ${
+        active ? "bg-skylab-400/5 ring-1 ring-skylab-400/30" : "hover:bg-white/3"
+      }`}
+    >
+      <div className="flex min-w-0 items-center gap-1.5 px-0.5">
+        <span className="min-w-0 flex-1 text-xs font-medium">
+          {groupSelected ? (
+            <Editable editKey={`rc-${field.id}-${child.id}`} value={child.props?.question} placeholder="Alanın adını yazın"
+              className="text-neutral-200"
+              onChange={(value) => api.updateChild(field.id, child.id, { question: value })}
+            />
+          ) : (
+            <span className="text-neutral-300">{child.props?.question || REGISTRY[child.type]?.label || "Alan"}</span>
+          )}
+          {isChildRequired(field.props, child) ? <span className="ml-0.5 text-red-200/70">*</span> : null}
+        </span>
+        {groupSelected ? (
+          <button type="button" title="Alanı kaldır" aria-label="Alanı kaldır" onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => api.removeChild(field.id, child.id)}
+            className="grid size-5 shrink-0 place-items-center rounded text-neutral-600 opacity-0 transition-opacity hover:text-neutral-200 focus-visible:opacity-100 group-hover/child:opacity-100"
+          >
+            <X size={12} />
+          </button>
+        ) : null}
+      </div>
+      <ControlPreview field={child} selected={active} readOnly={!active} lockedValues={NO_VALUES} api={childApi} />
+    </div>
+  );
+}
+
+function RepeaterPreview({ field, selected, childId = null, readOnly = false, api }) {
   const children = Array.isArray(field.props?.fields) ? field.props.fields : [];
 
   return (
     <div className="mt-3 flex flex-col gap-3">
       <div className="rounded-lg border border-white/10 bg-neutral-900/40">
         <div className="border-b border-white/5 px-3 py-1.5 text-3xs font-medium text-neutral-500">1. kayıt</div>
-        <div className="flex flex-col gap-3 p-3">
+        <div className="flex flex-col gap-2 p-3">
           {children.length === 0 ? <p className="px-0.5 text-xs text-neutral-500">Bu grupta henüz alan yok.</p> : null}
           {children.map((child) => (
-            <div key={child.id} className="group/child flex min-w-0 flex-col [&>*:last-child]:mt-1.5">
-              <div className="flex min-w-0 items-center gap-1.5 px-0.5">
-                {selected ? (
-                  <Editable editKey={`rc-${field.id}-${child.id}`} value={child.props?.question} placeholder="Alanın adını yazın"
-                    className="min-w-0 flex-1 text-xs font-medium text-neutral-200"
-                    onChange={(value) => api.updateChild(field.id, child.id, { question: value })}
-                  />
-                ) : (
-                  <span className="min-w-0 flex-1 truncate text-xs font-medium text-neutral-300">{child.props?.question || REGISTRY[child.type]?.label || "Alan"}</span>
-                )}
-                {child.props?.required ? <span className="text-xs text-red-200/70">*</span> : null}
-                {selected ? (
-                  <button type="button" title="Alanı kaldır" aria-label="Alanı kaldır" onPointerDown={(event) => event.stopPropagation()}
-                    onClick={() => api.removeChild(field.id, child.id)}
-                    className="grid size-5 shrink-0 place-items-center rounded text-neutral-600 opacity-0 transition-opacity hover:text-neutral-200 focus-visible:opacity-100 group-hover/child:opacity-100"
-                  >
-                    <X size={12} />
-                  </button>
-                ) : null}
+            readOnly ? (
+              <div key={child.id} className="flex min-w-0 flex-col py-1.5 [&>*:last-child]:mt-1.5">
+                <span className="min-w-0 truncate px-0.5 text-xs font-medium text-neutral-300">
+                  {child.props?.question || REGISTRY[child.type]?.label || "Alan"}
+                  {isChildRequired(field.props, child) ? <span className="ml-1 text-red-200/70">*</span> : null}
+                </span>
+                <ControlPreview field={child} selected={false} readOnly lockedValues={NO_VALUES} api={api} />
               </div>
-              <ControlPreview field={child} selected={false} readOnly lockedValues={NO_VALUES} api={api} />
-            </div>
+            ) : (
+              <RepeaterChild key={child.id} field={field} child={child} groupSelected={selected} active={childId === child.id} api={api} />
+            )
           ))}
         </div>
       </div>
@@ -346,7 +403,7 @@ function RepeaterPreview({ field, selected, readOnly = false, api }) {
   );
 }
 
-export function ControlPreview({ field, selected, lockedValues, readOnly = false, api }) {
+export function ControlPreview({ field, selected, childId = null, lockedValues, readOnly = false, api }) {
   const props = field.props ?? {};
 
   switch (field.type) {
@@ -384,9 +441,7 @@ export function ControlPreview({ field, selected, lockedValues, readOnly = false
         </div>
       );
     case "slider": {
-      const min = Number(props.min ?? 0);
-      const max = Number(props.max ?? 100);
-      const middle = Math.round(min + (max - min) / 2);
+      const { min, max, middle } = sliderRange(props);
       return (
         <div className={`mt-3 flex w-full items-center gap-4 px-4 py-2.5 ${BOX}`}>
           <span className="w-6 shrink-0 text-right text-xs font-medium text-neutral-500">{min}</span>
@@ -424,7 +479,7 @@ export function ControlPreview({ field, selected, lockedValues, readOnly = false
     case "matrix":
       return <MatrixPreview field={field} selected={selected} api={api} />;
     case "repeater":
-      return <RepeaterPreview field={field} selected={selected} readOnly={readOnly} api={api} />;
+      return <RepeaterPreview field={field} selected={selected} childId={childId} readOnly={readOnly} api={api} />;
     default:
       return null;
   }
@@ -492,7 +547,7 @@ export function InsertLine({ index, api, disabled = false }) {
 }
 
 export const FieldBlock = memo(function FieldBlock({
-  field, number, selected = false, solo = false, condText = null, canUp = false, canDown = false, isLast = false,
+  field, number, selected = false, solo = false, childId = null, condText = null, canUp = false, canDown = false, isLast = false,
   protectedReason = null, lockBadge = null, lockedValues = [], phone = false, hoverable = true, others = NO_OTHERS,
   commentCount = 0, commentActive = false, commentUnread = false, commentable = false, api,
 }) {
@@ -604,7 +659,7 @@ export const FieldBlock = memo(function FieldBlock({
                 ) : null}
               </div>
             </div>
-            <ControlPreview field={field} selected={selected} lockedValues={lockedValues} api={api} />
+            <ControlPreview field={field} selected={selected} childId={childId} lockedValues={lockedValues} api={api} />
             {hint ? <span className={`px-0.5 text-2xs text-neutral-500 ${field.type === "toggle" ? "mt-1.5" : "mt-1"}`}>{hint}</span> : null}
           </>
         )}

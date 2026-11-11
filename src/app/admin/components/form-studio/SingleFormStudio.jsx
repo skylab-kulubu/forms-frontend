@@ -27,7 +27,7 @@ import StudioHeaderActions from "./StudioHeaderActions";
 import StudioSkeleton from "./StudioSkeleton";
 import { SingleNextBlock } from "./StudioNextBlock";
 import { OutlineHeader, OutlineQuestions } from "./StudioOutline";
-import { Crumbs, FormInspectorBody, formCrumb, selectionCrumb } from "./StudioInspector";
+import { Crumbs, FormInspectorBody, formCrumb, selectionCrumbs } from "./StudioInspector";
 import { FormKeys } from "./StudioKeys";
 import { newFormDataOf, publishedQueries, studioStatusOf } from "./studio-save";
 import { startFlowBlocker } from "./studio-flow";
@@ -179,10 +179,9 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, onStartFlow, handoff
 
   const isWorkflowLocked = Boolean(state.workflow?.isPublished);
   const fields = state.schema;
-  const crumb = selectionCrumb(ui.selection, fields);
   const crumbs = [
     { label: formCrumb(state), placeholder: !state.title?.trim(), onClick: () => studio.select({ kind: "none" }) },
-    ...(ui.fill ? [{ label: "Doldurma" }] : crumb ? [{ label: crumb }] : []),
+    ...(ui.fill ? [{ label: "Doldurma" }] : selectionCrumbs(ui.selection, fields, studio.select)),
   ];
 
   const saveStatus = (

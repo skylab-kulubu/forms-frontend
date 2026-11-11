@@ -1,7 +1,7 @@
 "use client";
 
-import { Fragment, useState } from "react";
-import { Activity, ChevronRight, Copy, EyeOff, LayoutTemplate, Lock, PencilLine, RotateCcw, Trash2 } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
+import { Activity, ArrowDown, ArrowUp, ChevronRight, Copy, EyeOff, LayoutTemplate, Lock, PencilLine, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/app/admin/components/utils/SidePanel";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
 import { AccountUploadHint, GuestUploadHint } from "@/app/components/form-components/FormFileUpload";
-import { RepeaterFieldsEditor } from "@/app/components/form-components/FormRepeater";
+import { isChildRequired, recordRuleOf } from "@/app/components/form-components/FormRepeater";
 import { LOCKED_OPTION_HINT } from "@/app/components/form-components/FieldShell";
 import { isIdentityField } from "@/lib/event-handoff";
 import { durationText, formatLongDate } from "@/lib/form-timing";
@@ -23,8 +23,9 @@ import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
 import { colorOf, uniquePeople, useStudioPresence } from "./StudioPresence";
 import { NONE, useStudio } from "./StudioContext";
 import { CHOICE_PRESETS } from "./studio-presets";
+import { ChildTypeMenu } from "./StudioField";
 import {
-  NO_VALUE_OPERATORS, RETYPE_OPTIONS, conditionPhrase, defaultCondition, fieldLabel, fieldTypeOf, operatorsFor, questionNumbers, visibleFieldsOf,
+  FIELD_TYPES, NO_VALUE_OPERATORS, REPEATER_CHILD_TYPES, RETYPE_OPTIONS, conditionPhrase, defaultCondition, fieldLabel, fieldTypeOf, operatorsFor, questionNumbers, visibleFieldsOf,
 } from "./studio-schema";
 
 const SMALL_INPUT = "h-8 rounded-lg border border-white/10 bg-neutral-900/60 px-2.5 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20 [color-scheme:dark]";
@@ -75,14 +76,14 @@ function KV({ label, hint, children }) {
   );
 }
 
-function ShortTextSection({ field, actions, locked }) {
+function ShortTextSection({ field, actions, locked, child = false }) {
   const props = field.props ?? {};
   const current = props.inputType || "text";
-  const canMarkCopy = !actions.eventLinked;
+  const canMarkCopy = !actions.eventLinked && !child;
 
   return (
     <section className={PANEL_SECTION}>
-      <SectionHeader title="Cevap tipi" description="Giriş alanı ve ikon buna göre değişir. İsim ve e-posta, giriş yapan kişinin bilgileriyle dolar." />
+      <SectionHeader title="Cevap tipi" description={child ? "Giriş alanı ve ikon buna göre değişir." : "Giriş alanı ve ikon buna göre değişir. İsim ve e-posta, giriş yapan kişinin bilgileriyle dolar."} />
       <div className="grid grid-cols-2 gap-1.5">
         {INPUT_TYPES.map((type) => (
           <button key={type.id} type="button" disabled={locked}
@@ -291,7 +292,176 @@ function VisibilitySection({ field, fields, actions, disabledReason }) {
   );
 }
 
-function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onRemove, onToast }) {
+function MultiChoiceSection({ field, actions, lockedValues = [] }) {
+  const multiple = field.props?.allowMultiple !== false;
+  return (
+    <section className={PANEL_SECTION}>
+      <SectionHeader title="Seçenekler"
+        description={`${(field.props?.choices ?? []).length} seçenek. Tuvalde düzenlenir: Enter yeni seçenek açar, boş seçenekte Backspace siler, birden çok satır yapıştırınca her satır bir seçenek olur.`}
+      />
+      <div className="divide-y divide-white/5">
+        <KV label="Birden fazla seçim" hint={multiple ? "Başvuran istediği kadar seçenek işaretler." : "Başvuran yalnız bir seçenek işaretler."}>
+          <Switch checked={multiple} label="Birden fazla seçim" onChange={() => actions.updateProps(field.id, { allowMultiple: !multiple })} />
+        </KV>
+      </div>
+      {lockedValues.length > 0 ? (
+        <p className="flex items-start gap-1.5 text-2xs leading-relaxed text-neutral-500"><Lock size={11} className="mt-0.5 shrink-0" />{lockedValues.length} seçenek akış koşulunda kullanılıyor; adı değiştirilemez ve silinemez.</p>
+      ) : null}
+    </section>
+  );
+}
+
+const RECORD_RULE_OPTIONS = [
+  { value: "marked", label: "İşaretlenen alanlar", hint: "Zorunlu işaretlediğin alanlar dolmalı." },
+  { value: "all", label: "Tüm alanlar", hint: "Başlanan her kayıtta bütün alanlar dolmalı." },
+  { value: "any", label: "En az bir alan", hint: "Kayıtta herhangi bir alanın dolu olması yeter." },
+];
+
+const CHILD_TYPE_OPTIONS = REPEATER_CHILD_TYPES.map((type) => ({ value: type, label: FIELD_TYPES[type].label }));
+
+function childMeta(child) {
+  const label = fieldTypeOf(child).label;
+  const count = (child.props?.choices ?? []).length;
+  if (child.type === "short_text") return `${label} · ${(INPUT_TYPES.find((type) => type.id === (child.props?.inputType || "text")) ?? INPUT_TYPES[0]).label}`;
+  if (child.type === "multi_choice") return `${label} · ${child.props?.allowMultiple === false ? "tek" : "çoklu"}, ${count} seçenek`;
+  if (child.type === "combobox") return `${label} · ${count} seçenek`;
+  return label;
+}
+
+function RepeaterSection({ field, actions, onOpenChild }) {
+  const [anchor, setAnchor] = useState(null);
+  const children = Array.isArray(field.props?.fields) ? field.props.fields : [];
+  const rule = recordRuleOf(field.props);
+  const ruleOption = RECORD_RULE_OPTIONS.find((option) => option.value === rule);
+
+  const add = (type) => {
+    const childId = actions.addChild(field.id, type);
+    if (childId) onOpenChild(childId);
+  };
+
+  return (
+    <section className={PANEL_SECTION}>
+      <SectionHeader title="Kayıttaki alanlar" description="Başvuran bu alanların bir kopyasını istediği kadar ekler. Hiç dokunulmamış kayıt sayılmaz." />
+      <KV label="Bir kayıtta dolması gereken" hint={ruleOption.hint}>
+        <MenuPill wide value={rule} options={RECORD_RULE_OPTIONS} onSelect={(value) => actions.updateProps(field.id, { recordRule: value })} />
+      </KV>
+      {children.length ? (
+        <div>
+          {rule === "marked" ? <p className="mb-1 pr-8 text-right text-3xs text-neutral-600">Zorunlu</p> : null}
+          <div className="-mx-2 space-y-0.5">
+            {children.map((child, index) => {
+              const { Icon } = fieldTypeOf(child);
+              const name = child.props?.question?.trim();
+              return (
+                <div key={child.id} className="group/row relative flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-white/4">
+                  <button type="button" onClick={() => onOpenChild(child.id)} aria-label={`${name || "Adsız alan"} ayarları`} className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40" />
+                  <span className="pointer-events-none grid size-8 shrink-0 place-items-center rounded-lg border border-white/10 bg-neutral-900/60 text-neutral-400"><Icon size={14} /></span>
+                  <span className="pointer-events-none min-w-0 flex-1">
+                    <span className="block truncate text-xs text-neutral-200">
+                      {name || <span className="text-neutral-600">Adsız alan</span>}
+                      {isChildRequired(field.props, child) ? <span className="ml-0.5 text-red-200/70">*</span> : null}
+                    </span>
+                    <span className="block truncate text-3xs text-neutral-500">{childMeta(child)}</span>
+                  </span>
+                  <span className="relative flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/row:opacity-100">
+                    <button type="button" title="Yukarı taşı" aria-label="Yukarı taşı" disabled={index === 0} onClick={() => actions.moveChild(field.id, child.id, -1)}
+                      className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
+                    >
+                      <ArrowUp size={12} />
+                    </button>
+                    <button type="button" title="Aşağı taşı" aria-label="Aşağı taşı" disabled={index === children.length - 1} onClick={() => actions.moveChild(field.id, child.id, 1)}
+                      className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
+                    >
+                      <ArrowDown size={12} />
+                    </button>
+                  </span>
+                  {rule === "marked" ? (
+                    <span className="relative flex">
+                      <Switch small checked={Boolean(child.props?.required)} label={`${name || "Alan"} zorunlu`}
+                        onChange={() => actions.updateChild(field.id, child.id, { required: !child.props?.required })}
+                      />
+                    </span>
+                  ) : null}
+                  <ChevronRight size={14} className="pointer-events-none shrink-0 text-neutral-600" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <p className="text-2xs text-neutral-500">Grupta henüz alan yok.</p>
+      )}
+      <PanelButton icon={Plus} chevron active={Boolean(anchor)} className="w-full" onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}>
+        Alan ekle
+      </PanelButton>
+      <ChildTypeMenu anchor={anchor} onPick={add} onDismiss={() => setAnchor(null)} />
+    </section>
+  );
+}
+
+function ChildInspector({ field, child, actions, onBack, onOpenChild }) {
+  const rule = recordRuleOf(field.props);
+  const required = isChildRequired(field.props, child);
+  const childActions = useMemo(() => ({
+    ...actions,
+    eventLinked: false,
+    updateProps: (_, patch) => actions.updateChild(field.id, child.id, patch),
+  }), [actions, field.id, child.id]);
+
+  const requiredHint = rule === "all" ? "Kayıt kuralı “Tüm alanlar”: her alan dolmalı"
+    : rule === "any" ? "Kayıt kuralı “En az bir alan”"
+      : required ? "Başlanan kayıtta boş bırakılamaz" : "Boş bırakılabilir";
+
+  let typeSection = null;
+  if (child.type === "short_text") typeSection = <ShortTextSection field={child} actions={childActions} child />;
+  else if (child.type === "combobox") typeSection = <ComboboxSection field={child} actions={childActions} lockedValues={[]} />;
+  else if (child.type === "multi_choice") typeSection = <MultiChoiceSection field={child} actions={childActions} />;
+  else if (child.type === "toggle") typeSection = <ToggleSection field={child} actions={childActions} lockedValues={[]} />;
+
+  const duplicate = () => {
+    const copy = actions.duplicateChild(field.id, child.id);
+    if (copy) onOpenChild(copy);
+  };
+  const remove = () => {
+    actions.removeChild(field.id, child.id);
+    onBack();
+  };
+
+  return (
+    <div className={PANEL_STACK}>
+      <section className={PANEL_SECTION}>
+        <SectionHeader title="Alan ayarları" description="Adı tuvalde de yazabilirsin." />
+        <div className="divide-y divide-white/5">
+          <KV label="Ad">
+            <input value={child.props?.question ?? ""} placeholder="Alanın adı" onChange={(event) => actions.updateChild(field.id, child.id, { question: event.target.value })}
+              className={`${SMALL_INPUT} w-44`}
+            />
+          </KV>
+          <KV label="Tip">
+            <MenuPill wide value={child.type} options={CHILD_TYPE_OPTIONS} onSelect={(type) => actions.retypeChild(field.id, child.id, type)} />
+          </KV>
+          <KV label="Zorunlu" hint={requiredHint}>
+            <Switch checked={required} disabled={rule !== "marked"} label="Zorunlu"
+              onChange={() => actions.updateChild(field.id, child.id, { required: !child.props?.required })}
+            />
+          </KV>
+        </div>
+      </section>
+
+      {typeSection}
+
+      <section className={PANEL_SECTION}>
+        <div className="flex flex-wrap gap-2">
+          <PanelButton icon={Copy} onClick={duplicate} className="min-w-fit flex-1">Çoğalt</PanelButton>
+          <PanelButton icon={Trash2} danger onClick={remove} className="min-w-fit flex-1">Gruptan çıkar</PanelButton>
+        </div>
+        <p className="text-3xs text-neutral-600">Esc gruba döner. Ctrl+D çoğaltır, Delete gruptan çıkarır, Alt+↑↓ taşır.</p>
+      </section>
+    </div>
+  );
+}
+
+function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onRemove, onToast, onOpenChild }) {
   const isSeparator = field.type === "separator";
   const locked = actions.lockedById.get(field.id) ?? null;
   const identity = actions.eventLinked && isIdentityField(field);
@@ -301,18 +471,8 @@ function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onR
   let typeSection = null;
   if (field.type === "short_text") typeSection = <ShortTextSection field={field} actions={actions} locked={identity} />;
   else if (field.type === "combobox") typeSection = <ComboboxSection field={field} actions={actions} lockedValues={lockedValues} />;
-  else if (field.type === "multi_choice") {
-    typeSection = (
-      <section className={PANEL_SECTION}>
-        <SectionHeader title="Seçenekler"
-          description={`${(field.props?.choices ?? []).length} seçenek. Tuvalde düzenlenir: Enter yeni seçenek açar, boş seçenekte Backspace siler, birden çok satır yapıştırınca her satır bir seçenek olur.`}
-        />
-        {lockedValues.length > 0 ? (
-          <p className="flex items-start gap-1.5 text-2xs leading-relaxed text-neutral-500"><Lock size={11} className="mt-0.5 shrink-0" />{lockedValues.length} seçenek akış koşulunda kullanılıyor; adı değiştirilemez ve silinemez.</p>
-        ) : null}
-      </section>
-    );
-  } else if (field.type === "toggle") typeSection = <ToggleSection field={field} actions={actions} lockedValues={lockedValues} />;
+  else if (field.type === "multi_choice") typeSection = <MultiChoiceSection field={field} actions={actions} lockedValues={lockedValues} />;
+  else if (field.type === "toggle") typeSection = <ToggleSection field={field} actions={actions} lockedValues={lockedValues} />;
   else if (field.type === "slider") typeSection = <SliderSection field={field} actions={actions} />;
   else if (field.type === "file") typeSection = <FileSection field={field} actions={actions} anonymous={anonymous} />;
   else if (field.type === "matrix") {
@@ -321,14 +481,7 @@ function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onR
         <SectionHeader title="Tablo" description={`${(field.props?.rows ?? []).length} satır, ${(field.props?.columns ?? []).length} sütun. Soru seçiliyken satır ve sütun adlarını tuvalde yazarsın; her satıra bir cevap verilir.`} />
       </section>
     );
-  } else if (field.type === "repeater") {
-    typeSection = (
-      <section className={PANEL_SECTION}>
-        <SectionHeader title="Her kayıtta tekrar eden alanlar" description="Başvuran bu alanların bir kopyasını istediği kadar ekler." />
-        <RepeaterFieldsEditor heading={false} fields={field.props?.fields} onChange={(next) => actions.updateProps(field.id, { fields: next })} />
-      </section>
-    );
-  }
+  } else if (field.type === "repeater") typeSection = <RepeaterSection field={field} actions={actions} onOpenChild={onOpenChild} />;
 
   return (
     <div className={PANEL_STACK}>
@@ -350,7 +503,7 @@ function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onR
             )}
           </KV>
           {isSeparator ? null : (
-            <KV label="Zorunlu" hint={field.props?.required ? "Boş bırakılırsa gönderilemez" : "Boş bırakılabilir"}>
+            <KV label="Zorunlu" hint={field.type === "repeater" ? (field.props?.required ? "En az bir kayıt girilmeli" : "Kayıt eklemeden geçilebilir") : field.props?.required ? "Boş bırakılırsa gönderilemez" : "Boş bırakılabilir"}>
               <Switch checked={Boolean(field.props?.required)} disabled={identity} label="Zorunlu" onChange={() => actions.setRequired([field.id], !field.props?.required)} />
             </KV>
           )}
@@ -668,11 +821,20 @@ export function FormInspectorBody({ eventLinked = false, flow = null, focusTimin
   if (ids.length > 1) return <MultiInspector ids={ids} fields={fields} actions={actions} onDuplicate={duplicate} onRemove={remove} />;
   if (ids.length === 1) {
     const field = fields.find((item) => item.id === ids[0]);
+    const openChild = (childId) => studio.select({ kind: "fields", ids: [field.id], childId });
+    const child = selection.childId ? childOf(field, selection.childId) : null;
+    if (child) {
+      return (
+        <ChildInspector key={child.id} field={field} child={child} actions={actions} onOpenChild={openChild}
+          onBack={() => studio.select({ kind: "fields", ids: [field.id] })}
+        />
+      );
+    }
     return (
       <>
         <PeersNote others={presence.byField.get(field.id)} fieldId={field.id} />
         <QuestionInspector key={field.id} field={field} fields={fields} actions={actions} anonymous={state.allowAnonymousResponses}
-          onDuplicate={duplicate} onRemove={remove} onToast={studio.toast}
+          onDuplicate={duplicate} onRemove={remove} onToast={studio.toast} onOpenChild={openChild}
         />
       </>
     );
@@ -690,6 +852,25 @@ export function FormInspectorBody({ eventLinked = false, flow = null, focusTimin
 
 export function formCrumb(state) {
   return state.title?.trim() || "Adsız form";
+}
+
+function childOf(field, childId) {
+  if (field?.type !== "repeater" || !Array.isArray(field.props?.fields)) return null;
+  return field.props.fields.find((child) => child.id === childId) ?? null;
+}
+
+export function childCrumb(selection, fields) {
+  if (selection.kind !== "fields" || selection.ids.length !== 1 || !selection.childId) return null;
+  const child = childOf(fields.find((field) => field.id === selection.ids[0]), selection.childId);
+  return child ? child.props?.question?.trim() || "Adsız alan" : null;
+}
+
+export function selectionCrumbs(selection, fields, onSelect) {
+  const crumb = selectionCrumb(selection, fields);
+  if (!crumb) return [];
+  const child = childCrumb(selection, fields);
+  if (!child) return [{ label: crumb }];
+  return [{ label: crumb, onClick: () => onSelect({ kind: "fields", ids: selection.ids }) }, { label: child }];
 }
 
 export function selectionCrumb(selection, fields) {
