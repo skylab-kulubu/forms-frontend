@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
 import { sliderRange } from "@/app/components/form-components/FormSlider";
+import { matrixChoiceClass, matrixGroupProps, matrixLabelClass, useMatrixLayout } from "@/app/components/form-components/FormMatrix";
 import { Floating } from "@/app/components/utils/Floating";
 import { accountFileRules } from "@/lib/guest-uploads";
 import { REGISTRY } from "@/app/components/form-registry";
@@ -192,63 +193,90 @@ function ComboOptions({ field, lockedValues, api }) {
 }
 
 function MatrixPreview({ field, selected, api }) {
-  const rows = field.props?.rows ?? [];
-  const columns = field.props?.columns ?? [];
+  const rows = field.props?.rows ?? NO_VALUES;
+  const columns = field.props?.columns ?? NO_VALUES;
+  const { rootRef, scrollerRef, layout } = useMatrixLayout(rows, columns, { hold: selected });
+
+  const columnLabel = (column, index, editKey, className = "") => (selected ? (
+    <Editable editKey={editKey} value={column} placeholder={`Sütun ${index + 1}`} className={className}
+      onChange={(value) => api.setListItem(field.id, "columns", index, value)}
+    />
+  ) : <span className={className}>{column}</span>);
+
+  const rowLabel = (row, rowIndex) => (selected ? (
+    <Editable editKey={`r-${field.id}-${rowIndex}`} value={row} placeholder={`Satır ${rowIndex + 1}`}
+      onChange={(value) => api.setListItem(field.id, "rows", rowIndex, value)}
+    />
+  ) : row);
+
+  const removeButton = (list, index, className) => {
+    const label = list === "rows" ? "Satırı sil" : "Sütunu sil";
+    return (
+      <button type="button" aria-label={label} title={label} onPointerDown={(event) => event.stopPropagation()}
+        onClick={() => api.removeListItem(field.id, list, index)}
+        className={`grid size-4 place-items-center rounded text-neutral-600 opacity-0 transition-opacity hover:text-neutral-200 ${className}`}
+      >
+        <X size={11} />
+      </button>
+    );
+  };
 
   return (
-    <div className="mt-4 w-full">
-      <div className={`overflow-x-auto ${BOX}`}>
-        <table className="w-full min-w-105 text-left">
-          <thead className="border-b border-white/10 bg-white/5">
-            <tr>
-              <th className="w-1/3 p-3" />
-              {columns.map((column, index) => (
-                <th key={index} className="group/col relative p-3 text-center text-2xs font-semibold uppercase tracking-wider text-neutral-400">
-                  {selected ? (
-                    <Editable editKey={`c-${field.id}-${index}`} value={column} placeholder={`Sütun ${index + 1}`}
-                      onChange={(value) => api.setListItem(field.id, "columns", index, value)}
-                    />
-                  ) : column}
-                  {selected && columns.length > 1 && (
-                    <button type="button" aria-label="Sütunu sil" title="Sütunu sil" onPointerDown={(event) => event.stopPropagation()}
-                      onClick={() => api.removeListItem(field.id, "columns", index)}
-                      className="absolute right-0.5 top-0.5 grid size-4 place-items-center rounded text-neutral-600 opacity-0 transition-opacity hover:text-neutral-200 group-hover/col:opacity-100"
-                    >
-                      <X size={11} />
-                    </button>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className="group/row">
-                <td className="relative p-3 text-sm font-medium text-neutral-200">
-                  {selected ? (
-                    <Editable editKey={`r-${field.id}-${rowIndex}`} value={row} placeholder={`Satır ${rowIndex + 1}`}
-                      onChange={(value) => api.setListItem(field.id, "rows", rowIndex, value)}
-                    />
-                  ) : row}
-                  {selected && rows.length > 1 && (
-                    <button type="button" aria-label="Satırı sil" title="Satırı sil" onPointerDown={(event) => event.stopPropagation()}
-                      onClick={() => api.removeListItem(field.id, "rows", rowIndex)}
-                      className="absolute left-0 top-1/2 grid size-4 -translate-y-1/2 place-items-center rounded text-neutral-600 opacity-0 transition-opacity hover:text-neutral-200 group-hover/row:opacity-100"
-                    >
-                      <X size={11} />
-                    </button>
-                  )}
-                </td>
-                {columns.map((_, columnIndex) => (
-                  <td key={columnIndex} className="p-2 text-center align-middle">
-                    <span className="inline-block size-4.5 rounded-full border border-white/20 bg-neutral-900/80" />
-                  </td>
+    <div ref={rootRef} className="mt-4 w-full">
+      {layout.mode === "table" ? (
+        <div ref={scrollerRef} className={`overflow-x-auto ${BOX}`}>
+          <table className="w-full min-w-125 text-left">
+            <thead className="border-b border-white/10 bg-white/5">
+              <tr>
+                <th className="w-1/3 p-3" />
+                {columns.map((column, index) => (
+                  <th key={index} className="group/col relative p-3 text-center text-2xs font-semibold uppercase tracking-wider text-neutral-400">
+                    {columnLabel(column, index, `c-${field.id}-${index}`)}
+                    {selected && columns.length > 1 && removeButton("columns", index, "absolute right-0.5 top-0.5 group-hover/col:opacity-100")}
+                  </th>
                 ))}
+                <th className="w-10 p-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className="group/row">
+                  <td className="relative p-3 text-sm font-medium text-neutral-200">
+                    {rowLabel(row, rowIndex)}
+                    {selected && rows.length > 1 && removeButton("rows", rowIndex, "absolute left-0 top-1/2 -translate-y-1/2 group-hover/row:opacity-100")}
+                  </td>
+                  {columns.map((_, columnIndex) => (
+                    <td key={columnIndex} className="p-2 text-center align-middle">
+                      <span className="inline-block size-4.5 rounded-full border border-white/20 bg-neutral-900/80" />
+                    </td>
+                  ))}
+                  <td className="w-10 p-2 pr-4" />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5">
+          {rows.map((row, rowIndex) => (
+            <div key={rowIndex}>
+              <div className="group/row mb-2 flex items-start gap-1.5 text-sm font-medium text-neutral-200">
+                <div className="min-w-0">{rowLabel(row, rowIndex)}</div>
+                {selected && rows.length > 1 && removeButton("rows", rowIndex, "mt-0.5 shrink-0 group-hover/row:opacity-100")}
+              </div>
+              <div {...matrixGroupProps(layout)}>
+                {columns.map((column, index) => (
+                  <div key={index} className={`group/col relative ${matrixChoiceClass(layout)}`}>
+                    <input type="radio" disabled tabIndex={-1} className={layout.mode === "list" ? "checkbox shrink-0" : "hidden"} />
+                    {columnLabel(column, index, rowIndex ? `c-${field.id}-${index}@${rowIndex}` : `c-${field.id}-${index}`, matrixLabelClass(layout))}
+                    {selected && columns.length > 1 && removeButton("columns", index, "absolute right-0.5 top-0.5 group-hover/col:opacity-100")}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {selected && (
         <div className="mt-2 flex gap-3 px-0.5">
           <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => api.addListItem(field.id, "rows", "Satır")}
