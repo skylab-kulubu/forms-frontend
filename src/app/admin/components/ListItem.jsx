@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronRight, ClipboardCheck, FileText, PencilLine, Repeat2, UserX, ChartColumn, Workflow } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, ClipboardCheck, Crown, Eye, FileText, PencilLine, Repeat2, UserX, ChartColumn, Workflow } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { eventRefFromForm } from "@/lib/return-to";
 import { effectiveFormSettings } from "@/lib/form-settings";
@@ -94,17 +94,18 @@ export function SortHeader({ label, field, sortField, sortDirection, onSort, ali
   );
 }
 
-export const ROLE_BADGE = {
-  3: { label: "Sahip", className: "bg-skylab-500/10 text-skylab-300 border border-skylab-400/40" },
-  2: { label: "Editör", className: "bg-white/10 text-neutral-200 border border-white/20" },
-  default: { label: "Görüntüleyici", className: "bg-white/5 text-neutral-400 border border-white/10" },
+export const ROLE_MARK = {
+  3: { label: "Sahip", Icon: Crown, text: "text-neutral-300", icon: "text-skylab-300" },
+  2: { label: "Editör", Icon: PencilLine, text: "text-neutral-300", icon: "text-neutral-400" },
+  1: { label: "Okuyucu", Icon: Eye, text: "text-neutral-500", icon: "text-neutral-500" },
 };
 
 export function RoleBadge({ role }) {
-  const { label, className } = ROLE_BADGE[role] ?? ROLE_BADGE.default;
+  const { label, Icon, text, icon } = ROLE_MARK[role] ?? ROLE_MARK[1];
 
   return (
-    <span className={`rounded-md px-1 py-0.5 text-4xs uppercase tracking-[0.18em] ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 text-2xs ${text}`}>
+      <Icon size={12} strokeWidth={1.75} className={`shrink-0 ${icon}`} />
       {label}
     </span>
   );
