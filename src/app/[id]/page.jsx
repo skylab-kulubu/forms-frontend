@@ -8,7 +8,7 @@ async function fetchFormMeta(id) {
   const res = await fetch(`${BASE_URL}/api/forms/${id}/meta`, {
     next: { revalidate: 60 },
   });
-  if (!res.ok) return null;
+  if (!res.ok && res.status !== 410) return null;
   const json = await res.json();
   return json?.data ?? null;
 }
