@@ -217,7 +217,7 @@ export default function AnalyticsCard({ form, analytics, participation = null, m
   }, [analytics, fields, total]);
 
   return (
-    <CardShell phone={phone} active>
+    <CardShell phone={phone} active brand={form?.brand}>
       {stepInfo ? <StepBar flowName={stepInfo.flowName} stage={stepInfo.stage} total={stepInfo.total} timeLimitMinutes={form?.timeLimitMinutes} /> : null}
       <FormDisplayerHeader title={form?.title || "Adsız form"} description={form?.description ?? ""} />
       {participation ? (

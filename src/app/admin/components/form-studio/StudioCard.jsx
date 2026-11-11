@@ -11,14 +11,17 @@ import { QuestionHint, QuestionNumber } from "@/app/components/form-components/Q
 import { RichText } from "@/app/components/rich-text/RichText";
 import { questionNumbers } from "./studio-schema";
 import { COLLAPSE_EASING, COLLAPSE_MS } from "./studio-motion";
+import BrandPaper from "@/brands/BrandPaper";
 
 export const CARD_WIDTH = { desktop: 672, phone: 358 };
 
-export function CardShell({ phone = false, active = false, className = "", ref, children }) {
+export function CardShell({ phone = false, active = false, brand = null, className = "", ref, children }) {
   return (
-    <div ref={ref} className={`studio-card flex w-full flex-col rounded-3xl border text-neutral-200 shadow-xl shadow-black/30 ${active ? "border-white/15" : "border-white/10"} ${className}`}>
-      <div className={`flex flex-1 flex-col gap-6 ${phone ? "p-6" : "p-6 sm:p-10"}`}>{children}</div>
-    </div>
+    <BrandPaper brand={brand}>
+      <div ref={ref} data-slot="form-card" data-phone={phone || undefined} className={`studio-card flex w-full flex-col rounded-3xl border text-neutral-200 shadow-xl shadow-black/30 ${active ? "border-white/15" : "border-white/10"} ${className}`}>
+        <div className={`flex flex-1 flex-col gap-6 ${phone ? "p-6" : "p-6 sm:p-10"}`}>{children}</div>
+      </div>
+    </BrandPaper>
   );
 }
 
@@ -65,7 +68,7 @@ export function CardFooter({ phone = false, userName, onSubmit, submitLabel = "G
             <span className="truncate"><span className="text-neutral-300">{userName || "Başvuran"}</span> olarak yanıtlıyorsunuz</span>
           </p>
         )}
-        <button type="button" onClick={onSubmit} onPointerDown={(event) => event.stopPropagation()}
+        <button type="button" data-slot="submit" onClick={onSubmit} onPointerDown={(event) => event.stopPropagation()}
           className={`relative inline-flex min-w-30 items-center justify-center gap-2 whitespace-nowrap rounded-xl border-[1.5px] border-skylab-300/50 bg-skylab-400/40 px-8 py-3 text-sm font-semibold transition-all hover:bg-pink-200/60 ${phone ? "order-1" : "order-1 sm:order-2 sm:ml-auto sm:shrink-0"}`}
         >
           {submitLabel}
@@ -204,7 +207,7 @@ export function StaticCard({ form, phone = false, active = false, stepInfo = nul
   const header = <FormDisplayerHeader title={form?.title || "Adsız form"} description={form?.description ?? ""} />;
 
   return (
-    <CardShell ref={shellRef} phone={phone} active={active}>
+    <CardShell ref={shellRef} phone={phone} active={active} brand={form?.brand}>
       {stepInfo ? <StepBar flowName={stepInfo.flowName} stage={stepInfo.stage} total={stepInfo.total} timeLimitMinutes={form?.timeLimitMinutes} /> : null}
       {collapse?.gap ? <div>{header}<div ref={gapRef} /></div> : header}
       {task ? <TaskBlock task={task} title={form?.title} /> : null}
@@ -225,7 +228,7 @@ export function StaticCard({ form, phone = false, active = false, stepInfo = nul
       ) : null}
       <div className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
         <div className="flex justify-end">
-          <span className="inline-flex min-w-30 items-center justify-center rounded-xl border-[1.5px] border-skylab-300/50 bg-skylab-400/40 px-8 py-3 text-sm font-semibold">Gönder</span>
+          <span data-slot="submit" className="inline-flex min-w-30 items-center justify-center rounded-xl border-[1.5px] border-skylab-300/50 bg-skylab-400/40 px-8 py-3 text-sm font-semibold">Gönder</span>
         </div>
       </div>
     </CardShell>

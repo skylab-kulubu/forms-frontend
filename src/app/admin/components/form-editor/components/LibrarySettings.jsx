@@ -3,10 +3,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LibrarySettingsEditors } from "./LibrarySettingsEditors";
 import { WorkflowLockMark, WorkflowManagedRow, WorkflowMembershipSection } from "./WorkflowMembership";
 import { TimingSection } from "./TimingSection";
+import { BrandSection } from "./BrandSection";
 import { useFormEditor } from "../FormEditorContext";
 import { WORKFLOW_INTAKE, effectiveFormSettings } from "@/lib/form-settings";
 import { PANEL_SECTION, PANEL_STACK, PanelNotice, SectionHeader, ToggleRow } from "@/app/admin/components/utils/SidePanel";
 import { OwnershipTransferSection } from "@/app/admin/components/OwnershipTransfer";
+import { swapView } from "@/app/admin/components/form-studio/studio-motion";
+import { loadBrandFonts } from "@/brands/BrandPaper";
 
 const alertVariants = {
     hidden: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" },
@@ -18,7 +21,7 @@ const PERSONAL_LOCK = "Kişisel süre açıkken kullanılamaz.";
 
 export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMembership = false, managedActions = {} }) {
     const { state, dispatch, doc } = useFormEditor();
-    const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt, userRole, editors, isSaved } = state;
+    const { id: formId, status, allowAnonymousResponses, allowMultipleResponses, requiresManualReview, workflow, timeLimitMinutes, closesAt, brand, userRole, editors, isSaved } = state;
     const rootRef = useRef(null);
 
     const isWorkflowLocked = Boolean(workflow?.isPublished);
@@ -55,6 +58,11 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
             { op: "set", path: ["allowAnonymousResponses"], value: nextValue },
             ...(nextValue ? [{ op: "set", path: ["allowMultipleResponses"], value: true }] : []),
         ], { group: false });
+    };
+
+    const changeBrand = async (value) => {
+        if (value) await loadBrandFonts(value);
+        swapView(() => dispatch({ type: "UPDATE_SETTINGS", payload: { key: "brand", value } }), { duration: 320, variant: "theme" });
     };
 
     return (
@@ -128,6 +136,8 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
                     )}
                 </div>
             </section>
+
+            <BrandSection value={brand} onChange={changeBrand} />
 
             {isOwner ? (
                 <OwnershipTransferSection kind="form" itemId={formId} preset="transfer-form" excludeIds={ownerId ? [ownerId] : []}

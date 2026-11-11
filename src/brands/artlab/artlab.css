@@ -1,0 +1,257 @@
+[data-brand="artlab"] {
+  --al-bg: #0b0e13;
+  --al-surface: #141a23;
+  --al-surface-2: #0e1218;
+  --al-line: #2a3544;
+  --al-line-2: #1c2430;
+  --al-ink: #e9edf2;
+  --al-ink-2: #8a95a5;
+  --al-ink-3: #5e6978;
+  --al-amber: #f5b82e;
+  --al-amber-soft: oklch(0.86 0.085 82);
+  --al-on-amber: #1a1204;
+  --al-cyan: #3ed6f0;
+  --al-cyan-hover: #8fe8f7;
+  --al-on-cyan: #04232a;
+
+  --color-skylab-300: oklch(0.93 0.035 210);
+  --color-skylab-400: oklch(0.89 0.05 210);
+  --color-skylab-500: oklch(0.85 0.07 210);
+  --color-skylab-600: oklch(0.76 0.08 212);
+  --color-skylab-700: oklch(0.66 0.085 214);
+  --color-skylab-800: oklch(0.55 0.08 216);
+  --color-skylab-900: oklch(0.45 0.065 218);
+
+  --color-pink-100: oklch(0.95 0.025 210);
+  --color-pink-200: oklch(0.91 0.04 210);
+  --color-pink-300: oklch(0.88 0.055 210);
+  --color-pink-400: oklch(0.85 0.07 210);
+  --color-pink-500: oklch(0.78 0.075 212);
+  --color-pink-600: oklch(0.69 0.08 214);
+
+  --color-sky-300: oklch(0.9 0.05 210);
+  --color-sky-400: oklch(0.85 0.07 210);
+  --color-sky-500: oklch(0.78 0.075 212);
+
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+
+  --font-sans: var(--font-artlab-sans), system-ui, sans-serif;
+  --font-display: var(--font-artlab-display), var(--font-artlab-sans), sans-serif;
+
+  --studio-glow: var(--color-skylab-500);
+
+  font-family: var(--font-sans);
+}
+
+[data-brand="artlab"]:not([data-brand-paper]) {
+  --color-white: #dce6f2;
+
+  --color-neutral-50: #f6f8fa;
+  --color-neutral-100: #edf1f5;
+  --color-neutral-200: #e3e8ee;
+  --color-neutral-300: #b9c2cd;
+  --color-neutral-400: #8a95a5;
+  --color-neutral-500: #6b7685;
+  --color-neutral-600: #4f5a6a;
+  --color-neutral-700: #2a3544;
+  --color-neutral-800: #1c2430;
+  --color-neutral-900: #141a23;
+  --color-neutral-950: #0b0e13;
+
+  background-color: var(--al-bg);
+  color-scheme: dark;
+}
+
+[data-brand="artlab"] ::selection {
+  background: color-mix(in oklab, var(--al-cyan) 30%, transparent);
+  color: var(--al-ink);
+}
+
+[data-brand="artlab"] .al-cho {
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+  background: color-mix(in oklab, var(--al-ink) 18%, transparent);
+  padding: 1px;
+}
+
+[data-brand="artlab"] .al-chi {
+  clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+  background: color-mix(in oklab, var(--al-surface-2) 70%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+[data-brand="artlab"] .al-display {
+  font-family: var(--font-display);
+}
+
+[data-brand="artlab"] .al-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+[data-brand="artlab"] [data-slot="form-card"] {
+  position: relative;
+  isolation: isolate;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+
+[data-brand="artlab"] [data-slot="form-card"]::before,
+[data-brand="artlab"] [data-slot="form-card"]::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+[data-brand="artlab"] [data-slot="form-card"]::before {
+  inset: -1px;
+  clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px);
+  background: color-mix(in oklab, var(--al-ink) 16%, transparent);
+}
+
+[data-brand="artlab"] [data-slot="form-card"]::after {
+  inset: 0;
+  clip-path: polygon(23.6px 0, 100% 0, 100% calc(100% - 23.6px), calc(100% - 23.6px) 100%, 0 100%, 0 23.6px);
+  background: color-mix(in oklab, var(--al-surface-2) 82%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+[data-brand="artlab"] .studio-card[data-slot="form-card"]::before {
+  background: color-mix(in oklab, var(--color-white) 15%, transparent);
+}
+
+[data-brand="artlab"] .studio-card[data-slot="form-card"]::after {
+  background: var(--studio-paper);
+  backdrop-filter: none;
+}
+
+[data-brand="artlab"] [data-slot="form-title"],
+[data-brand="artlab"] [data-slot="screen-title"] {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+[data-brand="artlab"]:not([data-brand-paper]) [data-slot="form-title"],
+[data-brand="artlab"]:not([data-brand-paper]) [data-slot="screen-title"] {
+  color: var(--al-ink);
+}
+
+[data-brand="artlab"] [data-slot="form-title"] {
+  font-size: 1.625rem;
+  line-height: 1.2;
+}
+
+[data-brand="artlab"] [data-slot="form-card"][data-phone] [data-slot="form-title"] {
+  font-size: 1.375rem;
+}
+
+@media (width < 40rem) {
+  [data-brand="artlab"] [data-slot="form-title"] {
+    font-size: 1.375rem;
+  }
+}
+
+[data-brand="artlab"] [data-slot="question-number"]:not([data-missing]) {
+  border-color: color-mix(in oklab, var(--al-amber-soft) 35%, transparent);
+  background: transparent;
+  color: var(--al-amber-soft);
+}
+
+[data-brand="artlab"] [data-slot="page-footer"],
+[data-brand="artlab"] [data-slot="footer-mark"] {
+  --color-skylab-300: color-mix(in oklab, var(--al-amber) 70%, white);
+  --color-skylab-400: color-mix(in oklab, var(--al-amber) 85%, white);
+  --color-skylab-500: var(--al-amber);
+}
+
+[data-brand="artlab"] [data-slot="submit"] {
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  border-color: transparent;
+  background: var(--al-amber-soft);
+  color: var(--al-on-amber);
+  font-weight: 700;
+  transition: filter 0.15s ease, translate 0.15s ease;
+}
+
+[data-brand="artlab"] [data-slot="submit"]:hover {
+  background: var(--al-amber-soft);
+  filter: brightness(1.06);
+}
+
+[data-brand="artlab"] [data-slot="submit"]:active {
+  translate: 0 1px;
+}
+
+[data-brand="artlab"] .checkbox:not([type="radio"]) {
+  border-radius: 0;
+}
+
+[data-brand="artlab"]:not([data-brand-paper]) .checkbox {
+  border-color: color-mix(in oklab, var(--al-ink) 25%, transparent);
+  background-color: var(--al-surface-2);
+}
+
+[data-brand="artlab"] .checkbox:checked {
+  background-color: var(--color-skylab-500);
+  border-color: var(--color-skylab-500);
+}
+
+[data-brand="artlab"] .checkbox::before {
+  box-shadow: inset 1em 1em var(--al-on-cyan);
+}
+
+[data-brand="artlab"] .al-stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.4px 1.4px at 14% 22%, rgba(245, 184, 46, 0.75), transparent 60%),
+    radial-gradient(1px 1px at 41% 9%, rgba(245, 184, 46, 0.55), transparent 60%),
+    radial-gradient(1.2px 1.2px at 63% 31%, rgba(245, 184, 46, 0.6), transparent 60%),
+    radial-gradient(1px 1px at 86% 14%, rgba(245, 184, 46, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 29% 57%, rgba(245, 184, 46, 0.45), transparent 60%),
+    radial-gradient(1.3px 1.3px at 77% 66%, rgba(245, 184, 46, 0.55), transparent 60%),
+    radial-gradient(1px 1px at 52% 80%, rgba(233, 237, 242, 0.4), transparent 60%),
+    radial-gradient(1px 1px at 8% 74%, rgba(233, 237, 242, 0.35), transparent 60%),
+    radial-gradient(1.5px 1.5px at 93% 46%, rgba(62, 214, 240, 0.7), transparent 60%),
+    radial-gradient(1.2px 1.2px at 22% 38%, rgba(62, 214, 240, 0.55), transparent 60%);
+  background-size: 380px 340px;
+  opacity: 0.55;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+}
+
+[data-brand="artlab"] .al-stars::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 33% 18%, rgba(245, 184, 46, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 71% 42%, rgba(233, 237, 242, 0.35), transparent 60%),
+    radial-gradient(1.2px 1.2px at 12% 61%, rgba(245, 184, 46, 0.45), transparent 60%),
+    radial-gradient(1px 1px at 88% 83%, rgba(62, 214, 240, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 47% 93%, rgba(245, 184, 46, 0.4), transparent 60%);
+  background-size: 530px 470px;
+}
+
+[data-brand="artlab"] .al-horizon {
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 42vh;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 100% at 50% 100%, rgba(18, 52, 62, 0.55), transparent 70%),
+    linear-gradient(to top, rgba(14, 34, 42, 0.35), transparent);
+}

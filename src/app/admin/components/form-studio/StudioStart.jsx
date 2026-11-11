@@ -62,7 +62,7 @@ export function IntroFields({ title, description, onTitle, onDescription, setup 
 
   return (
     <div className={`relative max-w-2xl ${phone ? "px-1" : "px-2 md:px-4"}`}>
-      <h1 className={`font-semibold tracking-tight text-neutral-50 ${phone ? "text-2xl" : "text-2xl sm:text-3xl"}`}>
+      <h1 data-slot="form-title" className={`font-semibold tracking-tight text-neutral-50 ${phone ? "text-2xl" : "text-2xl sm:text-3xl"}`}>
         <Editable editKey="form-title" value={title} placeholder="Formun adı" onChange={onTitle} onEnter={setup ? toDescription : undefined}
           className="-mx-1 block rounded-md px-1"
         />

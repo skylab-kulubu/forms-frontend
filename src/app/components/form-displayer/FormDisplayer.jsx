@@ -17,6 +17,7 @@ import TaskBlock from "./components/TaskBlock";
 import { Countdown, DeliverablesHeader, ExtensionNotice, TaskGate, TaskMeta, useIsLate } from "./components/TimedParts";
 import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
 import Background from "../Background";
+import { BrandSlot } from "@/brands/BrandContext";
 import NoticeDock, { NoticeDockPlacement } from "../utils/NoticeDock";
 import LoginButton from "../utils/LoginButton";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
@@ -105,14 +106,14 @@ function hasValue(field, value) {
 function PageFooter() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }}
-      className="shrink-0 mt-12 mb-8 pb-[env(safe-area-inset-bottom)] flex flex-col items-center gap-4 text-xs font-medium text-neutral-500"
+      data-slot="page-footer" className="font-platform shrink-0 mt-12 mb-8 pb-[env(safe-area-inset-bottom)] flex flex-col items-center gap-4 text-xs font-medium text-neutral-500"
     >
       <div className="flex flex-col items-center gap-1.5">
         <div className="flex items-center gap-2">
           <a href={process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 opacity-80 transition-opacity hover:opacity-100"
           >
-            <img src="/skylab.svg" alt="Skylab Logo" className="h-5 w-5 object-contain mt-1 transition-all" />
+            <span role="img" aria-label="Skylab Logo" className="mt-1 size-5 shrink-0 bg-skylab-500 mask-[url(/skylab.svg)] mask-contain mask-center mask-no-repeat" />
             <span className="text-sm font-semibold uppercase tracking-wide text-skylab-400">SKY LAB Forms</span>
           </a>
           <span className="text-neutral-600">by WEBLAB</span>
@@ -421,7 +422,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
           <motion.div key="background-layer" className="fixed inset-0 z-0 pointer-events-none"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.5 }}
           >
-            <Background />
+            <BrandSlot name="Backdrop" fallback={<Background />} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -441,9 +442,10 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.3 } }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
-            {!embedded && <div className="h-12 w-full shrink-0" />}
+            {!embedded && <BrandSlot name="Header" fallback={<div className="h-12 w-full shrink-0" />} />}
 
-            <div className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
+            <div data-slot="form-card" className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
+              <BrandSlot name="CardTop" />
               <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
 
                 {activeIsWorkflow ? (
@@ -558,7 +560,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                             <RespondentLine savedAt={isAuthed ? lastSavedAt : null} compact />
                           </div>
                         )}
-                        <motion.button onClick={() => onSubmit()} disabled={isSubmitting || isAnyFileUploading || isScanWaiting} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        <motion.button data-slot="submit" onClick={() => onSubmit()} disabled={isSubmitting || isAnyFileUploading || isScanWaiting} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
                           className={`relative order-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none sm:order-2 sm:ml-auto sm:shrink-0
                           ${isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}
                         >

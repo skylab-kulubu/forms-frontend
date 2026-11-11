@@ -20,6 +20,7 @@ body {
   --font-sans: 'Space Grotesk', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-platform: var(--font-sans);
 
   /* Mikro tipografi ölçeği: 4xs = satır içi chip (rol rozeti), 3xs = durum
      rozeti/sayaç/bölüm etiketi, 2xs = meta satırı.
@@ -184,21 +185,22 @@ body {
 
   .studio-editable { outline: none; white-space: pre-wrap; overflow-wrap: anywhere; caret-color: var(--color-skylab-400); border-radius: 3px; cursor: text; }
   .studio-editable:empty::before { content: attr(data-placeholder); color: var(--color-neutral-500); font-weight: 400; pointer-events: none; }
-  .studio-editable:focus { background: rgba(235, 213, 238, 0.06); box-shadow: 0 0 0 3px rgba(235, 213, 238, 0.06); }
+  .studio-editable:focus { background: color-mix(in srgb, var(--color-skylab-400) 6%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-skylab-400) 6%, transparent); }
   .studio-editable[contenteditable="false"] { cursor: default; }
 
   .studio-card {
-    background:
+    --studio-paper:
       radial-gradient(
         600px 380px at 100% -30px,
-        color-mix(in srgb, oklch(0.84 0.07 318) 12%, transparent) 0%,
-        color-mix(in srgb, oklch(0.84 0.07 318) 10.32%, transparent) 20%,
-        color-mix(in srgb, oklch(0.84 0.07 318) 6.6%, transparent) 40%,
-        color-mix(in srgb, oklch(0.84 0.07 318) 3.12%, transparent) 60%,
-        color-mix(in srgb, oklch(0.84 0.07 318) 0.96%, transparent) 80%,
-        color-mix(in srgb, oklch(0.84 0.07 318) 0%, transparent) 100%
+        color-mix(in srgb, var(--studio-glow, oklch(0.84 0.07 318)) 12%, transparent) 0%,
+        color-mix(in srgb, var(--studio-glow, oklch(0.84 0.07 318)) 10.32%, transparent) 20%,
+        color-mix(in srgb, var(--studio-glow, oklch(0.84 0.07 318)) 6.6%, transparent) 40%,
+        color-mix(in srgb, var(--studio-glow, oklch(0.84 0.07 318)) 3.12%, transparent) 60%,
+        color-mix(in srgb, var(--studio-glow, oklch(0.84 0.07 318)) 0.96%, transparent) 80%,
+        color-mix(in srgb, var(--studio-glow, oklch(0.84 0.07 318)) 0%, transparent) 100%
       ),
       #1c1c1c;
+    background: var(--studio-paper);
   }
 
   @media (width >= 64rem) {
@@ -261,6 +263,44 @@ body {
   :root.studio-swap::view-transition-old(studio-step),
   :root.studio-swap::view-transition-new(studio-step) {
     animation-duration: var(--studio-swap-ms, 180ms);
+  }
+
+  :root.studio-theme [data-studio-page] {
+    view-transition-name: studio-theme;
+  }
+
+  :root.studio-theme [data-studio-toolbar] {
+    view-transition-name: studio-toolbar;
+  }
+
+  :root.studio-theme::view-transition-old(studio-toolbar) {
+    display: none;
+  }
+
+  :root.studio-theme::view-transition-new(studio-toolbar) {
+    animation: none;
+  }
+
+  :root.studio-theme::view-transition-old(root),
+  :root.studio-theme::view-transition-new(root),
+  :root.studio-theme::view-transition-group(studio-theme) {
+    animation: none;
+  }
+
+  :root.studio-theme::view-transition-old(studio-theme) {
+    animation: studio-theme-out var(--studio-swap-ms, 320ms) ease-out both;
+  }
+
+  :root.studio-theme::view-transition-new(studio-theme) {
+    animation: studio-theme-in var(--studio-swap-ms, 320ms) ease-out both;
+  }
+
+  @keyframes studio-theme-out {
+    to { opacity: 0; filter: blur(6px); }
+  }
+
+  @keyframes studio-theme-in {
+    from { opacity: 0; filter: blur(6px); }
   }
 
   .task-prose { font-size: 0.875rem; line-height: 1.625; color: var(--color-neutral-300); overflow-wrap: break-word; }

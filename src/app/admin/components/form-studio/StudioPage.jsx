@@ -25,6 +25,7 @@ import StudioTask from "./StudioTask";
 import StudioInsertMenu from "./StudioInsertMenu";
 import { EmptyStart, IntroFields, TemplateIntro, TemplateStart, previewOf } from "./StudioStart";
 import { CARD_WIDTH, CardFooter, CardShell, DeliverablesHeader, DisplayFields, StepBar } from "./StudioCard";
+import BrandPaper from "@/brands/BrandPaper";
 import { conditionLabel, insertIndexOf, missingFieldIds, questionNumbers, requiredFill, visibleFieldsOf } from "./studio-schema";
 import { DROP_ANIMATION, conditionLoss, slotOf, useStudioSensors } from "./studio-dnd";
 import { ARRIVAL_EASE, ARRIVAL_MS, SLIDE_IN_EASING, SLIDE_IN_MS, SLIDE_PX, prefersReducedMotion } from "./studio-motion";
@@ -172,7 +173,7 @@ export function StudioToolbar({ inFlow, empty = false, comments = null, settings
   const { ui, actions: studio } = useStudio();
 
   return (
-    <div onPointerDown={(event) => event.stopPropagation()} className={TOOLBAR_CLASS}>
+    <div data-studio-toolbar onPointerDown={(event) => event.stopPropagation()} className={TOOLBAR_CLASS}>
       {onOverview ? <OverviewButton onClick={onOverview} /> : null}
       <SheetButtons side="start" />
       <ToolButton label="Bileşen ekle (/)" onClick={(event) => onAdd(event.currentTarget)}>
@@ -574,7 +575,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
             style={{ maxWidth: width, ...cardMotion }}
           >
             {ui.fill ? (
-              <CardShell phone={phone} active className={template ? "" : "flex-1"}>
+              <CardShell phone={phone} active brand={state.brand} className={template ? "" : "flex-1"}>
                 {stepInfo ? <StepBar flowName={stepInfo.flowName} stage={stepInfo.stage} total={stepInfo.total} fill={fill} timeLimitMinutes={state.timeLimitMinutes} /> : null}
                 {template ? null : <FormDisplayerHeader title={state.title} description={state.description} />}
                 {task?.content?.trim() ? <TaskBlock task={task} title={state.title} /> : null}
@@ -589,7 +590,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
                 <CardFooter phone={phone} userName={userName} onSubmit={submitFill} bare={template} submitLabel={template ? "Kontrol et" : undefined} />
               </CardShell>
             ) : (
-              <CardShell phone={phone} active className={template && fields.length > 0 ? "" : "flex-1"}>
+              <CardShell phone={phone} active brand={state.brand} className={template && fields.length > 0 ? "" : "flex-1"}>
                 {stepInfo ? <StepBar flowName={stepInfo.flowName} stage={stepInfo.stage} total={stepInfo.total} timeLimitMinutes={state.timeLimitMinutes} /> : null}
                 {template ? null : (
                   <IntroFields title={state.title} description={state.description} onTitle={actions.setTitle} onDescription={actions.setDescription}
@@ -623,10 +624,12 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
                     {isClient ? createPortal(
                       <DragOverlay dropAnimation={DROP_ANIMATION} modifiers={[restrictToVerticalAxis]}>
                         {activeField ? (
-                          <div className="cursor-grabbing rounded-xl bg-[#1f1f1f] shadow-2xl shadow-black/60 ring-1 ring-skylab-400/40">
-                            <FieldBlock {...blockProps(activeField, activeIndex)} solo={false} isLast hoverable={false} commentCount={0} commentable={false} />
-                            {loss ? <div className={phone ? "px-2 pb-2" : "px-4 pb-3"}><DragLossNote count={loss} /></div> : null}
-                          </div>
+                          <BrandPaper brand={state.brand}>
+                            <div className="cursor-grabbing rounded-xl bg-[#1f1f1f] shadow-2xl shadow-black/60 ring-1 ring-skylab-400/40">
+                              <FieldBlock {...blockProps(activeField, activeIndex)} solo={false} isLast hoverable={false} commentCount={0} commentable={false} />
+                              {loss ? <div className={phone ? "px-2 pb-2" : "px-4 pb-3"}><DragLossNote count={loss} /></div> : null}
+                            </div>
+                          </BrandPaper>
                         ) : null}
                       </DragOverlay>,
                       document.body,

@@ -130,7 +130,7 @@ export default function OverviewCard({ form, analytics, stepInfo = null, phone =
   }, [analytics, fields]);
 
   return (
-    <CardShell phone={phone} active>
+    <CardShell phone={phone} active brand={form?.brand}>
       {stepInfo ? <StepBar flowName={stepInfo.flowName} stage={stepInfo.stage} total={stepInfo.total} timeLimitMinutes={form?.timeLimitMinutes} /> : null}
       <FormDisplayerHeader title={form?.title || "Adsız form"} description={form?.description ?? ""} />
       {task ? <TaskBlock task={task} title={form?.title} /> : null}

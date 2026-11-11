@@ -66,7 +66,7 @@ export function FormDisplayerHeader({ title, description, children }) {
   return (
     <div className="max-w-2xl px-2 md:px-4">
       {hasTitle && (
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-50 sm:text-3xl">
+        <h1 data-slot="form-title" className="text-2xl font-semibold tracking-tight text-neutral-50 sm:text-3xl">
           {title}
         </h1>
       )}

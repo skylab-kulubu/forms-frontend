@@ -6,6 +6,7 @@ import { loginWithKeycloak } from "@/lib/authActions";
 import LoginButton from "./utils/LoginButton";
 import StateCard from "./StateCard";
 import Background from "./Background";
+import { BrandSlot } from "@/brands/BrandContext";
 
 export const FORM_ACCESS_STATUS = {
     AVAILABLE: 200,
@@ -317,7 +318,7 @@ export function FormStatusHandler({ isLoading, error, data, renderForm, renderSt
 
     return (
         <>
-            {withBackground && <Background instant />}
+            {withBackground && <BrandSlot name="Backdrop" fallback={<Background instant />} />}
             {uiState === "success" ? renderForm(data) : renderState ? (
                 renderState({ state: uiState, message, stage, startFormId, isWorkflow, reviewNote, reviewedAt, payload })
             ) : (
