@@ -4,9 +4,22 @@ import { useState } from "react";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
-export function DisplayFormSlider({ question, questionNumber, description, required = false, min = 0, max = 100, step = 1, value, onChange, missing = false }) {
-  const [internalValue, setInternalValue] = useState(value !== undefined ? value : (Number(min) + (Number(max) - Number(min)) / 2));
-  const currentValue = value !== undefined ? value : internalValue;
+export function sliderRange({ min = 0, max = 100, step = 1 } = {}) {
+  const low = Number.isFinite(Number(min)) ? Number(min) : 0;
+  const high = Number.isFinite(Number(max)) && Number(max) > low ? Number(max) : low + 1;
+  const size = Number(step) > 0 ? Number(step) : 1;
+  const decimals = (String(size).split(".")[1] ?? "").length;
+  const snap = (value) => {
+    const steps = Math.round((Math.min(high, Math.max(low, Number(value))) - low) / size);
+    return Math.min(high, Number((low + steps * size).toFixed(decimals)));
+  };
+  return { min: low, max: high, step: size, snap, middle: snap(low + (high - low) / 2) };
+}
+
+export function DisplayFormSlider({ question, questionNumber, description, required = false, min: rawMin = 0, max: rawMax = 100, step: rawStep = 1, value, onChange, missing = false }) {
+  const { min, max, step, snap, middle } = sliderRange({ min: rawMin, max: rawMax, step: rawStep });
+  const [internalValue, setInternalValue] = useState(value !== undefined ? value : middle);
+  const currentValue = snap(value !== undefined && value !== null && value !== "" ? value : internalValue);
   const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
 
   const commit = (next) => {
@@ -36,7 +49,7 @@ export function DisplayFormSlider({ question, questionNumber, description, requi
             <span className="text-xs font-medium text-neutral-500 w-6 text-right shrink-0">{min}</span>
             
             <input type="range" min={min} max={max} step={step} value={currentValue} onChange={(e) => commit(Number(e.target.value))}
-              className="flex-1 h-1 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-pink-400/40 hover:accent-pink-300 transition-all"
+              className="min-w-0 flex-1 h-1 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-pink-400/40 hover:accent-pink-300 transition-all"
             />
             
             <span className="text-xs font-medium text-neutral-500 w-6 text-left shrink-0">{max}</span>

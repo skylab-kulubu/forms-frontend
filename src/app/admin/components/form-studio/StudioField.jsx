@@ -6,6 +6,7 @@ import {
   ArrowDown, ArrowUp, Calendar, ChevronsUpDown, Clock, Copy, CornerDownRight, GripVertical, Lock, Plus, Trash2, Upload, X,
 } from "lucide-react";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
+import { sliderRange } from "@/app/components/form-components/FormSlider";
 import { Floating } from "@/app/components/utils/Floating";
 import { accountFileRules } from "@/lib/guest-uploads";
 import { REGISTRY } from "@/app/components/form-registry";
@@ -384,9 +385,7 @@ export function ControlPreview({ field, selected, lockedValues, readOnly = false
         </div>
       );
     case "slider": {
-      const min = Number(props.min ?? 0);
-      const max = Number(props.max ?? 100);
-      const middle = Math.round(min + (max - min) / 2);
+      const { min, max, middle } = sliderRange(props);
       return (
         <div className={`mt-3 flex w-full items-center gap-4 px-4 py-2.5 ${BOX}`}>
           <span className="w-6 shrink-0 text-right text-xs font-medium text-neutral-500">{min}</span>
