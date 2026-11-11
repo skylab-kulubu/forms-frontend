@@ -130,7 +130,7 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
   );
 }
 
-export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, choices = [], compact = false, value, onChange, missing = false }) {
+export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, allowMultiple = true, choices = [], compact = false, value, onChange, missing = false }) {
   const normalized = choices.map((choice, idx) => {
     if (typeof choice === "string") {
       return { id: String(idx), label: choice };
@@ -153,8 +153,11 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
 
   const toggle = (id) => {
     const exists = currentValue.includes(id);
-    const next = exists ? currentValue.filter((v) => v !== id) : [...currentValue, id];
-    commit(next);
+    if (!allowMultiple) {
+      commit(exists ? [] : [id]);
+      return;
+    }
+    commit(exists ? currentValue.filter((v) => v !== id) : [...currentValue, id]);
   };
 
   const choiceItems = normalized.map((choice, idx) => {
@@ -164,10 +167,17 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
       <label key={id} htmlFor={id}
         className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`}
       >
-        <input id={id} name="multi_choice" type="checkbox" aria-required={required}
-          checked={checked} onChange={() => toggle(choice.id)}
-          className="checkbox shrink-0"
-        />
+        {allowMultiple ? (
+          <input id={id} name="multi_choice" type="checkbox" aria-required={required}
+            checked={checked} onChange={() => toggle(choice.id)}
+            className="checkbox shrink-0"
+          />
+        ) : (
+          <input id={id} name={`mc-${instanceId}`} type="radio"
+            checked={checked} onChange={() => {}} onClick={() => toggle(choice.id)}
+            className="checkbox shrink-0"
+          />
+        )}
         <span className="text-sm text-neutral-200">{choice.label}</span>
       </label>
     );

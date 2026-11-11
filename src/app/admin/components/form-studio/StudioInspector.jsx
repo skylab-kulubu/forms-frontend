@@ -291,6 +291,25 @@ function VisibilitySection({ field, fields, actions, disabledReason }) {
   );
 }
 
+function MultiChoiceSection({ field, actions, lockedValues = [] }) {
+  const multiple = field.props?.allowMultiple !== false;
+  return (
+    <section className={PANEL_SECTION}>
+      <SectionHeader title="Seçenekler"
+        description={`${(field.props?.choices ?? []).length} seçenek. Tuvalde düzenlenir: Enter yeni seçenek açar, boş seçenekte Backspace siler, birden çok satır yapıştırınca her satır bir seçenek olur.`}
+      />
+      <div className="divide-y divide-white/5">
+        <KV label="Birden fazla seçim" hint={multiple ? "Başvuran istediği kadar seçenek işaretler." : "Başvuran yalnız bir seçenek işaretler."}>
+          <Switch checked={multiple} label="Birden fazla seçim" onChange={() => actions.updateProps(field.id, { allowMultiple: !multiple })} />
+        </KV>
+      </div>
+      {lockedValues.length > 0 ? (
+        <p className="flex items-start gap-1.5 text-2xs leading-relaxed text-neutral-500"><Lock size={11} className="mt-0.5 shrink-0" />{lockedValues.length} seçenek akış koşulunda kullanılıyor; adı değiştirilemez ve silinemez.</p>
+      ) : null}
+    </section>
+  );
+}
+
 function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onRemove, onToast }) {
   const isSeparator = field.type === "separator";
   const locked = actions.lockedById.get(field.id) ?? null;
@@ -301,18 +320,8 @@ function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onR
   let typeSection = null;
   if (field.type === "short_text") typeSection = <ShortTextSection field={field} actions={actions} locked={identity} />;
   else if (field.type === "combobox") typeSection = <ComboboxSection field={field} actions={actions} lockedValues={lockedValues} />;
-  else if (field.type === "multi_choice") {
-    typeSection = (
-      <section className={PANEL_SECTION}>
-        <SectionHeader title="Seçenekler"
-          description={`${(field.props?.choices ?? []).length} seçenek. Tuvalde düzenlenir: Enter yeni seçenek açar, boş seçenekte Backspace siler, birden çok satır yapıştırınca her satır bir seçenek olur.`}
-        />
-        {lockedValues.length > 0 ? (
-          <p className="flex items-start gap-1.5 text-2xs leading-relaxed text-neutral-500"><Lock size={11} className="mt-0.5 shrink-0" />{lockedValues.length} seçenek akış koşulunda kullanılıyor; adı değiştirilemez ve silinemez.</p>
-        ) : null}
-      </section>
-    );
-  } else if (field.type === "toggle") typeSection = <ToggleSection field={field} actions={actions} lockedValues={lockedValues} />;
+  else if (field.type === "multi_choice") typeSection = <MultiChoiceSection field={field} actions={actions} lockedValues={lockedValues} />;
+  else if (field.type === "toggle") typeSection = <ToggleSection field={field} actions={actions} lockedValues={lockedValues} />;
   else if (field.type === "slider") typeSection = <SliderSection field={field} actions={actions} />;
   else if (field.type === "file") typeSection = <FileSection field={field} actions={actions} anonymous={anonymous} />;
   else if (field.type === "matrix") {

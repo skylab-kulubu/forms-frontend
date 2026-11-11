@@ -108,7 +108,7 @@ function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
         const locked = lockedValues.includes(choice);
         return (
           <div key={index} className={`group/opt flex items-center gap-3 rounded-md border border-white/10 bg-neutral-900/60 p-2`}>
-            <input type="checkbox" disabled tabIndex={-1} className="checkbox shrink-0" />
+            <input type={field.props?.allowMultiple === false ? "radio" : "checkbox"} disabled tabIndex={-1} className="checkbox shrink-0" />
             <Editable editKey={`o-${field.id}-${index}`} value={choice} placeholder={`Seçenek ${index + 1}`} readOnly={locked || readOnly}
               title={locked ? "Akış koşulu bu seçeneği karşılaştırıyor; adı değiştirilemez." : undefined}
               className={`min-w-0 flex-1 text-sm ${locked ? "text-neutral-400" : "text-neutral-200"}`}

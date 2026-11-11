@@ -42,7 +42,7 @@ export const REGISTRY = {
   multi_choice: {
     label: "Çoklu Seçim",
     svg: "/assets/components/multi-choice.svg",
-    defaults: { question: "", description: "", required: false, choices: ["Seçenek 1", "Seçenek 2"] },
+    defaults: { question: "", description: "", required: false, allowMultiple: true, choices: ["Seçenek 1", "Seçenek 2"] },
     Create: CreateFormMultiChoice, Display: DisplayFormMultiChoice
   },
   date: {
