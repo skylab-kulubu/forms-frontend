@@ -55,7 +55,7 @@ export default function StepIntro({ workflow, stage, formTitle, arrivedTitle = n
             {workflow?.title}
             {!arrived && stage > 0 && <> · <span className="text-skylab-300">{stage}. adım</span></>}
           </p>
-          <h1 className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-neutral-50">
+          <h1 data-slot="screen-title" className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-neutral-50">
             {revision ? `${formTitle} için düzeltme istendi` : arrived ? `${arrivedTitle} kaydedildi` : formTitle}
           </h1>
           {revision && (

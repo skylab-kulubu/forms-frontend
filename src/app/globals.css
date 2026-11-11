@@ -20,6 +20,7 @@ body {
   --font-sans: 'Space Grotesk', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-platform: var(--font-sans);
 
   /* Mikro tipografi ölçeği: 4xs = satır içi chip (rol rozeti), 3xs = durum
      rozeti/sayaç/bölüm etiketi, 2xs = meta satırı.

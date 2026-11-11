@@ -8,6 +8,7 @@ import { formatJourneyDate, hasJourney, journeyTimeline, singleResponseTimeline 
 import { formatLongDate } from "@/lib/form-timing";
 import LoginButton from "../../utils/LoginButton";
 import JourneyTimeline, { ReviewNote } from "./JourneyTimeline";
+import { BrandSlot, useHasBrandSlot } from "@/brands/BrandContext";
 
 const REPORT_MAILTO = "mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "/";
@@ -22,8 +23,8 @@ const ICON_TONE = {
 
 export function FooterMark() {
   return (
-    <div className="mt-10 flex items-center gap-1.5 text-2xs text-neutral-600">
-      <img src="/skylab.svg" alt="" className="size-3.5 opacity-70" />
+    <div data-slot="footer-mark" className="font-platform mt-10 flex items-center gap-1.5 text-2xs text-neutral-600">
+      <span aria-hidden="true" className="size-3.5 shrink-0 bg-skylab-500 opacity-70 mask-[url(/skylab.svg)] mask-contain mask-center mask-no-repeat" />
       <span>SKY LAB Forms</span>
     </div>
   );
@@ -210,17 +211,19 @@ export default function StatusScreen({ onRerun = null, ...props }) {
   const base = buildScreen({ ...props, isLastRun: Boolean(onRerun) });
   const screen = onRerun ? { ...base, action: { label: base.rerunLabel ?? "Yeniden başvur", onClick: onRerun }, hint: "Yeni başvuru ilk adımdan başlar." } : base;
   const { Icon } = screen;
+  const hasBrandHeader = useHasBrandSlot("Header");
 
   return (
-    <motion.div className="relative z-10 flex min-h-full w-full flex-col items-center px-5 pb-7 pt-14"
+    <motion.div className={`relative z-10 flex min-h-full w-full flex-col items-center px-5 pb-7 ${hasBrandHeader ? "" : "pt-14"}`}
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12, transition: { duration: 0.15, ease: [0.22, 1, 0.36, 1] } }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
+      <BrandSlot name="Header" />
       <div className="flex w-full flex-1 items-center justify-center">
         <div className="flex w-full max-w-104 flex-col items-center text-center">
           <Icon className={`size-8 ${ICON_TONE[screen.tone] ?? ICON_TONE.neutral}`} strokeWidth={1.6} />
           {screen.context && <p className="mt-4.5 text-xs text-neutral-500">{screen.context}</p>}
-          <h1 className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-neutral-50">{screen.title}</h1>
+          <h1 data-slot="screen-title" className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-neutral-50">{screen.title}</h1>
           {screen.description && <p className="mt-2 max-w-96 text-balance text-sm leading-relaxed text-neutral-400">{screen.description}</p>}
           <JourneyTimeline items={screen.timeline} className="mt-7" />
           {screen.note && <ReviewNote note={screen.note.note} date={screen.note.date} className="mt-5.5 w-full max-w-88 pl-3" />}
