@@ -12,9 +12,9 @@ export async function loadBrandFonts(key) {
   ]);
 }
 
-export default function BrandPaper({ brand, children }) {
+export default function BrandPaper({ brand, className = "", children }) {
   const skin = findBrand(brand);
-  if (!skin) return children;
+  if (!skin) return className ? <div className={className}>{children}</div> : children;
 
-  return <div data-brand={skin.key} data-brand-paper="" className={`contents ${skin.scopeClass}`}>{children}</div>;
+  return <div data-brand={skin.key} data-brand-paper="" className={`${className || "contents"} ${skin.scopeClass}`}>{children}</div>;
 }
