@@ -90,4 +90,4 @@
 .pk8-tog i::after { content: ""; position: absolute; right: .7cqw; top: .7cqw; width: 3.2cqw; height: 3.2cqw; border-radius: 1cqw; background: #fff; }
 .pk8-t { position: relative; z-index: 2; margin-top: auto; padding-bottom: 4cqw; }
 .pk8-h { font-size: 14cqw; line-height: .9; font-weight: 700; letter-spacing: -.055em; }
-.pk8-s { margin-top: 2.4cqw; max-width: 74cqw; font-size: 2.9cqw; line-height: 1.38; opacity: .9; }
+.pst .pk8-s { margin-top: 2.4cqw; max-width: 74cqw; font-size: 2.9cqw; line-height: 1.38; opacity: .9; }
