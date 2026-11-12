@@ -18,7 +18,7 @@ export const metadata = {
 
 export default function NewHomePage() {
   return (
-    <HomeShell page="kisiler" block=".a2-try.is-open">
+    <HomeShell page="kisiler" block=".tl-open">
       <HeroWall />
       <div className="a2-wrap">
         <section className="a2-sec" id={ids.after} data-page="">

@@ -2,28 +2,24 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, X } from "lucide-react";
-import { shortOrigin } from "@/lib/short-url";
+import { ArrowRight } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { fetchDisplayFormById } from "@/lib/hooks/useForm";
 import Poster from "../poster/Poster";
-import { posterQr } from "../poster/posterQr";
-import HomeForm from "../HomeForm";
-import { HOME_FORMS, HOME_PATHS, SECTIONS, TRIAL_ALIAS } from "../config";
+import { HOME_FORMS, HOME_PATHS, SECTIONS } from "../config";
 import { useHome, useScrollTo } from "../HomeContext";
-import { useMedia } from "../useInView";
+import PosterTrial, { preloadTrialForm } from "./trial/PosterTrial";
 import "./hero-wall.css";
 
-const WIDE = "(min-width: 1024px)";
-const REDUCE = "(prefers-reduced-motion: reduce)";
-const SCAN_MS = 560;
-const FOCUS_MS = 90;
-const SHORT_PREFIX = `${shortOrigin().replace(/^https?:\/\//i, "")}/`;
-const TRIAL_QR = posterQr(TRIAL_ALIAS);
-
-const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, iframe, [tabindex]:not([tabindex="-1"])';
+const HASH = "#deneme";
 
 function focusedElement() {
   const el = document.activeElement;
   return el && el !== document.body ? el : null;
+}
+
+function dropHash() {
+  window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
 }
 
 const WALL = [
@@ -49,62 +45,67 @@ const WALL = [
   },
 }));
 
-function PhoneForm({ formId, onEscape }) {
-  if (!formId) return <div className="a2-try-off">Form henüz bağlanmadı.</div>;
-
-  const prepare = (e) => {
-    try {
-      const win = e.currentTarget.contentWindow;
-      const style = win.document.createElement("style");
-      style.textContent = "*{scrollbar-width:none!important}";
-      win.document.head.appendChild(style);
-      win.addEventListener("keydown", (ev) => {
-        if (ev.key === "Escape" && !ev.defaultPrevented) onEscape();
-      });
-    } catch { }
-  };
-
-  return <iframe className="a2-try-frame" src={`/${formId}`} title="Deneme formu" onLoad={prepare} />;
-}
-
 export default function HeroWall() {
   const { trial: trialRef, pager: pagerRef } = useHome();
   const scrollTo = useScrollTo();
+  const queryClient = useQueryClient();
   const boardRef = useRef(null);
-  const panelRef = useRef(null);
-  const closeRef = useRef(null);
   const waitRef = useRef(null);
-  const pressRef = useRef(null);
   const openerRef = useRef(null);
   const phaseRef = useRef("idle");
   const lastPhaseRef = useRef("idle");
+  const pushedRef = useRef(false);
   const [phase, setPhase] = useState("idle");
-  const [armed, setArmed] = useState(false);
-  const wide = useMedia(WIDE);
-
-  const trying = phase === "open";
-  const scanning = phase === "scan";
+  const [entry, setEntry] = useState("click");
+  const [landed, setLanded] = useState(0);
 
   const move = useCallback((next) => {
     phaseRef.current = next;
     setPhase(next);
   }, []);
 
-  const arm = useCallback(() => setArmed(true), []);
-
-  const begin = useCallback(() => {
-    setArmed(true);
-    if (phaseRef.current !== "idle") return;
-    if (!openerRef.current) openerRef.current = focusedElement();
-    move(window.matchMedia(REDUCE).matches ? "open" : "scan");
+  const open = useCallback((from) => {
+    setEntry(from);
+    move("open");
   }, [move]);
 
-  const close = useCallback(() => move("idle"), [move]);
+  const arm = useCallback(() => {
+    if (!HOME_FORMS.trial) return;
+    preloadTrialForm();
+    queryClient.prefetchQuery({ queryKey: ["display-form", HOME_FORMS.trial], queryFn: () => fetchDisplayFormById(HOME_FORMS.trial), staleTime: 60_000 });
+  }, [queryClient]);
+
+  const begin = useCallback(() => {
+    arm();
+    if (phaseRef.current !== "idle") return;
+    if (!openerRef.current) openerRef.current = focusedElement();
+    open("click");
+  }, [arm, open]);
+
+  const startClosing = useCallback(() => {
+    if (phaseRef.current === "open") move("closing");
+  }, [move]);
+
+  const close = useCallback(() => {
+    if (pushedRef.current) {
+      pushedRef.current = false;
+      window.history.back();
+      return;
+    }
+    if (window.location.hash === HASH) dropHash();
+    startClosing();
+  }, [startClosing]);
+
+  const closed = useCallback(() => {
+    if (phaseRef.current !== "closing") return;
+    setLanded((n) => n + 1);
+    move("idle");
+  }, [move]);
 
   const tryAnywhere = useCallback(() => {
-    if (phaseRef.current === "open") return;
+    if (phaseRef.current !== "idle") return;
     openerRef.current = focusedElement();
-    setArmed(true);
+    arm();
     const board = boardRef.current;
     let far = false;
     if (board) {
@@ -115,7 +116,7 @@ export default function HeroWall() {
     clearTimeout(waitRef.current);
     const delay = far ? (pagerRef?.current?.on() ? 1000 : 520) : 0;
     waitRef.current = setTimeout(begin, delay);
-  }, [begin, scrollTo, pagerRef]);
+  }, [arm, begin, scrollTo, pagerRef]);
 
   useEffect(() => {
     if (!trialRef) return;
@@ -128,10 +129,29 @@ export default function HeroWall() {
   useEffect(() => () => clearTimeout(waitRef.current), []);
 
   useEffect(() => {
-    if (phase !== "scan") return;
-    const t = setTimeout(() => move("open"), SCAN_MS);
-    return () => clearTimeout(t);
-  }, [phase, move]);
+    const raf = window.location.hash === HASH ? requestAnimationFrame(() => {
+      if (phaseRef.current === "idle") open("hash");
+    }) : 0;
+    const onPop = () => {
+      if (window.location.hash !== HASH) {
+        pushedRef.current = false;
+        startClosing();
+      } else if (phaseRef.current === "idle") {
+        open("click");
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("popstate", onPop);
+    };
+  }, [open, startClosing]);
+
+  useEffect(() => {
+    if (phase !== "open" || window.location.hash === HASH) return;
+    window.history.pushState(window.history.state, "", window.location.pathname + window.location.search + HASH);
+    pushedRef.current = true;
+  }, [phase]);
 
   useEffect(() => {
     const was = lastPhaseRef.current;
@@ -142,44 +162,10 @@ export default function HeroWall() {
     if (opener?.isConnected) opener.focus({ preventScroll: true });
   }, [phase]);
 
-  useEffect(() => {
-    if (phase !== "open") return;
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        move("idle");
-        return;
-      }
-      if (e.key !== "Tab" || !window.matchMedia(WIDE).matches) return;
-      const box = panelRef.current;
-      const items = box ? [...box.querySelectorAll(FOCUSABLE)].filter((el) => el.getClientRects().length > 0) : [];
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-      if (!box.contains(active)) {
-        e.preventDefault();
-        (e.shiftKey ? last : first).focus();
-      } else if (e.shiftKey && active === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    const t = setTimeout(() => {
-      if (window.matchMedia(WIDE).matches) closeRef.current?.focus({ preventScroll: true });
-      else panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, FOCUS_MS);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      clearTimeout(t);
-    };
-  }, [phase, move]);
+  const active = phase !== "idle";
 
   return (
-    <section className={"a2-board" + (trying ? " is-trying" : "")} id={SECTIONS.kisiler.top} data-page="" aria-label="Afiş panosu" ref={boardRef}>
+    <section className={"a2-board" + (active ? " is-tl" : "") + (phase === "closing" ? " is-tl-closing" : "")} id={SECTIONS.kisiler.top} data-page="" aria-label="Afiş panosu" ref={boardRef}>
       <div className="a2-board-in">
         <div className="a2-intro">
           <p className="a2-eyebrow">SKY LAB Forms</p>
@@ -194,103 +180,37 @@ export default function HeroWall() {
           </div>
         </div>
         <div className="a2-rail">
-          {WALL.map((item) => {
-            const scan = scanning && item.trial;
-            return (
-              <div key={item.id} className={"a2-item" + (item.trial ? " is-trial" : "") + (scan ? " is-scan" : "")} style={item.style}>
-                <div className="a2-float">
-                  <div className="a2-card">
-                    <div className="a2-front">
-                      <Poster kind={item.kind} />
-                      {item.trial && (
-                        <p className="a2-sticky">
-                          <i />
-                          Buradan deneyin
-                        </p>
-                      )}
-                      {item.trial && phase === "idle" && (
-                        <span className="a2-scan is-idle" aria-hidden="true">
-                          <i />
-                          <i />
-                          <i />
-                          <i />
-                        </span>
-                      )}
-                      {scan && (
-                        <span className="a2-scan" aria-hidden="true">
-                          <i />
-                          <i />
-                          <i />
-                          <i />
-                          <b />
-                        </span>
-                      )}
-                      {item.trial && (
-                        <button type="button" className="a2-hit" onClick={begin} onPointerEnter={arm} onFocus={arm} aria-label="Forms'u deneyin afişi. QR'ını okutup formu açın." />
-                      )}
-                    </div>
+          {WALL.map((item) => (
+            <div key={item.id} className={"a2-item" + (item.trial ? " is-trial" : "")} style={item.style}>
+              <div className="a2-float">
+                <div className="a2-card">
+                  <div className="a2-front">
+                    <Poster kind={item.kind} />
+                    {item.trial && (
+                      <p className="a2-sticky" key={landed}>
+                        <i />
+                        Buradan deneyin
+                      </p>
+                    )}
+                    {item.trial && !active && (
+                      <span className="a2-scan" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    )}
+                    {item.trial && (
+                      <button type="button" className="a2-hit" onClick={begin} onPointerEnter={arm} onFocus={arm} aria-label="Forms'u deneyin afişi. QR'ını okutup formu açın." />
+                    )}
                   </div>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
         <p className="a2-swipe">Kaydırarak afişlere bakabilirsiniz. Deneme formu için afişe tıklayın.</p>
-        <div className={"a2-try scrollbar" + (trying ? " is-open" : "")} ref={panelRef} role="dialog" aria-modal={trying && wide ? "true" : undefined} aria-label="Forms'u deneyin" inert={!trying}>
-          <div className="a2-try-bg" aria-hidden="true" />
-          <div
-            className="a2-try-in"
-            onPointerDown={(e) => {
-              pressRef.current = e.target;
-            }}
-            onClick={(e) => {
-              if (e.target === e.currentTarget && pressRef.current === e.currentTarget) close();
-            }}
-          >
-            <div className="a2-try-cap">
-              <p className="a2-try-k">Afişteki QR telefonda bu formu açar</p>
-              <h2 className="a2-try-h">Forms&apos;u deneyin</h2>
-              <p className="a2-try-p">İki dakikalık bir deneme başvurusu. Gönderdikten sonra cevaplarınızın kopyası e-postanıza gelecek.</p>
-              {TRIAL_QR && (
-                <div className="a2-try-scan">
-                  <span className="a2-try-qr">
-                    <svg viewBox={`0 0 ${TRIAL_QR.size} ${TRIAL_QR.size}`} shapeRendering="crispEdges" aria-hidden="true">
-                      <path d={TRIAL_QR.d} fill="#121212" />
-                    </svg>
-                  </span>
-                  <span className="a2-try-scan-t">
-                    <b>Kendi telefonunuzla okutun</b>
-                    <span>Bu formu telefonunuzda denemek için QR&apos;ı okutun.</span>
-                    <code>{SHORT_PREFIX + TRIAL_ALIAS}</code>
-                  </span>
-                </div>
-              )}
-              <p className="a2-try-or">ya da yandaki telefonda doldurun</p>
-              <button type="button" className="f-quiet a2-try-back" onClick={close}>Panoya dönün</button>
-            </div>
-            <div className="a2-try-sheet">
-              <div className="a2-try-hd">
-                <span className="a2-try-thumb">
-                  <Poster kind="trial" />
-                </span>
-                <div className="a2-try-hm">
-                  <p>Forms&apos;u deneyin</p>
-                  <small>{SHORT_PREFIX + TRIAL_ALIAS} · WEBLAB</small>
-                </div>
-                <button type="button" className="a2-try-xm" onClick={close} aria-label="Formu kapatın">
-                  <X size={16} aria-hidden="true" />
-                </button>
-              </div>
-              <div className="a2-try-scr">
-                {armed && (wide ? <PhoneForm formId={HOME_FORMS.trial} onEscape={close} /> : <HomeForm formId={HOME_FORMS.trial} eager />)}
-              </div>
-            </div>
-            <button type="button" className="a2-try-x" ref={closeRef} onClick={close}>
-              <X size={16} aria-hidden="true" />
-              Kapatın
-            </button>
-          </div>
-        </div>
+        {active && <PosterTrial formId={HOME_FORMS.trial} onClose={close} closing={phase === "closing"} onClosed={closed} entry={entry} />}
       </div>
     </section>
   );
