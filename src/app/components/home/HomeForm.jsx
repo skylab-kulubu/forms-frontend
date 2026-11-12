@@ -14,22 +14,16 @@ function Waiting() {
 
 const FormClient = dynamic(() => import("@/app/[id]/FormClient"), { ssr: false, loading: Waiting });
 
-export default function HomeForm({ formId, eager = false, className = "" }) {
+export default function HomeForm({ formId, className = "" }) {
   if (!formId) {
     return <div className={`hm-embed-off ${className}`.trim()}>Form henüz bağlanmadı.</div>;
   }
 
-  const form = (
-    <div className="hm-embed">
-      <FormClient formId={formId} embedded />
-    </div>
-  );
-
-  if (eager) return <div className={className}>{form}</div>;
-
   return (
     <Deferred className={className} margin="900px 0px" placeholder={<Waiting />}>
-      {form}
+      <div className="hm-embed">
+        <FormClient formId={formId} embedded />
+      </div>
     </Deferred>
   );
 }

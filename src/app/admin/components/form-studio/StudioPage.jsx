@@ -624,11 +624,9 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
                     {isClient ? createPortal(
                       <DragOverlay dropAnimation={DROP_ANIMATION} modifiers={[restrictToVerticalAxis]}>
                         {activeField ? (
-                          <BrandPaper brand={state.brand}>
-                            <div className="cursor-grabbing rounded-xl bg-[#1f1f1f] shadow-2xl shadow-black/60 ring-1 ring-skylab-400/40">
-                              <FieldBlock {...blockProps(activeField, activeIndex)} solo={false} isLast hoverable={false} commentCount={0} commentable={false} />
-                              {loss ? <div className={phone ? "px-2 pb-2" : "px-4 pb-3"}><DragLossNote count={loss} /></div> : null}
-                            </div>
+                          <BrandPaper brand={state.brand} className="cursor-grabbing rounded-xl bg-[#1f1f1f] shadow-2xl shadow-black/60 ring-1 ring-skylab-400/40">
+                            <FieldBlock {...blockProps(activeField, activeIndex)} solo={false} isLast hoverable={false} commentCount={0} commentable={false} />
+                            {loss ? <div className={phone ? "px-2 pb-2" : "px-4 pb-3"}><DragLossNote count={loss} /></div> : null}
                           </BrandPaper>
                         ) : null}
                       </DragOverlay>,
