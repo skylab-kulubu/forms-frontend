@@ -82,12 +82,14 @@
 @media (min-width: 640px) { .sf-dev { margin-left: auto; } }
 @media (max-width: 639px) {
   .sf-in { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
-  .sf-top { gap: 6px 0; }
-  .sf-nav { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+  .sf-top { justify-content: center; gap: 6px 0; }
+  .sf-id { width: 100%; justify-content: center; }
+  .sf-nav { width: 100%; justify-content: center; gap: 0 20px; }
   .sf .sf-nav a { min-height: 40px; font-size: 14px; }
   .sf-legal { gap: 10px 16px; margin-top: 16px; }
   .sf-legal > * { flex: 0 0 calc(50% - 8px); min-width: max-content; }
   .sf-legal > :first-child { flex-basis: 100%; }
+  .sf-legal > .sf-dev { text-align: right; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

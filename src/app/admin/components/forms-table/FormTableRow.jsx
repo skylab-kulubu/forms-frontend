@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
-import { ChartColumn, Check, ChevronDown, ChevronRight, Crown, Eye, FileText, Link2, PencilLine, Workflow } from "lucide-react";
+import { ChartColumn, Check, ChevronDown, ChevronRight, FileText, Link2, PencilLine, Workflow } from "lucide-react";
 import Avatar from "@/app/components/utils/Avatar";
 import { effectiveFormSettings } from "@/lib/form-settings";
 import { eventRefFromForm, publicFormUrl } from "@/lib/return-to";
-import { COLUMN_LABEL, EventChip, FeatureIcons, SortHeader, StatusDot, formatUpdatedAt } from "../ListItem";
+import { COLUMN_LABEL, EventChip, FeatureIcons, ROLE_MARK, SortHeader, StatusDot, formatUpdatedAt } from "../ListItem";
 import ColumnMenu from "./ColumnMenu";
 import RowPeek from "./RowPeek";
 import { agoText, closingNote } from "./table-data";
@@ -15,12 +15,6 @@ import { agoText, closingNote } from "./table-data";
 const TABLE_GRID = "grid items-center gap-3 grid-cols-[var(--table-0)] @2xl:grid-cols-[var(--table-2)] @4xl:grid-cols-[var(--table-4)] @5xl:grid-cols-[var(--table-5)] @6xl:grid-cols-[var(--table-6)]";
 
 const ROW_ICON = "relative z-10 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors";
-
-const ROLE_MARK = {
-  3: { label: "Sahip", Icon: Crown, text: "text-neutral-300", icon: "text-skylab-300" },
-  2: { label: "Editör", Icon: PencilLine, text: "text-neutral-300", icon: "text-neutral-400" },
-  1: { label: "Okuyucu", Icon: Eye, text: "text-neutral-500", icon: "text-neutral-500" },
-};
 
 function WeekBars({ values, peak }) {
   const today = values.length - 1;

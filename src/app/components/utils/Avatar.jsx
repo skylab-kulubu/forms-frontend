@@ -20,7 +20,7 @@ export default function Avatar({ name, email, photoUrl, size = "md", className =
   const initials = getInitials(name, email);
 
   return (
-    <div className={`${s.box} grid shrink-0 place-items-center overflow-hidden rounded-lg border border-white/10 bg-neutral-900/60 font-semibold text-neutral-300 ${className}`}>
+    <div className={`${s.box} grid shrink-0 place-items-center overflow-hidden rounded-lg border border-white/12 bg-black/45 font-semibold text-neutral-300 inset-shadow-xs inset-shadow-black/50 ${className}`}>
       {photoUrl ? (
         <img src={photoUrl} alt={name || ""} className="h-full w-full object-cover" />
       ) : initials ? (

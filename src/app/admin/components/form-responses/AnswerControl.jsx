@@ -2,6 +2,7 @@
 
 import { Calendar, ChevronsUpDown, Clock, Link as LinkIcon } from "lucide-react";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
+import { useMatrixLayout } from "@/app/components/form-components/FormMatrix";
 import { FilePreview } from "../response-displayer/components/FilePreview";
 import { answerKey, choiceItems, formatAnswerDate, isEmptyAnswer, matrixOf, recordsOf } from "./response-data";
 
@@ -129,31 +130,45 @@ function MatrixAnswer({ field, answer }) {
   const picked = matrixOf(answer);
   const rows = Array.isArray(props.rows) && props.rows.length ? props.rows : Object.keys(picked);
   const columns = Array.isArray(props.columns) && props.columns.length ? props.columns : [...new Set(Object.values(picked))];
+  const { rootRef, scrollerRef, layout } = useMatrixLayout(rows, columns);
 
   if (rows.length === 0) return <LongAnswer answer={answer} />;
 
   return (
-    <div className="mt-3 w-full overflow-x-auto rounded-lg border border-white/10">
-      <table className="w-full text-left text-xs">
-        <thead className="bg-white/3 text-neutral-400">
-          <tr>
-            <th className="px-3 py-2 font-medium" />
-            {columns.map((column) => <th key={column} className="px-2 py-2 text-center font-medium">{column}</th>)}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-white/5">
-          {rows.map((row) => (
-            <tr key={row}>
-              <td className="px-3 py-2 text-neutral-200">{row}</td>
-              {columns.map((column) => (
-                <td key={column} className="px-2 py-2 text-center">
-                  <span className={`inline-block size-3.5 rounded-full border ${picked[row] === column ? "border-skylab-300 bg-skylab-400 shadow-[inset_0_0_0_3px_#1c1c1c]" : "border-white/20"}`} />
-                </td>
+    <div ref={rootRef} className="mt-3 w-full">
+      {layout.mode === "table" ? (
+        <div ref={scrollerRef} className="w-full overflow-x-auto rounded-lg border border-white/10">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-white/3 text-neutral-400">
+              <tr>
+                <th className="px-3 py-2 font-medium" />
+                {columns.map((column) => <th key={column} className="px-2 py-2 text-center font-medium">{column}</th>)}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {rows.map((row) => (
+                <tr key={row}>
+                  <td className="px-3 py-2 text-neutral-200">{row}</td>
+                  {columns.map((column) => (
+                    <td key={column} className="px-2 py-2 text-center">
+                      <span className={`inline-block size-3.5 rounded-full border ${picked[row] === column ? "border-skylab-300 bg-skylab-400 shadow-[inset_0_0_0_3px_#1c1c1c]" : "border-white/20"}`} />
+                    </td>
+                  ))}
+                </tr>
               ))}
-            </tr>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <dl className="divide-y divide-white/5 rounded-lg border border-white/10">
+          {rows.map((row) => (
+            <div key={row} className="flex items-baseline justify-between gap-4 px-3 py-2 text-xs">
+              <dt className="min-w-0 text-neutral-400">{row}</dt>
+              <dd className={`max-w-[55%] shrink-0 text-right ${picked[row] !== undefined ? "text-neutral-100" : "text-neutral-600"}`}>{picked[row] ?? EMPTY}</dd>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </dl>
+      )}
     </div>
   );
 }
