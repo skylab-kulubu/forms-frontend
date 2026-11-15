@@ -80,7 +80,7 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
     };
 
     const control = (
-        <ToggleRow title={falseLabel} checkedTitle={trueLabel} checked={currentValue} onCheckedChange={handleToggle}
+        <ToggleRow variant="control" title={falseLabel} checkedTitle={trueLabel} checked={currentValue} onCheckedChange={handleToggle}
             className={missing ? "border-destructive/50" : undefined}
         />
     );

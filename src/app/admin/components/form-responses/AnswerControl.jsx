@@ -1,7 +1,7 @@
 "use client";
 
 import { Calendar, ChevronsUpDown, Clock, Link as LinkIcon } from "lucide-react";
-import { CheckboxCard, ChoiceMatrix, ToggleRow } from "@skylab-kulubu/skylcn-ui";
+import { CheckboxCard, ChoiceMatrix, ControlSizeProvider, ToggleRow } from "@skylab-kulubu/skylcn-ui";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
 import { FilePreview } from "../response-displayer/components/FilePreview";
 import { answerKey, choiceItems, formatAnswerDate, isEmptyAnswer, matrixOf, recordsOf } from "./response-data";
@@ -74,7 +74,7 @@ function ChoiceAnswer({ field, answer }) {
   return (
     <div className="mt-3 flex flex-col gap-2">
       {rows.map((row, index) => (
-        <CheckboxCard key={`${row.label}-${index}`} size="lg" label={row.label} checked={row.on} readOnly tabIndex={-1} />
+        <CheckboxCard key={`${row.label}-${index}`} label={row.label} checked={row.on} readOnly tabIndex={-1} />
       ))}
     </div>
   );
@@ -89,7 +89,7 @@ function ToggleAnswer({ field, answer }) {
   const on = text === trueLabel || text === "true";
   const title = empty ? <span className="font-normal text-subtle-foreground">{EMPTY}</span> : on ? trueLabel : text === "false" ? falseLabel : text;
 
-  return <ToggleRow className="mt-3" title={title} checked={on} readOnly tabIndex={-1} />;
+  return <ToggleRow variant="control" className="mt-3" title={title} checked={on} readOnly tabIndex={-1} />;
 }
 
 // skylcn's Slider has no read-only state, so its track, thumb, value and ends are drawn here in its classes
@@ -178,7 +178,16 @@ function FileAnswer({ answer, responseId }) {
   );
 }
 
-export default function AnswerControl({ field, answer, responseId }) {
+// The skylcn controls take the lg size the applicant answered at, as the static boxes here are drawn
+export default function AnswerControl(props) {
+  return (
+    <ControlSizeProvider size="lg">
+      <Answer {...props} />
+    </ControlSizeProvider>
+  );
+}
+
+function Answer({ field, answer, responseId }) {
   switch (field.type) {
     case "short_text":
     case "link":

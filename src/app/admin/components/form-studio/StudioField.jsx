@@ -4,7 +4,7 @@ import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import {
   ArrowDown, ArrowUp, Calendar, ChevronsUpDown, Clock, Copy, CornerDownRight, GripVertical, Lock, Plus, Trash2, Upload, X,
 } from "lucide-react";
-import { Badge, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, MenuGroup, MenuItem } from "@skylab-kulubu/skylcn-ui";
+import { Badge, ControlSizeProvider, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, MenuGroup, MenuItem, ToggleRow } from "@skylab-kulubu/skylcn-ui";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
 import { sliderRange } from "@/app/components/form-components/FormSlider";
 import { matrixChoiceClass, matrixGroupProps, matrixLabelClass, useMatrixLayout } from "@/app/components/form-components/FormMatrix";
@@ -97,8 +97,10 @@ function fileRulesLabel(acceptedFiles, maxSize) {
   return `${label} • MAKS ${Math.round(rules.maxBytes / 1024 / 1024)}MB`;
 }
 
-// The canvas previews draw the respondent page's skylcn controls (lg) statically, in their classes
+// The canvas previews draw the respondent page's skylcn controls (lg) statically, in their classes, so a
+// press selects the field rather than reaching a control. ToggleRow has a read-only state, so it is the real one.
 const BOX = "rounded-lg border border-input bg-background/60";
+const CHOICE = "border border-input bg-background/60";
 
 function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
   const choices = field.props?.choices ?? [];
@@ -108,7 +110,7 @@ function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
       {choices.map((choice, index) => {
         const locked = lockedValues.includes(choice);
         return (
-          <div key={index} className="group/opt flex items-center gap-3 rounded-md border border-border bg-input-background px-3 py-2">
+          <div key={index} className={`group/opt flex items-center gap-3 rounded-md px-3 py-2 ${CHOICE}`}>
             <span aria-hidden="true" className={`size-4 shrink-0 border border-border-strong bg-input-background ${field.props?.allowMultiple === false ? "rounded-full" : "rounded-sm"}`} />
             <Editable editKey={`o-${field.id}-${index}`} value={choice} placeholder={`Seçenek ${index + 1}`} readOnly={locked || readOnly}
               title={locked ? "Akış koşulu bu seçeneği karşılaştırıyor; adı değiştirilemez." : undefined}
@@ -445,12 +447,9 @@ export function ControlPreview({ field, selected, childId = null, lockedValues, 
       return <OptionRows field={field} selected={selected} lockedValues={lockedValues} readOnly={readOnly} api={api} />;
     case "toggle":
       return (
-        <div className="mt-3 flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5">
-          <span className="select-none text-sm font-semibold text-foreground">{props.falseLabel || "Hayır"}</span>
-          <span aria-hidden="true" className="inline-flex h-6 w-10 shrink-0 items-center rounded-full border border-border bg-muted px-0.5">
-            <span className="size-4.5 rounded-full bg-white shadow-sm shadow-black/30" />
-          </span>
-        </div>
+        <ControlSizeProvider size="lg">
+          <ToggleRow variant="control" className="mt-3" title={props.falseLabel || "Hayır"} checked={false} readOnly tabIndex={-1} />
+        </ControlSizeProvider>
       );
     case "slider": {
       const { min, max, middle } = sliderRange(props);
