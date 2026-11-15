@@ -145,7 +145,8 @@ body {
   --forms-ink: #000;
   --forms-ink-rgb: 0 0 0;
   --forms-panel: #ffffff;
-  --forms-panel-soft: #faf8f5;
+  /* The form card, a step darker than the page as dark's is a step lighter */
+  --forms-panel-soft: #eeeae5;
   --forms-danger-panel: #fdf3f2;
   --forms-code: #f4f2ef;
   --forms-shimmer-peak: 0.07;
