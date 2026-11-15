@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import SkylabLoader from "@/app/components/SkylabLoader";
+import { SkylabLoader } from "@skylab-kulubu/skylcn-ui";
 import { reportAuthResult } from "@/lib/session-recovery";
 
 export default function SignInDone() {
@@ -14,7 +14,7 @@ export default function SignInDone() {
 
   return (
     <div className="grid h-dvh place-items-center">
-      <SkylabLoader size={64} color="#525252" />
+      <SkylabLoader size={64} className="text-neutral-600" />
     </div>
   );
 }

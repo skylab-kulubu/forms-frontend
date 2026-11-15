@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import SkylabLoader from "@/app/components/SkylabLoader";
+import { SkylabLoader } from "@skylab-kulubu/skylcn-ui";
 import { loginWithKeycloak, getPostLoginRedirect } from "@/lib/authActions";
 import { inSilentFrame, reportAuthResult } from "@/lib/session-recovery";
 
@@ -17,7 +17,7 @@ const RETRY_GUARD_MS = 20 * 1000;
 function Loader() {
   return (
     <div className="grid h-dvh place-items-center">
-      <SkylabLoader size={64} color="#525252" />
+      <SkylabLoader size={64} className="text-neutral-600" />
     </div>
   );
 }

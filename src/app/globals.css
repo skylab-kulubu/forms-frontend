@@ -1,4 +1,12 @@
-@import "tailwindcss";
+/* Only src is scanned: with automatic detection on, an @source line into node_modules opens the
+   whole skylcn package to the scan. skylcn comes in as its theme plus one stylesheet per component
+   forms uses; a component without its line here renders unstyled. */
+@import "tailwindcss" source(none);
+@source "../";
+@import "@skylab-kulubu/skylcn-ui/theme-base.css";
+@import "@skylab-kulubu/skylcn-ui/sources/pagination.css";
+@import "@skylab-kulubu/skylcn-ui/sources/skylab-loader.css";
+@import "@skylab-kulubu/skylcn-ui/sources/tooltip.css";
 
 html {
   -webkit-text-size-adjust: 100%;

@@ -10,6 +10,7 @@ import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow, UserX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { TooltipProvider } from "@skylab-kulubu/skylcn-ui";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
@@ -348,7 +349,7 @@ export default function Sidebar({ user, children }) {
             <div id="admin-header-slot" className="flex shrink-0 items-center" />
           </div>
         </div>
-        <div className="md:min-h-0 md:flex-1">{children}</div>
+        <div className="md:min-h-0 md:flex-1"><TooltipProvider>{children}</TooltipProvider></div>
       </div>
     </div>
   );

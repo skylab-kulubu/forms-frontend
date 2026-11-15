@@ -2,7 +2,7 @@
 
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import SkylabLoader from "@/app/components/SkylabLoader";
+import { SkylabLoader } from "@skylab-kulubu/skylcn-ui";
 import { loginWithKeycloak, getPostLoginRedirect } from "@/lib/authActions";
 import { claimAuthRetry, inSilentFrame, releaseAuthRetry, reportAuthResult } from "@/lib/session-recovery";
 
@@ -27,7 +27,7 @@ function SignInLogic() {
 
   return (
     <div className="grid h-dvh place-items-center">
-      <SkylabLoader size={64} color="#525252" />
+      <SkylabLoader size={64} className="text-neutral-600" />
     </div>
   );
 }
@@ -36,7 +36,7 @@ export default function SignInRedirect() {
   return (
     <Suspense fallback={
       <div className="grid h-dvh place-items-center">
-        <SkylabLoader size={64} color="#525252" />
+        <SkylabLoader size={64} className="text-neutral-600" />
       </div>
     }>
       <SignInLogic />

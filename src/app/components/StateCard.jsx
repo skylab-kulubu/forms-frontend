@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import SkylabLoader from "./SkylabLoader";
+import { SkylabLoader } from "@skylab-kulubu/skylcn-ui";
 
 const cardVariants = {
     initial: { opacity: 0, y: 28, scale: 0.98 },
@@ -23,7 +23,7 @@ export default function StateCard({ title, description, Icon, isLoading, tone = 
                 className="mx-auto flex w-full max-w-md flex-col items-center px-6 text-center"
             >
                 {isLoading ? (
-                    <SkylabLoader size={80} color="#e5e5e5" />
+                    <SkylabLoader size={80} className="text-neutral-200" />
                 ) : Icon ? (
                     <Icon className={`h-9 w-9 ${iconColor} drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)]`} />
                 ) : null}

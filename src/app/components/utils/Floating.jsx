@@ -93,6 +93,8 @@ export function Floating({ anchor, onDismiss, placement = "bottom-start", offset
       if (floating && floating.contains(event.target)) return;
       const resolved = resolveAnchor(anchor);
       if (resolved?.node && resolved.node.contains(event.target)) return;
+      // A skylcn popup opened from this panel lives in Base UI's portal on body, outside the panel's DOM
+      if (event.target.closest?.("[data-base-ui-portal]")) return;
       onDismiss();
     };
 
