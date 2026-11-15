@@ -13,7 +13,9 @@
   --fade: calc(var(--gap) + 10px);
   position: sticky; top: 0; height: 100dvh; overflow: clip;
 }
-.tour[data-pin="pinned"] .tour-stage { position: fixed; left: var(--tour-left, 0); width: var(--tour-width, 100%); }
+@media not (any-pointer: coarse) {
+  .hm-main.tour-wide .tour[data-pin="pinned"] .tour-stage { position: fixed; left: var(--tour-left, 0); width: var(--tour-width, 100%); }
+}
 .tour-stage .tour-scene { position: absolute; inset: 0 0 0 var(--cut); overflow: clip; pointer-events: none; -webkit-mask-image: linear-gradient(to right, transparent, #000 calc(var(--fade) + 28px)); mask-image: linear-gradient(to right, transparent, #000 calc(var(--fade) + 28px)); transition: opacity .3s ease; }
 .tour-stage .tour-scene.is-cut { opacity: 0; transition-duration: .16s; }
 .tour-stage:not(.is-in) :is(.tour-scene, .tour-copy) { opacity: 0; }
