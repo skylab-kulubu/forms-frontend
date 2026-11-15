@@ -231,9 +231,10 @@ function ParticipationSection({ metrics, attempts, timed }) {
           ) : <KV label="Ortalama süre"><span className="font-semibold tabular-nums text-neutral-100">{formatDuration(metrics.averageCompletionTime)}</span></KV>
         )}
       </div>
+      {/* The channel bars above draw in these two, so the panel keeps one palette */}
       <ProportionBar segments={[
-        { key: "registered", label: "Kayıtlı", value: metrics.sourceBreakdown?.registered ?? 0 },
-        { key: "anonymous", label: "Anonim", value: metrics.sourceBreakdown?.anonymous ?? 0 },
+        { key: "registered", label: "Kayıtlı", value: metrics.sourceBreakdown?.registered ?? 0, color: "var(--skylab-500)" },
+        { key: "anonymous", label: "Anonim", value: metrics.sourceBreakdown?.anonymous ?? 0, color: "var(--skylab-800)" },
       ]}
       />
     </section>
