@@ -93,10 +93,12 @@ export function slot(actor, options = {}) {
   return shot(actor, R(0, 0, actor.pw, actor.ph), { max: 1, ...options });
 }
 
+export const OFF = { before: { dx: 0.14, o: 0, z: -60 }, after: { dx: -0.14, o: 0, z: -60 } };
+
 export function stint(actor, from, to) {
   const on = () => slot(actor);
-  const before = () => slot(actor, { dx: 0.5, o: 0, ry: -16, z: -120 });
-  const after = () => slot(actor, { dx: -0.5, o: 0, ry: 16, z: -120 });
+  const before = () => slot(actor, OFF.before);
+  const after = () => slot(actor, OFF.after);
   return [{ u: from - 0.16, f: before }, { u: from + 0.04, f: on }, { u: to - 0.16, f: on }, { u: to + 0.04, f: after }];
 }
 

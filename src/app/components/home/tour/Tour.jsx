@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ChevronRight } from "lucide-react";
 import { useHome, useScrollTo } from "../HomeContext";
 import { useScrollContainer } from "../scroll";
 import { scrollToSection } from "../usePager";
@@ -20,6 +20,8 @@ const INTRO_MS = { wide: 1700, narrow: 1300 };
 const SWAP_OUT = 140;
 const SWAP_IN = 260;
 const CLOSE = 0.1;
+const STORY_RATE = 0.4;
+const READ = { base: 1.2, chars: 28, min: 4, max: 6 };
 const SCROLL_KEYS = { ArrowDown: 40, ArrowUp: -40, PageDown: 0.875, PageUp: -0.875, " ": 0.875, Home: -1e9, End: 1e9 };
 
 export default function Tour({ film, sections, deep, intro, slim = false, tryable = false, column = false }) {
@@ -48,7 +50,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
     const S = {
       mod: null, film: null, mode: null, state: "open", open: false, top: 0, span: 0, vh: 1, per: 1, raw: 0, liveAt: 0, near: false, dead: false,
       wanted: false, armed: false, cut: false, hold: null, dip: 0, intro: 0, rest: 0, timer: 0, idle: 0, docs: new WeakMap(), lost: null,
-      pin: "", tight: null, wide: null, loading: false, land: 0, slim: false, swap: null, shown: false,
+      pin: "", tight: null, wide: null, loading: false, land: 0, slim: false, swap: null, shown: false, story: false, play: 0, view: false, k: "", pace: [],
     };
     const bar = box.querySelector(".f-hdr");
     const capsule = bar?.querySelector(".f-hdr-in") ?? null;
@@ -157,11 +159,11 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
     const place = () => {
       const vh = box.clientHeight;
       const per = vh * (PACE[S.mode] ?? 1);
-      if (S.open) track.style.setProperty("--tour-len", String(S.mod.T.total * (per / vh) + 1));
+      if (S.open && !S.story) track.style.setProperty("--tour-len", String(S.mod.T.total * (per / vh) + 1));
       const frame = track.getBoundingClientRect();
       const top = frame.top - box.getBoundingClientRect().top + box.scrollTop;
       const moved = vh !== S.vh || per !== S.per || Math.abs(top - S.top) > 0.5;
-      const keep = moved && S.open && S.raw > 0.001 && S.raw < S.mod.T.total - 0.001 ? S.raw : null;
+      const keep = !S.story && moved && S.open && S.raw > 0.001 && S.raw < S.mod.T.total - 0.001 ? S.raw : null;
       S.vh = vh;
       S.per = per;
       S.top = top;
@@ -204,7 +206,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
     const setState = (state) => {
       S.state = state;
       S.open = state === "open" && Boolean(S.mod) && Boolean(S.mode) && S.mode !== "off";
-      track.style.setProperty("--tour-len", S.open ? lenOf() : "1");
+      track.style.setProperty("--tour-len", S.open && !S.story ? lenOf() : "1");
       store.set({ state, active: 0, note: -1, live: false, pinned: false, away: false });
       place();
     };
@@ -224,7 +226,22 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       return true;
     };
 
-    const inTour = () => S.open && S.raw > -0.02 && S.raw < S.mod.T.total + 0.02;
+    const inTour = () => (S.story ? S.open && S.view : S.open && S.raw > -0.02 && S.raw < S.mod.T.total + 0.02);
+
+    const captionAt = (u) => {
+      let index = 0;
+      S.mod.CAPTIONS.forEach((item, at) => {
+        if (u >= item.at - 0.02) index = at;
+      });
+      return index;
+    };
+
+    const paceOf = (mod) => mod.CAPTIONS.map((item, index) => {
+      const span = (mod.CAPTIONS[index + 1]?.at ?? mod.T.total) - item.at;
+      const length = `${item.title} ${item.compactText ?? item.text}`.length;
+      const read = Math.min(READ.max, Math.max(READ.min, READ.base + length / READ.chars));
+      return span / Math.max(span / STORY_RATE, read);
+    });
 
     const onInnerKey = (event) => {
       if (S.film?.live) return;
@@ -270,7 +287,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       });
     };
 
-    const onFrame = (u) => {
+    const onFrame = (u, dt = 0) => {
       const film = S.film;
       if (!film) return;
       bridge();
@@ -279,9 +296,19 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       setSlim(slim && S.open && S.mode === "wide" && (S.slim ? u > 0.38 && u < end - CLOSE : u > 0.46 && u < end - CLOSE - 0.04));
       const total = S.mod.T.total;
       S.raw = (box.scrollTop - S.top) / S.per;
+      const lead = film.lead();
+      const ready = lead ? lead.ready : film.ready || film.covered;
       if (!S.open) {
         if (film.u > 0.0005 || film.target > 0.0005) film.jump(0);
         S.cut = false;
+      } else if (S.story) {
+        if (S.cut) {
+          film.jump(S.play);
+          S.cut = false;
+        } else {
+          if (S.view && ready && !film.live && !S.dip && S.play < total) S.play = Math.min(total, S.play + Math.min(0.25, dt) * (S.pace[captionAt(S.play)] ?? STORY_RATE));
+          film.setTarget(S.play);
+        }
       } else {
         const aim = pager?.current?.aim?.() ?? null;
         const passing = aim !== null && (aim < S.top - 1 || aim > S.top + total * S.per + 1);
@@ -300,18 +327,23 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       if (film.live && Math.abs(box.scrollTop - S.liveAt) > S.vh * 0.04) setLive(false);
 
       const list = S.mod.CAPTIONS;
-      let active = 0;
-      list.forEach((item, index) => {
-        if (u >= item.at - 0.02) active = index;
-      });
+      const active = captionAt(u);
       let note = -1;
       list[active].notes?.forEach((item, index) => {
         if (u >= item.at) note = index;
       });
-      const lead = film.lead();
+      if (S.story) {
+        const from = list[active].at;
+        const to = list[active + 1]?.at ?? total;
+        const k = Math.max(0, Math.min(1, (u - from) / Math.max(0.01, to - from))).toFixed(3);
+        if (k !== S.k) {
+          S.k = k;
+          stage.style.setProperty("--tour-k", k);
+        }
+      }
       store.set({
-        active, note, live: film.live, framed: S.mod.framed(u) > 0.5, pinned: inTour(), away: S.open && u > AWAY, closing: S.open && u >= S.mod.T.end - CLOSE,
-        waiting: !(lead ? lead.ready : film.ready || film.covered),
+        active, note, live: film.live, framed: S.mod.framed(u) > 0.5, pinned: inTour(), away: S.open && !S.story && u > AWAY, closing: S.open && u >= S.mod.T.end - CLOSE,
+        waiting: !ready,
         canTry: S.open && (film.live || Boolean(lead?.ready)),
       });
     };
@@ -382,6 +414,17 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       const key = deep[decodeURIComponent(window.location.hash.slice(1))];
       if (!key || !S.mod || !S.mode || S.mode === "off") return;
       if (!S.open) steady(() => setState("open"));
+      if (S.story) {
+        S.play = S.mod.T[key] + 0.02;
+        S.cut = true;
+        wake();
+        if (smooth) scrollToY(S.top);
+        else {
+          box.scrollTop = S.top;
+          remember(box);
+        }
+        return;
+      }
       const y = yOf(S.mod.T[key] + 0.02);
       wake();
       if (smooth) travel(y);
@@ -399,6 +442,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
         const mod = await film();
         if (S.dead) return;
         S.mod = mod;
+        S.pace = paceOf(mod);
         store.set({ captions: mod.CAPTIONS });
         steady(() => setState(S.state));
         seek(false);
@@ -427,6 +471,8 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       S.film?.destroy();
       S.film = null;
       S.mode = next;
+      S.story = next === "narrow";
+      S.play = 0;
       setSlim(false, false);
       box.classList.toggle("tour-wide", next === "wide");
       box.classList.toggle("tour-narrow", next === "narrow");
@@ -482,6 +528,12 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
     }
 
     function replay() {
+      if (S.story) {
+        S.play = 0;
+        S.cut = true;
+        scrollToY(S.top);
+        return;
+      }
       box.scrollTop = S.top;
       remember(box);
       S.cut = true;
@@ -512,7 +564,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
 
     const rest = () => {
       S.rest = 0;
-      if (!S.open || S.intro || S.dip || (pager?.current?.aim?.() ?? null) !== null) return;
+      if (!S.open || S.story || S.intro || S.dip || (pager?.current?.aim?.() ?? null) !== null) return;
       if (box.scrollTop < S.top + S.span - 1) return;
       setLive(false);
       steady(() => setState("done"));
@@ -550,6 +602,34 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       run();
     }, { root: box, rootMargin: "100% 0px" });
     near.observe(track);
+    const view = new IntersectionObserver(([entry]) => {
+      S.view = entry.intersectionRatio >= 0.6;
+    }, { root: box, threshold: [0, 0.6, 1] });
+    view.observe(track);
+
+    const jumpTo = (u) => {
+      if (!S.open || !S.mod) return;
+      if (!S.story) {
+        travel(yOf(u));
+        return;
+      }
+      scene.classList.add("is-cut");
+      clearTimeout(S.dip);
+      S.dip = setTimeout(() => {
+        S.dip = 0;
+        S.play = Math.max(0, u);
+        S.cut = true;
+        requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.remove("is-cut")));
+      }, 170);
+    };
+    const step = (dir) => {
+      if (!S.mod) return;
+      const list = S.mod.CAPTIONS;
+      const active = captionAt(S.play);
+      const into = S.play - list[active].at;
+      const next = dir < 0 && into > 0.6 ? active : Math.max(0, Math.min(list.length - 1, active + dir));
+      jumpTo(list[next].at + 0.02);
+    };
     const sizes = new ResizeObserver(() => {
       applyMode();
       place();
@@ -563,9 +643,8 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       skip,
       watch,
       live: () => setLive(!S.film?.live),
-      go: (index) => {
-        if (S.open) travel(yOf(S.mod.CAPTIONS[index].at + 0.02));
-      },
+      go: (index) => jumpTo(S.mod.CAPTIONS[index].at + 0.02),
+      step,
     });
     wideMq.addEventListener("change", applyMode);
     motionMq.addEventListener("change", applyMode);
@@ -583,6 +662,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       disarm();
       unwatch();
       near.disconnect();
+      view.disconnect();
       sizes.disconnect();
       wideMq.removeEventListener("change", applyMode);
       motionMq.removeEventListener("change", applyMode);
@@ -604,7 +684,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
   const list = tour.captions.length ? tour.captions : [{ at: 0, label: "Tur", ...intro }];
   const last = tour.captions.length - 1;
   const touring = open && tour.pinned && tour.active < last && !tour.closing;
-  const hint = narrow && open && tour.active === 0 && !tour.away && !tour.waiting;
+  const hint = narrow && open && tour.active <= 1 && !tour.waiting;
 
   useEffect(() => {
     const box = scrollRef?.current;
@@ -633,6 +713,12 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
         <div className="film-scene tour-scene" ref={sceneRef}>
           <div className="film-world" ref={worldRef} />
         </div>
+        {narrow && open && !tour.live && (
+          <div className="tour-taps">
+            <button type="button" aria-label="Önceki bölüm" onClick={press(() => store.actions.step?.(-1))} />
+            <button type="button" aria-label="Sonraki bölüm" onClick={press(() => store.actions.step?.(1))} />
+          </div>
+        )}
         <div className="tour-m tour-m-area-a" ref={areaARef} aria-hidden="true" />
         <div className="tour-m tour-m-area-b" ref={areaBRef} aria-hidden="true" />
         {slim && <div className="tour-m tour-m-hdr" ref={slimRef} aria-hidden="true" />}
@@ -705,8 +791,8 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
           })}
         </div>
         <p className={hint ? "tour-hint" : "tour-hint is-off"} aria-hidden={hint ? undefined : "true"}>
-          <ArrowDown size={12} aria-hidden="true" />
-          Aşağı kaydırın
+          Sonraki bölüm için ekranın sağına dokunun
+          <ChevronRight size={12} aria-hidden="true" />
         </p>
         <p className={tour.live ? "tour-live is-on" : "tour-live"} aria-hidden={tour.live ? undefined : "true"}>
           Ekranı kullanabilirsiniz. Tura dön&apos;e basınca tur kaldığı yerden devam eder.

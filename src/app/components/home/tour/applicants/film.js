@@ -185,7 +185,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
 
     if (!state.live && loaded.phone) phone.update(u, dt, now, clamp(state.target, 0, T.total));
 
-    onFrame?.(u, dt);
+    onFrame?.(u, elapsed);
     state.raf = requestAnimationFrame(frame);
   }
 

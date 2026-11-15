@@ -120,6 +120,12 @@
 .tour-seg i { height: 2px; flex: 1; border-radius: 2px; background: rgba(255, 255, 255, .16); transition: background-color .35s ease; }
 .tour-seg .is-done { background: var(--s600); }
 .tour-seg .is-on { background: var(--s300); }
+.tour-narrow .tour-seg .is-on { background: linear-gradient(to right, var(--s300) calc(var(--tour-k, 0) * 100%), rgba(255, 255, 255, .16) 0); }
+.tour-taps { display: none; }
+.tour-narrow .tour-taps { position: absolute; z-index: 4; left: var(--col-x); right: var(--col-x); top: 214px; bottom: 12px; display: grid; grid-template-columns: 2fr 3fr; }
+.tour-taps button { border: 0; background: none; padding: 0; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
 .tour-narrow .tour .tour-live { display: none; }
-.tour-narrow .tour .tour-hint { position: absolute; z-index: 6; left: 50%; bottom: 20px; display: flex; align-items: center; gap: 8px; margin: 0; transform: translateX(-50%); border-radius: 99px; background: rgba(8, 7, 11, .7); padding: 4px 10px; font-size: 11px; line-height: 16px; color: var(--n400); white-space: nowrap; transition: opacity .4s ease; }
+.tour-narrow .tour .tour-hint { position: absolute; z-index: 6; right: calc(var(--col-x) + 10px); bottom: 76px; display: flex; align-items: center; gap: 6px; margin: 0; border: 1px solid var(--l2); border-radius: 99px; background: rgba(20, 19, 24, .92); padding: 6px 10px 6px 12px; box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .9); font-size: 11px; line-height: 16px; color: var(--n300); white-space: nowrap; pointer-events: none; transition: opacity .4s ease; }
+.tour-narrow .tour-hint svg { animation-name: tour-nudge-x; }
+@keyframes tour-nudge-x { 0%, 100% { transform: translateX(-1px); } 50% { transform: translateX(2px); } }
 .tour-narrow .tour .tour-hint.is-off { opacity: 0; }

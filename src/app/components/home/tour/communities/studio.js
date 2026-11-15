@@ -1,4 +1,4 @@
-import { M, R, bleed, clamp, crop, handAt, lerp, panelShot, part, scrollSpot, scrollTo, seg, shot, slot, throttle, typed } from "../film/engine.js";
+import { M, OFF, R, bleed, clamp, crop, handAt, lerp, panelShot, part, scrollSpot, scrollTo, seg, shot, slot, throttle, typed } from "../film/engine.js";
 import { AHMET, BEAT, COMMENT, DESCRIPTION, ME, Q, REPLY, SELIN, T, TEAMS, TEMPLATE_IDS, TITLE } from "./script.js";
 import { GHOST_CARD } from "./ghost.js";
 
@@ -311,8 +311,8 @@ export function createStudio(actor, IDS, mode = {}) {
     { u: 0.34, f: paper(4, -8) },
     { u: B + 0.22, f: () => slot(actor) },
     { u: T.fill - 0.16, f: () => slot(actor) },
-    { u: T.fill + 0.04, f: () => slot(actor, { dx: -0.5, o: 0, ry: 16, z: -120 }) },
-    { u: T.end - 0.24, f: () => slot(actor, { dx: -0.5, o: 0, ry: 16, z: -120 }) },
+    { u: T.fill + 0.04, f: () => slot(actor, OFF.after) },
+    { u: T.end - 0.24, f: () => slot(actor, OFF.after) },
     { u: T.end - 0.22, f: paper(4, -8, { o: 0 }, true) },
     { u: T.end + 0.12, f: paper(0, 0, {}, true) },
   ];

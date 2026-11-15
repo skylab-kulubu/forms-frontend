@@ -1,4 +1,4 @@
-import { R, bleed, crop, handAt, lerp, panelShot, part, scrollSpot, scrollTo, seg, shot, slot, splitArea, stint, throttle, typed } from "../film/engine.js";
+import { OFF, R, bleed, crop, handAt, lerp, panelShot, part, scrollSpot, scrollTo, seg, shot, slot, splitArea, stint, throttle, typed } from "../film/engine.js";
 import { T } from "./script.js";
 
 const RV = T.review;
@@ -58,7 +58,7 @@ export function createRoom(actor, IDS, server, mode = {}) {
   const before = () => shot(actor, all(), { pad: 6, max: 0.7, rx: 5, ry: -30, dx: 0.55, z: -420, o: 0 });
   const gone = () => shot(actor, all(), { pad: 6, max: 0.5, rx: 4, ry: 30, dx: -0.6, shade: 0.7, z: -500, o: 0 });
 
-  const hiddenLeft = () => slot(actor, { dx: -0.5, o: 0, ry: 16, z: -120 });
+  const hiddenLeft = () => slot(actor, OFF.after);
   const trackCompact = [
     ...stint(actor, RV, RV + 1.06),
     ...stint(actor, ST, T.share),

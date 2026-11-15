@@ -338,7 +338,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
 
     if (!state.live) directors.forEach((director) => director.update(u, dt, now));
 
-    onFrame?.(u, dt);
+    onFrame?.(u, elapsed);
     state.raf = requestAnimationFrame(frame);
   }
 

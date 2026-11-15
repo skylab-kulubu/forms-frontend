@@ -1,4 +1,4 @@
-import { M, R, lerp, part, scrollSpot, scrollTo, seg, shot, slot, splitArea, stint, throttle, typed } from "../film/engine.js";
+import { M, OFF, R, lerp, part, scrollSpot, scrollTo, seg, shot, slot, splitArea, stint, throttle, typed } from "../film/engine.js";
 import { T } from "./script.js";
 import { APPROVE_AT } from "./room.js";
 
@@ -52,7 +52,7 @@ export function createPhone(actor, IDS, mode = {}) {
   const side = () => shot(actor, all(), { max: 0.8, min: 0.3, pad: 6, ry: -12, rx: 2, z: 80, area: splitArea().right });
   const enter = () => shot(actor, all(), { mode: "height", max: 0.94, min: 0.74, pad: 8, ry: -34, rx: 4, dx: 0.52, dy: 0.16, z: 260 });
 
-  const hiddenLeft = () => slot(actor, { dx: -0.5, o: 0, ry: 16, z: -120 });
+  const hiddenLeft = () => slot(actor, OFF.after);
   const trackCompact = [
     ...stint(actor, T.fill, T.review),
     ...stint(actor, T.review + 1.06, T.stats),

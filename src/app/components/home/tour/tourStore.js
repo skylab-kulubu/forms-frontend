@@ -13,7 +13,7 @@ export function sceneName(captions, item) {
 
 export function createTourStore() {
   let state = EMPTY;
-  const actions = { skip: null, watch: null, live: null, go: null };
+  const actions = { skip: null, watch: null, live: null, go: null, step: null };
   const listeners = new Set();
 
   return {

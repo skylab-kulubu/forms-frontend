@@ -1,4 +1,4 @@
-import { R, bleed, crop, handAt, part, shot, slot, stint } from "../film/engine.js";
+import { OFF, R, bleed, crop, handAt, part, shot, slot, stint } from "../film/engine.js";
 import { SHARE_TOKEN } from "@/lib/demo/server/communities/templates";
 import { T } from "./script.js";
 
@@ -41,7 +41,7 @@ export function createShare(owner, guest, IDS, mode = {}, resetGuest = () => {})
   const aside = (actor) => () => shot(actor, allOf(actor), { pad: 6, max: 0.6, rx: 4, ry: 26, dx: -0.36, shade: 0.5, z: -280 });
   const hidden = (actor) => () => shot(actor, allOf(actor), { pad: 6, max: 0.5, rx: 4, ry: 30, dx: -0.6, shade: 0.7, z: -500, o: 0 });
 
-  const gone = (actor) => () => slot(actor, { dx: -0.5, o: 0, ry: 16, z: -120 });
+  const gone = (actor) => () => slot(actor, OFF.after);
   const ownerCompact = [...stint(owner, SH, SH + 0.72), { u: T.end + 0.3, f: gone(owner) }];
   const guestCompact = [...stint(guest, SH + 0.72, T.end - 0.14), { u: T.end + 0.3, f: gone(guest) }];
 
