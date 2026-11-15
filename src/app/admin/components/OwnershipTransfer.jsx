@@ -31,7 +31,7 @@ function OwnerPicker({ excludeIds, onSelect }) {
 
     // The server is asked from two letters on, so the list opens from two letters on too
     return (
-        <Combobox items={items} value={null} size="sm" onSearch={setSearch} minSearch={2}
+        <Combobox items={items} value={null} size="sm" onSearch={setSearch} minSearch={2} maxRows={5}
             loading={isLoading || search !== debouncedSearch}
             onValueChange={(id) => {
                 const user = users.find((item) => item.id === id);

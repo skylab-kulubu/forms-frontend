@@ -245,7 +245,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
 
   const control = (
     <Combobox items={items} value={selected?.id ?? (currentValue || null)} onValueChange={(next) => commit(next ?? "")}
-      onCreate={allowCustom ? commit : undefined} readOnly={isAutoFilled} placeholder="Bir seçenek seçin"
+      onCreate={allowCustom ? commit : undefined} readOnly={isAutoFilled} placeholder="Bir seçenek seçin" maxRows={5}
       aria-label={questionLabel(question)} className={missing ? "border-destructive/50" : undefined}
     />
   );
