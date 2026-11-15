@@ -11,6 +11,7 @@ import { FormEditorProvider, useFormEditor } from "../form-editor/FormEditorCont
 import { EventReturnBar, HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
 import { useDeleteFormMutation } from "@/lib/hooks/useFormAdmin";
 import { request } from "@/lib/apiClient";
+import { exposeToTour } from "@/lib/demo/frame";
 import { studioApi } from "@/lib/studio/studio-api";
 import { schemaOps } from "@/lib/studio/schema-ops";
 import { FORM_STATUS_OPEN, cloneSchema, ensureEventIdentityFields, hasEventIdentity, pickTemplateGroup } from "@/lib/event-handoff";
@@ -176,6 +177,10 @@ function SingleStudioContent({ doc, legacyDraft, onRefresh, onStartFlow, handoff
     setDraftNotice(false);
     if (doc.discard()) studio.toast("Taslak silindi. Ctrl+Z geri alır.");
   };
+
+  useEffect(() => {
+    exposeToTour("studio", { doc, studio, session: studioSession, state, ui, save: handleSave, schemaOps });
+  });
 
   const isWorkflowLocked = Boolean(state.workflow?.isPublished);
   const fields = state.schema;

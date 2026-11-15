@@ -131,7 +131,7 @@ function createComments(userId, markRead) {
   };
 }
 
-export function createStudioSession({ baseUrl, getToken, http, userId, onNotice = () => {}, onSessionExpired = () => {}, logLevel = LogLevel.Warning, transport }) {
+export function createStudioSession({ baseUrl, getToken, http, userId, onNotice = () => {}, onSessionExpired = () => {}, logLevel = LogLevel.Warning, transport, hub }) {
   const docs = new Map();
   const loading = new Map();
   const presence = createPresence();
@@ -155,7 +155,7 @@ export function createStudioSession({ baseUrl, getToken, http, userId, onNotice 
   let lastToken = null;
   let notify = onNotice;
 
-  const connection = new HubConnectionBuilder()
+  const connection = hub ?? new HubConnectionBuilder()
     .withUrl(`${baseUrl}${HUB_PATH}`, {
       accessTokenFactory: async () => {
         lastToken = await getToken();

@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useSession } from "next-auth/react";
 import { announceSessionExpired, getAccessToken, sessionEnded } from "@/lib/apiClient";
+import { demoFrame } from "@/lib/demo/frame";
+import { createDemoHub } from "@/lib/demo/hub";
 import { SESSION_RESTORED_EVENT } from "@/lib/session-recovery";
 import { createStudioSession } from "@/lib/studio/studio-session";
 import { studioApi } from "@/lib/studio/studio-api";
@@ -59,7 +61,10 @@ export function StudioSessionProvider({ onNotice, fallback = null, children }) {
   useEffect(() => { updateRef.current = update; });
 
   const session = useMemo(() => (userId
-    ? createStudioSession({ baseUrl: BASE_URL, userId, http: studioApi, getToken: getAccessToken, onSessionExpired: expireSession })
+    ? createStudioSession({
+      baseUrl: BASE_URL, userId, http: studioApi, getToken: getAccessToken, onSessionExpired: expireSession,
+      hub: demoFrame() ? createDemoHub(userId) : undefined,
+    })
     : null), [userId]);
 
   useEffect(() => {

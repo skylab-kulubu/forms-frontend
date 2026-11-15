@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { REGISTRY } from "@/app/components/form-registry";
 import { formatFieldAnswer } from "@/app/components/form-answer-format";
 import { serializeRepeater } from "@/app/components/form-components/FormRepeater";
+import { exposeToTour } from "@/lib/demo/frame";
 import { markIntroSeen, nextStepCopy } from "@/lib/workflow-journey";
 import {
   CopyEmailNote, FormAuthContext, FormDisplayerHeader, GuestNoticeDock, HeaderNote, IdentityNote, MissingFields, NextStepNote, RespondentLine,
@@ -267,6 +268,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
   useEffect(() => {
     submitRef.current = onSubmit;
+    exposeToTour("form", { set: handleValueChange, submit: () => submitRef.current?.(), state, visibleFields, endIntro, startAttempt });
   });
 
   useEffect(() => {

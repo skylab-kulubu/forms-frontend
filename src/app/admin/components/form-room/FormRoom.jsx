@@ -8,6 +8,7 @@ import { keepPreviousData, useQueries, useQuery, useQueryClient } from "@tanstac
 import { FileXCorner } from "lucide-react";
 import { FormStatusHandler } from "@/app/components/FormStatusHandler";
 import StateCard from "@/app/components/StateCard";
+import TourHandle from "@/lib/demo/TourHandle";
 import { formMetricsQuery, formQuery } from "@/lib/hooks/useFormAdmin";
 import { workflowQuery } from "@/lib/hooks/useWorkflowAdmin";
 import { effectiveFormSettings } from "@/lib/form-settings";
@@ -447,6 +448,7 @@ export default function FormRoom() {
 
   return (
     <RoomContext.Provider value={room}>
+      <TourHandle name="room" value={room} />
       <Mode key={route.mode} />
       {formId ? (
         <FormShareDialog open={shareOpen} onClose={() => setShareOpen(false)} formId={formId} formTitle={title}

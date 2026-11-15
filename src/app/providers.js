@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
 import SessionExpiredHandler from "@/app/components/SessionExpiredHandler";
+import { exposeToTour } from "@/lib/demo/frame";
 
 export default function Providers({ children }) {
   const [queryClient] = useState(
@@ -14,6 +15,8 @@ export default function Providers({ children }) {
         },
       })
   );
+
+  useEffect(() => exposeToTour("query", queryClient), [queryClient]);
 
   return (
     // refetchInterval keeps the access token fresh in the background: every poll hits
