@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import {
   Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, Input, MenuItem, MenuSeparator, Notice, Select, StatusDot,
-  Switch as SkylcnSwitch, Textarea, ToggleRow as SkylcnToggleRow, buttonVariants, cn,
+  Switch as SkylcnSwitch, Textarea, ToggleRow as SkylcnToggleRow, cn,
 } from "@skylab-kulubu/skylcn-ui";
 
 export const FOCUS_RING = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -19,10 +19,6 @@ const NOTICE_TONE = { amber: "warning", red: "danger", neutral: "info" };
 
 function variantOf({ danger, active }) {
   return active ? "primary" : danger ? "destructive" : "outline";
-}
-
-export function actionClass({ danger = false, active = false, compact = false } = {}) {
-  return cn(buttonVariants({ variant: variantOf({ danger, active }), size: "sm" }), compact && "h-6");
 }
 
 export function StatePill({ tone = "skylab", children }) {

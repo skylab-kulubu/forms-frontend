@@ -1,10 +1,53 @@
 /* Only src is scanned: with automatic detection on, an @source line into node_modules opens the
-   whole skylcn package to the scan. MIGRATION: the whole package is scanned on purpose while parts
-   move over; the cleanup step narrows it to one sources/<component>.css line per component in use. */
+   whole skylcn package to the scan. skylcn comes in as its theme plus one stylesheet per component
+   forms uses; a component without its line here renders unstyled. */
 @import "tailwindcss" source(none);
 @source "../";
 @import "@skylab-kulubu/skylcn-ui/theme-base.css";
-@source "../../node_modules/@skylab-kulubu/skylcn-ui/dist";
+@import "@skylab-kulubu/skylcn-ui/sources/app-shell.css";
+@import "@skylab-kulubu/skylcn-ui/sources/avatar.css";
+@import "@skylab-kulubu/skylcn-ui/sources/badge.css";
+@import "@skylab-kulubu/skylcn-ui/sources/bar-list.css";
+@import "@skylab-kulubu/skylcn-ui/sources/breadcrumbs.css";
+@import "@skylab-kulubu/skylcn-ui/sources/button.css";
+@import "@skylab-kulubu/skylcn-ui/sources/calendar.css";
+@import "@skylab-kulubu/skylcn-ui/sources/card.css";
+@import "@skylab-kulubu/skylcn-ui/sources/charts.css";
+@import "@skylab-kulubu/skylcn-ui/sources/checkbox.css";
+@import "@skylab-kulubu/skylcn-ui/sources/choice-list.css";
+@import "@skylab-kulubu/skylcn-ui/sources/choice-matrix.css";
+@import "@skylab-kulubu/skylcn-ui/sources/control.css";
+@import "@skylab-kulubu/skylcn-ui/sources/copy-button.css";
+@import "@skylab-kulubu/skylcn-ui/sources/data-list.css";
+@import "@skylab-kulubu/skylcn-ui/sources/dialog.css";
+@import "@skylab-kulubu/skylcn-ui/sources/display-extra.css";
+@import "@skylab-kulubu/skylcn-ui/sources/drawer.css";
+@import "@skylab-kulubu/skylcn-ui/sources/feedback.css";
+@import "@skylab-kulubu/skylcn-ui/sources/field.css";
+@import "@skylab-kulubu/skylcn-ui/sources/file-upload.css";
+@import "@skylab-kulubu/skylcn-ui/sources/form-extra.css";
+@import "@skylab-kulubu/skylcn-ui/sources/icon-swap.css";
+@import "@skylab-kulubu/skylcn-ui/sources/list.css";
+@import "@skylab-kulubu/skylcn-ui/sources/menu.css";
+@import "@skylab-kulubu/skylcn-ui/sources/motion.css";
+@import "@skylab-kulubu/skylcn-ui/sources/notice.css";
+@import "@skylab-kulubu/skylcn-ui/sources/page-header.css";
+@import "@skylab-kulubu/skylcn-ui/sources/pagination.css";
+@import "@skylab-kulubu/skylcn-ui/sources/popover.css";
+@import "@skylab-kulubu/skylcn-ui/sources/preview-card.css";
+@import "@skylab-kulubu/skylcn-ui/sources/proportion-bar.css";
+@import "@skylab-kulubu/skylcn-ui/sources/section.css";
+@import "@skylab-kulubu/skylcn-ui/sources/segmented-control.css";
+@import "@skylab-kulubu/skylcn-ui/sources/select.css";
+@import "@skylab-kulubu/skylcn-ui/sources/skeleton.css";
+@import "@skylab-kulubu/skylcn-ui/sources/skylab-loader.css";
+@import "@skylab-kulubu/skylcn-ui/sources/state-card.css";
+@import "@skylab-kulubu/skylcn-ui/sources/switch.css";
+@import "@skylab-kulubu/skylcn-ui/sources/tabs.css";
+@import "@skylab-kulubu/skylcn-ui/sources/task-page.css";
+@import "@skylab-kulubu/skylcn-ui/sources/time-picker.css";
+@import "@skylab-kulubu/skylcn-ui/sources/tooltip.css";
+@import "@skylab-kulubu/skylcn-ui/sources/trend-badge.css";
 
 html {
   -webkit-text-size-adjust: 100%;
@@ -28,15 +71,9 @@ body {
   --font-serif: 'Instrument Serif', Georgia, serif;
   --font-platform: var(--font-sans);
 
-  /* Mikro tipografi ölçeği: 4xs = satır içi chip (rol rozeti), 3xs = durum
-     rozeti/sayaç/bölüm etiketi, 2xs = meta satırı.
-     text-[10px]/text-[11px] gibi keyfi değerler yerine bunlar kullanılır. */
+  /* skylcn brings 2xs and 3xs; 4xs is forms' own, for chart counts and inline chips */
   --text-4xs: 0.5rem;
   --text-4xs--line-height: 0.75rem;
-  --text-3xs: 0.625rem;
-  --text-3xs--line-height: 0.875rem;
-  --text-2xs: 0.6875rem;
-  --text-2xs--line-height: 1rem;
 }
 
 /* Inline so the utility reads the variable where it is used, and a nested data-theme wins:
