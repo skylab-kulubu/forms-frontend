@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { ArrowUpRight, Lock, Workflow } from "lucide-react";
+import { Button } from "@skylab-kulubu/skylcn-ui";
 import { FOCUS_RING, PANEL_SECTION, ROW, ROW_HOVER, SectionHeader, TILE } from "@/app/admin/components/utils/SidePanel";
 
 export const WORKFLOW_LOCK_REASON = "Akışta kullanıldığı için değiştirilemez.";
 
 export function WorkflowLockMark({ title = WORKFLOW_LOCK_REASON }) {
     return (
-        <span title={title} aria-label={title} role="img" className="inline-flex shrink-0 text-neutral-500">
+        <span title={title} aria-label={title} role="img" className="inline-flex shrink-0 text-subtle-foreground">
             <Lock size={12} />
         </span>
     );
@@ -16,26 +17,17 @@ export function WorkflowLockMark({ title = WORKFLOW_LOCK_REASON }) {
 
 export function WorkflowManagedRow({ title, description, href, onClick = null, linkLabel = "Akışta", newTab = false }) {
     return (
-        <div className={`${ROW} flex items-center justify-between gap-3 border-ink/10 px-3 py-2.5`}>
+        <div className={`${ROW} flex items-center justify-between gap-3 border-border px-3 py-2.5`}>
             <div className="min-w-0">
-                <p className="text-sm font-semibold text-neutral-100">{title}</p>
-                <p className="text-2xs text-neutral-500">{description}</p>
+                <p className="text-sm font-semibold text-foreground">{title}</p>
+                <p className="text-2xs text-subtle-foreground">{description}</p>
             </div>
-            {onClick ? (
-                <button type="button" onClick={onClick}
-                    className={`inline-flex shrink-0 items-center gap-1 rounded-lg border border-ink/10 bg-ink/5 px-2.5 py-1 text-2xs text-neutral-300 transition-colors hover:border-ink/20 hover:bg-ink/10 hover:text-neutral-50 ${FOCUS_RING}`}
-                >
-                    {linkLabel}
-                    <ArrowUpRight size={12} className="opacity-70" />
-                </button>
-            ) : (
-                <Link href={href} target={newTab ? "_blank" : undefined}
-                    className={`inline-flex shrink-0 items-center gap-1 rounded-lg border border-ink/10 bg-ink/5 px-2.5 py-1 text-2xs text-neutral-300 transition-colors hover:border-ink/20 hover:bg-ink/10 hover:text-neutral-50 ${FOCUS_RING}`}
-                >
-                    {linkLabel}
-                    <ArrowUpRight size={12} className="opacity-70" />
-                </Link>
-            )}
+            <Button size="sm" className="shrink-0" onClick={onClick ?? undefined}
+                render={onClick ? undefined : <Link href={href} target={newTab ? "_blank" : undefined} />}
+            >
+                {linkLabel}
+                <ArrowUpRight aria-hidden className="size-3.5" />
+            </Button>
         </div>
     );
 }
@@ -52,31 +44,31 @@ export function WorkflowMembershipSection({ workflow }) {
             />
 
             <Link href={`/admin/workflows/${workflow.id}`}
-                className={`${ROW} ${ROW_HOVER} ${FOCUS_RING} flex items-center gap-3 border-ink/10 px-3 py-2.5`}
+                className={`${ROW} ${ROW_HOVER} ${FOCUS_RING} flex items-center gap-3 border-border px-3 py-2.5`}
             >
-                <span className={`${TILE} border-ink/10 text-neutral-400`}>
+                <span className={`${TILE} border-border text-muted-foreground`}>
                     <Workflow size={14} strokeWidth={1.75} />
                 </span>
                 <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-neutral-100">{workflow.name || "Adsız akış"}</span>
-                    <span className="block text-2xs text-neutral-500">{workflow.isStart ? "Bu form akışın başlangıç formu" : "Bu form akışın bir adımı"}</span>
+                    <span className="block truncate text-sm font-semibold text-foreground">{workflow.name || "Adsız akış"}</span>
+                    <span className="block text-2xs text-subtle-foreground">{workflow.isStart ? "Bu form akışın başlangıç formu" : "Bu form akışın bir adımı"}</span>
                 </span>
-                <ArrowUpRight size={14} className="shrink-0 text-neutral-500" />
+                <ArrowUpRight size={14} className="shrink-0 text-subtle-foreground" />
             </Link>
 
             {workflow.isPublished && (
                 <ul className="space-y-2">
-                    <li className="flex items-start gap-2 text-2xs leading-relaxed text-neutral-400">
-                        <Lock size={11} className="mt-0.5 shrink-0 text-neutral-500" />
+                    <li className="flex items-start gap-2 text-2xs leading-relaxed text-muted-foreground">
+                        <Lock size={11} className="mt-0.5 shrink-0 text-subtle-foreground" />
                         <span>Anonim cevaba açılamaz ve silinemez.</span>
                     </li>
-                    <li className="flex items-start gap-2 text-2xs leading-relaxed text-neutral-400">
-                        <Workflow size={11} className="mt-0.5 shrink-0 text-neutral-500" />
+                    <li className="flex items-start gap-2 text-2xs leading-relaxed text-muted-foreground">
+                        <Workflow size={11} className="mt-0.5 shrink-0 text-subtle-foreground" />
                         <span>Cevap kabulü, çoklu cevap ve onay ayarlarını akış yönetir; bu formdaki karşılıkları kullanılmaz.</span>
                     </li>
                     {lockedCount > 0 && (
-                        <li className="flex items-start gap-2 text-2xs leading-relaxed text-neutral-400">
-                            <Lock size={11} className="mt-0.5 shrink-0 text-neutral-500" />
+                        <li className="flex items-start gap-2 text-2xs leading-relaxed text-muted-foreground">
+                            <Lock size={11} className="mt-0.5 shrink-0 text-subtle-foreground" />
                             <span>{lockedCount} soru bir yönlendirme koşulunda kullanılıyor. Bu sorular silinemez; koşulun karşılaştırdığı seçeneklerin adı değiştirilemez.</span>
                         </li>
                     )}

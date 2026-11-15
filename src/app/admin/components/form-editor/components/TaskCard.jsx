@@ -1,7 +1,5 @@
 "use client";
 
-const LINK_BUTTON = "underline underline-offset-3 transition-colors";
-
 export function insertAtCursor(textarea, kind) {
     const value = textarea.value;
     const start = textarea.selectionStart;
@@ -59,18 +57,4 @@ export function insertAtCursor(textarea, kind) {
         default:
             break;
     }
-}
-
-export function TaskRemoveConfirm({ onConfirm, onCancel }) {
-    return (
-        <span className="inline-flex items-center gap-2.5 text-2xs">
-            <span className="text-neutral-300">Görev metni silinecek.</span>
-            <button type="button" onClick={onConfirm} className={`${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`}>
-                Kaldır
-            </button>
-            <button type="button" onClick={onCancel} className={`${LINK_BUTTON} text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50`}>
-                Vazgeç
-            </button>
-        </span>
-    );
 }

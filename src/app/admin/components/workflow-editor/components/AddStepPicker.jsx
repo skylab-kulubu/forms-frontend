@@ -37,16 +37,16 @@ export default function AddStepPicker({ open, forms = [], usedFormIds = [], isLo
                 return (
                   <button type="button" onClick={select} disabled={disabled}
                     className={`flex w-full items-start gap-2 px-3 py-2 text-left transition-colors ${
-                      disabled ? "cursor-not-allowed opacity-50" : "hover:bg-ink/10"
+                      disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent-strong"
                     }`}
                   >
                     <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-skylab-400/70" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
-                        <span className="truncate text-sm font-medium leading-tight text-neutral-200">{form.title || "Adsız form"}</span>
-                        {form.requiresManualReview ? <ClipboardCheck size={11} className="shrink-0 text-amber-300" /> : null}
+                        <span className="truncate text-sm font-medium leading-tight text-secondary-foreground">{form.title || "Adsız form"}</span>
+                        {form.requiresManualReview ? <ClipboardCheck size={11} className="shrink-0 text-warning" /> : null}
                       </span>
-                      <span className="block truncate text-2xs text-neutral-500">{reason ?? form.id}</span>
+                      <span className="block truncate text-2xs text-subtle-foreground">{reason ?? form.id}</span>
                     </span>
                   </button>
                 );

@@ -1,9 +1,8 @@
-import { useState, useRef, useMemo } from "react";
-import { Trash2, AlertCircle, Calendar, Clock } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
+import { Trash2, AlertCircle } from "lucide-react";
+import { DatePicker, IconButton, Input, TimePicker } from "@skylab-kulubu/skylcn-ui";
 import { Dropdown } from "@/app/components/utils/Dropdown";
-import DatePicker from "@/app/components/utils/DatePicker";
-import TimePicker from "@/app/components/utils/TimePicker";
+
+const LABEL = "ml-1 text-3xs font-semibold uppercase tracking-[0.18em] text-subtle-foreground";
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 function toYMD(d) {
@@ -28,8 +27,6 @@ function parseTime(str) {
     return { h, m: min };
 }
 function formatTime24({ h, m }) { return `${pad2(h)}:${pad2(m)}`; }
-
-const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
 export const FIELD_OPERATORS = {
     text: [
@@ -96,7 +93,7 @@ export const FIELD_OPERATORS = {
 export function ConditionSelector({ condition, onUpdate, availableFields }) {
     if (!availableFields || availableFields.length === 0) {
         return (
-            <div className="flex items-center gap-2 rounded-lg p-3 text-xs text-neutral-400/70">
+            <div className="flex items-center gap-2 rounded-lg p-3 text-xs text-muted-foreground">
                 <AlertCircle size={14} />
                 <span>Bu formun ilk sorusu olduğu için herhangi bir koşula bağlanamaz.</span>
             </div>
@@ -142,28 +139,7 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
 
     const showValueInput = current.operator && !["is_set", "is_empty", "is_true", "is_false"].includes(current.operator);
 
-    const [dateOpen, setDateOpen] = useState(false);
-    const [timeOpen, setTimeOpen] = useState(false);
-    const dateRef = useRef(null);
-    const timeRef = useRef(null);
-
-    const [tempHour, setTempHour] = useState(0);
-    const [tempMinute, setTempMinute] = useState(0);
-
-    const toggleTimePicker = () => {
-        if (!timeOpen) {
-            const p = parseTime(current.value);
-            const now = new Date();
-            setTempHour(p?.h ?? now.getHours());
-            setTempMinute(p?.m ?? Math.round(now.getMinutes() / 5) * 5);
-        }
-        setTimeOpen(!timeOpen);
-    };
-
-    const selectedDate = useMemo(() => parseYMD(current.value), [current.value]);
-    const parsedTime = useMemo(() => parseTime(current.value), [current.value]);
-    const dateDisplay = selectedDate ? `${pad2(selectedDate.getDate())} ${months[selectedDate.getMonth()]} ${selectedDate.getFullYear()}` : "Tarih seçin";
-    const timeDisplay = parsedTime ? formatTime24(parsedTime) : "Saat seçin";
+    const parsedTime = parseTime(current.value);
 
     const handleChange = (key, val) => {
         if (key === "fieldId") {
@@ -185,11 +161,11 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
     };
 
     return (
-        <div className="rounded-b-xl border-t border-ink/5 bg-neutral-900/40 p-3">
+        <div className="rounded-b-xl border-t border-border-subtle bg-background/40 p-3">
             <div className="grid grid-cols-12 gap-3 items-end">
 
                 <div className="col-span-12 sm:col-span-4 flex flex-col gap-1.5">
-                    <label className="ml-1 text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Buna Bağlı:</label>
+                    <label className={LABEL}>Buna Bağlı:</label>
                     <Dropdown value={current.fieldId} onChange={(val) => handleChange("fieldId", val)}
                         options={availableFields.map(q => ({
                             value: q.id,
@@ -200,7 +176,7 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
                 </div>
 
                 <div className="col-span-12 sm:col-span-3 flex flex-col gap-1.5">
-                    <label className="ml-1 text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Koşul:</label>
+                    <label className={LABEL}>Koşul:</label>
                     <Dropdown value={current.operator} onChange={(val) => handleChange("operator", val)}
                         options={operators} placeholder="Seçiniz..." className={!current.fieldId ? "opacity-50 pointer-events-none" : ""}
                     />
@@ -209,52 +185,22 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
                 <div className="col-span-12 sm:col-span-5 flex flex-col gap-1.5">
                     {showValueInput && (
                         <>
-                            <label className="ml-1 text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-500">Değer:</label>
+                            <label className={LABEL}>Değer:</label>
 
                             {hasChoices && selectedTarget?.choices?.length > 0 ? (
                                 <Dropdown value={current.value} onChange={(val) => handleChange("value", val)} placeholder="Seçenek seçin"
                                     options={selectedTarget.choices.map(c => ({ label: c, value: c }))}
                                 />
                             ) : isDate ? (
-                                <div className="relative" ref={dateRef}>
-                                    <button type="button" onClick={() => setDateOpen((s) => !s)}
-                                        className="flex w-full items-center gap-2 rounded-lg border border-ink/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-ink/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
-                                    >
-                                        <Calendar size={13} className="text-neutral-400 shrink-0" />
-                                        <span className={selectedDate ? "text-neutral-200" : "text-neutral-500"}>{dateDisplay}</span>
-                                    </button>
-                                    <AnimatePresence>
-                                        {dateOpen && (
-                                            <DatePicker value={selectedDate} anchor={dateRef}
-                                                onChange={(date) => handleChange("value", toYMD(date))}
-                                                onClose={() => setDateOpen(false)}
-                                            />
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            ) : isTime ? (
-                                <div className="relative" ref={timeRef}>
-                                    <button type="button" onClick={toggleTimePicker}
-                                        className="flex w-full items-center gap-2 rounded-lg border border-ink/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-ink/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
-                                    >
-                                        <Clock size={13} className="text-neutral-400 shrink-0" />
-                                        <span className={parsedTime ? "text-neutral-200" : "text-neutral-500"}>{timeDisplay}</span>
-                                    </button>
-                                    <AnimatePresence>
-                                        {timeOpen && (
-                                            <TimePicker hour={tempHour} minute={tempMinute} anchor={timeRef}
-                                                onChange={(h, m) => { setTempHour(h); setTempMinute(m); }}
-                                                onCancel={() => setTimeOpen(false)}
-                                                onConfirm={() => { handleChange("value", formatTime24({ h: tempHour, m: tempMinute })); setTimeOpen(false); }}
-                                                onClear={() => { handleChange("value", ""); setTimeOpen(false); }}
-                                            />
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            ) : (
-                                <input type="text" placeholder="Cevap..." value={current.value} onChange={(e) => handleChange("value", e.target.value)}
-                                    className="w-full rounded-lg border border-ink/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-neutral-200 placeholder-neutral-600 outline-none focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 transition-all"
+                                <DatePicker value={parseYMD(current.value)} onValueChange={(date) => handleChange("value", date ? toYMD(date) : "")}
+                                    placeholder="Tarih seçin" aria-label="Değer"
                                 />
+                            ) : isTime ? (
+                                <TimePicker value={parsedTime ? formatTime24(parsedTime) : null} onValueChange={(time) => handleChange("value", time ?? "")}
+                                    placeholder="Saat seçin" aria-label="Değer"
+                                />
+                            ) : (
+                                <Input placeholder="Cevap..." value={current.value} onChange={(e) => handleChange("value", e.target.value)} aria-label="Değer" />
                             )}
                         </>
                     )}
@@ -270,11 +216,7 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
                     </span>
 
                     <div className="flex justify-end">
-                        <button onClick={() => onUpdate(null)} title="Kuralı Kaldır"
-                            className="group flex size-8 items-center justify-center rounded-lg border border-transparent text-neutral-500 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-400"
-                        >
-                            <Trash2 size={15} />
-                        </button>
+                        <IconButton icon={Trash2} label="Kuralı Kaldır" variant="ghost" onClick={() => onUpdate(null)} />
                     </div>
                 </div>
             )}

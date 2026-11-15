@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { Collapse } from "@skylab-kulubu/skylcn-ui";
 import { LibrarySettingsEditors } from "./LibrarySettingsEditors";
 import { WorkflowLockMark, WorkflowManagedRow, WorkflowMembershipSection } from "./WorkflowMembership";
 import { TimingSection } from "./TimingSection";
@@ -10,12 +10,6 @@ import { PANEL_SECTION, PANEL_STACK, PanelNotice, SectionHeader, ToggleRow } fro
 import { OwnershipTransferSection } from "@/app/admin/components/OwnershipTransfer";
 import { swapView } from "@/app/admin/components/form-studio/studio-motion";
 import { loadBrandFonts } from "@/brands/BrandPaper";
-
-const alertVariants = {
-    hidden: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" },
-    visible: { opacity: 1, height: "auto", marginTop: 12, marginBottom: 0, overflow: "hidden" },
-    exit: { opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden" }
-};
 
 const PERSONAL_LOCK = "Kişisel süre açıkken kullanılamaz.";
 
@@ -94,15 +88,11 @@ export function LibrarySettings({ focusTiming = 0, eventLinked = false, hideMemb
                         />
                     )}
 
-                    <AnimatePresence>
-                        {!isStatusManaged && status !== 2 && (
-                            <motion.div key={"status-paused-alert"} variants={alertVariants} initial="hidden" animate="visible" exit="exit" transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
-                                <PanelNotice className="mb-3">
-                                    Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.
-                                </PanelNotice>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    <Collapse open={!isStatusManaged && status !== 2}>
+                        <PanelNotice>
+                            Form cevap kabulü duraklatıldı. Kullanıcılar formu görüntüleyebilir ancak yeni cevap gönderemezler.
+                        </PanelNotice>
+                    </Collapse>
 
                     <ToggleRow title="Anonim cevap izni"
                         description={personal && !allowAnonymousResponses ? PERSONAL_LOCK : "Kimlik bilgisi olmadan gönderime izin ver."}

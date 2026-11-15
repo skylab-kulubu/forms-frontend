@@ -3,39 +3,30 @@
 import { useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import DatePicker from "@/app/components/utils/DatePicker";
-import { PANEL_SECTION, SectionHeader, Switch } from "@/app/admin/components/utils/SidePanel";
+import { PANEL_SECTION, SectionHeader, ToggleRow } from "@/app/admin/components/utils/SidePanel";
 import { defaultClosesAt, untilText } from "@/lib/form-timing";
 
 const DEFAULT_MINUTES = 48 * 60;
 const MAX_MINUTES = 720 * 60;
 
-const GHOST = "rounded-md bg-ink/5 px-1.5 py-0.5 tabular-nums text-neutral-100 transition-colors hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-skylab-400/50";
-const GHOST_INPUT = `${GHOST} w-9 text-center outline-none focus:bg-ink/10 focus:ring-1 focus:ring-skylab-400/50`;
+const GHOST = "rounded-md bg-accent px-1.5 py-0.5 tabular-nums text-foreground transition-colors hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
+const GHOST_INPUT = `${GHOST} w-9 text-center outline-none focus:bg-accent-strong focus:ring-1 focus:ring-ring`;
 
 const pad = (value) => String(value).padStart(2, "0");
 
 export function TimingRow({ title, description, checked, onChange, disabled = false, dimmed = false, children }) {
     return (
-        <div className={`rounded-lg border border-ink/10 px-3 py-2.5 transition-opacity duration-300 ${dimmed ? "opacity-40" : ""}`}>
-            <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="text-sm font-semibold text-neutral-100">{title}</p>
-                    <p className="text-2xs text-neutral-500">{description}</p>
-                </div>
-                <Switch checked={checked} onChange={onChange} disabled={disabled} label={title} className={dimmed ? "" : "disabled:opacity-50"} />
-            </div>
-            {checked && children ? (
-                <div className="mt-2.5 divide-y divide-ink/5 border-t border-ink/5 text-2xs">{children}</div>
-            ) : null}
-        </div>
+        <ToggleRow title={title} description={description} checked={checked} onChange={onChange} disabled={disabled} dimmed={dimmed}>
+            {children ? <div className="-my-1.5 divide-y divide-border-subtle text-2xs">{children}</div> : null}
+        </ToggleRow>
     );
 }
 
 function KeyRow({ label, children }) {
     return (
         <div className="flex items-center justify-between gap-4 py-1.5">
-            <span className="shrink-0 text-neutral-500">{label}</span>
-            <span className="flex min-w-0 items-center gap-1.5 text-neutral-400">{children}</span>
+            <span className="shrink-0 text-subtle-foreground">{label}</span>
+            <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">{children}</span>
         </div>
     );
 }
@@ -133,10 +124,10 @@ function TimeField({ value, onChange, label }) {
 
     return (
         <span onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) commit(); }}
-            className="inline-flex items-center rounded-md bg-ink/5 px-1 py-0.5 text-neutral-100 transition-colors hover:bg-ink/10 focus-within:bg-ink/10 focus-within:ring-1 focus-within:ring-skylab-400/50"
+            className="inline-flex items-center rounded-md bg-accent px-1 py-0.5 text-foreground transition-colors hover:bg-accent-strong focus-within:bg-accent-strong focus-within:ring-1 focus-within:ring-ring"
         >
             {segment("hour", 23)}
-            <span className="text-neutral-500">:</span>
+            <span className="text-subtle-foreground">:</span>
             {segment("minute", 59)}
         </span>
     );
@@ -164,7 +155,7 @@ export function InlineDateTime({ value, onChange, label }) {
             <KeyRow label="Tarih">
                 <span ref={dateRef} className="relative inline-flex">
                     <button type="button" onClick={() => setDateOpen((open) => !open)} aria-label={`${label}, tarih`} aria-expanded={dateOpen}
-                        className={`${GHOST} ${dateOpen ? "bg-ink/10" : ""}`}
+                        className={`${GHOST} ${dateOpen ? "bg-accent-strong" : ""}`}
                     >
                         {date.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" })}
                     </button>
@@ -177,7 +168,7 @@ export function InlineDateTime({ value, onChange, label }) {
                 <TimeField value={date} onChange={onChange} label={label} />
             </KeyRow>
             <KeyRow label="Kalan">
-                {until ? <span className="text-neutral-500">{until}</span> : <span className="text-amber-300/90">geçti</span>}
+                {until ? <span className="text-subtle-foreground">{until}</span> : <span className="text-warning">geçti</span>}
             </KeyRow>
         </>
     );
@@ -221,7 +212,7 @@ export function TimingSection({ timeLimitMinutes, closesAt, personalBlocker, isW
             </div>
 
             {personal && (
-                <p className="text-2xs leading-relaxed text-neutral-500">
+                <p className="text-2xs leading-relaxed text-subtle-foreground">
                     Süre dolunca taslak Cevaplar&apos;a geçici cevap olarak düşer; ekip kabul eder, süre verir ya da teslim yok diye kapatır.
                 </p>
             )}

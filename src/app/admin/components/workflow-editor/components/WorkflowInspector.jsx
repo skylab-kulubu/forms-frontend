@@ -2,14 +2,13 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { Button, Collapse } from "@skylab-kulubu/skylcn-ui";
 import {
   ArrowDown, ArrowRight, ArrowUp, ChevronRight, CornerDownRight, ExternalLink, Flag, LayoutGrid, Plus, Trash2, X,
 } from "lucide-react";
 import { Dropdown } from "@/app/components/utils/Dropdown";
 import {
-  ACTION_ICON, FOCUS_RING, MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTextarea,
-  ROW, ROW_HOVER, SectionHeader, TILE, ToggleRow, actionClass,
+  FOCUS_RING, MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTextarea, ROW, ROW_HOVER, SectionHeader, TILE, ToggleRow,
 } from "@/app/admin/components/utils/SidePanel";
 import AddStepPicker from "./AddStepPicker";
 import { OwnershipTransferSection } from "../../OwnershipTransfer";
@@ -28,13 +27,13 @@ const END_VALUE = "__end";
 const FLASH_MS = 1200;
 
 const TRIGGER_SECTION = {
-  [TRIGGER.SUBMITTED]: { label: "Gönderildiğinde", description: "Cevap gönderilince başvuru nereye gider?", dot: "bg-neutral-500" },
-  [TRIGGER.APPROVED]: { label: "Onaylandığında", description: "Cevap onaylanınca başvuru nereye gider?", dot: "bg-emerald-400" },
-  [TRIGGER.DECLINED]: { label: "Reddedildiğinde", description: "Cevap reddedilince başvuru nereye gider?", dot: "bg-red-400" },
+  [TRIGGER.SUBMITTED]: { label: "Gönderildiğinde", description: "Cevap gönderilince başvuru nereye gider?", dot: "bg-subtle-foreground" },
+  [TRIGGER.APPROVED]: { label: "Onaylandığında", description: "Cevap onaylanınca başvuru nereye gider?", dot: "bg-success" },
+  [TRIGGER.DECLINED]: { label: "Reddedildiğinde", description: "Cevap reddedilince başvuru nereye gider?", dot: "bg-destructive" },
   [TRIGGER.TIMED_OUT]: {
     label: "Süre dolduğunda",
     description: "Geçici cevap teslim yok diye kapatılınca ya da taslak hiç yokken başvuru nereye gider? Teslim olarak kabul edilen geçici cevap normal yoldan devam eder.",
-    dot: "bg-amber-400",
+    dot: "bg-warning",
   },
 };
 
@@ -44,11 +43,11 @@ const INTAKE_STATE = {
   [WORKFLOW_INTAKE.CLOSED]: { pill: "Kapalı", tone: "red" },
 };
 
-const INLINE_INPUT = "w-24 min-w-0 border-b border-dotted border-ink/25 bg-transparent px-0.5 py-0.5 text-2xs text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-skylab-400/60";
+const INLINE_INPUT = "w-24 min-w-0 border-b border-dotted border-border-strong bg-transparent px-0.5 py-0.5 text-2xs text-foreground outline-none transition-colors placeholder:text-faint-foreground focus:border-skylab-400/60";
 
 function linkClass(active = false) {
-  return `rounded text-3xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:cursor-not-allowed disabled:opacity-35 ${
-    active ? "text-skylab-300" : "text-neutral-500 hover:text-neutral-200 disabled:hover:text-neutral-500"
+  return `rounded text-3xs transition-colors ${FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-35 ${
+    active ? "text-skylab-300" : "text-subtle-foreground hover:text-secondary-foreground disabled:hover:text-subtle-foreground"
   }`;
 }
 
@@ -133,8 +132,8 @@ function IntakeSection({ intakeControl, scheduleControl, allowMultipleRuns, hasT
         </PanelNotice>
       )}
 
-      {intakeControl?.isError && <p className="text-2xs text-red-300">Başvuru durumu değiştirilemedi. Lütfen tekrar deneyin.</p>}
-      {scheduleControl?.isError && <p className="text-2xs text-red-300">Kapanış saati kaydedilemedi. Lütfen tekrar deneyin.</p>}
+      {intakeControl?.isError && <p className="text-2xs text-destructive">Başvuru durumu değiştirilemedi. Lütfen tekrar deneyin.</p>}
+      {scheduleControl?.isError && <p className="text-2xs text-destructive">Kapanış saati kaydedilemedi. Lütfen tekrar deneyin.</p>}
     </section>
   );
 }
@@ -164,11 +163,11 @@ function RuleLine({ rule, index, ruleCount, operatorWord, sourceNode, nodes, tra
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-2xs leading-6.5 text-neutral-400">
-      <span className="w-8 shrink-0 text-neutral-500">{index === 0 ? "Eğer" : operatorWord}</span>
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 text-2xs leading-6.5 text-muted-foreground">
+      <span className="w-8 shrink-0 text-subtle-foreground">{index === 0 ? "Eğer" : operatorWord}</span>
 
       {ancestors.length > 0 && (
-        <Dropdown variant="inline" tone="text-neutral-300" value={rule.nodeKey ?? ""}
+        <Dropdown variant="inline" tone="text-secondary-foreground" value={rule.nodeKey ?? ""}
           options={[{ value: "", label: "bu adımda" }, ...ancestors.map((node) => ({ value: node.nodeKey, label: `${node.formTitle} adımında` }))]}
           onChange={(value) => onChange({ nodeKey: value || null, questionId: "", value: "", values: null })}
         />
@@ -180,7 +179,7 @@ function RuleLine({ rule, index, ruleCount, operatorWord, sourceNode, nodes, tra
       />
 
       {field && (
-        <Dropdown variant="inline" tone="text-neutral-300" value={comparison}
+        <Dropdown variant="inline" tone="text-secondary-foreground" value={comparison}
           options={comparisons.map((item) => ({ value: item, label: COMPARISON_LABEL[item] }))}
           onChange={(value) => onChange({ comparison: Number(value), value: "", values: null })}
         />
@@ -191,9 +190,9 @@ function RuleLine({ rule, index, ruleCount, operatorWord, sourceNode, nodes, tra
           {options.map((option) => {
             const active = selectedValues.includes(option);
             return (
-              <button key={option} type="button" onClick={() => toggleValue(option)}
-                className={`max-w-full truncate rounded-full border px-2 py-px text-3xs leading-4 transition-colors ${
-                  active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 text-neutral-500 hover:text-neutral-200"
+              <button key={option} type="button" aria-pressed={active} onClick={() => toggleValue(option)}
+                className={`max-w-full truncate rounded-full border px-2 py-px text-3xs leading-4 transition-colors ${FOCUS_RING} ${
+                  active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-border text-subtle-foreground hover:text-secondary-foreground"
                 }`}
               >
                 {option}
@@ -214,7 +213,7 @@ function RuleLine({ rule, index, ruleCount, operatorWord, sourceNode, nodes, tra
 
       {ruleCount > 1 && (
         <button type="button" onClick={onRemove} title="Kuralı kaldır" aria-label="Kuralı kaldır"
-          className="ml-auto rounded p-0.5 text-neutral-600 transition-colors hover:bg-ink/5 hover:text-neutral-300"
+          className={`ml-auto rounded p-0.5 text-faint-foreground transition-colors hover:bg-accent hover:text-secondary-foreground ${FOCUS_RING}`}
         >
           <X size={11} />
         </button>
@@ -228,7 +227,7 @@ function ConditionTitle({ condition, sourceNode, nodes, schemasByFormId }) {
   const joiner = Number(condition?.operator ?? 0) === 1 ? "veya" : "ve";
 
   return (
-    <p className="truncate text-sm font-semibold text-neutral-100">
+    <p className="truncate text-sm font-semibold text-foreground">
       {rules.map((rule, index) => {
         const ruleNode = rule.nodeKey ? nodes.find((node) => node.nodeKey === rule.nodeKey) : sourceNode;
         const field = schemasByFormId[ruleNode?.formId]?.schema?.find((item) => item.id === rule.questionId);
@@ -238,15 +237,15 @@ function ConditionTitle({ condition, sourceNode, nodes, schemasByFormId }) {
 
         return (
           <Fragment key={index}>
-            {index > 0 && <span className="font-medium text-neutral-400"> {joiner} </span>}
+            {index > 0 && <span className="font-medium text-muted-foreground"> {joiner} </span>}
             {question ? (
               <>
                 <span className="text-skylab-300">{question}</span>
-                <span className="font-medium text-neutral-400"> {COMPARISON_LABEL[comparison]}</span>
+                <span className="font-medium text-muted-foreground"> {COMPARISON_LABEL[comparison]}</span>
                 {VALUELESS_COMPARISONS.includes(comparison) ? null : <span> {value || "?"}</span>}
               </>
             ) : (
-              <span className="font-normal italic text-neutral-500">koşul seçilmedi</span>
+              <span className="font-normal italic text-subtle-foreground">koşul seçilmedi</span>
             )}
           </Fragment>
         );
@@ -259,12 +258,12 @@ function RouteEditor({ transition, kind, order, conditionalCount, group, sourceN
   const update = (patch) => dispatch({ type: "UPDATE_TRANSITION", localId: transition.localId, patch });
 
   if (Number(transition.trigger) === TRIGGER.TIMED_OUT && kind === "always") {
-    return <p className="text-2xs leading-relaxed text-neutral-400">Süre dolduğunda başvuru her zaman bu yola gider.</p>;
+    return <p className="text-2xs leading-relaxed text-muted-foreground">Süre dolduğunda başvuru her zaman bu yola gider.</p>;
   }
 
   if (kind === "fallback") {
     return (
-      <p className="text-2xs leading-relaxed text-neutral-400">
+      <p className="text-2xs leading-relaxed text-muted-foreground">
         Koşullu yönlendirmelerden hiçbiri uymadığında bu yol çalışır. Koşullar kaldırılırsa &quot;Her zaman&quot;a döner.
       </p>
     );
@@ -273,7 +272,7 @@ function RouteEditor({ transition, kind, order, conditionalCount, group, sourceN
   if (kind === "always") {
     return (
       <div className="space-y-2">
-        <p className="text-2xs leading-relaxed text-neutral-400">Bu yol her cevapta çalışır. Sadece belirli cevaplarda gitmesini istiyorsan koşul ekle.</p>
+        <p className="text-2xs leading-relaxed text-muted-foreground">Bu yol her cevapta çalışır. Sadece belirli cevaplarda gitmesini istiyorsan koşul ekle.</p>
         <button type="button" className={linkClass(true)} onClick={() => update({ condition: { operator: 0, rules: [{ ...EMPTY_RULE }] } })}>
           + Koşul ekle
         </button>
@@ -316,7 +315,7 @@ function RouteEditor({ transition, kind, order, conditionalCount, group, sourceN
         </button>
 
         {condition.rules.length > 1 && (
-          <span className="flex items-center gap-1 text-3xs text-neutral-600">
+          <span className="flex items-center gap-1 text-3xs text-faint-foreground">
             <button type="button" className={linkClass(operator === 0)} onClick={() => update({ condition: { ...condition, operator: 0 } })}>tümü</button>
             ·
             <button type="button" className={linkClass(operator === 1)} onClick={() => update({ condition: { ...condition, operator: 1 } })}>herhangi biri</button>
@@ -356,7 +355,7 @@ function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode
 
   return (
     <div ref={rowRef} data-route-row={transition.localId}
-      className={`${ROW} ${isOpen ? "border-skylab-400/30" : `border-ink/10 ${ROW_HOVER}`} ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}
+      className={`${ROW} ${isOpen ? "border-skylab-400/30" : `border-border ${ROW_HOVER}`} ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}
     >
       <div role="button" tabIndex={0} aria-expanded={isOpen} onClick={onToggle}
         onKeyDown={(event) => {
@@ -365,39 +364,32 @@ function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode
         }}
         className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 ${FOCUS_RING}`}
       >
-        <span className={`${TILE} border-ink/10 ${kind === "cond" ? "text-neutral-300" : "text-neutral-500"}`}>
+        <span className={`${TILE} border-border ${kind === "cond" ? "text-secondary-foreground" : "text-subtle-foreground"}`}>
           {kind === "cond" ? order : kind === "fallback" ? <CornerDownRight size={14} /> : <ArrowRight size={14} />}
         </span>
 
         <div className="min-w-0 flex-1">
           {kind === "cond"
             ? <ConditionTitle condition={transition.condition} sourceNode={sourceNode} nodes={nodes} schemasByFormId={schemasByFormId} />
-            : <p className="truncate text-sm font-medium italic text-neutral-300">{kind === "fallback" ? "Aksi halde" : "Her zaman"}</p>}
-          <p className="truncate text-2xs text-neutral-500">{subtitle}</p>
+            : <p className="truncate text-sm font-medium italic text-secondary-foreground">{kind === "fallback" ? "Aksi halde" : "Her zaman"}</p>}
+          <p className="truncate text-2xs text-subtle-foreground">{subtitle}</p>
         </div>
 
         <MenuPill value={target} options={targetOptions(sourceNode, nodes, transitions)} placeholder="Akış biter" italic={target === END_VALUE}
           onSelect={(value) => dispatch({ type: "UPDATE_TRANSITION", localId: transition.localId, patch: { targetNodeKey: value === END_VALUE ? null : value } })}
           onDelete={kind === "fallback" ? null : () => dispatch({ type: "REMOVE_TRANSITION", localId: transition.localId })}
-          deleteLabel="Yönlendirmeyi sil" deleteHint="Önce koşullu yolları kaldır"
+          deleteLabel="Yönlendirmeyi sil" deleteHint="Önce koşullu yolları kaldır" label="Yönlendirme hedefi"
         />
       </div>
 
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div key="editor" className="overflow-hidden"
-            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="mx-3 border-t border-ink/5 pb-3 pt-2.5">
-              <RouteEditor transition={transition} kind={kind} order={order} conditionalCount={conditionalCount} group={group}
-                sourceNode={sourceNode} nodes={nodes} transitions={transitions} schemasByFormId={schemasByFormId} dispatch={dispatch}
-                onClose={onToggle}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Collapse open={isOpen}>
+        <div className="mx-3 border-t border-border-subtle pb-3 pt-2.5">
+          <RouteEditor transition={transition} kind={kind} order={order} conditionalCount={conditionalCount} group={group}
+            sourceNode={sourceNode} nodes={nodes} transitions={transitions} schemasByFormId={schemasByFormId} dispatch={dispatch}
+            onClose={onToggle}
+          />
+        </div>
+      </Collapse>
     </div>
   );
 }
@@ -406,14 +398,14 @@ function ImplicitRow({ trigger, sourceNode, nodes, transitions, dispatch, isFlas
   const rowRef = useScrollIntoView(isFlashing);
 
   return (
-    <div ref={rowRef} data-route-row={`implicit-${trigger}`} className={`${ROW} border-ink/10 ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}>
+    <div ref={rowRef} data-route-row={`implicit-${trigger}`} className={`${ROW} border-border ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}>
       <div className="flex items-center gap-3 px-3 py-2.5">
-        <span className={`${TILE} border-ink/10 text-neutral-500`}><ArrowRight size={14} /></span>
+        <span className={`${TILE} border-border text-subtle-foreground`}><ArrowRight size={14} /></span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium italic text-neutral-300">Her zaman</p>
-          <p className="truncate text-2xs text-neutral-500">Yönlendirme yok; akış burada biter</p>
+          <p className="truncate text-sm font-medium italic text-secondary-foreground">Her zaman</p>
+          <p className="truncate text-2xs text-subtle-foreground">Yönlendirme yok; akış burada biter</p>
         </div>
-        <MenuPill value={END_VALUE} options={targetOptions(sourceNode, nodes, transitions)} placeholder="Akış biter" italic
+        <MenuPill value={END_VALUE} options={targetOptions(sourceNode, nodes, transitions)} placeholder="Akış biter" italic label="Yönlendirme hedefi"
           open={menuOpen} onOpenChange={onMenuOpenChange}
           onSelect={(value) => {
             if (value === END_VALUE) return;
@@ -489,11 +481,11 @@ export function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issu
             <PanelNotice key={`${issue.code}-${index}`} tone="red">
               {validationMessage(issue)}
               {validationAction(issue) === "openForm" && (onOpenForm ? (
-                <button type="button" onClick={() => onOpenForm(selectedNode.formId)} className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-ink">
+                <button type="button" onClick={() => onOpenForm(selectedNode.formId)} className="ml-1.5 underline decoration-border-strong underline-offset-2 transition-colors hover:text-foreground">
                   Formu düzenle
                 </button>
               ) : (
-                <Link href={formHref} target="_blank" className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-ink">
+                <Link href={formHref} target="_blank" className="ml-1.5 underline decoration-border-strong underline-offset-2 transition-colors hover:text-foreground">
                   Formu düzenle
                 </Link>
               ))}
@@ -510,17 +502,15 @@ export function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issu
               />
 
               {onOpenForm ? (
-                <div className={`${ROW} flex items-center justify-between gap-3 border-ink/10 px-3 py-2.5`}>
+                <div className={`${ROW} flex items-center justify-between gap-3 border-border px-3 py-2.5`}>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-neutral-100">Kişisel süre</p>
-                    <p className="text-2xs text-neutral-500">{isTimedNode(selectedNode) ? `Form yönetiyor · başlatınca ${durationText(selectedNode.timeLimitMinutes)}` : "Form yönetiyor · kapalı"}</p>
+                    <p className="text-sm font-semibold text-foreground">Kişisel süre</p>
+                    <p className="text-2xs text-subtle-foreground">{isTimedNode(selectedNode) ? `Form yönetiyor · başlatınca ${durationText(selectedNode.timeLimitMinutes)}` : "Form yönetiyor · kapalı"}</p>
                   </div>
-                  <button type="button" onClick={() => onOpenForm(selectedNode.formId, { panel: "timing" })}
-                    className={`inline-flex shrink-0 items-center gap-1 rounded-lg border border-ink/10 bg-ink/5 px-2.5 py-1 text-2xs text-neutral-300 transition-colors hover:border-ink/20 hover:bg-ink/10 hover:text-neutral-50 ${FOCUS_RING}`}
-                  >
+                  <Button size="sm" className="shrink-0" onClick={() => onOpenForm(selectedNode.formId, { panel: "timing" })}>
                     Formda
-                    <ChevronRight size={12} className="opacity-70" />
-                  </button>
+                    <ChevronRight aria-hidden className="size-3.5" />
+                  </Button>
                 </div>
               ) : (
                 <WorkflowManagedRow title="Kişisel süre" linkLabel="Formda" newTab href={`${formHref}?panel=timing`}
@@ -532,10 +522,10 @@ export function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issu
                 {onOpenForm ? (
                   <PanelButton icon={ExternalLink} onClick={() => onOpenForm(selectedNode.formId)} className="min-w-fit flex-1">Formu aç</PanelButton>
                 ) : (
-                  <Link href={formHref} target="_blank" className={`${actionClass()} min-w-fit flex-1`}>
-                    <ExternalLink size={13} className={ACTION_ICON} />
+                  <Button size="sm" className="min-w-fit flex-1" render={<Link href={formHref} target="_blank" />}>
+                    <ExternalLink aria-hidden />
                     Formu aç
-                  </Link>
+                  </Button>
                 )}
                 <PanelButton icon={Flag} disabled={selectedNode.isStart} onClick={() => dispatch({ type: "SET_START", nodeKey: selectedNode.nodeKey })}
                   className="min-w-fit flex-1"
@@ -577,7 +567,7 @@ export function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout
         <SectionHeader title="Adımlar" description={stepsDescription} />
 
         {orderedNodes.length === 0 ? (
-          <p className="text-2xs leading-relaxed text-neutral-500">Henüz adım yok. İlk eklediğin form akışın başlangıcı olur.</p>
+          <p className="text-2xs leading-relaxed text-subtle-foreground">Henüz adım yok. İlk eklediğin form akışın başlangıcı olur.</p>
         ) : (
           <div className="space-y-3">
             {orderedNodes.map((node) => {
@@ -592,16 +582,16 @@ export function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout
 
               return (
                 <button key={node.nodeKey} type="button" onClick={() => (onOpenStep ? onOpenStep(node) : dispatch({ type: "SELECT", nodeKey: node.nodeKey }))}
-                  className={`${ROW} ${ROW_HOVER} ${FOCUS_RING} flex w-full items-center gap-3 border-ink/10 px-3 py-2.5 text-left`}
+                  className={`${ROW} ${ROW_HOVER} ${FOCUS_RING} flex w-full items-center gap-3 border-border px-3 py-2.5 text-left`}
                 >
-                  <span className={`${TILE} ${node.isStart ? "border-skylab-400/40 text-skylab-300" : "border-ink/10 text-neutral-300"}`}>
+                  <span className={`${TILE} ${node.isStart ? "border-skylab-400/40 text-skylab-300" : "border-border text-secondary-foreground"}`}>
                     {node.isStart ? 1 : depth ?? "?"}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-neutral-100">{node.formTitle}</span>
-                    {meta ? <span className="block truncate text-2xs text-neutral-500">{meta}</span> : null}
+                    <span className="block truncate text-sm font-semibold text-foreground">{node.formTitle}</span>
+                    {meta ? <span className="block truncate text-2xs text-subtle-foreground">{meta}</span> : null}
                   </span>
-                  <ChevronRight size={14} className="shrink-0 text-neutral-600" />
+                  <ChevronRight size={14} className="shrink-0 text-faint-foreground" />
                 </button>
               );
             })}
@@ -643,9 +633,9 @@ export function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout
 
 export function DescriptionPanel({ description, dispatch }) {
   return (
-    <div className="flex flex-col gap-4 p-4 text-sm text-neutral-200">
+    <div className="flex flex-col gap-4 p-4 text-sm text-secondary-foreground">
       <SectionHeader title="Akış açıklaması" description="Akışın ne için kullanıldığını ekip arkadaşların için yaz." />
-      <PanelTextarea rows={6} value={description ?? ""} aria-label="Akış açıklaması" placeholder="Bu akış ne için kullanılıyor?"
+      <PanelTextarea rows={6} className="min-h-32" value={description ?? ""} aria-label="Akış açıklaması" placeholder="Bu akış ne için kullanılıyor?"
         onChange={(event) => dispatch({ type: "SET_META", key: "description", value: event.target.value })}
       />
     </div>

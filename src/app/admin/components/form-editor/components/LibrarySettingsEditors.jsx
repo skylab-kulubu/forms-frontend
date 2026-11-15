@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, UserMinus, Users } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { UserMinus, Users } from "lucide-react";
+import { Collapse } from "@skylab-kulubu/skylcn-ui";
 import SearchPicker from "../../../../components/utils/SearchPicker";
 import Avatar from "@/app/components/utils/Avatar";
 import { fetchUserByMail, useUserByMailQuery } from "@/lib/hooks/useUser";
@@ -44,7 +45,6 @@ export function LibrarySettingsEditors() {
     const [isBulkAdding, setIsBulkAdding] = useState(false);
     const [boardMemberIds, setBoardMemberIds] = useState([]);
     const [isExpanded, setIsExpanded] = useState(true);
-    const [isAnimating, setIsAnimating] = useState(false);
     const userPickerRef = useRef(null);
 
     const currentUserRole = Number(userRole ?? 0);
@@ -138,12 +138,12 @@ export function LibrarySettingsEditors() {
         if (canManageRoles) {
             return (
                 <MenuPill value={roleValue} options={ROLE_OPTIONS} onSelect={(value) => handleChangeEditorRole(editor.user.id, value)}
-                    onDelete={() => handleRemoveEditor(editor)} deleteLabel="İzni kaldır"
+                    onDelete={() => handleRemoveEditor(editor)} deleteLabel="İzni kaldır" label="Rol"
                 />
             );
         }
         if (canRemoveReadersOnly && roleValue === 1) {
-            return <MenuPill value={1} options={READER_OPTIONS} onSelect={() => {}} onDelete={() => handleRemoveEditor(editor)} deleteLabel="İzni kaldır" />;
+            return <MenuPill value={1} options={READER_OPTIONS} onSelect={() => {}} onDelete={() => handleRemoveEditor(editor)} deleteLabel="İzni kaldır" label="Rol" />;
         }
         return <PillBadge>{roleValue === 2 ? "Editör" : "Okuyucu"}</PillBadge>;
     };
@@ -156,20 +156,18 @@ export function LibrarySettingsEditors() {
                 expanded={isExpanded} onToggle={() => setIsExpanded((v) => !v)}
             />
 
-            <AnimatePresence initial={false}>
-            {isExpanded && (
-            <motion.div key="editors-body" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} onAnimationStart={() => setIsAnimating(true)} onAnimationComplete={() => setIsAnimating(false)} className={`-mt-4 ${isAnimating ? "overflow-hidden" : ""}`}>
+            <Collapse open={isExpanded} className="-mt-4">
             <div className="space-y-4 pt-4">
             <div className="space-y-3">
                 {sortedEditors.map((editor, index) => {
                     const roleValue = Number(editor.role);
                     return (
-                        <div key={editor.user.id || index} className={`${ROW} flex items-center justify-between gap-3 border-ink/10 px-3 py-2.5`}>
+                        <div key={editor.user.id || index} className={`${ROW} flex items-center justify-between gap-3 border-border px-3 py-2.5`}>
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <Avatar name={editor.user?.fullName} email={editor.user?.email} photoUrl={editor.user?.profilePictureUrl} size="md" />
                                 <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-neutral-100 truncate">{normalizeUserName(editor.user.fullName) || "--"}</p>
-                                    <p className="text-2xs text-neutral-500 truncate">{editor.user.email}</p>
+                                    <p className="text-sm font-semibold text-foreground truncate">{normalizeUserName(editor.user.fullName) || "--"}</p>
+                                    <p className="text-2xs text-subtle-foreground truncate">{editor.user.email}</p>
                                 </div>
                             </div>
                             {renderRole(editor, roleValue)}
@@ -179,11 +177,10 @@ export function LibrarySettingsEditors() {
             </div>
 
             {canManageRoles && (
-                <PanelButton icon={isBulkAdding ? Loader2 : isRemoveMode ? UserMinus : Users} iconClassName={isBulkAdding ? "animate-spin" : ""}
-                    danger={isRemoveMode} disabled={isBulkAdding} className="w-full"
+                <PanelButton icon={isRemoveMode ? UserMinus : Users} danger={isRemoveMode} pending={isBulkAdding} className="w-full"
                     onClick={isRemoveMode ? handleBulkRemoveBoardMembers : handleBulkAddBoardMembers}
                 >
-                    {isBulkAdding ? "Ekleniyor..." : isRemoveMode ? "Yönetim Kurulunu kaldır" : "Yönetim Kurulunu ekle"}
+                    {isRemoveMode ? "Yönetim Kurulunu kaldır" : "Yönetim Kurulunu ekle"}
                 </PanelButton>
             )}
 
@@ -197,9 +194,9 @@ export function LibrarySettingsEditors() {
                             renderItem={(user, { active, onSelect }) => {
                                 const isAdded = editorsList.some(e => e.user.id === user.id);
                                 return (
-                                    <button type="button" onClick={isAdded ? undefined : onSelect} disabled={isAdded} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition ${active ? "bg-ink/10 text-neutral-100" : "text-neutral-200"} ${isAdded ? "opacity-50 cursor-default" : "hover:bg-ink/5"}`}>
+                                    <button type="button" onClick={isAdded ? undefined : onSelect} disabled={isAdded} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition ${active ? "bg-accent-strong text-foreground" : "text-secondary-foreground"} ${isAdded ? "opacity-50 cursor-default" : "hover:bg-accent"}`}>
                                         <Avatar name={user.fullName} email={user.email} photoUrl={user.profilePictureUrl} size="md" />
-                                        <div className="flex-1 min-w-0"><p className="font-medium leading-tight truncate">{formatFullName(user.firstName, user.lastName)}</p><p className="text-2xs text-neutral-500 truncate">{user.email}</p></div>
+                                        <div className="flex-1 min-w-0"><p className="font-medium leading-tight truncate">{formatFullName(user.firstName, user.lastName)}</p><p className="text-2xs text-subtle-foreground truncate">{user.email}</p></div>
                                         {isAdded && <span className="text-3xs text-skylab-300">Ekli</span>}
                                     </button>
                                 );
@@ -209,9 +206,7 @@ export function LibrarySettingsEditors() {
                 </AnimatePresence>
             </div>
             </div>
-            </motion.div>
-            )}
-            </AnimatePresence>
+            </Collapse>
         </section>
     );
 }
