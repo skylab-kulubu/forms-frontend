@@ -73,7 +73,7 @@
 @keyframes at-draw { to { stroke-dashoffset: 0; } }
 @keyframes at-pop { from { opacity: 0; translate: 0 -6px; scale: .97; } to { opacity: 1; translate: 0 0; scale: 1; } }
 @media (prefers-reduced-motion: reduce) { .at-ppin.is-hot::after { animation: none !important; } }
-@media (min-width: 1280px) { .at-board-in { max-width: min(1760px, 156.52dvh); translate: calc(max(40px, (100vw - 1160px) / 2) - 2.8% - (100vw - 100%) / 2) max(0px, calc(76px - 8.5dvh)); } }
+@media (min-width: 1280px) { .at-board-in { max-width: min(1760px, 156.52dvh); translate: 0 max(0px, calc(76px - 8.5dvh)); } }
 @media (min-width: 1280px) and (max-height: 639px) { .at-board-in { max-width: min(1760px, max(156.52dvh, 1100px)); } }
 @container (max-width: 1330px) { .at-note-p, .at-frag { margin-top: 0; } }
 @container (max-width: 1260px) { .at-frag, .at-p2 { display: none; } }
