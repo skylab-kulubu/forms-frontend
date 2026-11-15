@@ -281,7 +281,7 @@ body {
 
   .studio-editable { outline: none; white-space: pre-wrap; overflow-wrap: anywhere; caret-color: var(--skylab-400); border-radius: 3px; cursor: text; }
   .studio-editable:empty::before { content: attr(data-placeholder); color: var(--color-neutral-500); font-weight: 400; pointer-events: none; }
-  .studio-editable:focus { background: color-mix(in srgb, var(--color-skylab-400) 6%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-skylab-400) 6%, transparent); }
+  .studio-editable:focus { background: color-mix(in srgb, var(--skylab-400) 6%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--skylab-400) 6%, transparent); }
   .studio-editable[contenteditable="false"] { cursor: default; }
 
   .studio-card {

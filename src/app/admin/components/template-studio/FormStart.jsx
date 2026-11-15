@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, CornerDownRight, FileText, Search } from "lucide-react";
+import { IconButton, Input } from "@skylab-kulubu/skylcn-ui";
 import { PanelButton } from "@/app/admin/components/utils/SidePanel";
 import { formQuery, useUserFormsQuery } from "@/lib/hooks/useFormAdmin";
 import { templateFieldsOf } from "@/lib/studio/template-doc";
@@ -36,12 +37,9 @@ function FormList({ phone, onPick }) {
   return (
     <StartList heading="Formdan başlayın" phone={phone}
       action={searchable ? (
-        <div className="relative w-36 shrink-0">
-          <Search size={12} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-neutral-500" />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={handleKeyDown} placeholder="Form ara..." aria-label="Form ara"
-            className="h-7 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-7 pr-2 text-2xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
-          />
-        </div>
+        <Input inputSize="sm" icon={Search} className="w-36 shrink-0" value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={handleKeyDown}
+          placeholder="Form ara..." aria-label="Form ara"
+        />
       ) : null}
     >
       <div className={`divide-y divide-ink/5 ${searchable ? "min-h-40" : ""}`}>
@@ -82,11 +80,7 @@ function QuestionStep({ form, phone, onBack, onImport }) {
   return (
     <div>
       <div className={`flex items-center gap-2 ${pad}`}>
-        <button type="button" aria-label="Formlara dön" onClick={onBack}
-          className="-ml-1.5 grid size-7 shrink-0 place-items-center rounded-md text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100"
-        >
-          <ChevronLeft size={15} />
-        </button>
+        <IconButton variant="ghost" size="icon-sm" icon={ChevronLeft} label="Formlara dön" onClick={onBack} className="-ml-1.5" />
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-neutral-100">{form.title || "Adsız form"}</span>
         {schema.length > 0 ? (
           <button type="button" onClick={() => setPicked(allPicked ? [] : schema.map((field) => field.id))}

@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Maximize2, Minus, Plus, Timer } from "lucide-react";
+import { IconButton, Skeleton, StatusDot } from "@skylab-kulubu/skylcn-ui";
 import { shortDuration } from "@/lib/form-timing";
 import { depthMap, flowOrder, groupTransitions, isTimedNode, triggersForNode } from "../workflow-editor/workflow-graph";
 import { StaticCard } from "./StudioCard";
@@ -585,7 +586,7 @@ export default function StudioMap({
         }}
       >
         <div className="absolute left-0 top-0" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${z})`, transformOrigin: "0 0" }}>
-          <svg className="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" aria-hidden="true">
+          <svg className="pointer-events-none absolute left-0 top-0 overflow-visible text-skylab-400" width="1" height="1" aria-hidden="true">
             {terminals.map((terminal) => (
               <path key={`line-${terminal.key}`} d={`M ${terminal.fromX} ${terminal.y} L ${terminal.x} ${terminal.y}`} fill="none"
                 stroke={terminal.stroke} strokeWidth={1.4} vectorEffect="non-scaling-stroke" strokeDasharray={terminal.dash} opacity={terminal.implicit ? 0.45 : 1}
@@ -596,7 +597,7 @@ export default function StudioMap({
                 <path d={edge.d} fill="none" stroke="transparent" strokeWidth={16} vectorEffect="non-scaling-stroke" style={{ pointerEvents: "stroke", cursor: "pointer" }}
                   onPointerDown={(event) => event.stopPropagation()} onClick={() => wf.dispatch({ type: "FOCUS_ROUTE", localId: edge.id })}
                 />
-                <path d={edge.d} fill="none" vectorEffect="non-scaling-stroke" stroke={edge.isHighlighted ? "#ebd5ee" : edge.stroke}
+                <path d={edge.d} fill="none" vectorEffect="non-scaling-stroke" stroke={edge.isHighlighted ? "currentColor" : edge.stroke}
                   strokeWidth={edge.isHighlighted ? 2.4 : 1.5} strokeDasharray={edge.dashed ? "4 4" : undefined}
                 />
               </g>
@@ -608,7 +609,7 @@ export default function StudioMap({
             ) : null}
             {connecting ? (
               <path d={pathOf(curve({ x: connecting.from.x + PORT_GAP, y: connecting.from.y }, connecting.to))} fill="none" vectorEffect="non-scaling-stroke"
-                stroke="#ebd5ee" strokeWidth={1.5} strokeDasharray="5 4"
+                stroke="currentColor" strokeWidth={1.5} strokeDasharray="5 4"
               />
             ) : null}
           </svg>
@@ -671,7 +672,7 @@ export default function StudioMap({
                   {isTimedNode(node) ? (
                     <span className="inline-flex shrink-0 items-center gap-0.5 text-3xs text-amber-300/90"><Timer size={10} />{shortDuration(node.timeLimitMinutes * 60_000)}</span>
                   ) : null}
-                  {issues.length > 0 ? <span className="size-1.5 shrink-0 rounded-full bg-red-400" title={`${issues.length} sorun`} /> : null}
+                  {issues.length > 0 ? <StatusDot tone="danger" glow={false} label={`${issues.length} sorun`} /> : null}
                   {commentCounts[node.formId] ? <CommentMark count={commentCounts[node.formId]} /> : null}
                   {peopleByForm[node.formId]?.length ? <PresenceDots members={peopleByForm[node.formId]} /> : null}
                 </div>
@@ -684,7 +685,7 @@ export default function StudioMap({
                           echo={node.formId === entry?.formId ? entry.echo ?? null : null}
                         />
                       ) : (
-                        <div className="h-96 rounded-3xl border border-ink/10 bg-panel-soft"><div className="shimmer m-10 h-8 w-64 rounded-lg" /></div>
+                        <div className="h-96 rounded-3xl border border-ink/10 bg-panel-soft"><Skeleton className="m-10 h-8 w-64 rounded-lg" /></div>
                       )}
                       <button type="button" aria-label={`${node.formTitle || "Form"} formunu düzenle`} onClick={() => onOpenForm(node.formId)}
                         className="absolute inset-0 z-10 cursor-pointer rounded-3xl transition-[background-color,box-shadow] hover:bg-ink/2 hover:ring-[6px] hover:ring-skylab-400/30"
@@ -753,16 +754,13 @@ export default function StudioMap({
       <div data-map-ui onPointerDown={(event) => event.stopPropagation()}
         className="absolute bottom-17 right-3 z-30 flex items-center rounded-lg border border-ink/10 bg-neutral-900 text-2xs text-neutral-400 shadow-lg @3xl:bottom-4 @3xl:right-4"
       >
-        <button type="button" title="Uzaklaş" aria-label="Uzaklaş" onClick={() => zoomBy(1 / 1.2)} className="grid size-7 place-items-center transition-colors hover:text-neutral-100"><Minus size={13} /></button>
+        <IconButton variant="ghost" size="icon-sm" icon={Minus} label="Uzaklaş" tooltip="top" onClick={() => zoomBy(1 / 1.2)} />
         <span className="h-7 min-w-11 px-1 text-center leading-7 tabular-nums">{Math.round(z * 100)}%</span>
-        <button type="button" title="Yakınlaş" aria-label="Yakınlaş" onClick={() => zoomBy(1.2)} className="grid size-7 place-items-center transition-colors hover:text-neutral-100"><Plus size={13} /></button>
+        <IconButton variant="ghost" size="icon-sm" icon={Plus} label="Yakınlaş" tooltip="top" onClick={() => zoomBy(1.2)} />
         <span className="h-4 w-px bg-ink/10" />
-        <button type="button" title="Hepsini sığdır (Shift+1)" aria-label="Hepsini sığdır"
+        <IconButton variant="ghost" size="icon-sm" icon={Maximize2} label="Hepsini sığdır" title="Hepsini sığdır (Shift+1)" tooltip="top"
           onClick={() => { stopTween(); const next = fitView(); if (next) setView(next); }}
-          className="grid size-7 place-items-center transition-colors hover:text-neutral-100"
-        >
-          <Maximize2 size={13} />
-        </button>
+        />
       </div>
 
       <span className="pointer-events-none absolute bottom-4 left-4 z-30 hidden max-w-56 text-3xs leading-snug text-neutral-600 @5xl:block">

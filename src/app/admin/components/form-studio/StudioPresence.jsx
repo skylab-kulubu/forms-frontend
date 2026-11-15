@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Badge, Tooltip } from "@skylab-kulubu/skylcn-ui";
 import { questionNumbers } from "./studio-schema";
 
 const PALETTE = ["#a6b3f1", "#f8a9c7", "#a780e6", "#d78adb", "#e6c2f1", "#c2b1f8"];
@@ -103,17 +104,29 @@ export function PresenceDots({ members, max = 3 }) {
 
 const STACK_MAX = 4;
 
+function PersonCard({ person, onGo }) {
+  return (
+    <>
+      <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: colorOf(person.userId) }} />
+        <span className="truncate">{person.name}</span>
+      </span>
+      <span className="mt-0.5 block text-muted-foreground">{person.where}</span>
+      {onGo ? <span className="mt-1.5 block text-subtle-foreground">Tıklayınca yanına gidersin</span> : null}
+    </>
+  );
+}
+
 export function PeopleStack({ people, onGo }) {
-  const [hovered, setHovered] = useState(null);
   if (people.length === 0) return null;
   const extra = people.length - STACK_MAX;
 
   return (
     <div className="mr-3 flex items-center -space-x-0.5">
       {people.slice(0, STACK_MAX).map((person) => (
-        <div key={person.userId} className={`relative hover:z-20 ${person.editing ? "z-10" : ""}`} onMouseEnter={() => setHovered(person.userId)} onMouseLeave={() => setHovered(null)}>
+        <Tooltip key={person.userId} label={<PersonCard person={person} onGo={onGo} />} className="w-56 rounded-[10px] px-2.5 py-2 text-left text-2xs font-normal">
           <button type="button" onClick={() => onGo?.(person)} aria-label={`${person.name}, ${person.where}`}
-            className="relative block rounded-md ring-2 ring-neutral-900 transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-skylab-400/60"
+            className={`relative block rounded-md ring-2 ring-neutral-900 transition-transform hover:z-20 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-skylab-400/60 ${person.editing ? "z-10" : ""}`}
           >
             <PresenceAvatar member={person} />
             {person.editing ? (
@@ -122,17 +135,7 @@ export function PeopleStack({ people, onGo }) {
               </span>
             ) : null}
           </button>
-          {hovered === person.userId ? (
-            <div role="tooltip" className="absolute right-0 top-8 z-50 w-56 rounded-[10px] border border-ink/15 bg-panel px-2.5 py-2 text-left text-2xs shadow-2xl shadow-black/50">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-neutral-100">
-                <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: colorOf(person.userId) }} />
-                <span className="truncate">{person.name}</span>
-              </p>
-              <p className="mt-0.5 text-neutral-400">{person.where}</p>
-              {onGo ? <p className="mt-1.5 text-neutral-500">Tıklayınca yanına gidersin</p> : null}
-            </div>
-          ) : null}
-        </div>
+        </Tooltip>
       ))}
       {extra > 0 ? (
         <span title={people.slice(STACK_MAX).map((person) => person.name).join(", ")}
@@ -148,10 +151,10 @@ export function PeopleStack({ people, onGo }) {
 export function PeopleCount({ people }) {
   if (people.length === 0) return null;
   return (
-    <span title={people.map((person) => person.name).join(", ")} className="mr-1 inline-flex items-center gap-1 rounded-md border border-ink/10 px-1.5 py-0.5 text-3xs tabular-nums text-neutral-400">
+    <Badge title={people.map((person) => person.name).join(", ")} className="mr-1 tabular-nums">
       <span className="size-1.5 rounded-full" style={{ backgroundColor: colorOf(people[0].userId) }} />
       {people.length} kişi
-    </span>
+    </Badge>
   );
 }
 

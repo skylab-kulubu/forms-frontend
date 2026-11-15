@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, LayoutTemplate, Search } from "lucide-react";
+import { Input } from "@skylab-kulubu/skylcn-ui";
 import { Floating } from "@/app/components/utils/Floating";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import { FIELD_TYPES, INSERT_CATEGORIES } from "./studio-schema";
@@ -105,16 +106,14 @@ export default function StudioInsertMenu({ anchor, initialView = "root", placeme
         <div className="relative mb-1">
           {view !== "root" ? (
             <button type="button" aria-label="Geri" onClick={() => showView("root")}
-              className="absolute left-1.5 top-1/2 grid size-5 -translate-y-1/2 place-items-center rounded text-neutral-500 hover:text-neutral-200"
+              className="absolute left-1.5 top-1/2 z-10 grid size-5 -translate-y-1/2 place-items-center rounded text-neutral-500 hover:text-neutral-200"
             >
               <ChevronLeft size={14} />
             </button>
-          ) : (
-            <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-          )}
-          <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); onHover?.(null); }} onKeyDown={handleKeyDown}
+          ) : null}
+          <Input ref={inputRef} inputSize="sm" icon={view === "root" ? Search : undefined} className={view === "root" ? undefined : "pl-8"}
+            value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); onHover?.(null); }} onKeyDown={handleKeyDown}
             placeholder={view === "templates" ? "Şablon ara..." : "Bileşen ara..."} aria-label="Bileşen ara"
-            className="h-8 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
           />
         </div>
 

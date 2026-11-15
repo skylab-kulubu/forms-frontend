@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CircleAlert, CircleGauge, CopyPlus, LayoutTemplate, Timer } from "lucide-react";
+import { CircleAlert, CopyPlus, LayoutTemplate, Timer } from "lucide-react";
+import { Button } from "@skylab-kulubu/skylcn-ui";
 import { useCloneGroupMutation } from "@/lib/hooks/useGroupShare";
 import Popover from "@/app/components/utils/Popover";
 import Avatar from "@/app/components/utils/Avatar";
 import { PANEL_SECTION, PANEL_STACK, SectionHeader } from "@/app/admin/components/utils/SidePanel";
 import { CARD_WIDTH, CardShell, DisplayFields } from "../form-studio/StudioCard";
-
-const PRIMARY = "flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-3 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-60";
 
 const formatName = (raw) => {
   if (!raw) return "";
@@ -97,10 +96,10 @@ export default function SharedTemplate({ group, token }) {
             <section className={PANEL_SECTION}>
               <SectionHeader title="Kendi şablonlarına ekle" description="Bir kopyası hesabına eklenir ve düzenlemek için açılır. Paylaşanın şablonu değişmez." />
               <Popover open={isError} error={error} variant="error" align="bottom-right">
-                <button type="button" onClick={handleClone} disabled={isPending || isSuccess} className={PRIMARY}>
-                  {isPending ? <CircleGauge size={14} className="animate-spin" /> : isError ? <CircleAlert size={14} /> : <CopyPlus size={14} />}
+                <Button variant="primary" size="lg" onClick={handleClone} disabled={isSuccess} pending={isPending} className="w-full">
+                  {isError ? <CircleAlert className="size-3.5" /> : <CopyPlus className="size-3.5" />}
                   {isPending ? "Ekleniyor..." : isError ? "Hata oluştu" : isSuccess ? "Eklendi" : "Kendime ekle"}
-                </button>
+                </Button>
               </Popover>
               <p className="flex items-center gap-1.5 text-2xs text-neutral-500">
                 <Timer size={12} className="shrink-0" />

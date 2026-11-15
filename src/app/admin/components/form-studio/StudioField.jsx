@@ -1,20 +1,18 @@
 "use client";
 
-import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { memo, useLayoutEffect, useMemo, useRef } from "react";
 import {
   ArrowDown, ArrowUp, Calendar, ChevronsUpDown, Clock, Copy, CornerDownRight, GripVertical, Lock, Plus, Trash2, Upload, X,
 } from "lucide-react";
+import { Badge, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, MenuGroup, MenuItem } from "@skylab-kulubu/skylcn-ui";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
 import { sliderRange } from "@/app/components/form-components/FormSlider";
 import { matrixChoiceClass, matrixGroupProps, matrixLabelClass, useMatrixLayout } from "@/app/components/form-components/FormMatrix";
-import { Floating } from "@/app/components/utils/Floating";
 import { accountFileRules } from "@/lib/guest-uploads";
 import { REGISTRY } from "@/app/components/form-registry";
 import { isChildRequired } from "@/app/components/form-components/FormRepeater";
 import { CHOICE_PRESET_LABELS } from "./studio-presets";
 import { FIELD_TYPES, REPEATER_CHILD_TYPES } from "./studio-schema";
-import { POPOVER_MOTION } from "./studio-motion";
 import { colorOf, firstName } from "./StudioPresence";
 
 const NO_VALUES = [];
@@ -99,7 +97,8 @@ function fileRulesLabel(acceptedFiles, maxSize) {
   return `${label} • MAKS ${Math.round(rules.maxBytes / 1024 / 1024)}MB`;
 }
 
-const BOX = "rounded-lg border border-ink/10 bg-neutral-900/60";
+// The canvas previews draw the respondent page's skylcn controls (lg) statically, in their classes
+const BOX = "rounded-lg border border-input bg-background/60";
 
 function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
   const choices = field.props?.choices ?? [];
@@ -109,17 +108,17 @@ function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
       {choices.map((choice, index) => {
         const locked = lockedValues.includes(choice);
         return (
-          <div key={index} className={`group/opt flex items-center gap-3 rounded-md border border-ink/10 bg-neutral-900/60 p-2`}>
-            <input type={field.props?.allowMultiple === false ? "radio" : "checkbox"} disabled tabIndex={-1} className="checkbox shrink-0" />
+          <div key={index} className="group/opt flex items-center gap-3 rounded-md border border-border bg-input-background px-3 py-2">
+            <span aria-hidden="true" className={`size-4 shrink-0 border border-border-strong bg-input-background ${field.props?.allowMultiple === false ? "rounded-full" : "rounded-sm"}`} />
             <Editable editKey={`o-${field.id}-${index}`} value={choice} placeholder={`Seçenek ${index + 1}`} readOnly={locked || readOnly}
               title={locked ? "Akış koşulu bu seçeneği karşılaştırıyor; adı değiştirilemez." : undefined}
-              className={`min-w-0 flex-1 text-sm ${locked ? "text-neutral-400" : "text-neutral-200"}`}
+              className={`min-w-0 flex-1 text-sm ${locked ? "text-muted-foreground" : "text-secondary-foreground"}`}
               onChange={(value) => api.setChoice(field.id, index, value)}
               onEnter={() => api.addChoice(field.id, index + 1)}
               onBackspaceEmpty={() => api.removeChoice(field.id, index, true)}
               onPasteLines={(lines) => api.pasteChoices(field.id, index, lines)}
             />
-            {locked ? <Lock size={12} className="shrink-0 text-neutral-500" /> : selected && choices.length > 1 ? (
+            {locked ? <Lock size={12} className="shrink-0 text-subtle-foreground" /> : selected && choices.length > 1 ? (
               <button type="button" title="Seçeneği sil" aria-label="Seçeneği sil" onPointerDown={(event) => event.stopPropagation()}
                 onClick={() => api.removeChoice(field.id, index, false)}
                 className="grid size-5 shrink-0 place-items-center rounded text-neutral-600 opacity-0 transition-opacity hover:text-neutral-200 group-hover/opt:opacity-100"
@@ -132,7 +131,7 @@ function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
       })}
       {selected && (
         <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => api.addChoice(field.id, choices.length)}
-          className="flex items-center gap-3 rounded-md border border-dashed border-ink/10 p-2 text-left text-sm text-neutral-500 transition-colors hover:border-ink/20 hover:text-neutral-300"
+          className="flex items-center gap-3 rounded-md border border-dashed border-border px-3 py-2 text-left text-sm text-subtle-foreground transition-colors hover:border-border-strong hover:text-secondary-foreground"
         >
           <Plus size={14} className="mx-px" />
           Seçenek ekle
@@ -224,33 +223,31 @@ function MatrixPreview({ field, selected, api }) {
   return (
     <div ref={rootRef} className="mt-4 w-full">
       {layout.mode === "table" ? (
-        <div ref={scrollerRef} className={`overflow-x-auto ${BOX}`}>
-          <table className="w-full min-w-125 text-left">
-            <thead className="border-b border-ink/10 bg-ink/5">
+        <div ref={scrollerRef} className="overflow-x-auto">
+          <table className="w-full min-w-105 border-y border-border-subtle text-left">
+            <thead className="border-b border-border-subtle">
               <tr>
                 <th className="w-1/3 p-3" />
                 {columns.map((column, index) => (
-                  <th key={index} className="group/col relative p-3 text-center text-2xs font-semibold uppercase tracking-wider text-neutral-400">
+                  <th key={index} className="group/col relative p-3 text-center text-sm font-normal text-muted-foreground">
                     {columnLabel(column, index, `c-${field.id}-${index}`)}
                     {selected && columns.length > 1 && removeButton("columns", index, "absolute right-0.5 top-0.5 group-hover/col:opacity-100")}
                   </th>
                 ))}
-                <th className="w-10 p-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-ink/5">
+            <tbody className="divide-y divide-border-subtle">
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex} className="group/row">
-                  <td className="relative p-3 text-sm font-medium text-neutral-200">
+                  <td className="relative p-3 text-sm text-foreground">
                     {rowLabel(row, rowIndex)}
                     {selected && rows.length > 1 && removeButton("rows", rowIndex, "absolute left-0 top-1/2 -translate-y-1/2 group-hover/row:opacity-100")}
                   </td>
                   {columns.map((_, columnIndex) => (
                     <td key={columnIndex} className="p-2 text-center align-middle">
-                      <span className="inline-block size-4.5 rounded-full border border-ink/20 bg-neutral-900/80" />
+                      <span className="inline-block size-4 rounded-full border border-border-strong bg-input-background align-middle" />
                     </td>
                   ))}
-                  <td className="w-10 p-2 pr-4" />
                 </tr>
               ))}
             </tbody>
@@ -260,14 +257,14 @@ function MatrixPreview({ field, selected, api }) {
         <div className="flex flex-col gap-5">
           {rows.map((row, rowIndex) => (
             <div key={rowIndex}>
-              <div className="group/row mb-2 flex items-start gap-1.5 text-sm font-medium text-neutral-200">
+              <div className="group/row mb-2 flex items-start gap-1.5 text-sm text-foreground">
                 <div className="min-w-0">{rowLabel(row, rowIndex)}</div>
                 {selected && rows.length > 1 && removeButton("rows", rowIndex, "mt-0.5 shrink-0 group-hover/row:opacity-100")}
               </div>
               <div {...matrixGroupProps(layout)}>
                 {columns.map((column, index) => (
                   <div key={index} className={`group/col relative ${matrixChoiceClass(layout)}`}>
-                    <input type="radio" disabled tabIndex={-1} className={layout.mode === "list" ? "checkbox shrink-0" : "hidden"} />
+                    {layout.mode === "list" ? <span aria-hidden="true" className="size-4 shrink-0 rounded-full border border-border-strong bg-input-background" /> : null}
                     {columnLabel(column, index, rowIndex ? `c-${field.id}-${index}@${rowIndex}` : `c-${field.id}-${index}`, matrixLabelClass(layout))}
                     {selected && columns.length > 1 && removeButton("columns", index, "absolute right-0.5 top-0.5 group-hover/col:opacity-100")}
                   </div>
@@ -297,48 +294,35 @@ function MatrixPreview({ field, selected, api }) {
   );
 }
 
-export function ChildTypeMenu({ anchor, onPick, onDismiss }) {
+// The menu lives in a portal, but React still bubbles its events through the card: stopping them keeps a
+// press from starting a drag or clearing the selection, and a click from reselecting the question
+const stop = (event) => event.stopPropagation();
+
+// Shared by the canvas's add button and the inspector's, each bringing its own trigger
+export function ChildTypeMenuContent({ onPick }) {
   return (
-    <AnimatePresence>
-      {anchor ? (
-        <Floating key="child-types" anchor={anchor} onDismiss={onDismiss} placement="bottom" offset={6}>
-          <motion.div data-studio-menu role="menu" onPointerDown={(event) => event.stopPropagation()} {...POPOVER_MOTION}
-            className="w-48 rounded-[10px] border border-ink/20 bg-panel p-1.5 shadow-2xl shadow-black/50"
-          >
-            <p className="px-2 pb-1 pt-1 text-3xs text-neutral-500">Gruba alan ekle</p>
-            {REPEATER_CHILD_TYPES.map((type) => {
-              const { label, Icon } = FIELD_TYPES[type];
-              return (
-                <button key={type} type="button" role="menuitem" onClick={() => { onDismiss(); onPick(type); }}
-                  className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs text-neutral-300 transition-colors hover:bg-ink/6 hover:text-ink"
-                >
-                  <Icon size={14} className="text-neutral-500" />
-                  {label}
-                </button>
-              );
-            })}
-          </motion.div>
-        </Floating>
-      ) : null}
-    </AnimatePresence>
+    <DropdownMenuContent data-studio-menu align="center" sideOffset={6} className="w-48" onPointerDown={stop} onClick={stop}>
+      <MenuGroup label="Gruba alan ekle">
+        {REPEATER_CHILD_TYPES.map((type) => {
+          const { label, Icon } = FIELD_TYPES[type];
+          return <MenuItem key={type} icon={Icon} onClick={() => onPick(type)}>{label}</MenuItem>;
+        })}
+      </MenuGroup>
+    </DropdownMenuContent>
   );
 }
 
 function AddChildButton({ onPick }) {
-  const [anchor, setAnchor] = useState(null);
-
   return (
-    <>
-      <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}
-        className={`inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 py-2 text-xs font-medium transition-colors ${
-          anchor ? "border-ink/25 bg-ink/5 text-neutral-200" : "border-ink/15 bg-ink/3 text-neutral-400 hover:border-ink/25 hover:text-neutral-200"
-        }`}
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger onPointerDown={stop}
+        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink/15 bg-ink/3 px-3 py-2 text-xs font-medium text-neutral-400 transition-colors hover:border-ink/25 hover:text-neutral-200 data-popup-open:border-ink/25 data-popup-open:bg-ink/5 data-popup-open:text-neutral-200"
       >
         <Plus size={14} />
         Alan ekle
-      </button>
-      <ChildTypeMenu anchor={anchor} onPick={onPick} onDismiss={() => setAnchor(null)} />
-    </>
+      </DropdownMenuTrigger>
+      <ChildTypeMenuContent onPick={onPick} />
+    </DropdownMenu>
   );
 }
 
@@ -440,19 +424,19 @@ export function ControlPreview({ field, selected, childId = null, lockedValues, 
       const Icon = input.icon;
       return (
         <div className="relative mt-3 flex w-full items-center">
-          <div className="pointer-events-none absolute left-3.5 flex items-center justify-center text-neutral-500"><Icon size={16} strokeWidth={2} /></div>
-          <div className={`block w-full truncate py-2 pl-10 pr-4 text-sm text-neutral-600 ${BOX}`}>{input.placeholder}</div>
+          <div className="pointer-events-none absolute left-3 flex items-center justify-center text-subtle-foreground"><Icon className="size-4" /></div>
+          <div className={`block min-h-9.5 w-full truncate py-2 pl-9 pr-3 text-sm text-subtle-foreground ${BOX}`}>{input.placeholder}</div>
         </div>
       );
     }
     case "long_text":
-      return <div className={`mt-3 block h-19.5 w-full px-3 py-2 text-sm text-neutral-500 ${BOX}`}>Cevabınızı buraya yazın.</div>;
+      return <div className={`mt-3 block h-19.5 w-full px-3 py-2 text-sm text-subtle-foreground ${BOX}`}>Cevabınızı buraya yazın.</div>;
     case "combobox":
       return (
         <div className="mt-3 flex flex-col gap-2">
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"><ChevronsUpDown size={16} /></span>
-            <div className={`flex w-full items-center py-2 pl-9 pr-3 text-sm text-neutral-500 ${BOX}`}>Bir seçenek seçin</div>
+          <div className={`flex min-h-9.5 w-full items-center justify-between gap-2 px-3 py-2 text-sm text-subtle-foreground ${BOX}`}>
+            Bir seçenek seçin
+            <ChevronsUpDown className="size-4 shrink-0" />
           </div>
           {selected ? <ComboOptions field={field} lockedValues={lockedValues} api={api} /> : null}
         </div>
@@ -461,37 +445,39 @@ export function ControlPreview({ field, selected, childId = null, lockedValues, 
       return <OptionRows field={field} selected={selected} lockedValues={lockedValues} readOnly={readOnly} api={api} />;
     case "toggle":
       return (
-        <div className={`mt-3 flex w-full items-center justify-between gap-4 px-4 py-1.5 ${BOX}`}>
-          <span className="select-none text-sm font-medium text-neutral-400">{props.falseLabel || "Hayır"}</span>
-          <span className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-lg border-2 border-transparent bg-neutral-700">
-            <span className="inline-block h-4 w-4 translate-x-0.5 rounded-md bg-white shadow" />
+        <div className="mt-3 flex w-full items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5">
+          <span className="select-none text-sm font-semibold text-foreground">{props.falseLabel || "Hayır"}</span>
+          <span aria-hidden="true" className="inline-flex h-6 w-10 shrink-0 items-center rounded-full border border-border bg-muted px-0.5">
+            <span className="size-4.5 rounded-full bg-white shadow-sm shadow-black/30" />
           </span>
         </div>
       );
     case "slider": {
       const { min, max, middle } = sliderRange(props);
       return (
-        <div className={`mt-3 flex w-full items-center gap-4 px-4 py-2.5 ${BOX}`}>
-          <span className="w-6 shrink-0 text-right text-xs font-medium text-neutral-500">{min}</span>
-          <div className="relative h-1 flex-1 rounded-lg bg-neutral-800">
-            <span className="absolute left-1/2 top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-300/40" />
-          </div>
-          <span className="w-6 shrink-0 text-left text-xs font-medium text-neutral-500">{max}</span>
-          <div className="mx-1 h-5 w-px shrink-0 bg-ink/10" />
-          <span className="min-w-10 shrink-0 text-center text-sm text-neutral-200">{middle}</span>
+        <div className="mt-3 flex w-full flex-col gap-2">
+          <span className="self-end text-xs tabular-nums text-subtle-foreground">{middle}</span>
+          <span className="flex h-5 w-full items-center">
+            <span className="relative h-1.5 w-full rounded-full bg-muted">
+              <span className="absolute inset-y-0 left-0 w-1/2 rounded-full bg-skylab-500" />
+              <span className="absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-skylab-400 bg-background shadow-sm" />
+            </span>
+          </span>
+          <span className="-mt-1 flex justify-between gap-3 text-2xs tabular-nums text-subtle-foreground">
+            <span>{min}</span>
+            <span>{max}</span>
+          </span>
         </div>
       );
     }
     case "file":
       return (
-        <div className="relative mt-3 flex h-16 w-full items-center overflow-hidden rounded-lg border border-dashed border-ink/10 bg-neutral-900/40 px-4 py-3">
-          <div className="flex w-full items-center gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-ink/5 text-neutral-400"><Upload size={18} /></div>
-            <div className="flex flex-col text-left">
-              <span className="text-sm font-medium text-neutral-200">Dosya yükle veya sürükle</span>
-              <span className="mt-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-500">{fileRulesLabel(props.acceptedFiles, props.maxSize)}</span>
-            </div>
-          </div>
+        <div className="mt-3 flex h-16 w-full items-center gap-3 rounded-lg border border-dashed border-border-strong px-3 text-left">
+          <span className="grid size-10 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><Upload className="size-4.5" /></span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-sm font-medium text-foreground">Dosya seç ya da buraya bırak</span>
+            <span className="mt-0.5 text-2xs text-subtle-foreground">{fileRulesLabel(props.acceptedFiles, props.maxSize)}</span>
+          </span>
         </div>
       );
     case "date":
@@ -499,8 +485,8 @@ export function ControlPreview({ field, selected, childId = null, lockedValues, 
       const Icon = field.type === "date" ? Calendar : Clock;
       return (
         <div className="relative mt-3">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"><Icon size={16} /></span>
-          <div className={`flex w-full items-center py-2 pl-9 pr-3 text-sm text-neutral-500 ${BOX}`}>{field.type === "date" ? "Tarih seçin" : "Saat seçin"}</div>
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-subtle-foreground"><Icon className="size-4" /></span>
+          <div className={`flex min-h-9.5 w-full items-center py-2 pl-9 pr-3 text-sm text-subtle-foreground ${BOX}`}>{field.type === "date" ? "Tarih seçin" : "Saat seçin"}</div>
         </div>
       );
     }
@@ -585,7 +571,7 @@ export const FieldBlock = memo(function FieldBlock({
   const peer = others.length > 0 ? colorOf(others[0].userId) : null;
   const typist = others.find((member) => member.editing === field.id);
   const peerShadow = peer
-    ? selected ? `0 0 0 2px rgba(235, 213, 238, 0.5), 0 0 0 5px color-mix(in srgb, ${peer} 45%, transparent)` : `0 0 0 2px color-mix(in srgb, ${peer} 55%, transparent)`
+    ? selected ? `0 0 0 2px color-mix(in srgb, var(--skylab-400) 50%, transparent), 0 0 0 5px color-mix(in srgb, ${peer} 45%, transparent)` : `0 0 0 2px color-mix(in srgb, ${peer} 55%, transparent)`
     : undefined;
 
   return (
@@ -622,9 +608,10 @@ export const FieldBlock = memo(function FieldBlock({
         ) : null}
 
         {others.length > 0 ? (
+          // A person's colour is the same pastel in both themes, so the name on it stays black instead of following the theme
           <div className="pointer-events-none absolute -top-2.5 right-3.5 z-10 flex gap-1">
             {others.map((member) => (
-              <span key={member.key} className="inline-flex items-center gap-1 whitespace-nowrap rounded-[5px] px-1.5 py-0.5 text-3xs font-semibold text-neutral-950"
+              <span key={member.key} className="inline-flex items-center gap-1 whitespace-nowrap rounded-[5px] px-1.5 py-0.5 text-3xs font-semibold text-black"
                 style={{ backgroundColor: colorOf(member.userId) }}
               >
                 {firstName(member.name)}
@@ -637,16 +624,16 @@ export const FieldBlock = memo(function FieldBlock({
         {(condText || lockBadge) && (
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             {condText ? (
-              <span className="inline-flex items-center gap-1 rounded-md border border-skylab-400/20 bg-skylab-500/10 px-1.5 py-0.5 text-3xs text-skylab-300">
-                <CornerDownRight size={10} />
+              <Badge tone="brand" className="whitespace-normal">
+                <CornerDownRight />
                 {condText}
-              </span>
+              </Badge>
             ) : null}
             {lockBadge ? (
-              <span title={lockBadge.title} className="inline-flex items-center gap-1 rounded-md border border-ink/10 bg-ink/5 px-1.5 py-0.5 text-3xs text-neutral-400">
-                <Lock size={10} />
+              <Badge title={lockBadge.title}>
+                <Lock />
                 {lockBadge.label}
-              </span>
+              </Badge>
             ) : null}
           </div>
         )}

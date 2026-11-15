@@ -8,6 +8,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-
 import { CSS as DndCSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { FileText, GitBranch, LayoutTemplate, List, ListTree, Map as MapIcon, MessageSquare, Monitor, PencilLine, Play, Plus, SlidersHorizontal, Smartphone, Timer, TriangleAlert } from "lucide-react";
+import { Badge } from "@skylab-kulubu/skylcn-ui";
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { isIdentityField } from "@/lib/event-handoff";
@@ -54,10 +55,10 @@ function SortableField({ id, spaced, children }) {
 export function DragLossNote({ count, className = "" }) {
   if (!count) return null;
   return (
-    <p className={`inline-flex items-center gap-1.5 rounded-md border border-amber-400/30 bg-amber-500/10 px-2 py-1 text-3xs text-amber-200 ${className}`}>
-      <TriangleAlert size={11} className="shrink-0" />
+    <Badge tone="warning" className={`whitespace-normal ${className}`}>
+      <TriangleAlert />
       Buraya bırakırsan {count} sorunun koşulu kalkar
-    </p>
+    </Badge>
   );
 }
 
@@ -256,15 +257,15 @@ function LogicLayer({ fields, anchors, selectedIds }) {
   const ordered = [...paths.filter((path) => !path.hot), ...paths.filter((path) => path.hot)];
 
   return (
-    <svg className="pointer-events-none absolute left-0 top-0 hidden overflow-visible md:block" width="1" height="1" aria-hidden="true">
+    <svg className="pointer-events-none absolute left-0 top-0 hidden overflow-visible text-skylab-400 md:block" width="1" height="1" aria-hidden="true">
       {ordered.map((path) => (
         <g key={path.id}>
-          <path d={path.d} fill="none" stroke={path.hot ? "rgba(235,213,238,0.85)" : "rgba(235,213,238,0.28)"} strokeWidth={path.hot ? 1.6 : 1.2} />
-          <path d={path.head} fill={path.hot ? "rgba(235,213,238,0.85)" : "rgba(235,213,238,0.28)"} />
+          <path d={path.d} fill="none" stroke="currentColor" strokeOpacity={path.hot ? 0.85 : 0.28} strokeWidth={path.hot ? 1.6 : 1.2} />
+          <path d={path.head} fill="currentColor" fillOpacity={path.hot ? 0.85 : 0.28} />
         </g>
       ))}
       {sources.map((id) => (
-        <circle key={`s-${id}`} cx={x0 - 1} cy={anchors.points[id]} r="3" fill={selectedIds.includes(id) ? "#ebd5ee" : "rgba(235,213,238,0.5)"} />
+        <circle key={`s-${id}`} cx={x0 - 1} cy={anchors.points[id]} r="3" fill="currentColor" fillOpacity={selectedIds.includes(id) ? 1 : 0.5} />
       ))}
     </svg>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ClipboardCheck, FilePlus, FileText, Search } from "lucide-react";
+import { Input } from "@skylab-kulubu/skylcn-ui";
 import { Floating } from "@/app/components/utils/Floating";
 import { eligibilityReason } from "../workflow-editor/workflow-copy";
 import { POPOVER_MOTION } from "./studio-motion";
@@ -54,13 +55,10 @@ export function FormPickerList({ forms = [], isLoading = false, excludeIds = [],
 
   return (
     <>
-      <div className="relative mb-1 shrink-0">
-        <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-        <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(autoFocus ? 0 : -1); }} onKeyDown={handleKeyDown}
-          placeholder="Form ara..." aria-label="Form ara"
-          className="h-8 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
-        />
-      </div>
+      <Input ref={inputRef} inputSize="sm" icon={Search} className="mb-1 shrink-0" value={search}
+        onChange={(event) => { setSearch(event.target.value); setActiveIndex(autoFocus ? 0 : -1); }} onKeyDown={handleKeyDown}
+        placeholder="Form ara..." aria-label="Form ara"
+      />
       <div data-map-scroll onMouseLeave={() => { if (!autoFocus) setActiveIndex(-1); }} className={`overflow-y-auto scrollbar ${className}`}>
         {items.map((item, index) => (
           <div key={item.id}>

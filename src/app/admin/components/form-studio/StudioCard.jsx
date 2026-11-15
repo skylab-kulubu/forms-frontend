@@ -1,14 +1,14 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { Timer, Upload, UserRound, File as FileIcon } from "lucide-react";
+import { Send, Timer, UserRound } from "lucide-react";
+import { Button, ControlSizeProvider, FileUpload } from "@skylab-kulubu/skylcn-ui";
 import { REGISTRY } from "@/app/components/form-registry";
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { durationText } from "@/lib/form-timing";
 import { accountFileRules } from "@/lib/guest-uploads";
-import { QuestionHint, QuestionNumber } from "@/app/components/form-components/QuestionParts";
-import { RichText } from "@/app/components/rich-text/RichText";
+import { QuestionField, questionLabel } from "@/app/components/form-components/QuestionParts";
 import { questionNumbers } from "./studio-schema";
 import { COLLAPSE_EASING, COLLAPSE_MS } from "./studio-motion";
 import BrandPaper from "@/brands/BrandPaper";
@@ -68,11 +68,11 @@ export function CardFooter({ phone = false, userName, onSubmit, submitLabel = "G
             <span className="truncate"><span className="text-neutral-300">{userName || "Başvuran"}</span> olarak yanıtlıyorsunuz</span>
           </p>
         )}
-        <button type="button" data-slot="submit" onClick={onSubmit} onPointerDown={(event) => event.stopPropagation()}
-          className={`relative inline-flex min-w-30 items-center justify-center gap-2 whitespace-nowrap rounded-xl border-[1.5px] border-skylab-300/50 bg-skylab-400/40 px-8 py-3 text-sm font-semibold transition-all hover:bg-pink-200/60 ${phone ? "order-1" : "order-1 sm:order-2 sm:ml-auto sm:shrink-0"}`}
+        <Button data-slot="submit" variant="solid" size="lg" onClick={onSubmit} onPointerDown={(event) => event.stopPropagation()} hoverIcon={Send}
+          className={`min-w-30 ${phone ? "order-1" : "order-1 sm:order-2 sm:ml-auto sm:shrink-0"}`}
         >
           {submitLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -90,82 +90,65 @@ export function DeliverablesHeader({ phone = false }) {
   );
 }
 
-export function MockFileField({ field, number, value, missing, onChange }) {
+// Fill mode tries the question without uploading: a picked file only lends its name and size to the row
+export function MockFileField({ field, number, value, missing, interactive = false, onChange }) {
   const props = field.props ?? {};
   const rules = accountFileRules(props.acceptedFiles, props.maxSize);
-  const has = Boolean(value);
+  const [size, setSize] = useState(0);
+  const files = value ? [{ id: "answer", name: value, size, status: "ready" }] : [];
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <div className="flex gap-3">
-          <QuestionNumber number={number} missing={missing} />
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {props.question ? <RichText text={props.question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}
-              {props.required ? <span className="ml-1 text-red-200/70">*</span> : null}
-            </p>
-            {props.description ? <RichText as="p" text={props.description} className="my-1 text-xs text-neutral-400" /> : null}
-          </div>
-        </div>
-        <button type="button" onClick={() => onChange(has ? null : "ornek-dosya.pdf")}
-          className={`relative mt-3 flex h-16 w-full items-center overflow-hidden rounded-lg border px-4 py-3 text-left transition-colors ${
-            has ? "border-solid border-ink/10 bg-neutral-900/60 hover:bg-neutral-900/80"
-              : missing ? "border-dashed border-red-400/60 bg-red-900/20"
-                : "border-dashed border-ink/10 bg-neutral-900/40 hover:bg-neutral-900/60"
-          }`}
-        >
-          <span className="flex w-full items-center gap-4">
-            <span className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${has ? "bg-ink/10 text-neutral-300" : "bg-ink/5 text-neutral-400"}`}>
-              {has ? <FileIcon size={18} /> : <Upload size={18} />}
-            </span>
-            <span className="flex flex-col">
-              <span className="text-sm font-medium text-neutral-200">{has ? value : "Dosya yükle veya sürükle"}</span>
-              <span className="mt-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-500">
-                {has ? "Doldur modunda dosya yüklenmez · kaldırmak için tıkla" : `${rules.label || "PDF, JPG, PNG, DOCX"} • MAKS ${Math.round(rules.maxBytes / 1024 / 1024)}MB`}
-              </span>
-            </span>
-          </span>
-        </button>
-        <QuestionHint required={Boolean(props.required)} missing={missing} className="mt-2" />
-      </div>
-    </div>
+    <QuestionField question={props.question} questionNumber={number} description={props.description} required={Boolean(props.required)} missing={missing}
+      hint={interactive ? `${props.required ? "Zorunlu alan · " : ""}Doldur modunda dosya sunucuya gönderilmez` : undefined}
+    >
+      <FileUpload files={files} onRemove={() => onChange(null)}
+        onFiles={(picked) => {
+          setSize(picked[0]?.size ?? 0);
+          onChange(picked[0]?.name ?? null);
+        }}
+        accept={rules.accept || undefined} rules={`${rules.label || "PDF, JPG, PNG, DOCX"} • MAKS ${Math.round(rules.maxBytes / 1024 / 1024)}MB`}
+        invalid={missing && !value} variant="compact" aria-label={questionLabel(props.question)}
+      />
+    </QuestionField>
   );
 }
 
 export function DisplayFields({ fields, values = null, missing = [], interactive = false, eventLinked = false, onChange }) {
   const numbers = questionNumbers(fields);
 
+  // The respondent page sets its controls to lg, so the canvas does too
   return (
-    <div className="flex flex-1 flex-col">
-      {fields.map((field, index) => {
-        const Display = REGISTRY[field.type]?.Display;
-        if (!Display) return null;
-        const isSeparator = field.type === "separator";
-        const isLast = index === fields.length - 1;
-        const isMissing = missing.includes(field.id);
-        const shared = {
-          ...field.props,
-          questionNumber: isSeparator ? null : numbers.get(field.id),
-          missing: isMissing,
-          disableAutoFill: !interactive || eventLinked,
-        };
+    <ControlSizeProvider size="lg">
+      <div className="flex flex-1 flex-col">
+        {fields.map((field, index) => {
+          const Display = REGISTRY[field.type]?.Display;
+          if (!Display) return null;
+          const isSeparator = field.type === "separator";
+          const isLast = index === fields.length - 1;
+          const isMissing = missing.includes(field.id);
+          const shared = {
+            ...field.props,
+            questionNumber: isSeparator ? null : numbers.get(field.id),
+            missing: isMissing,
+            disableAutoFill: !interactive || eventLinked,
+          };
 
-        return (
-          <div key={field.id} data-fill-id={field.id} className={`relative ${isLast || isSeparator ? "" : "border-b border-ink/5 pb-6"}`}>
-            {field.type === "file" ? (
-              <MockFileField field={field} number={numbers.get(field.id)} value={values?.[field.id]} missing={isMissing}
-                onChange={(value) => interactive && onChange?.(field.id, value)}
-              />
-            ) : interactive ? (
-              <Display {...shared} value={values?.[field.id]} onChange={(event) => onChange?.(field.id, event.target.value)} />
-            ) : (
-              <Display {...shared} />
-            )}
-          </div>
-        );
-      })}
-    </div>
+          return (
+            <div key={field.id} data-fill-id={field.id} className={`relative ${isLast || isSeparator ? "" : "border-b border-ink/5 pb-6"}`}>
+              {field.type === "file" ? (
+                <MockFileField field={field} number={numbers.get(field.id)} value={values?.[field.id]} missing={isMissing} interactive={interactive}
+                  onChange={(value) => interactive && onChange?.(field.id, value)}
+                />
+              ) : interactive ? (
+                <Display {...shared} value={values?.[field.id]} onChange={(event) => onChange?.(field.id, event.target.value)} />
+              ) : (
+                <Display {...shared} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </ControlSizeProvider>
   );
 }
 
@@ -227,8 +210,8 @@ export function StaticCard({ form, phone = false, active = false, stepInfo = nul
         </div>
       ) : null}
       <div className="mt-auto border-t border-ink/5 px-2 pt-6 md:px-4">
-        <div className="flex justify-end">
-          <span data-slot="submit" className="inline-flex min-w-30 items-center justify-center rounded-xl border-[1.5px] border-skylab-300/50 bg-skylab-400/40 px-8 py-3 text-sm font-semibold">Gönder</span>
+        <div inert className="flex justify-end">
+          <Button data-slot="submit" variant="solid" size="lg" className="min-w-30">Gönder</Button>
         </div>
       </div>
     </CardShell>

@@ -4,6 +4,7 @@ import { Fragment, useMemo, useState } from "react";
 import { Activity, ArrowDown, ArrowUp, ChevronRight, Copy, EyeOff, LayoutTemplate, Lock, PencilLine, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
+import { DropdownMenu, DropdownMenuTrigger, Input } from "@skylab-kulubu/skylcn-ui";
 import {
   MenuPill, PANEL_SECTION, PANEL_STACK, PanelButton, PanelNotice, PanelTextarea, SectionHeader, Switch, ToggleRow,
 } from "@/app/admin/components/utils/SidePanel";
@@ -23,12 +24,10 @@ import { LIVE_LOCK_HINT, useFormActions } from "./useFormActions";
 import { colorOf, uniquePeople, useStudioPresence } from "./StudioPresence";
 import { NONE, useStudio } from "./StudioContext";
 import { CHOICE_PRESETS } from "./studio-presets";
-import { ChildTypeMenu } from "./StudioField";
+import { ChildTypeMenuContent } from "./StudioField";
 import {
   FIELD_TYPES, NO_VALUE_OPERATORS, REPEATER_CHILD_TYPES, RETYPE_OPTIONS, conditionPhrase, defaultCondition, fieldLabel, fieldTypeOf, operatorsFor, questionNumbers, visibleFieldsOf,
 } from "./studio-schema";
-
-const SMALL_INPUT = "h-8 rounded-lg border border-ink/10 bg-neutral-900/60 px-2.5 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20 [color-scheme:dark]";
 
 const REVEAL = {
   className: "-mx-1 overflow-hidden px-1",
@@ -138,7 +137,7 @@ function ComboboxSection({ field, actions, lockedValues }) {
       />
       <div className="divide-y divide-ink/5">
         <KV label="Hazır liste">
-          <MenuPill value={preset?.id ?? "none"} options={options}
+          <MenuPill label="Hazır liste" value={preset?.id ?? "none"} options={options}
             onSelect={(value) => {
               if (value === "none") actions.updateProps(field.id, { preset: null, choices: lockedValues.length ? lockedValues : ["Seçenek 1", "Seçenek 2"] });
               else actions.updateProps(field.id, { preset: value, choices: CHOICE_PRESETS.find((item) => item.id === value).data });
@@ -166,10 +165,10 @@ function ToggleSection({ field, actions, lockedValues }) {
       <SectionHeader title="Etiketler" description="Başvuran anahtarı açıp kapatınca bu metinleri görür." />
       <div className="divide-y divide-ink/5">
         <KV label="Açıkken" hint={trueLocked ? LOCKED_OPTION_HINT : null}>
-          <input value={props.trueLabel ?? ""} readOnly={trueLocked} onChange={(event) => actions.updateProps(field.id, { trueLabel: event.target.value })} placeholder="Evet" className={`${SMALL_INPUT} w-28`} />
+          <Input inputSize="sm" value={props.trueLabel ?? ""} readOnly={trueLocked} onChange={(event) => actions.updateProps(field.id, { trueLabel: event.target.value })} placeholder="Evet" className="w-28" />
         </KV>
         <KV label="Kapalıyken" hint={falseLocked ? LOCKED_OPTION_HINT : null}>
-          <input value={props.falseLabel ?? ""} readOnly={falseLocked} onChange={(event) => actions.updateProps(field.id, { falseLabel: event.target.value })} placeholder="Hayır" className={`${SMALL_INPUT} w-28`} />
+          <Input inputSize="sm" value={props.falseLabel ?? ""} readOnly={falseLocked} onChange={(event) => actions.updateProps(field.id, { falseLabel: event.target.value })} placeholder="Hayır" className="w-28" />
         </KV>
       </div>
     </section>
@@ -184,8 +183,8 @@ function SliderSection({ field, actions }) {
       <div className="divide-y divide-ink/5">
         {[["En az", "min"], ["En çok", "max"], ["Artış", "step"]].map(([label, key]) => (
           <KV key={key} label={label}>
-            <input type="number" value={props[key] ?? ""} onChange={(event) => actions.updateProps(field.id, { [key]: event.target.value === "" ? "" : Number(event.target.value) })}
-              className={`${SMALL_INPUT} w-20 text-right`}
+            <Input inputSize="sm" type="number" value={props[key] ?? ""} onChange={(event) => actions.updateProps(field.id, { [key]: event.target.value === "" ? "" : Number(event.target.value) })}
+              className="w-20 text-right"
             />
           </KV>
         ))}
@@ -201,10 +200,10 @@ function FileSection({ field, actions, anonymous }) {
       <SectionHeader title="Dosya" description="Boş bırakılırsa PDF, JPG, PNG ve DOCX kabul edilir." />
       <div className="divide-y divide-ink/5">
         <KV label="Türler">
-          <input value={props.acceptedFiles ?? ""} onChange={(event) => actions.updateProps(field.id, { acceptedFiles: event.target.value })} placeholder=".pdf,.jpg" className={`${SMALL_INPUT} w-32`} />
+          <Input inputSize="sm" value={props.acceptedFiles ?? ""} onChange={(event) => actions.updateProps(field.id, { acceptedFiles: event.target.value })} placeholder=".pdf,.jpg" className="w-32" />
         </KV>
         <KV label="En büyük boyut" hint="0 en büyük sınırı kullanır">
-          <input type="number" min="0" value={props.maxSize ?? 0} onChange={(event) => actions.updateProps(field.id, { maxSize: Number(event.target.value) || 0 })} className={`${SMALL_INPUT} w-16 text-right`} />
+          <Input inputSize="sm" type="number" min="0" value={props.maxSize ?? 0} onChange={(event) => actions.updateProps(field.id, { maxSize: Number(event.target.value) || 0 })} className="w-16 text-right" />
           <span className="text-2xs text-neutral-500">MB</span>
         </KV>
       </div>
@@ -229,16 +228,16 @@ function VisibilitySection({ field, fields, actions, disabledReason }) {
   if (needsValue && source) {
     if (source.type === "combobox" || source.type === "multi_choice") {
       valueControl = (
-        <MenuPill wide value={condition.value} placeholder="Seçenek seç" options={(source.props?.choices ?? []).map((choice) => ({ value: choice, label: choice }))}
+        <MenuPill wide label="Koşulun değeri" value={condition.value} placeholder="Seçenek seç" options={(source.props?.choices ?? []).map((choice) => ({ value: choice, label: choice }))}
           onSelect={(value) => update({ value })}
         />
       );
     } else if (source.type === "date" || source.type === "time") {
-      valueControl = <input type={source.type} value={condition.value ?? ""} onChange={(event) => update({ value: event.target.value })} className={`${SMALL_INPUT} w-36`} />;
+      valueControl = <Input inputSize="sm" type={source.type} value={condition.value ?? ""} onChange={(event) => update({ value: event.target.value })} className="w-36" />;
     } else {
       valueControl = (
-        <input type={source.type === "slider" || source.props?.inputType === "number" ? "number" : "text"} value={condition.value ?? ""}
-          onChange={(event) => update({ value: event.target.value })} placeholder="Değer" className={`${SMALL_INPUT} w-32 border-dashed`}
+        <Input inputSize="sm" type={source.type === "slider" || source.props?.inputType === "number" ? "number" : "text"} value={condition.value ?? ""}
+          onChange={(event) => update({ value: event.target.value })} placeholder="Değer" className="w-32 border-dashed"
         />
       );
     }
@@ -265,12 +264,12 @@ function VisibilitySection({ field, fields, actions, disabledReason }) {
                 <div className="border-t border-ink/5">
                   <div className="divide-y divide-ink/5">
                     <KV label="Soru">
-                      <MenuPill wide value={condition.fieldId} options={previous.map((item) => ({ value: item.id, label: `${numbers.get(item.id)} · ${fieldLabel(item)}` }))}
+                      <MenuPill wide label="Koşulun sorusu" value={condition.fieldId} options={previous.map((item) => ({ value: item.id, label: `${numbers.get(item.id)} · ${fieldLabel(item)}` }))}
                         onSelect={(id) => actions.setCondition(field.id, defaultCondition(fields.find((item) => item.id === id)))}
                       />
                     </KV>
                     <KV label="Koşul">
-                      <MenuPill wide value={condition.operator} options={operators.map((operator) => ({ value: operator.value, label: operator.label }))}
+                      <MenuPill wide label="Koşul" value={condition.operator} options={operators.map((operator) => ({ value: operator.value, label: operator.label }))}
                         onSelect={(operator) => update({ operator, value: NO_VALUE_OPERATORS.includes(operator) ? "" : condition.value })}
                       />
                     </KV>
@@ -329,7 +328,7 @@ function childMeta(child) {
 }
 
 function RepeaterSection({ field, actions, onOpenChild }) {
-  const [anchor, setAnchor] = useState(null);
+  const [adding, setAdding] = useState(false);
   const children = Array.isArray(field.props?.fields) ? field.props.fields : [];
   const rule = recordRuleOf(field.props);
   const ruleOption = RECORD_RULE_OPTIONS.find((option) => option.value === rule);
@@ -343,7 +342,7 @@ function RepeaterSection({ field, actions, onOpenChild }) {
     <section className={PANEL_SECTION}>
       <SectionHeader title="Kayıttaki alanlar" description="Başvuran bu alanların bir kopyasını istediği kadar ekler. Hiç dokunulmamış kayıt sayılmaz." />
       <KV label="Bir kayıtta dolması gereken" hint={ruleOption.hint}>
-        <MenuPill wide value={rule} options={RECORD_RULE_OPTIONS} onSelect={(value) => actions.updateProps(field.id, { recordRule: value })} />
+        <MenuPill wide label="Bir kayıtta dolması gereken" value={rule} options={RECORD_RULE_OPTIONS} onSelect={(value) => actions.updateProps(field.id, { recordRule: value })} />
       </KV>
       {children.length ? (
         <div>
@@ -391,10 +390,10 @@ function RepeaterSection({ field, actions, onOpenChild }) {
       ) : (
         <p className="text-2xs text-neutral-500">Grupta henüz alan yok.</p>
       )}
-      <PanelButton icon={Plus} chevron active={Boolean(anchor)} className="w-full" onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}>
-        Alan ekle
-      </PanelButton>
-      <ChildTypeMenu anchor={anchor} onPick={add} onDismiss={() => setAnchor(null)} />
+      <DropdownMenu modal={false} open={adding} onOpenChange={setAdding}>
+        <DropdownMenuTrigger render={<PanelButton icon={Plus} chevron active={adding} className="w-full" />}>Alan ekle</DropdownMenuTrigger>
+        <ChildTypeMenuContent onPick={add} />
+      </DropdownMenu>
     </section>
   );
 }
@@ -433,12 +432,12 @@ function ChildInspector({ field, child, actions, onBack, onOpenChild }) {
         <SectionHeader title="Alan ayarları" description="Adı tuvalde de yazabilirsin." />
         <div className="divide-y divide-ink/5">
           <KV label="Ad">
-            <input value={child.props?.question ?? ""} placeholder="Alanın adı" onChange={(event) => actions.updateChild(field.id, child.id, { question: event.target.value })}
-              className={`${SMALL_INPUT} w-44`}
+            <Input inputSize="sm" value={child.props?.question ?? ""} placeholder="Alanın adı" onChange={(event) => actions.updateChild(field.id, child.id, { question: event.target.value })}
+              className="w-44"
             />
           </KV>
           <KV label="Tip">
-            <MenuPill wide value={child.type} options={CHILD_TYPE_OPTIONS} onSelect={(type) => actions.retypeChild(field.id, child.id, type)} />
+            <MenuPill wide label="Alanın tipi" value={child.type} options={CHILD_TYPE_OPTIONS} onSelect={(type) => actions.retypeChild(field.id, child.id, type)} />
           </KV>
           <KV label="Zorunlu" hint={requiredHint}>
             <Switch checked={required} disabled={rule !== "marked"} label="Zorunlu"
@@ -494,7 +493,7 @@ function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onR
             {locked || identity ? (
               <span className="inline-flex items-center gap-1 text-2xs text-neutral-400"><Lock size={11} />{fieldTypeOf(field).label}</span>
             ) : (
-              <MenuPill wide value={field.type} options={RETYPE_OPTIONS}
+              <MenuPill wide label="Soru tipi" value={field.type} options={RETYPE_OPTIONS}
                 onSelect={(type) => {
                   const removed = actions.retype(field.id, type);
                   if (removed > 0) onToast(`${removed} sorunun koşulu kaldırıldı`);
@@ -589,9 +588,9 @@ function MultiInspector({ ids, fields, actions, onDuplicate, onRemove }) {
           ) : null}
           {savingOpen ? (
             <div className="flex gap-2">
-              <input autoFocus value={templateTitle} onChange={(event) => setTemplateTitle(event.target.value)} placeholder="Şablon adı"
+              <Input inputSize="sm" autoFocus value={templateTitle} onChange={(event) => setTemplateTitle(event.target.value)} placeholder="Şablon adı"
                 onKeyDown={(event) => { if (event.key === "Enter") saveTemplate(); if (event.key === "Escape") setSavingOpen(false); }}
-                className={`${SMALL_INPUT} min-w-0 flex-1`}
+                className="min-w-0 flex-1"
               />
               <PanelButton onClick={saveTemplate} disabled={isPending}>{isPending ? "Kaydediliyor" : "Kaydet"}</PanelButton>
             </div>
@@ -720,8 +719,8 @@ function RulesSection({ wf }) {
       <SectionHeader title="Kurallar"
         description="Başvuru kabulü, yeni başvurular ve otomatik kapanış akış sayfasında; burada akışın kuralları var."
       />
-      <input value={state.name ?? ""} onChange={(event) => dispatch({ type: "SET_META", key: "name", value: event.target.value })}
-        placeholder="Akış adı" aria-label="Akış adı" className={`${SMALL_INPUT} w-full text-sm font-semibold`}
+      <Input inputSize="sm" value={state.name ?? ""} onChange={(event) => dispatch({ type: "SET_META", key: "name", value: event.target.value })}
+        placeholder="Akış adı" aria-label="Akış adı" className="w-full text-sm font-semibold"
       />
       <ToggleRow title="Tekrar başlatma" checked={state.allowMultipleRuns} disabled={locked} dimmed={locked}
         description={locked ? "Kişisel süreli adım varken kullanılamaz." : state.allowMultipleRuns ? "Aynı kişi akışı tekrar başlatabilir; adımlarda kişisel süre kullanılamaz." : "Aynı kişi akışı birden fazla kez başlatabilsin."}

@@ -3,9 +3,11 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { LayoutTemplate, Plus, Search } from "lucide-react";
+import { Input } from "@skylab-kulubu/skylcn-ui";
 import { Floating } from "@/app/components/utils/Floating";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import { POPOVER_MOTION } from "../form-studio/studio-motion";
+import { PaletteKeys } from "../form-studio/StudioPalette";
 
 function paletteAnchor() {
   const row = document.querySelector("[data-studio-root] [data-palette-anchor]")?.parentElement;
@@ -67,13 +69,9 @@ export default function TemplatePalette({ currentId, name, onNavigate, onClose }
       <motion.div role="dialog" aria-label="Şablon aç" {...POPOVER_MOTION}
         className={`${docked ? "w-full" : "w-[min(24rem,calc(100vw-1rem))]"} rounded-[10px] border border-ink/20 bg-panel p-1.5 shadow-2xl shadow-black/50`}
       >
-        <div className="relative mb-1">
-          <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-          <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); }} onKeyDown={handleKeyDown}
-            placeholder="Şablon ara..." aria-label="Şablon ara"
-            className="h-8 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
-          />
-        </div>
+        <Input ref={inputRef} inputSize="sm" icon={Search} className="mb-1" value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); }} onKeyDown={handleKeyDown}
+          placeholder="Şablon ara..." aria-label="Şablon ara"
+        />
         <div className="max-h-72 overflow-y-auto scrollbar">
           {items.length === 0 ? <p className="px-2 py-3 text-center text-2xs text-neutral-600">Eşleşen şablon yok.</p> : null}
           {items.map((item, index) => (
@@ -89,7 +87,7 @@ export default function TemplatePalette({ currentId, name, onNavigate, onClose }
             </Fragment>
           ))}
         </div>
-        <p className="mt-1 border-t border-ink/5 px-2 pt-1.5 text-3xs text-neutral-600 pointer-coarse:hidden">↑↓ seç · Enter aç · Esc kapat</p>
+        <PaletteKeys />
       </motion.div>
     </Floating>
   );

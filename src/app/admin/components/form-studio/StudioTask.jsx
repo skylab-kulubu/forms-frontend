@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Bold, Code, Download, FileText, Heading2, Italic, Link, List, ListChecks, Table, Timer, Upload } from "lucide-react";
+import { Button, IconButton } from "@skylab-kulubu/skylcn-ui";
 import TaskMarkdown from "@/app/components/rich-text/TaskMarkdown";
 import { taskReadMinutes } from "@/app/components/rich-text/markdown";
 import { durationText } from "@/lib/form-timing";
@@ -51,23 +52,18 @@ export function TaskEditor({ task, onChange, onNotice }) {
     >
       <div className="flex items-center gap-0.5 overflow-x-auto border-b border-ink/10 px-1.5 py-1 text-neutral-500 scrollbar-hidden">
         {TOOLS.map((tool, index) => tool ? (
-          <button key={tool.kind} type="button" title={tool.label} aria-label={tool.label}
+          <IconButton key={tool.kind} variant="ghost" size="icon-sm" icon={tool.Icon} label={tool.label} tooltip="top"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => textareaRef.current && insertAtCursor(textareaRef.current, tool.kind)}
-            className="grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-ink/5 hover:text-neutral-300"
-          >
-            <tool.Icon size={13} />
-          </button>
+          />
         ) : (
           <span key={`divider-${index}`} className="mx-1 h-5 w-px shrink-0 bg-neutral-800" />
         ))}
         <span className="flex-1" />
-        <button type="button" onClick={() => fileRef.current?.click()}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-2xs transition-colors hover:bg-ink/5 hover:text-neutral-200"
-        >
-          <Upload size={12} />
+        <Button variant="ghost" size="sm" onClick={() => fileRef.current?.click()} className="px-1.5">
+          <Upload className="size-3" />
           .md içe aktar
-        </button>
+        </Button>
         <input ref={fileRef} type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden
           onChange={(event) => { importFile(event.target.files?.[0]); event.target.value = ""; }}
         />

@@ -1,21 +1,22 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeft, CheckCircle2, CircleAlert, CircleGauge, ClipboardX, Eye, Loader2, MoreHorizontal, PencilLine, Redo2, Share2, TriangleAlert, Undo2,
+  ArrowLeft, CheckCircle2, CircleAlert, ClipboardX, Eye, MoreHorizontal, PencilLine, Redo2, Share2, TriangleAlert, Undo2,
 } from "lucide-react";
+import {
+  Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, IconButton, MenuItem, StatusDot, buttonVariants,
+} from "@skylab-kulubu/skylcn-ui";
 import Popover from "@/app/components/utils/Popover";
-import { Floating } from "@/app/components/utils/Floating";
 import Tip from "@/app/admin/components/utils/Tip";
-import { POPOVER_MOTION } from "./studio-motion";
 import { PeopleCount, PeopleStack } from "./StudioPresence";
 
 const emptySubscribe = () => () => {};
 
-const ICON_BUTTON = "rounded-lg p-1.5 transition-colors hover:bg-neutral-800/70 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-inherit";
-const SAVE_BUTTON = "flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-60";
+// Off tools stay focusable: a tooltip never opens on a disabled button, and the delete's tooltip says why it is
+// off. skylcn dims only :disabled, so this gives them the disabled look.
+const OFF = "data-disabled:cursor-not-allowed data-disabled:opacity-60 data-disabled:hover:bg-transparent data-disabled:hover:text-muted-foreground";
 
 function SaveButton({ onSave, isSaving, isError, error, saveLabel, saveExtra, draftNotice, onDraftNoticeClose, noun }) {
   return (
@@ -23,11 +24,11 @@ function SaveButton({ onSave, isSaving, isError, error, saveLabel, saveExtra, dr
       message={!isError && draftNotice ? "Veriler taslaklardan geldi" : null} variant={isError ? "error" : "info"} align="bottom-right"
       onClose={!isError && draftNotice ? onDraftNoticeClose : undefined}
     >
-      <button onClick={onSave} disabled={isSaving} type="button" aria-label={`${noun}u kaydet`} title="Kaydet (Ctrl+S)" className={`ml-1 ${SAVE_BUTTON}`}>
-        {isSaving ? <CircleGauge size={14} className="animate-spin" /> : isError ? <CircleAlert size={14} className="text-red-400" /> : <CheckCircle2 size={14} />}
+      <Button variant="primary" size="sm" onClick={onSave} pending={isSaving} aria-label={`${noun}u kaydet`} title="Kaydet (Ctrl+S)" className="ml-1">
+        {isError ? <CircleAlert className="size-3.5 text-destructive" /> : <CheckCircle2 className="size-3.5" />}
         {saveLabel}
         {saveExtra ? <span className="rounded bg-skylab-400/15 px-1 text-3xs font-medium">{saveExtra}</span> : null}
-      </button>
+      </Button>
     </Popover>
   );
 }
@@ -36,66 +37,41 @@ function FullActions({ saveStatus, returnHref, people = [], onGoToPerson, fill, 
   return (
     <div className="flex items-center gap-1 text-neutral-500">
       {returnHref ? (
-        <a href={returnHref} aria-label="Etkinliğe dön"
-          className="mr-1 inline-flex items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-2.5 py-1 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 hover:text-skylab-200"
-        >
-          <ArrowLeft size={14} />
+        <Button variant="primary" size="sm" render={<a href={returnHref} />} aria-label="Etkinliğe dön" className="mr-1">
+          <ArrowLeft className="size-3.5" />
           Etkinliğe dön
-        </a>
+        </Button>
       ) : null}
       <PeopleStack people={people} onGo={onGoToPerson} />
       {saveStatus ? <div className="mr-2 hidden sm:block">{saveStatus}</div> : null}
 
       {fill ? (
-        <Tip label={fill.active ? "Düzenlemeye dön (P)" : "Başvuran gibi doldur (P)"}>
-          <button type="button" aria-label={fill.active ? "Düzenlemeye dön" : "Başvuran gibi doldur"} onClick={fill.onToggle}
-            className={`${ICON_BUTTON} ${fill.active ? "bg-skylab-500/15 text-skylab-300" : ""}`}
-          >
-            {fill.active ? <PencilLine size={16} /> : <Eye size={16} />}
-          </button>
-        </Tip>
+        <IconButton variant="ghost" size="icon-sm" icon={fill.active ? PencilLine : Eye} onClick={fill.onToggle}
+          label={fill.active ? "Düzenlemeye dön" : "Başvuran gibi doldur"} title={fill.active ? "Düzenlemeye dön (P)" : "Başvuran gibi doldur (P)"}
+          className={fill.active ? "bg-skylab-500/15 text-skylab-300 hover:bg-skylab-500/20 hover:text-skylab-300" : undefined}
+        />
       ) : null}
 
-      {onShare ? (
-        <Tip label={`${save.noun}u paylaş`}>
-          <button type="button" aria-label={`${save.noun}u paylaş`} onClick={onShare} className={ICON_BUTTON}><Share2 size={16} /></button>
-        </Tip>
-      ) : null}
+      {onShare ? <IconButton variant="ghost" size="icon-sm" icon={Share2} label={`${save.noun}u paylaş`} onClick={onShare} /> : null}
 
-      {draft?.has ? (
-        <Tip label="Taslağı sil">
-          <button type="button" aria-label="Taslağı sil" onClick={draft.onDiscard} disabled={draft.discarding} className={ICON_BUTTON}>
-            {draft.discarding ? <Loader2 size={16} className="animate-spin" /> : <ClipboardX size={16} />}
-          </button>
-        </Tip>
-      ) : null}
+      {draft?.has ? <IconButton variant="ghost" size="icon-sm" icon={ClipboardX} label="Taslağı sil" onClick={draft.onDiscard} pending={draft.discarding} /> : null}
 
-      <Tip label="Geri al (Ctrl+Z)">
-        <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo} className={ICON_BUTTON}><Undo2 size={16} /></button>
-      </Tip>
+      <IconButton variant="ghost" size="icon-sm" icon={Undo2} label="Geri al" title="Geri al (Ctrl+Z)" onClick={onUndo} disabled={!canUndo} focusableWhenDisabled className={OFF} />
 
       {onRedo ? (
-        <Tip label="İleri al (Ctrl+Shift+Z)">
-          <button type="button" aria-label="İleri al" onClick={onRedo} disabled={!canRedo} className={ICON_BUTTON}><Redo2 size={16} /></button>
-        </Tip>
+        <IconButton variant="ghost" size="icon-sm" icon={Redo2} label="İleri al" title="İleri al (Ctrl+Shift+Z)" onClick={onRedo} disabled={!canRedo} focusableWhenDisabled className={OFF} />
       ) : null}
 
       {secondary ? (
-        <Tip label={secondary.label}>
-          <button type="button" aria-label={secondary.label} onClick={secondary.onClick} disabled={secondary.disabled} className={ICON_BUTTON}>
-            <secondary.icon size={16} />
-          </button>
-        </Tip>
+        <IconButton variant="ghost" size="icon-sm" icon={secondary.icon} label={secondary.label} onClick={secondary.onClick} disabled={secondary.disabled} focusableWhenDisabled className={OFF} />
       ) : null}
 
       {issues?.count > 0 ? (
         <Tip label="Kaydı engelleyen sorunlar">
-          <button type="button" onClick={issues.onShow} aria-label="Sorunlar"
-            className="ml-1 inline-flex items-center gap-1.5 rounded-lg border border-red-400/30 bg-red-500/10 px-2 py-1 text-2xs font-medium text-red-200 transition-colors hover:bg-red-500/20"
-          >
-            <TriangleAlert size={12} />
+          <Button variant="destructive" size="sm" onClick={issues.onShow} aria-label="Sorunlar" className="ml-1 gap-1.5 px-2">
+            <TriangleAlert className="size-3" />
             {issues.count}
-          </button>
+          </Button>
         </Tip>
       ) : null}
 
@@ -105,51 +81,36 @@ function FullActions({ saveStatus, returnHref, people = [], onGoToPerson, fill, 
 }
 
 function CompactActions({ returnHref, people = [], onShare, draft, onUndo, canUndo, onRedo, canRedo, issues, secondary, onSave, ...save }) {
-  const [anchor, setAnchor] = useState(null);
-
   const items = [
     returnHref ? { key: "return", label: "Etkinliğe dön", icon: ArrowLeft, onClick: () => window.location.assign(returnHref) } : null,
-    issues?.count > 0 ? { key: "issues", label: `Kaydı engelleyen ${issues.count} sorun`, icon: TriangleAlert, onClick: issues.onShow, tone: "text-red-200" } : null,
+    issues?.count > 0 ? { key: "issues", label: `Kaydı engelleyen ${issues.count} sorun`, icon: TriangleAlert, onClick: issues.onShow, tone: "text-destructive" } : null,
     onShare ? { key: "share", label: `${save.noun}u paylaş`, icon: Share2, onClick: onShare } : null,
     onRedo ? { key: "redo", label: "İleri al", icon: Redo2, onClick: onRedo, disabled: !canRedo } : null,
     draft?.has ? { key: "draft", label: "Taslağı sil", icon: ClipboardX, onClick: draft.onDiscard, disabled: draft.discarding } : null,
-    secondary ? { key: "secondary", label: secondary.label, icon: secondary.icon, onClick: secondary.onClick, disabled: secondary.disabled, tone: "text-red-300" } : null,
+    secondary ? { key: "secondary", label: secondary.label, icon: secondary.icon, onClick: secondary.onClick, disabled: secondary.disabled, destructive: true } : null,
   ].filter(Boolean);
 
   return (
     <div className="flex items-center gap-0.5 text-neutral-500">
       <PeopleCount people={people} />
-      <button type="button" aria-label="Geri al" onClick={onUndo} disabled={!canUndo} className={`${ICON_BUTTON} p-2`}><Undo2 size={17} /></button>
+      <IconButton variant="ghost" icon={Undo2} label="Geri al" tooltip={false} onClick={onUndo} disabled={!canUndo} />
       {items.length > 0 ? (
-        <button type="button" aria-label="Diğer işlemler" aria-expanded={Boolean(anchor)} onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}
-          className={`relative ${ICON_BUTTON} p-2 ${anchor ? "bg-neutral-800/70 text-neutral-100" : ""}`}
-        >
-          <MoreHorizontal size={17} />
-          {issues?.count > 0 ? <span className="absolute right-1 top-1 size-1.5 rounded-full bg-red-400" /> : null}
-        </button>
+        // Not modal, so a tap outside both closes the menu and reaches what it lands on, as before
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger aria-label="Diğer işlemler" className={buttonVariants({ variant: "ghost", size: "icon" })}>
+            <MoreHorizontal />
+            {issues?.count > 0 ? <StatusDot tone="danger" glow={false} className="absolute right-1 top-1" /> : null}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={6} className="w-60">
+            {items.map((item) => (
+              <MenuItem key={item.key} icon={item.icon} disabled={item.disabled} destructive={item.destructive} onClick={item.onClick} className={item.tone}>
+                {item.label}
+              </MenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : null}
       {onSave ? <SaveButton onSave={onSave} {...save} /> : null}
-
-      <AnimatePresence>
-      {anchor ? (
-        <Floating key="more-menu" anchor={anchor} onDismiss={() => setAnchor(null)} placement="bottom-end" offset={6}>
-          <motion.div role="menu" {...POPOVER_MOTION} className="w-60 rounded-[10px] border border-ink/15 bg-panel p-1.5 shadow-2xl shadow-black/50">
-            {items.map((item) => (
-              <button key={item.key} type="button" role="menuitem" disabled={item.disabled}
-                onClick={() => { setAnchor(null); item.onClick(); }}
-                className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-left text-xs transition-colors hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-45 ${item.tone ?? "text-neutral-200"}`}
-              >
-                <item.icon size={14} className="shrink-0 opacity-80" />
-                <span className="min-w-0 flex-1">
-                  <span className="block">{item.label}</span>
-                  {item.hint ? <span className="mt-0.5 block text-3xs text-neutral-500">{item.hint}</span> : null}
-                </span>
-              </button>
-            ))}
-          </motion.div>
-        </Floating>
-      ) : null}
-      </AnimatePresence>
     </div>
   );
 }

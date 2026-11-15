@@ -116,19 +116,17 @@ export function matrixGroupProps(layout) {
     return { className: "flex flex-col gap-1.5" };
 }
 
-export function matrixChoiceClass(layout, missing = false) {
-    const border = missing ? "border-red-400/60" : "border-ink/10";
-    if (layout.mode === "list") {
-        return `flex items-center gap-3 rounded-md border ${border} bg-neutral-900/60 p-2 transition hover:bg-ink/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`;
-    }
-    const chip = `flex items-center justify-center rounded-md border ${border} bg-neutral-900/60 px-2 text-xs font-medium text-neutral-300 transition hover:bg-ink/10 has-checked:border-skylab-600/50 has-checked:bg-skylab-800/50 has-checked:text-ink has-focus-visible:ring-2 has-focus-visible:ring-skylab-400/40`;
+export function matrixChoiceClass(layout) {
+    if (layout.mode === "list") return "flex items-center gap-3 rounded-md border border-border bg-input-background px-3 py-2";
+    // ChoiceMatrix's chips, drawn static
+    const chip = "flex items-center justify-center rounded-md border border-border bg-input-background px-2 text-xs font-medium text-secondary-foreground";
     return layout.mode === "inline" ? `${chip} h-10 min-w-8 flex-auto` : `${chip} min-h-10 py-1.5 text-center`;
 }
 
 export function matrixLabelClass(layout) {
     if (layout.mode === "inline") return "whitespace-nowrap";
     if (layout.mode === "grid") return "leading-tight text-balance";
-    return "text-sm text-neutral-200";
+    return "text-sm text-foreground";
 }
 
 const ALL_ROWS = "Tüm satırların doldurulması zorunludur";

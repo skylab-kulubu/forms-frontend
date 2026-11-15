@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
 import { Archive, X } from "lucide-react";
+import { Skeleton } from "@skylab-kulubu/skylcn-ui";
 import { useWorkflowContext } from "../../providers";
 import { FormEditorProvider, useOptionalFormEditor } from "../form-editor/FormEditorContext";
 import { HeaderStatusPill } from "../form-editor/components/EditorHeaderActions";
@@ -89,9 +90,9 @@ function PageLoading({ error }) {
           <div className="rounded-3xl border border-red-400/20 bg-panel-soft p-10 text-sm text-red-200">Form yüklenemedi. Silinmiş olabilir ya da düzenleme yetkiniz yok.</div>
         ) : (
           <div className="space-y-6 rounded-3xl border border-ink/10 bg-panel-soft p-10">
-            <div className="shimmer h-8 w-2/3 rounded-lg" />
-            <div className="shimmer h-4 w-1/2 rounded-md" />
-            {Array.from({ length: 4 }, (_, index) => <div key={index} className="shimmer h-20 rounded-xl" />)}
+            <Skeleton className="h-8 w-2/3 rounded-lg" />
+            <Skeleton className="h-4 w-1/2" />
+            {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-20 rounded-xl" />)}
           </div>
         )}
       </div>
@@ -651,7 +652,7 @@ function WorkflowStudioContent({ workflow, seed, initialEntry = null, onLeave = 
       );
     } else {
       crumbs = [flowCrumb, { label: activeNode?.formTitle ?? "Form" }];
-      inspector = <div className="space-y-3 p-4">{Array.from({ length: 3 }, (_, index) => <div key={index} className="shimmer h-16 rounded-lg" />)}</div>;
+      inspector = <div className="space-y-3 p-4">{Array.from({ length: 3 }, (_, index) => <Skeleton key={index} className="h-16 rounded-lg" />)}</div>;
     }
 
     const questionCounts = Object.fromEntries(Object.entries(wf.schemasByFormId).map(([formId, form]) => [formId, form.schema.filter((field) => field?.type !== "separator").length]));

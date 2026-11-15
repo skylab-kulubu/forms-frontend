@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { FileText, Search, Workflow } from "lucide-react";
+import { Input, Kbd } from "@skylab-kulubu/skylcn-ui";
 import { useWorkflowsQuery } from "@/lib/hooks/useWorkflowAdmin";
 import { useUserFormsQuery } from "@/lib/hooks/useFormAdmin";
 import { workflowEditHref } from "@/lib/workflow-links";
@@ -19,6 +20,14 @@ function paletteAnchor(root) {
   if (row && row.getClientRects().length > 0) return row;
   const rect = document.querySelector(root)?.getBoundingClientRect();
   return { top: (rect?.top ?? 56) + 10, left: rect ? rect.left + rect.width / 2 : window.innerWidth / 2, width: 0, height: 0 };
+}
+
+export function PaletteKeys() {
+  return (
+    <p className="mt-1 flex items-center gap-1 border-t border-ink/5 px-2 pt-1.5 text-3xs text-neutral-600 pointer-coarse:hidden">
+      <Kbd>↑↓</Kbd> seç · <Kbd>Enter</Kbd> aç · <Kbd>Esc</Kbd> kapat
+    </p>
+  );
 }
 
 function listOf(payload) {
@@ -119,13 +128,9 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
       <motion.div role="dialog" aria-label="Akış ya da form aç" {...POPOVER_MOTION}
         className={`${docked ? "w-full" : "w-[min(24rem,calc(100vw-1rem))]"} rounded-[10px] border border-ink/20 bg-panel p-1.5 shadow-2xl shadow-black/50`}
       >
-        <div className="relative mb-1">
-          <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-          <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); }} onKeyDown={handleKeyDown}
-            placeholder="Akış ya da form ara..." aria-label="Akış ya da form ara"
-            className="h-8 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
-          />
-        </div>
+        <Input ref={inputRef} inputSize="sm" icon={Search} className="mb-1" value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); }} onKeyDown={handleKeyDown}
+          placeholder="Akış ya da form ara..." aria-label="Akış ya da form ara"
+        />
         <div className="max-h-72 overflow-y-auto scrollbar">
           {items.length === 0 ? <p className="px-2 py-3 text-center text-2xs text-neutral-600">Eşleşen akış ya da form yok.</p> : null}
           {items.map((item, index) => {
@@ -144,7 +149,7 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
             );
           })}
         </div>
-        <p className="mt-1 border-t border-ink/5 px-2 pt-1.5 text-3xs text-neutral-600 pointer-coarse:hidden">↑↓ seç · Enter aç · Esc kapat</p>
+        <PaletteKeys />
       </motion.div>
     </Floating>
   );

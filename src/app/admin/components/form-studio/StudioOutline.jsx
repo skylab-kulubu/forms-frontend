@@ -7,7 +7,9 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-
 import { CSS as DndCSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { Activity, ChevronsUpDown, ClipboardList, CornerDownRight, FileText, GripVertical, LayoutTemplate, Map as MapIcon, PanelLeftClose, Plus, Workflow } from "lucide-react";
+import { IconButton, Kbd, StatusDot } from "@skylab-kulubu/skylcn-ui";
 import { PanelButton } from "@/app/admin/components/utils/SidePanel";
+import Tip from "@/app/admin/components/utils/Tip";
 import { useFormEditor } from "../form-editor/FormEditorContext";
 import { useFormActions } from "./useFormActions";
 import { NONE, useStudio } from "./StudioContext";
@@ -41,23 +43,13 @@ export function OutlineHeader({ title, untitled = false, inFlow, icon = null, sw
       >
         <SwitchIcon size={14} className="shrink-0 text-neutral-500" />
         <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${untitled ? "text-neutral-500" : "text-neutral-200"}`}>{title}</span>
-        <span className="hidden shrink-0 rounded border border-ink/10 px-1 font-mono text-4xs text-neutral-500 2xl:inline">Ctrl K</span>
+        <Kbd className="hidden h-4 shrink-0 border-border bg-transparent text-4xs text-subtle-foreground 2xl:inline-flex">Ctrl K</Kbd>
         <ChevronsUpDown size={13} className="shrink-0 text-neutral-500 transition-colors group-hover:text-neutral-300" />
       </button>
       {inFlow && onOpenFlowPage ? (
-        <button type="button" title="Akış sayfası: başvuranlar ve başvuru kabulü" aria-label="Akış sayfası" onClick={onOpenFlowPage}
-          className="ml-0.5 grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
-        >
-          <Activity size={14} />
-        </button>
+        <IconButton variant="ghost" size="icon-sm" icon={Activity} label="Akış sayfası" title="Akış sayfası: başvuranlar ve başvuru kabulü" onClick={onOpenFlowPage} className="ml-0.5" />
       ) : null}
-      {onCollapse ? (
-        <button type="button" title="Paneli kapat" aria-label="Paneli kapat" onClick={onCollapse}
-          className="ml-0.5 grid size-8 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
-        >
-          <PanelLeftClose size={15} />
-        </button>
-      ) : null}
+      {onCollapse ? <IconButton variant="ghost" icon={PanelLeftClose} label="Paneli kapat" onClick={onCollapse} className="ml-0.5" /> : null}
     </div>
   );
 }
@@ -69,11 +61,13 @@ export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCo
         <span className="text-2xs font-medium text-neutral-500">Adımlar</span>
         <span className="h-px flex-1 bg-ink/5" />
         <span title="Önceki ve sonraki adım" className="font-mono text-3xs text-neutral-600">← →</span>
-        <button type="button" title="Akış haritası (M)" aria-label="Akış haritası" onClick={onToggleMap}
-          className={`grid size-5 place-items-center rounded transition-colors ${mapActive ? "bg-skylab-500/15 text-skylab-300" : "text-neutral-500 hover:bg-ink/5 hover:text-neutral-200"}`}
-        >
-          <MapIcon size={12} />
-        </button>
+        <Tip label="Akış haritası (M)">
+          <button type="button" aria-label="Akış haritası" aria-pressed={mapActive} onClick={onToggleMap}
+            className={`grid size-5 place-items-center rounded transition-colors ${mapActive ? "bg-skylab-500/15 text-skylab-300" : "text-neutral-500 hover:bg-ink/5 hover:text-neutral-200"}`}
+          >
+            <MapIcon size={12} />
+          </button>
+        </Tip>
       </div>
       {nodes.length === 0 ? <p className="px-2 py-1.5 text-2xs text-neutral-600">Henüz adım yok.</p> : null}
       {nodes.map((node) => {
@@ -87,7 +81,7 @@ export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCo
             </span>
             <span className={`min-w-0 flex-1 truncate text-xs transition-colors ${active ? "text-neutral-100" : "text-neutral-400 group-hover:text-neutral-200"}`}>{node.formTitle || "Adsız form"}</span>
             {peopleByForm[node.formId]?.length ? <PresenceDots members={peopleByForm[node.formId]} /> : null}
-            {dirtyIds.includes(node.formId) ? <span title="Kaydedilmemiş değişiklik var" className="size-1.5 shrink-0 rounded-full bg-skylab-400" /> : null}
+            {dirtyIds.includes(node.formId) ? <StatusDot tone="brand" glow={false} label="Kaydedilmemiş değişiklik var" /> : null}
             <span className="shrink-0 text-3xs tabular-nums text-neutral-600">{questionCounts[node.formId] ?? ""}</span>
           </button>
         );
@@ -233,14 +227,16 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
       <div ref={headingRef} className="flex shrink-0 items-center gap-2 px-3 pb-1 pt-3">
         <span className="text-2xs font-medium text-neutral-500">Sorular</span>
         <span className="h-px flex-1 bg-ink/5" />
-        <button type="button" title="Sona soru ekle" aria-label="Sona soru ekle" disabled={ui.fill}
-          onClick={() => toggleMenu(headingRef.current, fields.length, { source: "outline-add" })}
-          className={`grid size-5 shrink-0 place-items-center rounded transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:opacity-40 ${
-            ui.menu?.source === "outline-add" ? "bg-ink/5 text-neutral-100" : "text-neutral-300"
-          }`}
-        >
-          <Plus size={13} />
-        </button>
+        <Tip label="Sona soru ekle">
+          <button type="button" aria-label="Sona soru ekle" disabled={ui.fill}
+            onClick={() => toggleMenu(headingRef.current, fields.length, { source: "outline-add" })}
+            className={`grid size-5 shrink-0 place-items-center rounded transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:opacity-40 ${
+              ui.menu?.source === "outline-add" ? "bg-ink/5 text-neutral-100" : "text-neutral-300"
+            }`}
+          >
+            <Plus size={13} />
+          </button>
+        </Tip>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2 scrollbar">

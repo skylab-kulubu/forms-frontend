@@ -132,7 +132,7 @@ function Composer({ initial = "", placeholder, typingKey, autoFocus = false, onS
           submit();
         }
       }}
-      className="block max-h-32 w-full resize-none overflow-y-auto bg-transparent pb-1.25 pt-0.75 text-xs leading-[17px] text-neutral-100 shadow-[inset_0_-1px_0_rgb(var(--forms-ink-rgb)/0.1)] outline-none transition-shadow duration-150 placeholder:text-neutral-600 focus:shadow-[inset_0_-1px_0_rgba(235,213,238,0.6)]"
+      className="block max-h-32 w-full resize-none overflow-y-auto bg-transparent pb-1.25 pt-0.75 text-xs leading-[17px] text-neutral-100 shadow-[inset_0_-1px_0_rgb(var(--forms-ink-rgb)/0.1)] outline-none transition-shadow duration-150 placeholder:text-neutral-600 focus:shadow-[inset_0_-1px_0_color-mix(in_srgb,var(--skylab-400)_60%,transparent)]"
     />
   );
 }

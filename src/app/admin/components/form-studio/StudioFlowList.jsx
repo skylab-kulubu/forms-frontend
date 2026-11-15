@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, ChevronRight, Plus } from "lucide-react";
+import { Button } from "@skylab-kulubu/skylcn-ui";
 import { durationText } from "@/lib/form-timing";
-import { actionClass } from "@/app/admin/components/utils/SidePanel";
 import { groupTransitions, triggersForNode } from "../workflow-editor/workflow-graph";
 import { SheetButtons, TOOLBAR_CLASS, TOOL_DIVIDER, ToolButton } from "./StudioPage";
 import { triggerStyle } from "./studio-flow";
@@ -80,10 +80,10 @@ export default function StudioFlowList({ nodes, transitions, stages, questionCou
             <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ink/10 px-6 py-10 text-center">
               <p className="text-sm text-neutral-300">İlk adımı ekleyin</p>
               <p className="text-2xs text-neutral-500">Akışın başlangıç formunu seçin ya da yeni bir form açın.</p>
-              <button type="button" onClick={(event) => onAddStep(event.currentTarget)} className={actionClass()}>
-                <Plus size={13} className="opacity-70" />
+              <Button size="sm" onClick={(event) => onAddStep(event.currentTarget)}>
+                <Plus className="size-3.5 opacity-70" />
                 Adım ekle
-              </button>
+              </Button>
             </div>
           ) : (
             <>

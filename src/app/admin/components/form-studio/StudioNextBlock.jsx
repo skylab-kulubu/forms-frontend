@@ -2,7 +2,8 @@
 
 import { Fragment, useRef, useState } from "react";
 import { ArrowRight, Map as MapIcon } from "lucide-react";
-import { MenuPill, actionClass } from "@/app/admin/components/utils/SidePanel";
+import { Button, IconButton } from "@skylab-kulubu/skylcn-ui";
+import { MenuPill } from "@/app/admin/components/utils/SidePanel";
 import { groupTransitions, triggersForNode } from "../workflow-editor/workflow-graph";
 import { END_TARGET, NEW_TARGET, TRIGGER_LABEL, answerText, sharedQuestion, targetOptions, triggerStyle } from "./studio-flow";
 
@@ -135,16 +136,12 @@ export function FlowNextBlock({ node, nodes, transitions, stageOf, conditionOf, 
     return (
       <div className="-ml-2 flex min-w-0 items-start justify-between gap-0.5">
         <span ref={(element) => { if (!conditional) anchorRefs.current[trigger] = element; }} className="inline-flex min-w-0">
-          <MenuPill quiet dim={!target} value={target ? target.nodeKey : END_TARGET} leading={target ? <StepNumber stage={stageOf(target.nodeKey)} /> : null}
+          <MenuPill quiet label={`${TRIGGER_LABEL[trigger]} gidilecek adım`} dim={!target} value={target ? target.nodeKey : END_TARGET} leading={target ? <StepNumber stage={stageOf(target.nodeKey)} /> : null}
             options={targetOptions(node.nodeKey, nodes, transitions, { allowNew: !conditional })} onSelect={select}
           />
         </span>
         {target ? (
-          <button type="button" title="Adıma git" aria-label={`${target.formTitle} adımına git`} onClick={() => onActivate(target.formId)}
-            className="grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-100"
-          >
-            <ArrowRight size={12} />
-          </button>
+          <IconButton variant="ghost" size="icon-sm" icon={ArrowRight} label={`${target.formTitle} adımına git`} title="Adıma git" onClick={() => onActivate(target.formId)} />
         ) : null}
       </div>
     );
@@ -152,14 +149,7 @@ export function FlowNextBlock({ node, nodes, transitions, stageOf, conditionOf, 
 
   return (
     <div className="px-4">
-      <Heading action={(
-        <button type="button" onClick={onEditRoutes}
-          className="-mr-2 rounded-md px-2 py-1 text-2xs text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100"
-        >
-          Yönlendirmeleri düzenle
-        </button>
-      )}
-      >
+      <Heading action={<Button variant="ghost" size="sm" onClick={onEditRoutes} className="-mr-2.5">Yönlendirmeleri düzenle</Button>}>
         Bu adımdan sonra
       </Heading>
 
@@ -187,16 +177,15 @@ export function SingleNextBlock({ reviewed, disabledReason = null, onStartFlow }
       <p className="mt-1 text-2xs leading-relaxed text-neutral-500">
         Form tek başına. {disabledReason ?? `${reviewed ? "Onaylanınca" : "Gönderilince"} başka bir form açılsın istersen akış başlat. Sonraki adımı ekleyene kadar form değişmez.`}
       </p>
-      <button type="button" disabled={Boolean(disabledReason) || busy}
+      <Button size="sm" disabled={Boolean(disabledReason)} pending={busy} className="mt-3"
         onClick={async () => {
           setBusy(true);
           try { await onStartFlow(); } finally { setBusy(false); }
         }}
-        className={`${actionClass()} mt-3 w-fit`}
       >
-        <MapIcon size={13} className="opacity-70" />
+        <MapIcon className="size-3.5 opacity-70" />
         Akış başlat
-      </button>
+      </Button>
     </div>
   );
 }
