@@ -1,5 +1,6 @@
 import HomeShell from "@/app/components/home/HomeShell";
 import HeroWall from "@/app/components/home/applicants/HeroWall";
+import ApplicantsTour from "@/app/components/home/tour/applicants/ApplicantsTour";
 import LazyDemo from "@/app/components/home/LazyDemo";
 import HomeForm from "@/app/components/home/HomeForm";
 import { HOME_FORMS, SECTIONS } from "@/app/components/home/config";
@@ -20,8 +21,9 @@ export default function NewHomePage() {
   return (
     <HomeShell page="kisiler" block=".tl-open">
       <HeroWall />
+      <ApplicantsTour />
       <div className="a2-wrap">
-        <section className="a2-sec" id={ids.after} data-page="">
+        <section className="a2-sec tour-alt" id={ids.after} data-page="">
           <div className="a2-head" data-rv="">
             <h2 className="a2-h2">Başvurduktan sonra</h2>
             <p className="a2-txt">

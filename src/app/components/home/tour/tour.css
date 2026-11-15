@@ -29,6 +29,9 @@
 
 .tour-note { position: absolute; z-index: 1; left: calc(var(--open-x) + var(--copy-w) + 56px); right: var(--open-x); top: 86px; bottom: 26px; display: grid; place-items: center; pointer-events: none; }
 .tour-stage.is-wide .tour-note { left: calc(var(--side-x) + var(--copy-w) + var(--gap)); right: 0; bottom: 0; }
+:where(.tour.is-column) .tour-stage { --col: max(var(--side-x), var(--open-x)); --cut: calc(var(--col) + var(--copy-w) - 10px); }
+:where(.tour.is-column) .tour-m-area-b { left: calc(var(--col) + var(--copy-w) + var(--gap)); right: max(var(--side), var(--open-x)); top: 86px; bottom: 26px; }
+:where(.tour.is-column) .tour-stage.is-wide .tour-note { left: calc(var(--col) + var(--copy-w) + var(--gap)); right: max(var(--side), var(--open-x)); bottom: 26px; }
 .tour .tour-wait { display: grid; justify-items: center; gap: 12px; margin: 0; font-size: 12px; line-height: 16px; color: var(--n500); opacity: 0; transition: opacity .25s ease; }
 .tour .tour-wait.is-on { opacity: 1; transition: opacity .4s ease .7s; }
 .tour-wait i { position: relative; display: block; width: 120px; height: 1px; overflow: hidden; background: var(--l2); }
@@ -39,6 +42,7 @@
 .tour-stage.is-live .tour-copy { opacity: .35; }
 .tour-cap { position: absolute; left: var(--side-x); top: 50%; width: var(--copy-w); opacity: 0; visibility: hidden; transform: translateY(calc(-50% + 14px)); transition: opacity .4s ease, transform .6s var(--ease), visibility 0s linear .4s; }
 .tour-cap.is-col { left: max(var(--side-x), var(--open-x)); }
+:where(.tour.is-column) .tour-cap { left: var(--col); }
 .tour-cap.is-on { opacity: 1; visibility: visible; transform: translateY(-50%); transition-delay: .12s, .12s, 0s; }
 .tour-cap.is-past { transform: translateY(calc(-50% - 14px)); }
 .tour .tour-cap-k { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--n500); }
@@ -57,6 +61,7 @@
 .tour-cap-hint svg, .tour-hint svg { animation: tour-nudge 1.8s var(--ease) infinite; }
 @keyframes tour-nudge { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(2px); } }
 .tour .tour-watch { cursor: pointer; }
+.tour-cap-acts button.f-quiet { border: 0; background: none; font-family: inherit; cursor: pointer; }
 
 .tour .tour-live { position: absolute; z-index: 6; left: var(--side-x); bottom: 26px; width: var(--copy-w); margin: 0; font-size: 12px; line-height: 18px; color: var(--n300); opacity: 0; transition: opacity .25s ease; pointer-events: none; }
 .tour .tour-live.is-on { opacity: 1; }

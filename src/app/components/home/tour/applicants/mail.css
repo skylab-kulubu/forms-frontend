@@ -1,0 +1,25 @@
+.film-phone-wait { background: #0b0a0e no-repeat center top / 100% auto; }
+.film-mail { position: absolute; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; text-align: left; }
+.film-mail-banner { position: absolute; left: 8px; right: 8px; top: 6px; z-index: 2; display: flex; gap: 10px; padding: 10px 12px; border-radius: 18px; background: #232227; box-shadow: 0 10px 28px -10px rgba(0, 0, 0, .85), inset 0 0 0 1px rgba(255, 255, 255, .06); visibility: hidden; opacity: 0; will-change: transform, opacity; }
+.film-mail-icon { display: grid; width: 30px; height: 30px; flex-shrink: 0; place-items: center; border-radius: 8px; background: rgba(224, 200, 229, .14); }
+.film-mail-icon img, .film-mail-from img { width: 15px; height: auto; }
+.film-mail-banner-t { min-width: 0; flex: 1; }
+.film-mail-banner-t p { margin: 0; }
+.film-mail-banner-t > p:first-child { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; line-height: 15px; color: var(--n400); }
+.film-mail-banner-t b { font-weight: 600; color: var(--n300); }
+.film-mail-banner-t time { font-size: 10.5px; color: var(--n500); }
+.film-mail-banner-s { margin-top: 2px !important; font-size: 12.5px; line-height: 17px; font-weight: 600; color: var(--n50); }
+.film-mail-banner-p { display: -webkit-box; overflow: hidden; font-size: 12px; line-height: 16px; color: var(--n400); -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.film-mail-view { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; background: #0a0a0a; visibility: hidden; transform: translateY(102%); will-change: transform; }
+.film-mail-bar { display: flex; height: 40px; flex-shrink: 0; align-items: center; gap: 8px; padding: 0 16px; font-size: 13px; color: #ebd5ee; }
+.film-mail-scroll { min-height: 0; flex: 1; overflow: hidden; }
+.film-mail-head { border-bottom: 1px solid #1f1f1f; padding: 4px 16px 14px; }
+.film-mail-head-r { display: flex; align-items: center; gap: 10px; }
+.film-mail-from { display: grid; width: 32px; height: 32px; flex-shrink: 0; place-items: center; border-radius: 50%; background: rgba(224, 200, 229, .12); }
+.film-mail-head-m { min-width: 0; flex: 1; }
+.film-mail-head-m p { margin: 0; font-size: 13px; font-weight: 600; color: var(--n100); }
+.film-mail-head-m small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--n500); }
+.film-mail-head time { flex-shrink: 0; font-size: 11px; color: var(--n500); }
+.film-mail-subj { margin: 12px 0 0 !important; font-size: 15px; line-height: 20px; font-weight: 600; color: var(--n50); }
+.film-phone .film-mail { z-index: 2; }
+.film-mail-view { padding-top: var(--film-mail-safe, 0px); }

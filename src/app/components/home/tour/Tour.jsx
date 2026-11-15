@@ -22,7 +22,7 @@ const SWAP_IN = 260;
 const CLOSE = 0.1;
 const SCROLL_KEYS = { ArrowDown: 40, ArrowUp: -40, PageDown: 0.875, PageUp: -0.875, " ": 0.875, Home: -1e9, End: 1e9 };
 
-export default function Tour({ film, sections, deep, intro, slim = false, tryable = false }) {
+export default function Tour({ film, sections, deep, intro, slim = false, tryable = false, column = false }) {
   const scrollRef = useScrollContainer();
   const { pager, headerSlot: slot } = useHome();
   const scrollTo = useScrollTo();
@@ -462,9 +462,26 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
     }
 
     function watch() {
-      if (S.state === "open" || !S.mod || !S.mode || S.mode === "off") return;
+      if (!S.mod || !S.mode || S.mode === "off") return;
+      if (S.state === "open") {
+        if (S.dip) return;
+        setLive(false);
+        cancelAnimationFrame(S.intro);
+        S.intro = 0;
+        scene.classList.add("is-cut");
+        S.dip = setTimeout(() => {
+          S.dip = 0;
+          replay();
+          requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.remove("is-cut")));
+        }, 170);
+        return;
+      }
       wake();
       setState("open");
+      replay();
+    }
+
+    function replay() {
       box.scrollTop = S.top;
       remember(box);
       S.cut = true;
@@ -611,7 +628,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
   };
 
   return (
-    <section className="tour" id="tur" data-page="" data-free="" aria-label="Tur" ref={trackRef}>
+    <section className={column ? "tour is-column" : "tour"} id="tur" data-page="" data-free="" aria-label="Tur" ref={trackRef}>
       <div className={`tour-stage${open ? " is-open" : ""}${tour.live ? " is-live" : ""}${tour.shown ? " is-in" : ""}${tour.framed ? " is-wide" : ""}`} ref={stageRef}>
         <div className="film-scene tour-scene" ref={sceneRef}>
           <div className="film-world" ref={worldRef} />
@@ -667,6 +684,13 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
                   <div className="tour-cap-acts">
                     {item.actions.map((action) => {
                       const kind = action.quiet ? "f-quiet" : "f-act";
+                      if (action.restart) {
+                        return (
+                          <button key={action.label} type="button" className={kind} onClick={press(() => store.actions.watch?.())}>
+                            {action.label}
+                          </button>
+                        );
+                      }
                       const id = action.section ? sections[action.section] : null;
                       return (
                         <a key={action.label} className={kind} href={id ? `#${id}` : action.href} onClick={id ? toSection(id) : undefined}>

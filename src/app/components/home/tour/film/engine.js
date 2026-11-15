@@ -396,7 +396,7 @@ export class Actor {
         this.iframe.style.opacity = shown;
         this.cover.style.opacity = (1 - this.fade).toFixed(3);
       }
-      if (this.ready && this.fade >= 1) {
+      if (this.ready && this.fade >= 1 && !this.keepCover) {
         this.cover.remove();
         this.cover = null;
         this.iframe.style.opacity = "";
