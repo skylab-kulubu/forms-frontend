@@ -5,7 +5,7 @@ import { BrandSlot } from "@/brands/BrandContext";
 
 function QuestionSkeleton({ divided }) {
   return (
-    <div className={divided ? "border-b border-border-subtle pb-6" : ""}>
+    <div className={divided ? "pb-6" : ""}>
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex gap-3">
           <Skeleton className="size-6 shrink-0" />

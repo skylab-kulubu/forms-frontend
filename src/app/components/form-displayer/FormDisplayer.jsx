@@ -509,7 +509,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                               if (el) el.style.overflow = "visible";
                             }}
                             style={{ zIndex: visibleFields.length - index }}
-                            className={`relative ${isLast || isSeparator ? "" : "border-b border-border-subtle pb-6"} ${requestedAccent}`}
+                            className={`relative ${isLast || isSeparator ? "" : "pb-6"} ${requestedAccent}`}
                           >
                             {isRequested && <RevisionFlag />}
                             <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionNumbers.get(field.id)} value={formValues[field.id]}
