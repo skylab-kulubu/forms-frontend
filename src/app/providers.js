@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
+import { SkylcnProvider } from "@skylab-kulubu/skylcn-ui";
 import SessionExpiredHandler from "@/app/components/SessionExpiredHandler";
 import { exposeToTour } from "@/lib/demo/frame";
 
@@ -24,8 +26,11 @@ export default function Providers({ children }) {
     // before it expires. Keep this below the Keycloak access-token lifespan (default 5m).
     <SessionProvider refetchInterval={4 * 60} refetchOnWindowFocus={true}>
       <QueryClientProvider client={queryClient}>
-        <SessionExpiredHandler />
-        {children}
+        {/* skylcn's links go through next/link and its motion parts animate only under this provider */}
+        <SkylcnProvider locale="tr" linkComponent={Link}>
+          <SessionExpiredHandler />
+          {children}
+        </SkylcnProvider>
       </QueryClientProvider>
     </SessionProvider>
   );
