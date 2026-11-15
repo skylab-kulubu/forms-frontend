@@ -2,11 +2,13 @@
 
 import { Fragment, useId, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import ChannelIcon from "../../share/ChannelIcon";
 import { sourceLabel } from "@/lib/share-channels";
 import { MIN_DECIDED, approvalRate } from "../overview-stats";
+
+export { TrendBadge } from "@skylab-kulubu/skylcn-ui";
 
 const fadeIn = {
   initial: { opacity: 0, y: 8 },
@@ -40,22 +42,6 @@ export function SectionTitle({ children, icon: Icon }) {
   );
 }
 
-export function TrendBadge({ value }) {
-  if (value === null || value === undefined) return null;
-  const rounded = Math.round(value * 10) / 10;
-  const isUp = rounded > 0;
-  const isDown = rounded < 0;
-  const Icon = isUp ? TrendingUp : isDown ? TrendingDown : Minus;
-  const color = isUp ? "text-emerald-400" : isDown ? "text-red-400" : "text-neutral-400";
-
-  return (
-    <span className={`inline-flex items-center gap-1 text-3xs font-medium ${color}`}>
-      <Icon size={10} />
-      {isUp ? "+" : ""}{rounded}%
-    </span>
-  );
-}
-
 export function TrendTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   return (
@@ -74,15 +60,15 @@ export function TrendArea({ data, className = "h-24 w-full" }) {
         <AreaChart data={data} margin={{ top: 5, right: 10, bottom: -2, left: 10 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#e0c8e5" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#e0c8e5" stopOpacity={0} />
+              <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} interval={0} dy={4} />
+          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "var(--subtle-foreground)" }} interval={0} dy={4} />
           <YAxis hide domain={[0, "auto"]} />
-          <Tooltip content={<TrendTooltip />} cursor={{ stroke: "#e0c8e5", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
-          <Area type="monotone" dataKey="count" stroke="#e0c8e5" strokeWidth={2} fill={`url(#${gradientId})`}
-            dot={{ r: 2.5, fill: "#e0c8e5", strokeWidth: 0 }} activeDot={{ r: 4, fill: "#f3e8f5", strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out"
+          <Tooltip content={<TrendTooltip />} cursor={{ stroke: "var(--chart-1)", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
+          <Area type="monotone" dataKey="count" stroke="var(--chart-1)" strokeWidth={2} fill={`url(#${gradientId})`}
+            dot={{ r: 2.5, fill: "var(--chart-1)", strokeWidth: 0 }} activeDot={{ r: 4, fill: "var(--skylab-300)", strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -164,7 +150,7 @@ export function WindowBars({ data, hourly = false }) {
           <span>{data[data.length - 1].label}</span>
         </div>
       ) : (
-        <div className="grid gap-0.5 text-center text-[0.5625rem] leading-3 text-neutral-500" style={{ gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}>
+        <div className="grid gap-0.5 text-center text-3xs leading-3 text-neutral-500" style={{ gridTemplateColumns: `repeat(${data.length}, minmax(0, 1fr))` }}>
           {data.map((item) => <span key={item.key}>{item.label}</span>)}
         </div>
       )}
@@ -196,35 +182,6 @@ export function LifeBars({ life, height }) {
           {closing ? <span className="text-neutral-400">Kapanış {closing.label}</span> : <span>{last.label}</span>}
         </div>
       )}
-    </div>
-  );
-}
-
-export function SourceBreakdownBar({ registered, anonymous }) {
-  const total = registered + anonymous;
-  const regPct = total > 0 ? (registered / total) * 100 : 50;
-  const anonPct = total > 0 ? (anonymous / total) * 100 : 50;
-
-  return (
-    <div>
-      <div className="flex h-2 w-full overflow-hidden rounded-full bg-neutral-800">
-        {total > 0 ? (
-          <>
-            {regPct > 0 && <div style={{ width: `${regPct}%` }} className="bg-skylab-600 transition-all duration-300" />}
-            {anonPct > 0 && <div style={{ width: `${anonPct}%` }} className="bg-skylab-300 transition-all duration-300" />}
-          </>
-        ) : null}
-      </div>
-      <div className="mt-2 flex justify-center gap-3">
-        <div className="flex items-center gap-1">
-          <div className="size-1.5 rounded-full bg-skylab-600" />
-          <span className="text-3xs text-neutral-500">Kayıtlı ({registered})</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="size-1.5 rounded-full bg-skylab-300" />
-          <span className="text-3xs text-neutral-500">Anonim ({anonymous})</span>
-        </div>
-      </div>
     </div>
   );
 }

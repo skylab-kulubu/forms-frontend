@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Archive, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Archive, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ActiveFilters, FilterPills, IconButton, SearchInput, SegmentedControl, Skeleton, StatusDot } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { STATUS_FILTERS } from "@/lib/attempt-status";
 import { currentTime, leftText, shortDuration } from "@/lib/form-timing";
@@ -10,16 +11,11 @@ import { FILTER_DEFAULTS, isAttemptRow, matchesSearch, personOf, rowKind, search
 const WHO_LABEL = { registered: "Kayıtlı", anonymous: "Anonim" };
 const TIME_LABEL = { extended: "Uzatılanlar", soon: "Bitmek üzere" };
 
-function Segment({ options, value, onChange }) {
+function Segment({ label, options, value, onChange }) {
   return (
-    <div className="grid w-full rounded-lg border border-ink/10 bg-neutral-900/60 p-1 text-2xs" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
-      {options.map(([key, label]) => (
-        <button key={key} type="button" onClick={() => onChange(key)} aria-pressed={value === key}
-          className={`flex h-7 items-center justify-center rounded-md px-2 font-medium transition-colors ${value === key ? "border border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "text-neutral-300 hover:text-skylab-300"}`}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="space-y-2">
+      <p className="text-2xs font-medium text-neutral-500">{label}</p>
+      <SegmentedControl aria-label={label} options={options.map(([key, text]) => ({ value: key, label: text }))} value={value} onValueChange={onChange} className="w-full" />
     </div>
   );
 }
@@ -49,13 +45,10 @@ function FilterPopover({ filters, setFilters, counts, timed, inline, onClose }) 
 
   return (
     <div ref={ref} role="dialog" aria-label="Cevap filtreleri"
-      className={`rounded-xl border border-ink/15 bg-neutral-950/95 text-neutral-100 ${inline ? "mt-1" : "absolute left-2 right-2 top-full z-40 mt-1.5 shadow-2xl backdrop-blur"}`}
+      className={`rounded-xl border border-border-strong bg-popover/95 text-foreground ${inline ? "mt-1" : "absolute left-2 right-2 top-full z-40 mt-1.5 shadow-overlay backdrop-blur"}`}
     >
       <div className="flex flex-col gap-4 p-4">
-        <div className="space-y-2">
-          <p className="text-2xs font-medium text-neutral-500">Sıralama</p>
-          <Segment options={[["desc", "Yeni önce"], ["asc", "Eski önce"]]} value={filters.sort} onChange={(value) => setFilters({ ...filters, sort: value })} />
-        </div>
+        <Segment label="Sıralama" options={[["desc", "Yeni önce"], ["asc", "Eski önce"]]} value={filters.sort} onChange={(value) => setFilters({ ...filters, sort: value })} />
         <div className="space-y-2">
           <p className="text-2xs font-medium text-neutral-500">Durum</p>
           <div className="grid grid-cols-2 gap-1.5">
@@ -72,20 +65,11 @@ function FilterPopover({ filters, setFilters, counts, timed, inline, onClose }) 
             ))}
           </div>
         </div>
-        <div className="space-y-2">
-          <p className="text-2xs font-medium text-neutral-500">Yanıtlayan</p>
-          <Segment options={[["all", "Hepsi"], ["registered", "Kayıtlı"], ["anonymous", "Anonim"]]} value={filters.who} onChange={(value) => setFilters({ ...filters, who: value })} />
-        </div>
+        <Segment label="Yanıtlayan" options={[["all", "Hepsi"], ["registered", "Kayıtlı"], ["anonymous", "Anonim"]]} value={filters.who} onChange={(value) => setFilters({ ...filters, who: value })} />
         {timed ? (
-          <div className="space-y-2">
-            <p className="text-2xs font-medium text-neutral-500">Süre</p>
-            <Segment options={[["all", "Hepsi"], ["extended", "Uzatılanlar"], ["soon", "Bitmek üzere"]]} value={filters.time} onChange={(value) => setFilters({ ...filters, time: value })} />
-          </div>
+          <Segment label="Süre" options={[["all", "Hepsi"], ["extended", "Uzatılanlar"], ["soon", "Bitmek üzere"]]} value={filters.time} onChange={(value) => setFilters({ ...filters, time: value })} />
         ) : null}
-        <div className="space-y-2">
-          <p className="text-2xs font-medium text-neutral-500">Arşiv</p>
-          <Segment options={[["out", "Hariç"], ["in", "Dahil"]]} value={filters.archived ? "in" : "out"} onChange={(value) => setFilters({ ...filters, archived: value === "in" })} />
-        </div>
+        <Segment label="Arşiv" options={[["out", "Hariç"], ["in", "Dahil"]]} value={filters.archived ? "in" : "out"} onChange={(value) => setFilters({ ...filters, archived: value === "in" })} />
       </div>
     </div>
   );
@@ -94,11 +78,11 @@ function FilterPopover({ filters, setFilters, counts, timed, inline, onClose }) 
 function RowSkeleton() {
   return (
     <div className="flex items-center gap-2.5 px-2 py-2">
-      <span className="shimmer size-1.5 rounded-full" />
-      <span className="shimmer size-7 rounded-lg" />
+      <Skeleton className="size-1.5 rounded-full" />
+      <Skeleton className="size-7 rounded-lg" />
       <span className="min-w-0 flex-1 space-y-1.5">
-        <span className="shimmer block h-3 w-28 rounded" />
-        <span className="shimmer block h-2.5 w-16 rounded" />
+        <Skeleton className="h-3 w-28 rounded" />
+        <Skeleton className="h-2.5 w-16 rounded" />
       </span>
     </div>
   );
@@ -142,46 +126,24 @@ export default function ApplicantList({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="relative shrink-0 space-y-2 px-3 pb-2 pt-3">
-        <div className="relative">
-          <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-          <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Bu sayfada ara" aria-label="Bu sayfadaki başvuranlarda ara"
-            className={`w-full rounded-lg border border-ink/10 bg-neutral-900/60 pl-8 pr-3 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20 ${touch ? "h-10" : "h-8"}`}
-          />
-        </div>
+        <SearchInput size="sm" value={search} onValueChange={setSearch} placeholder="Bu sayfada ara" aria-label="Bu sayfadaki başvuranlarda ara" className="max-w-none" />
         <div className="flex items-center gap-1">
-          <div className="flex min-w-0 flex-1 items-center text-2xs">
-            {[["all", "Hepsi"], ["pending", "Beklemede"]].map(([value, label], index) => (
-              <Fragment key={value}>
-                {index ? <span className="mx-2 h-3 w-px shrink-0 bg-neutral-800" /> : null}
-                <button type="button" onClick={() => setFilters({ ...filters, status: value })} aria-pressed={filters.status === value}
-                  className={`flex items-center gap-1.5 rounded transition-colors ${touch ? "min-h-10" : ""} ${filters.status === value ? "text-neutral-100" : "text-neutral-500 hover:text-neutral-300"}`}
-                >
-                  {value === "pending" ? <span className="size-1.5 rounded-full bg-amber-400" /> : null}
-                  {label}
-                  <span className="tabular-nums text-neutral-500">{counts ? (value === "all" ? STATUS_FILTERS[0].count(counts) : counts.pending) : ""}</span>
-                </button>
-              </Fragment>
-            ))}
-          </div>
+          <FilterPills aria-label="Durum" value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })} className="min-w-0"
+            options={[
+              { value: "all", label: "Hepsi", count: counts ? STATUS_FILTERS[0].count(counts) : undefined },
+              { value: "pending", label: <><StatusDot tone="warning" glow={false} />Beklemede</>, count: counts?.pending },
+            ]}
+          />
           <button type="button" data-filter-anchor onClick={() => setOpen((value) => !value)} title={active ? `Filtreler (${active})` : "Filtreler"} aria-label="Filtreler" aria-expanded={open}
-            className={`relative grid place-items-center rounded-lg border transition-colors ${touch ? "size-10" : "size-7"} ${
-              open || active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-400 hover:text-neutral-100"
+            className={`relative ml-auto grid shrink-0 place-items-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${touch ? "size-10" : "size-8"} ${
+              open || active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-border bg-input-background text-muted-foreground hover:text-foreground"
             }`}
           >
             <SlidersHorizontal size={13} />
             {active ? <span className="absolute -right-1 -top-1 grid size-3.5 place-items-center rounded-full bg-skylab-400 text-4xs font-semibold text-neutral-900">{active}</span> : null}
           </button>
         </div>
-        {chips.length ? (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {chips.map(([key, label, clear]) => (
-              <span key={key} className="inline-flex items-center gap-1 rounded-md border border-ink/10 bg-ink/5 py-0.5 pl-2 pr-1 text-2xs text-neutral-300">
-                {label}
-                <button type="button" onClick={clear} aria-label={`${label} filtresini kaldır`} className="grid size-4 place-items-center rounded text-neutral-500 hover:bg-ink/10 hover:text-neutral-200"><X size={11} /></button>
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <ActiveFilters filters={chips.map(([key, label, onRemove]) => ({ key, label, onRemove }))} />
         {open ? <FilterPopover filters={filters} setFilters={setFilters} counts={counts} timed={timed} inline={touch} onClose={() => setOpen(false)} /> : null}
       </div>
 
@@ -227,17 +189,9 @@ export default function ApplicantList({
       <div className="flex shrink-0 items-center justify-between border-t border-neutral-800 px-3 py-2 text-3xs text-neutral-600">
         <span className="tabular-nums">{rows.length ? `${from}-${from + rows.length - 1} / ${total}` : `0 / ${total}`}</span>
         <span className="flex items-center gap-0.5">
-          <button type="button" onClick={() => onPage(page - 1)} disabled={page <= 1} aria-label="Önceki sayfa"
-            className={`grid place-items-center rounded transition-colors ${touch ? "size-10" : "size-6"} ${page > 1 ? "text-neutral-400 hover:bg-ink/5 hover:text-neutral-100" : "text-neutral-700"}`}
-          >
-            <ChevronLeft size={13} />
-          </button>
+          <IconButton icon={ChevronLeft} label="Önceki sayfa" variant="ghost" size="icon-sm" onClick={() => onPage(page - 1)} disabled={page <= 1} />
           <span className="px-1 tabular-nums text-neutral-400">{page} / {totalPages}</span>
-          <button type="button" onClick={() => onPage(page + 1)} disabled={page >= totalPages} aria-label="Sonraki sayfa"
-            className={`grid place-items-center rounded transition-colors ${touch ? "size-10" : "size-6"} ${page < totalPages ? "text-neutral-400 hover:bg-ink/5 hover:text-neutral-100" : "text-neutral-700"}`}
-          >
-            <ChevronRight size={13} />
-          </button>
+          <IconButton icon={ChevronRight} label="Sonraki sayfa" variant="ghost" size="icon-sm" onClick={() => onPage(page + 1)} disabled={page >= totalPages} />
         </span>
       </div>
     </div>

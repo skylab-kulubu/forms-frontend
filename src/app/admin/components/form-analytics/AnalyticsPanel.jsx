@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, X } from "lucide-react";
+import { SegmentedControl } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { RichText } from "@/app/components/rich-text/RichText";
 import { PANEL_SECTION, PANEL_STACK, PanelButton, SectionHeader } from "@/app/admin/components/utils/SidePanel";
@@ -21,22 +22,10 @@ const PICK_GRID = "grid grid-cols-[minmax(0,1fr)_3rem_3.5rem_0.875rem] items-cen
 const RATE_GRID = "grid grid-cols-[minmax(0,1fr)_2.25rem_2.75rem_2.5rem_0.875rem] items-center gap-x-2";
 const PICKABLE = [3, 4, 5, 6];
 
+const VIEWS = [{ value: "bar", label: "Bar" }, { value: "pie", label: "Pasta" }];
+
 const personName = (name) =>
   name?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map((word) => word.replace(/^\p{L}/u, (letter) => letter.toLocaleUpperCase("tr-TR"))).join(" ") || "";
-
-export function ViewToggle({ value, onChange }) {
-  return (
-    <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-ink/10 bg-ink/5 p-0.5">
-      {[["bar", "Bar"], ["pie", "Pasta"]].map(([key, label]) => (
-        <button key={key} type="button" onClick={() => onChange(key)} aria-pressed={value === key}
-          className={`rounded px-2.5 py-2 text-3xs transition sm:py-1 ${value === key ? "bg-ink/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function ParticipationPanel({ data }) {
   const extendedBy = Array.isArray(data.extendedBy) ? data.extendedBy : [];
@@ -191,7 +180,7 @@ export default function AnalyticsPanel({ form, analytics, wideAnalytics = null, 
         {canPie ? (
           <div className="flex items-center justify-between">
             <span className="text-2xs text-neutral-500">Gösterim</span>
-            <ViewToggle value={view} onChange={onView} />
+            <SegmentedControl aria-label="Gösterim" options={VIEWS} value={view} onValueChange={onView} />
           </div>
         ) : null}
 

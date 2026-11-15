@@ -1,13 +1,16 @@
 "use client";
 
 import { Calendar, ChevronsUpDown, Clock, Link as LinkIcon } from "lucide-react";
+import { CheckboxCard, ChoiceMatrix, ToggleRow } from "@skylab-kulubu/skylcn-ui";
 import { INPUT_TYPES } from "@/app/components/form-components/FormShortText";
-import { useMatrixLayout } from "@/app/components/form-components/FormMatrix";
 import { FilePreview } from "../response-displayer/components/FilePreview";
 import { answerKey, choiceItems, formatAnswerDate, isEmptyAnswer, matrixOf, recordsOf } from "./response-data";
 
-const BOX = "rounded-lg border border-ink/10 bg-neutral-900/60";
+// The room shows an answer the way the applicant saw the question: skylcn's lg control box, drawn
+// static since an answer is read, not edited
+const BOX = "rounded-lg border border-input bg-background/60";
 const EMPTY = "Cevap yok";
+const tone = (empty) => (empty ? "text-subtle-foreground" : "text-foreground");
 
 function linkOf(text) {
   return /^https?:\/\/\S+$/i.test(text) ? text : null;
@@ -34,8 +37,8 @@ function ShortAnswer({ field, answer }) {
 
   return (
     <div className="relative mt-3 flex w-full items-start">
-      <div className="pointer-events-none absolute left-3.5 top-2.5 flex items-center text-neutral-500"><Icon size={16} strokeWidth={2} /></div>
-      <div className={`block w-full py-2 pl-10 pr-4 text-sm wrap-anywhere ${BOX} ${empty ? "text-neutral-600" : "text-neutral-100"}`}>
+      <div className="pointer-events-none absolute left-3 top-2.75 flex items-center text-subtle-foreground"><Icon className="size-4" /></div>
+      <div className={`block min-h-9.5 w-full py-2 pl-9 pr-3 text-sm wrap-anywhere ${BOX} ${tone(empty)}`}>
         {empty ? EMPTY : lines.map((line, index) => <p key={index}><TextValue text={line} /></p>)}
       </div>
     </div>
@@ -45,7 +48,7 @@ function ShortAnswer({ field, answer }) {
 function LongAnswer({ answer }) {
   const empty = isEmptyAnswer(answer);
   return (
-    <div className={`mt-3 block min-h-19.5 w-full whitespace-pre-wrap px-3 py-2 text-sm wrap-anywhere ${BOX} ${empty ? "text-neutral-600" : "text-neutral-100"}`}>
+    <div className={`mt-3 block min-h-19.5 w-full whitespace-pre-wrap px-3 py-2 text-sm wrap-anywhere ${BOX} ${tone(empty)}`}>
       {empty ? EMPTY : answerKey(answer)}
     </div>
   );
@@ -54,8 +57,8 @@ function LongAnswer({ answer }) {
 function IconAnswer({ Icon, text, empty }) {
   return (
     <div className="relative mt-3">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"><Icon size={16} /></span>
-      <div className={`flex w-full items-center py-2 pl-9 pr-3 text-sm ${BOX} ${empty ? "text-neutral-600" : "text-neutral-100"}`}>{empty ? EMPTY : text}</div>
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-subtle-foreground"><Icon className="size-4" /></span>
+      <div className={`flex min-h-9.5 w-full items-center py-2 pl-9 pr-3 text-sm ${BOX} ${tone(empty)}`}>{empty ? EMPTY : text}</div>
     </div>
   );
 }
@@ -67,13 +70,11 @@ function ChoiceAnswer({ field, answer }) {
 
   if (rows.length === 0) return <IconAnswer Icon={ChevronsUpDown} text={answerKey(answer)} empty={isEmptyAnswer(answer)} />;
 
+  // skylcn's checkbox cards as the respondent's ChoiceList draws them; read-only keeps them announced but fixed
   return (
     <div className="mt-3 flex flex-col gap-2">
       {rows.map((row, index) => (
-        <div key={`${row.label}-${index}`} className={`flex items-center gap-3 rounded-md border p-2 ${row.on ? "border-skylab-400/10 bg-skylab-400/20" : "border-ink/10 bg-neutral-900/60"}`}>
-          <input type="checkbox" className="checkbox shrink-0" checked={row.on} readOnly tabIndex={-1} aria-label={row.label} />
-          <span className="text-sm text-neutral-200">{row.label}</span>
-        </div>
+        <CheckboxCard key={`${row.label}-${index}`} size="lg" label={row.label} checked={row.on} readOnly tabIndex={-1} />
       ))}
     </div>
   );
@@ -86,19 +87,12 @@ function ToggleAnswer({ field, answer }) {
   const empty = isEmptyAnswer(answer);
   const text = answerKey(answer);
   const on = text === trueLabel || text === "true";
+  const title = empty ? <span className="font-normal text-subtle-foreground">{EMPTY}</span> : on ? trueLabel : text === "false" ? falseLabel : text;
 
-  return (
-    <div className={`mt-3 flex w-full items-center justify-between gap-4 px-4 py-1.5 ${BOX}`}>
-      <span className={`text-sm font-medium ${empty ? "text-neutral-600" : on ? "text-skylab-300" : "text-neutral-400"}`}>
-        {empty ? EMPTY : on ? trueLabel : text === "false" ? falseLabel : text}
-      </span>
-      <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-lg border-2 border-transparent ${on ? "bg-skylab-400" : "bg-neutral-700"}`}>
-        <span className={`inline-block h-4 w-4 rounded-md bg-white shadow ${on ? "translate-x-[22px]" : "translate-x-0.5"}`} />
-      </span>
-    </div>
-  );
+  return <ToggleRow className="mt-3" title={title} checked={on} readOnly tabIndex={-1} />;
 }
 
+// skylcn's Slider has no read-only state, so its track, thumb, value and ends are drawn here in its classes
 function SliderAnswer({ field, answer }) {
   const props = field.props ?? {};
   const min = Number(props.min ?? 0);
@@ -108,19 +102,22 @@ function SliderAnswer({ field, answer }) {
   const position = !empty && Number.isFinite(value) && max > min ? Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100)) : null;
 
   return (
-    <div className={`mt-3 flex w-full items-center gap-4 px-4 py-2.5 ${BOX}`}>
-      <span className="w-6 shrink-0 text-right text-xs font-medium text-neutral-500">{min}</span>
-      <span className="relative h-1 flex-1 rounded-lg bg-neutral-800">
-        {position != null ? (
-          <>
-            <span className="absolute inset-y-0 left-0 rounded-lg bg-pink-400/40" style={{ width: `${position}%` }} />
-            <span className="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-200" style={{ left: `${position}%` }} />
-          </>
-        ) : null}
+    <div className="mt-3 flex w-full flex-col gap-2">
+      <span className={`self-end text-xs tabular-nums ${empty ? "text-subtle-foreground" : "text-foreground"}`}>{empty ? EMPTY : answerKey(answer)}</span>
+      <span className="flex h-5 w-full items-center">
+        <span className="relative h-1.5 w-full rounded-full bg-muted">
+          {position != null ? (
+            <>
+              <span className="absolute inset-y-0 left-0 rounded-full bg-skylab-500" style={{ width: `${position}%` }} />
+              <span className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-skylab-400 bg-background shadow-sm" style={{ left: `${position}%` }} />
+            </>
+          ) : null}
+        </span>
       </span>
-      <span className="w-6 shrink-0 text-xs font-medium text-neutral-500">{max}</span>
-      <span className="mx-1 h-5 w-px shrink-0 bg-ink/10" />
-      <span className={`min-w-10 text-center text-sm ${empty ? "text-neutral-600" : "text-neutral-200"}`}>{empty ? "—" : answerKey(answer)}</span>
+      <span className="-mt-1 flex justify-between gap-3 text-2xs tabular-nums text-subtle-foreground">
+        <span>{min}</span>
+        <span className="text-right">{max}</span>
+      </span>
     </div>
   );
 }
@@ -130,46 +127,15 @@ function MatrixAnswer({ field, answer }) {
   const picked = matrixOf(answer);
   const rows = Array.isArray(props.rows) && props.rows.length ? props.rows : Object.keys(picked);
   const columns = Array.isArray(props.columns) && props.columns.length ? props.columns : [...new Set(Object.values(picked))];
-  const { rootRef, scrollerRef, layout } = useMatrixLayout(rows, columns);
 
   if (rows.length === 0) return <LongAnswer answer={answer} />;
 
+  // The applicant's matrix, read-only: the table where it fits, else each row beside its answer
   return (
-    <div ref={rootRef} className="mt-3 w-full">
-      {layout.mode === "table" ? (
-        <div ref={scrollerRef} className="w-full overflow-x-auto rounded-lg border border-ink/10">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-ink/3 text-neutral-400">
-              <tr>
-                <th className="px-3 py-2 font-medium" />
-                {columns.map((column) => <th key={column} className="px-2 py-2 text-center font-medium">{column}</th>)}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink/5">
-              {rows.map((row) => (
-                <tr key={row}>
-                  <td className="px-3 py-2 text-neutral-200">{row}</td>
-                  {columns.map((column) => (
-                    <td key={column} className="px-2 py-2 text-center">
-                      <span className={`inline-block size-3.5 rounded-full border ${picked[row] === column ? "border-skylab-300 bg-skylab-400 shadow-[inset_0_0_0_3px_#1c1c1c]" : "border-ink/20"}`} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <dl className="divide-y divide-ink/5 rounded-lg border border-ink/10">
-          {rows.map((row) => (
-            <div key={row} className="flex items-baseline justify-between gap-4 px-3 py-2 text-xs">
-              <dt className="min-w-0 text-neutral-400">{row}</dt>
-              <dd className={`max-w-[55%] shrink-0 text-right ${picked[row] !== undefined ? "text-neutral-100" : "text-neutral-600"}`}>{picked[row] ?? EMPTY}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-    </div>
+    <ChoiceMatrix readOnly className="mt-3 w-full" value={picked}
+      rows={rows.map((row) => ({ value: row, label: row }))}
+      columns={columns.map((column) => ({ value: column, label: column }))}
+    />
   );
 }
 
@@ -203,7 +169,7 @@ function RecordsAnswer({ answer }) {
 
 function FileAnswer({ answer, responseId }) {
   if (isEmptyAnswer(answer)) {
-    return <div className="mt-3 flex h-16 w-full items-center rounded-lg border border-dashed border-ink/10 bg-neutral-900/40 px-4 text-sm text-neutral-600">Dosya yüklenmedi</div>;
+    return <div className="mt-3 flex h-16 w-full items-center rounded-lg border border-dashed border-border px-4 text-sm text-subtle-foreground">Dosya yüklenmedi</div>;
   }
   return (
     <div className="pointer-events-auto mt-3" onClick={(event) => event.stopPropagation()}>

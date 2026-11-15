@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, Eye, FilePenLine, FileX, Flag, GitCompare, Timer, UserRound } from "lucide-react";
+import { Badge, Button } from "@skylab-kulubu/skylcn-ui";
+import StateCard from "@/app/components/StateCard";
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { RichText } from "@/app/components/rich-text/RichText";
@@ -17,10 +19,12 @@ import {
 } from "./response-data";
 
 const ATTEMPT_EMPTY = {
-  running: { Icon: Timer, title: "Aday görev üzerinde çalışıyor", description: "Taslak süre bitene kadar gizli. Süre dolarsa burada geçici cevap olarak açılır." },
-  opened: { Icon: Eye, title: "Görev henüz başlatılmadı", description: "Aday formu açtı ama Görevi başlat'a basmadı." },
-  none: { Icon: FileX, title: "Teslim yok", description: "Süre doldu ve teslim kaydedilmedi." },
+  running: { Icon: Timer, tone: "brand", title: "Aday görev üzerinde çalışıyor", description: "Taslak süre bitene kadar gizli. Süre dolarsa burada geçici cevap olarak açılır." },
+  opened: { Icon: Eye, tone: "neutral", title: "Görev henüz başlatılmadı", description: "Aday formu açtı ama Görevi başlat'a basmadı." },
+  none: { Icon: FileX, tone: "neutral", title: "Teslim yok", description: "Süre doldu ve teslim kaydedilmedi." },
 };
+
+const CHANGED = <Badge tone="info">değişti</Badge>;
 
 export function scrollToQuestion(questionId) {
   const canvas = document.querySelector("[data-room] [data-room-canvas]");
@@ -87,7 +91,7 @@ function RevisionRow({ previous, fields, numbers, requested, changedAll, onJump 
       </button>
     );
   };
-  const changedTag = <span className="shrink-0 rounded-full border border-sky-400/30 bg-sky-400/10 px-1.5 text-3xs leading-4 text-sky-200">değişti</span>;
+  const changedTag = CHANGED;
   const sameTag = <span className="shrink-0 text-3xs text-amber-200/80">değişmedi</span>;
 
   return (
@@ -235,14 +239,12 @@ export default function ResponseCard({
     const isFlagged = flagMode && flags.includes(field.id);
     const isRequested = requested.includes(field.id);
     const aside = flagMode ? (
-      <button type="button" onClick={() => onFlag?.(field.id)} aria-pressed={isFlagged}
-        className={`flex h-8 shrink-0 items-center gap-1 rounded-md border px-2.5 text-2xs font-medium transition-colors sm:h-6 sm:px-2 sm:text-3xs ${
-          isFlagged ? "border-sky-400/40 bg-sky-400/15 text-sky-200" : "border-ink/10 text-neutral-500 hover:border-sky-400/30 hover:text-sky-200"
-        }`}
+      <Button size="sm" onClick={() => onFlag?.(field.id)} aria-pressed={isFlagged}
+        className="-my-0.5 gap-1 hover:border-sky-400/30 hover:text-sky-200 aria-pressed:border-sky-400/40 aria-pressed:bg-sky-400/15 aria-pressed:text-sky-200"
       >
-        <Flag size={11} />
+        <Flag className="size-3" />
         {isFlagged ? "İşaretli" : "İşaretle"}
-      </button>
+      </Button>
     ) : isRequested ? (
       <span className="flex h-6 shrink-0 items-center gap-1 text-3xs font-medium text-sky-300/80" title="Bu soruda düzeltme istendi">
         <Flag size={11} />
@@ -254,9 +256,7 @@ export default function ResponseCard({
           </>
         ) : null}
       </span>
-    ) : isChanged ? (
-      <span className="rounded-full border border-sky-400/30 bg-sky-400/10 px-1.5 text-3xs leading-4 text-sky-200">değişti</span>
-    ) : null;
+    ) : isChanged ? CHANGED : null;
 
     return (
       <div key={field.id} className={last ? "" : "border-b border-ink/5 pb-6"}>
@@ -308,14 +308,10 @@ export default function ResponseCard({
       {task && !isAttempt && allFields.length > 0 ? <DeliverablesHeader phone={phone} /> : null}
 
       {isAttempt ? (
-        <div className="flex min-h-56 flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-          <span className="grid size-11 place-items-center rounded-xl border border-ink/10 bg-ink/3 text-skylab-300"><empty.Icon size={18} /></span>
-          <div>
-            <p className="text-sm font-semibold text-neutral-100">{empty.title}</p>
-            <p className="mt-1 max-w-sm text-xs text-neutral-400">
-              {attemptKind === "none" && detail?.attempt?.closedByTeam ? "Süre doldu; geçici cevap teslim yok olarak kapatıldı." : empty.description}
-            </p>
-          </div>
+        <div className="flex min-h-56">
+          <StateCard Icon={empty.Icon} tone={empty.tone} title={empty.title}
+            description={attemptKind === "none" && detail?.attempt?.closedByTeam ? "Süre doldu; geçici cevap teslim yok olarak kapatıldı." : empty.description}
+          />
         </div>
       ) : allFields.length === 0 ? (
         <p className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-ink/10 text-sm text-neutral-500">Bu cevapta gösterilecek soru yok.</p>

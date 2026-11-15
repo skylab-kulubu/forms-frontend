@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { ChartColumn, ChevronRight, FileText, List, PencilLine, Timer, X } from "lucide-react";
+import { ActiveFilters, Button, FilterPills, IconButton } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import ApprovalOverlay from "../ApprovalOverlay";
 import Pagination from "../utils/Pagination";
@@ -69,11 +70,7 @@ export function RunsList({
               : <StepBadge depth={stepDepth} isStart={stepIsStart} size="md" />}
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-100">{stepTitle || "Adsız form"}</span>
             {stepNote ? <span className="shrink-0 rounded border border-dashed border-neutral-700 px-1.5 py-0.5 text-3xs text-neutral-500">{stepNote}</span> : null}
-            <button type="button" onClick={onClear} title="Adım seçimini kaldır" aria-label="Adım seçimini kaldır"
-              className="grid size-10 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200 sm:size-6"
-            >
-              <X size={13} />
-            </button>
+            <IconButton icon={X} label="Adım seçimini kaldır" variant="ghost" size="icon-sm" onClick={onClear} />
           </div>
           <StepCounts counts={counts} />
           {onMode ? (
@@ -86,31 +83,14 @@ export function RunsList({
         </div>
       ) : null}
 
-      <div className="flex shrink-0 items-center px-4 pb-1 pt-2 text-2xs sm:pt-3">
-        {RUN_TABS.map(([key, label], index) => (
-          <Fragment key={key}>
-            {index ? <span className="mx-2 h-3 w-px bg-neutral-800" /> : null}
-            <button type="button" onClick={() => onTab(key)} aria-pressed={tab === key}
-              className={`rounded py-2 transition-colors sm:py-0 ${tab === key ? "text-neutral-100" : "text-neutral-500 hover:text-neutral-300"}`}
-            >
-              {label} {tabCounts[key] != null ? <span className="tabular-nums text-neutral-500">{tabCounts[key]}</span> : null}
-            </button>
-          </Fragment>
-        ))}
+      <div className="flex shrink-0 items-center px-4 pb-1 pt-2 sm:pt-3">
+        <FilterPills aria-label="Başvuranlar" value={String(tab)} onValueChange={(value) => onTab(Number(value))}
+          options={RUN_TABS.map(([key, label]) => ({ value: String(key), label, count: tabCounts[key] ?? undefined }))}
+        />
       </div>
 
       {only != null ? (
-        <div className="flex shrink-0 px-4 pt-1.5">
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-ink/10 py-0.5 pl-2 pr-0.5 text-2xs text-neutral-300">
-            <span className={`size-1.5 rounded-full ${RUN_STATE[only].dot}`} />
-            {RUN_STATE[only].label}
-            <button type="button" onClick={onClearOnly} title="Süzgeci kaldır" aria-label="Süzgeci kaldır"
-              className="grid size-8 place-items-center rounded text-neutral-500 transition-colors hover:text-neutral-200 sm:size-5"
-            >
-              <X size={11} />
-            </button>
-          </span>
-        </div>
+        <ActiveFilters className="shrink-0 px-4 pt-1.5" filters={[{ key: "only", label: RUN_STATE[only].label, onRemove: onClearOnly }]} />
       ) : null}
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-1 scrollbar">
@@ -210,11 +190,7 @@ export function OperationsPanel({ workflow, overview, steps, onMode, onEdit, can
               <StepBadge depth={step.depth} isStart={step.isStart} size="md" />
               <span className="min-w-0 flex-1 truncate text-xs font-medium text-neutral-200" title={step.formTitle}>{step.formTitle || "Adsız form"}</span>
               {MODE_LINKS.map(([mode, label]) => (
-                <button key={mode} type="button" onClick={() => onMode(mode, step.formId)}
-                  className="min-h-10 rounded px-1 text-2xs text-neutral-500 transition-colors hover:text-neutral-200 sm:min-h-7"
-                >
-                  {label}
-                </button>
+                <Button key={mode} variant="ghost" size="sm" className="px-1.5 font-normal" onClick={() => onMode(mode, step.formId)}>{label}</Button>
               ))}
             </div>
           ))}

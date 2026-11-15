@@ -3,6 +3,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, ClockPlusIcon, ChevronsLeft, GitCompare, ListX, TextSearch } from "lucide-react";
+import { Button } from "@skylab-kulubu/skylcn-ui";
 
 import { useResponsePreviewQuery } from "@/lib/hooks/useResponseShare";
 import { ResponseListItem, ResponseListSkeleton } from "./components/ResponseDisplayerComponents";
@@ -328,14 +329,14 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
           )}
           <span className="flex shrink-0 items-center gap-3">
             {previousSchema && !isOtherUnavailable && (
-              <button type="button" onClick={() => setShowChanges((value) => !value)} aria-pressed={showChanges}
+              <Button size="sm" onClick={() => setShowChanges((value) => !value)} aria-pressed={showChanges}
                 title={`${previousStep?.round ?? 1}. gönderimden farklı cevapları vurgula`}
-                className={`flex h-6 items-center gap-1.5 rounded-md border px-2 text-3xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${showChanges ? "border-sky-400/40 bg-sky-400/10 text-sky-200" : "border-ink/10 text-neutral-400 hover:text-neutral-200"}`}
+                className="gap-1.5 aria-pressed:border-sky-400/40 aria-pressed:bg-sky-400/10 aria-pressed:text-sky-200"
               >
-                <GitCompare size={11} />
+                <GitCompare className="size-3.5" />
                 Değişenler
                 <span className="tabular-nums opacity-70">{changeCount}</span>
-              </button>
+              </Button>
             )}
             <span className="flex items-center gap-1 text-3xs text-neutral-500">
               <ClockPlusIcon size={11} />
@@ -392,7 +393,7 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
                 <ActionTrigger />
             </div>
 
-            <DrawerContent className="h-full" rootClassName="overflow-visible" wrapperClassName="">
+            <DrawerContent className="h-full">
                 {drawerContent}
             </DrawerContent>
         </Drawer>

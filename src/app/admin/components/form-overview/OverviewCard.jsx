@@ -2,6 +2,7 @@
 
 import { Fragment, useMemo } from "react";
 import { ArrowRight, ChartColumn, ChevronRight, CornerDownRight } from "lucide-react";
+import { Badge } from "@skylab-kulubu/skylcn-ui";
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { RichText } from "@/app/components/rich-text/RichText";
@@ -55,10 +56,7 @@ function SummaryField({ field, number, condText, stats, isLast, phone, touch, on
       >
         {condText ? (
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-md border border-skylab-400/20 bg-skylab-500/10 px-1.5 py-0.5 text-3xs text-skylab-300">
-              <CornerDownRight size={10} />
-              {condText}
-            </span>
+            <Badge tone="brand" className="whitespace-normal"><CornerDownRight />{condText}</Badge>
           </div>
         ) : null}
 

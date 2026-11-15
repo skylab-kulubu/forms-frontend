@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, FileIcon, FileX, Image as ImageIcon, FileText, Loader2, AlertCircle, ChevronDown, ShieldAlert } from "lucide-react";
+import { Download, FileIcon, FileX, Image as ImageIcon, FileText, Loader2, AlertCircle, ChevronDown, ChevronUp, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { IconButton } from "@skylab-kulubu/skylcn-ui";
 import { useMediaQuery } from "@/lib/hooks/useMedia";
 import { requestResponseFileLink, useResponseFileQuery } from "@/lib/hooks/useResponseFiles";
 import { scanResultLabel } from "@/lib/guest-uploads";
@@ -113,19 +114,9 @@ function PublicFile({ media }) {
 
           <div className="flex items-center gap-1.5">
             {canPreview && fileUrl && (
-              <button type="button" onClick={() => setExpanded((v) => !v)} title={expanded ? "Önizlemeyi kapat" : "Önizle"}
-                className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-ink/5 hover:text-neutral-200 transition-colors"
-              >
-                <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="inline-flex">
-                  <ChevronDown size={16} />
-                </motion.span>
-              </button>
+              <IconButton icon={expanded ? ChevronUp : ChevronDown} label={expanded ? "Önizlemeyi kapat" : "Önizle"} variant="ghost" onClick={() => setExpanded((v) => !v)} />
             )}
-            <a href={fileUrl} download={fileName || true} title="İndir"
-              className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-skylab-500/10 hover:text-skylab-400 transition-colors"
-            >
-              <Download size={16} />
-            </a>
+            <IconButton icon={Download} label="İndir" variant="ghost" render={<a href={fileUrl} download={fileName || true} />} />
           </div>
         </div>
       )}
@@ -260,21 +251,11 @@ function PrivateFile({ file, mediaId, responseId, token }) {
 
         <div className="flex items-center gap-1.5">
           {(isImage || isPdf) && (
-            <button type="button" onClick={togglePreview} disabled={Boolean(opening)} title={expanded ? "Önizlemeyi kapat" : "Önizle"}
-              className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-ink/5 hover:text-neutral-200 transition-colors disabled:opacity-50"
-            >
-              {opening === "preview" ? <Loader2 size={16} className="animate-spin" /> : (
-                <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="inline-flex">
-                  <ChevronDown size={16} />
-                </motion.span>
-              )}
-            </button>
+            <IconButton icon={expanded ? ChevronUp : ChevronDown} label={expanded ? "Önizlemeyi kapat" : "Önizle"} variant="ghost" onClick={togglePreview}
+              pending={opening === "preview"} disabled={Boolean(opening)}
+            />
           )}
-          <button type="button" onClick={download} disabled={Boolean(opening)} title="İndir"
-            className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-skylab-500/10 hover:text-skylab-400 transition-colors disabled:opacity-50"
-          >
-            {opening === "download" ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          </button>
+          <IconButton icon={Download} label="İndir" variant="ghost" onClick={download} pending={opening === "download"} disabled={Boolean(opening)} />
         </div>
       </div>
 

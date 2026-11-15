@@ -2,6 +2,7 @@
 
 import { Fragment, useLayoutEffect, useRef } from "react";
 import { ChevronRight, Eye, Monitor, Smartphone, Timer } from "lucide-react";
+import { Badge, IconButton } from "@skylab-kulubu/skylcn-ui";
 import { durationText } from "@/lib/form-timing";
 import { EASE_CLASS, boardFits, useBoardPush } from "../form-studio/StudioBoard";
 import { sameId } from "./room-flow";
@@ -88,11 +89,9 @@ export function DeviceToggle({ device, onChange }) {
   return (
     <span className="hidden items-center gap-0.5 sm:flex">
       {options.map(([value, Icon, label]) => (
-        <button key={value} type="button" title={label} aria-label={label} aria-pressed={device === value} onClick={() => onChange(value)}
-          className={`grid size-6 place-items-center rounded transition-colors ${device === value ? "bg-ink/10 text-neutral-100" : "text-neutral-500 hover:text-neutral-200"}`}
-        >
-          <Icon size={13} />
-        </button>
+        <IconButton key={value} icon={Icon} label={label} aria-pressed={device === value} onClick={() => onChange(value)} variant="ghost" size="icon-sm"
+          className="aria-pressed:bg-accent-strong aria-pressed:text-foreground"
+        />
       ))}
     </span>
   );
@@ -100,12 +99,10 @@ export function DeviceToggle({ device, onChange }) {
 
 export function ReadOnlyPill() {
   return (
-    <span title="Süper admin olarak görüyorsun. Karar, arşiv ve düzenleme formun ekibine açık."
-      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-ink/10 bg-ink/3 px-1.5 py-0.5 text-3xs text-neutral-400"
-    >
-      <Eye size={10} />
+    <Badge title="Süper admin olarak görüyorsun. Karar, arşiv ve düzenleme formun ekibine açık.">
+      <Eye />
       Salt okunur
-    </span>
+    </Badge>
   );
 }
 

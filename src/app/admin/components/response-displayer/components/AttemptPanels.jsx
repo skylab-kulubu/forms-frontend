@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ChevronDown, ClipboardList, ClockPlus, Eye, FileCheck, FileX, Loader2, Mail, Play, Send, Timer, TimerOff } from "lucide-react";
+import { ArrowRight, ChevronDown, ClipboardList, ClockPlus, Eye, FileCheck, FileX, Mail, Play, Send, Timer, TimerOff } from "lucide-react";
+import { Button, Field, SegmentedControl, Textarea, Timeline } from "@skylab-kulubu/skylcn-ui";
 import TaskMarkdown from "@/app/components/rich-text/TaskMarkdown";
 import { taskFirstLine, taskReadMinutes } from "@/app/components/rich-text/markdown";
 import StateCard from "@/app/components/StateCard";
@@ -10,15 +11,9 @@ import { ATTEMPT_EVENT, ATTEMPT_STATUS, attemptKindOf } from "@/lib/attempt-stat
 import { currentTime, durationText, formatLongDate, formatShortDate, leftText, shortDuration } from "@/lib/form-timing";
 import { PanelButton, PanelNotice, ROW, ROW_HOVER, TILE } from "@/app/admin/components/utils/SidePanel";
 
-const MARK_TONE = {
-  done: "border-emerald-400/30 bg-emerald-400/10 text-emerald-400",
-  review: "border-amber-400/30 bg-amber-400/10 text-amber-400",
-  declined: "border-red-400/30 bg-red-400/10 text-red-300",
-  paused: "border-ink/15 bg-ink/5 text-neutral-400",
-  current: "border-skylab-400/40 bg-skylab-500/10 text-skylab-300",
-};
+const MARK_TONE = { done: "success", review: "warning", declined: "danger", paused: "neutral", current: "brand" };
 
-const EXTEND_PRESETS = [6, 12, 24, 48];
+const EXTEND_PRESETS = [6, 12, 24, 48].map((hours) => ({ value: String(hours), label: `+${hours} sa` }));
 
 export const formatPersonName = (name) =>
   name?.trim().toLocaleLowerCase("tr-TR").split(/\s+/).map((word) => word.replace(/^\p{L}/u, (c) => c.toLocaleUpperCase("tr-TR"))).join(" ") || "";
@@ -121,16 +116,8 @@ export function ProvisionalNotice({ actionable = true, closed = false }) {
 export function FlowButtons({ onCancel, onConfirm, confirmLabel, pending, danger = false }) {
   return (
     <div className="mt-3 flex items-center gap-2">
-      <button type="button" onClick={onCancel} disabled={pending}
-        className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-      >
-        Vazgeç
-      </button>
-      <button type="button" onClick={onConfirm} disabled={pending}
-        className={`flex flex-1 items-center justify-center rounded-lg border px-3 py-1.5 text-2xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-60 ${danger ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20" : "border-skylab-400/40 bg-skylab-500/10 text-skylab-200 hover:bg-skylab-500/20"}`}
-      >
-        {pending ? <Loader2 size={13} className="animate-spin" /> : confirmLabel}
-      </button>
+      <Button onClick={onCancel} disabled={pending} className="flex-1">Vazgeç</Button>
+      <Button variant={danger ? "destructive" : "primary"} onClick={onConfirm} pending={pending} className="flex-1 font-semibold">{confirmLabel}</Button>
     </div>
   );
 }
@@ -141,11 +128,9 @@ export function ConfirmCard({ title, outcome, note, confirmLabel, danger = false
       <p className="text-xs font-medium text-neutral-100">{title}</p>
       {outcome && <p className="mt-1 text-2xs text-neutral-300">{outcome}</p>}
       <p className="mt-1 text-3xs leading-relaxed text-neutral-500">{note}</p>
-      <label htmlFor="attempt-decision-note" className="mb-1.5 mt-3 block text-3xs font-medium text-neutral-500">Not (süre geçmişinde görünür)</label>
-      <textarea id="attempt-decision-note" rows={2} value={decisionNote} onChange={(event) => onNoteChange(event.target.value)} maxLength={500}
-        placeholder="İsteğe bağlı"
-        className="w-full rounded-lg border border-ink/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
-      />
+      <Field label="Not (süre geçmişinde görünür)" className="mt-3">
+        <Textarea size="sm" rows={2} value={decisionNote} onChange={(event) => onNoteChange(event.target.value)} maxLength={500} placeholder="İsteğe bağlı" />
+      </Field>
       <FlowButtons onCancel={onCancel} onConfirm={onConfirm} confirmLabel={confirmLabel} pending={pending} danger={danger} />
     </div>
   );
@@ -162,25 +147,13 @@ export function ExtendForm({ attempt, pending, onCancel, onConfirm }) {
   return (
     <div className="rounded-xl border border-ink/10 bg-ink/3 p-3">
       <p className="text-xs font-medium text-neutral-100">Süre ver</p>
-      <div className="mt-2.5 grid grid-cols-4 gap-1.5">
-        {EXTEND_PRESETS.map((value) => (
-          <button key={value} type="button" onClick={() => setHours(value)} aria-pressed={hours === value}
-            className={`h-7 rounded-md border text-2xs font-medium tabular-nums transition-colors ${hours === value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-300 hover:text-neutral-100"}`}
-          >
-            +{value} sa
-          </button>
-        ))}
-      </div>
+      <SegmentedControl aria-label="Ek süre" options={EXTEND_PRESETS} value={String(hours)} onValueChange={(value) => setHours(Number(value))} className="mt-2.5 w-full tabular-nums" />
       <p className="mt-2.5 text-2xs text-neutral-400">Yeni bitiş <span className="tabular-nums text-neutral-100">{formatLongDate(next)}</span></p>
-      <label htmlFor="attempt-extend-note" className="mb-1.5 mt-3 block text-3xs font-medium text-neutral-500">Not (adaya gönderilmez)</label>
-      <textarea id="attempt-extend-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={500}
-        placeholder="Neden süre verdiğinizi yazın, süre geçmişinde görünür."
-        className="w-full rounded-lg border border-ink/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
-      />
-      <p className="mt-1.5 text-3xs leading-relaxed text-neutral-500">
-        Aday kaldığı yerden devam eder ve e-postayla bilgilendirilir.
-        {attempt?.status === ATTEMPT_STATUS.PROVISIONAL ? " Geçici cevap geri alınır." : ""}
-      </p>
+      <Field label="Not (adaya gönderilmez)" className="mt-3"
+        hint={`Aday kaldığı yerden devam eder ve e-postayla bilgilendirilir.${attempt?.status === ATTEMPT_STATUS.PROVISIONAL ? " Geçici cevap geri alınır." : ""}`}
+      >
+        <Textarea size="sm" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} placeholder="Neden süre verdiğinizi yazın, süre geçmişinde görünür." />
+      </Field>
       <FlowButtons onCancel={onCancel} confirmLabel={`${hours} saat ver`} pending={pending}
         onConfirm={() => onConfirm({ minutes: hours * 60, note: note.trim() || null })}
       />
@@ -391,33 +364,28 @@ export function TimeEvents({ attempt }) {
   const events = attempt?.events ?? [];
 
   return (
-    <ol className="w-full text-left">
-      {events.map((event, index) => {
-        const view = eventView(event, attempt);
-        const last = index === events.length - 1;
-        return (
-          <li key={event.id ?? index} className={`relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 ${last ? "" : "pb-4"}`}>
-            {!last && <span aria-hidden className="absolute bottom-1.5 left-3 top-7.5 w-px -translate-x-1/2 bg-ink/10" />}
-            <span className={`grid size-6 place-items-center rounded-md border text-2xs font-semibold ${MARK_TONE[view.tone]}`}>
-              <view.Icon size={12} strokeWidth={2.2} />
-            </span>
-            <div className="min-w-0">
-              <div className="flex items-baseline justify-between gap-3 pt-0.5">
-                <span className="min-w-0 text-xs font-medium text-neutral-100">{view.title}</span>
-                <span className="shrink-0 text-3xs tabular-nums text-neutral-500">{formatShortDate(event.createdAt)}</span>
+    <Timeline items={events.map((event, index) => {
+      const view = eventView(event, attempt);
+      return {
+        id: event.id ?? String(index),
+        title: view.title,
+        time: formatShortDate(event.createdAt),
+        icon: view.Icon,
+        tone: MARK_TONE[view.tone],
+        description: view.detail || view.note ? (
+          <>
+            {view.detail ? <p>{view.detail}</p> : null}
+            {view.note ? (
+              <div className="relative mt-2 pl-3 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-full before:bg-neutral-700">
+                <p className="text-2xs text-neutral-500">Not</p>
+                <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-neutral-200">{view.note}</p>
               </div>
-              {view.detail && <p className="mt-px text-2xs leading-5 text-neutral-400">{view.detail}</p>}
-              {view.note && (
-                <div className="relative mt-2 pl-3 text-left before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-full before:bg-neutral-700">
-                  <p className="text-2xs text-neutral-500">Not</p>
-                  <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-neutral-200">{view.note}</p>
-                </div>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+            ) : null}
+          </>
+        ) : null,
+      };
+    })}
+    />
   );
 }
 

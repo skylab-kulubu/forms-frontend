@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, ListRestart, Loader2, RotateCcw } from "lucide-react";
+import { Clock, ListRestart, RotateCcw } from "lucide-react";
+import { Button, Field, Textarea } from "@skylab-kulubu/skylcn-ui";
 import { StatePill } from "@/app/admin/components/utils/SidePanel";
 import { useRunVoidMutation } from "@/lib/hooks/useResponse";
 import { isDeletedUser } from "@/lib/deleted-user";
@@ -148,23 +149,14 @@ export default function RunSection({ run, instanceId, readOnly = false }) {
                   </li>
                 ))}
               </ul>
-              <label htmlFor="run-void-note" className="mb-1.5 mt-3 block text-3xs font-medium text-neutral-500">Adaya gidecek not · isteğe bağlı</label>
-              <textarea id="run-void-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={NOTE_MAX_LENGTH}
-                placeholder="Neden yeniden başvurabileceğini yazın"
-                className="w-full rounded-lg border border-ink/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
-              />
-              <p className="mt-1.5 text-3xs leading-relaxed text-neutral-500">Aday e-postayla bilgilendirilir.</p>
+              <Field label="Adaya gidecek not · isteğe bağlı" hint="Aday e-postayla bilgilendirilir." className="mt-3">
+                <Textarea size="sm" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={NOTE_MAX_LENGTH}
+                  placeholder="Neden yeniden başvurabileceğini yazın"
+                />
+              </Field>
               <div className="mt-3 flex items-center gap-2">
-                <button type="button" onClick={() => setConfirming(false)} disabled={mutation.isPending}
-                  className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-                >
-                  Vazgeç
-                </button>
-                <button type="button" onClick={confirm} disabled={mutation.isPending}
-                  className={`flex flex-1 items-center justify-center rounded-lg border px-3 py-1.5 text-2xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:opacity-60 ${copy.danger ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20" : "border-skylab-400/40 bg-skylab-500/10 text-skylab-200 hover:bg-skylab-500/20"}`}
-                >
-                  {mutation.isPending ? <Loader2 size={13} className="animate-spin" /> : copy.button}
-                </button>
+                <Button onClick={() => setConfirming(false)} disabled={mutation.isPending} className="flex-1">Vazgeç</Button>
+                <Button variant={copy.danger ? "destructive" : "primary"} onClick={confirm} pending={mutation.isPending} className="flex-1 font-semibold">{copy.button}</Button>
               </div>
             </motion.div>
           ) : (

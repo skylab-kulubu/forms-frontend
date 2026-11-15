@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, ArrowRight, Check, Clock, Eye, FileClock, FilePenLine, FileX, Flag, Loader2, PencilLine, Share2, Undo2, X, Archive, Timer, CalendarCheck, ShieldAlert, ShieldCheck, ShieldX, ShieldQuestion } from "lucide-react";
+import { Button, Field, IconButton, Popover, PopoverContent, PopoverDescription, PopoverTitle, PopoverTrigger, Textarea } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { useResponseStatusMutation, useResponseArchiveMutation, useAttemptActionMutation } from "@/lib/hooks/useResponse";
 import { DecisionSection, ReminderSection, TimeHistory, TimeSection, attemptTimeValue, formatPersonName } from "./AttemptPanels";
@@ -39,10 +40,11 @@ const PROVISIONAL = 4;
 const FLAGGED = 5;
 const RETURNED = 6;
 
+// Tints for skylcn's outline button: it has no success or revision variant; reject uses its destructive one
 const DECISION_TONE = {
-  2: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20",
-  3: "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20",
-  [RETURNED]: "border-sky-400/40 bg-sky-400/10 text-sky-100 hover:bg-sky-400/20",
+  2: "border-success/40 bg-success/10 text-success hover:border-success/60 hover:bg-success/20",
+  3: "",
+  [RETURNED]: "border-sky-400/40 bg-sky-400/10 text-sky-200 hover:border-sky-400/60 hover:bg-sky-400/20",
 };
 
 const DECISION_COPY = {
@@ -170,6 +172,9 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
   const canEditReview = !readOnly && canReview && !isArchived && isRouteOpen;
   const canReturn = canEditReview && isWorkflowStep && Boolean(workflow.canReturn);
   const isArchiveBlocked = (isWorkflowStep && statusValue === 1) || isProvisional || isReturned;
+  const archiveTitle = isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin."
+    : isReturned ? "Düzeltme istenen cevap başvurunun geçmişinde kalır; arşivlenmez."
+      : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce karar verin." : "Cevabı arşivle";
   const round = workflow?.round ?? 1;
   const ownStep = workflow?.steps?.find((step) => step.stage === workflow.stage && (step.round ?? 1) === round) ?? null;
   const nextRoundAnswered = Boolean(workflow?.steps?.some((step) => step.stage === workflow.stage && step.round === round + 1 && step.responseId));
@@ -193,7 +198,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
   const [pendingDecision, setPendingDecision] = useState(null);
   const [shareOverlayOpen, setShareOverlayOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
-  const archiveRef = useRef(null);
+  const archiveCancelRef = useRef(null);
   const actionTimerRef = useRef(null);
   const noteRef = useRef(null);
   const responseId = response?.id;
@@ -212,18 +217,6 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
     const timer = setTimeout(() => { reset(); setArchiveOpen(false); }, isError ? 2500 : 2000);
     return () => clearTimeout(timer);
   }, [isError, isSuccess, reset]);
-
-  useEffect(() => {
-    if (!archiveOpen) return;
-    const handleDown = (event) => { if (!archiveRef.current?.contains(event.target)) setArchiveOpen(false); };
-    const handleKey = (event) => { if (event.key === "Escape") setArchiveOpen(false); };
-    document.addEventListener("mousedown", handleDown);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleDown);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [archiveOpen]);
 
   const clearActionTimer = () => {
     if (actionTimerRef.current) {
@@ -361,65 +354,48 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
         <span className="h-px flex-1 bg-ink/5" />
         {!readOnly && (
           <div className="flex items-center gap-1 text-neutral-500">
-            <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" disabled={!responseId} onClick={() => setShareOverlayOpen(true)}
-              className={`rounded-lg p-1.5 transition-colors ${!responseId ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-ink/5"}`}
-            >
-              <Share2 size={15} />
-            </button>
-            <div ref={archiveRef} className="relative inline-flex">
-              <button type="button" aria-label="Cevabı arşivle" aria-expanded={archiveOpen}
-                title={isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin." : isReturned ? "Düzeltme istenen cevap başvurunun geçmişinde kalır; arşivlenmez." : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce karar verin." : "Cevabı arşivle"}
-                disabled={isArchivePending || isError || isSuccess || isArchived || isArchiveBlocked} onClick={() => setArchiveOpen((open) => !open)}
-                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : archiveOpen ? "bg-ink/5 text-neutral-100" : "hover:text-neutral-100 hover:bg-ink/5"}`}
-              >
-                <Archive size={15} />
-              </button>
-              <AnimatePresence>
-                {archiveOpen && (
-                  <motion.div key={isError ? "error" : "confirm"} role={isError ? "alert" : "dialog"} aria-label="Cevabı arşivle"
-                    initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -2, scale: 0.96 }}
-                    transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                    onClick={isError ? closeArchive : undefined}
-                    className={`absolute right-0 top-full z-50 mt-2.5 rounded-[10px] border shadow-xl ${isError ? "w-max max-w-[220px] cursor-pointer border-red-500/20 bg-danger-panel px-2.5 py-1.5" : "w-64 border-ink/20 bg-panel p-3"}`}
-                  >
-                    <div className={`absolute -top-[5.5px] right-2 h-2.5 w-2.5 rotate-45 rounded-[2.5px] border-l border-t ${isError ? "border-red-500/20 bg-danger-panel" : "border-ink/20 bg-panel"}`} style={{ zIndex: -1 }} />
-                    {isError ? (
-                      <div className="flex items-center gap-1.5">
-                        <AlertCircle size={13} strokeWidth={2.5} className="shrink-0 text-red-200/30" />
-                        <span className="text-3xs font-medium leading-snug text-neutral-200 wrap-break-word">
-                          {error?.response?.data?.message || error?.data?.message || error?.message || "Cevap arşivlenemedi."}
-                        </span>
+            <IconButton icon={Share2} label="Cevabı paylaş" variant="ghost" size="icon-sm" disabled={!responseId} onClick={() => setShareOverlayOpen(true)} />
+            {isArchived || isArchiveBlocked || isSuccess ? (
+              <IconButton icon={Archive} label="Cevabı arşivle" title={archiveTitle} variant="ghost" size="icon-sm" disabled focusableWhenDisabled
+                className={isSuccess ? "text-skylab-300" : undefined}
+              />
+            ) : (
+              <Popover open={archiveOpen} onOpenChange={(next) => { if (!isArchivePending) next ? setArchiveOpen(true) : closeArchive(); }}>
+                <PopoverTrigger render={<IconButton icon={Archive} label="Cevabı arşivle" title={archiveTitle} variant="ghost" size="icon-sm" className={isError ? "text-destructive" : undefined} />} />
+                <PopoverContent align="end" initialFocus={archiveCancelRef} aria-label="Cevabı arşivle" onClick={isError ? closeArchive : undefined}
+                  className={isError ? "w-max max-w-56 cursor-pointer border-destructive/30 bg-danger-panel px-2.5 py-1.5" : "w-64"}
+                >
+                  {isError ? (
+                    <div role="alert" className="flex items-center gap-1.5">
+                      <AlertCircle size={13} strokeWidth={2.5} className="shrink-0 text-destructive/60" />
+                      <span className="text-3xs font-medium leading-snug text-foreground wrap-break-word">
+                        {error?.response?.data?.message || error?.data?.message || error?.message || "Cevap arşivlenemedi."}
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <PopoverTitle className="text-xs font-medium">Cevabı arşivle</PopoverTitle>
+                      <p className="mt-1 text-2xs text-secondary-foreground">
+                        {statusValue === 1 || statusValue === FLAGGED
+                          ? <>Karar verilmediği için cevap <span className="text-destructive">reddedilir</span> ve listeden gizlenir.</>
+                          : "Cevap listeden gizlenir, silinmez; Arşiv dahil filtresiyle görünür."}
+                      </p>
+                      <PopoverDescription className="mt-1 text-3xs leading-relaxed">
+                        {isWorkflowStep ? "Arşivden geri çıkarılamaz." : "Kişi formu yeniden doldurabilir. Arşivden geri çıkarılamaz."}
+                      </PopoverDescription>
+                      <div className="mt-3 flex items-center gap-2">
+                        <Button ref={archiveCancelRef} size="sm" className="flex-1" disabled={isArchivePending} onClick={closeArchive}>Vazgeç</Button>
+                        <Button variant="destructive" size="sm" className="flex-1 font-semibold" pending={isArchivePending}
+                          onClick={() => archiveMutate(responseId, { onSuccess: () => setArchiveOpen(false) })}
+                        >
+                          Arşivle
+                        </Button>
                       </div>
-                    ) : (
-                      <>
-                        <p className="text-xs font-medium text-neutral-100">Cevabı arşivle</p>
-                        <p className="mt-1 text-2xs text-neutral-300">
-                          {statusValue === 1 || statusValue === FLAGGED
-                            ? <>Karar verilmediği için cevap <span className="text-red-300">reddedilir</span> ve listeden gizlenir.</>
-                            : "Cevap listeden gizlenir, silinmez; Arşiv dahil filtresiyle görünür."}
-                        </p>
-                        <p className="mt-1 text-3xs leading-relaxed text-neutral-500">
-                          {isWorkflowStep ? "Arşivden geri çıkarılamaz." : "Kişi formu yeniden doldurabilir. Arşivden geri çıkarılamaz."}
-                        </p>
-                        <div className="mt-3 flex items-center gap-2">
-                          <button type="button" autoFocus onClick={closeArchive}
-                            className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-                          >
-                            Vazgeç
-                          </button>
-                          <button type="button" disabled={isArchivePending} onClick={() => archiveMutate(responseId, { onSuccess: () => setArchiveOpen(false) })}
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-2xs font-semibold text-red-100 transition-colors hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {isArchivePending && <Loader2 size={12} className="animate-spin" />}
-                            {isArchivePending ? "Arşivleniyor" : "Arşivle"}
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    </>
+                  )}
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
         )}
       </div>
@@ -542,11 +518,9 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                     )}
 
                     {canEditReview && (
-                      <button type="button" onClick={() => setIsEditing(true)} aria-label="Durumu değiştir" title="Durumu değiştir"
-                        className="mt-3 w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-2xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
-                      >
-                        <PencilLine size={15} className="mx-auto" />
-                      </button>
+                      <Button onClick={() => setIsEditing(true)} aria-label="Durumu değiştir" title="Durumu değiştir" className="mt-3 w-full">
+                        <PencilLine />
+                      </Button>
                     )}
                   </motion.div>
                 ) : canEditReview ? (
@@ -574,16 +548,12 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                             </div>
                           )}
                           <div className="mt-3 flex items-center gap-2">
-                            <button type="button" onClick={cancelDecision}
-                              className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-                            >
-                              Vazgeç
-                            </button>
-                            <button type="button" onClick={confirmDecision} disabled={isPending || noteMissing}
-                              className={`flex-1 rounded-lg border px-3 py-1.5 text-2xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:cursor-not-allowed disabled:opacity-50 ${DECISION_TONE[pendingDecision]}`}
+                            <Button onClick={cancelDecision} className="flex-1">Vazgeç</Button>
+                            <Button onClick={confirmDecision} disabled={isPending || noteMissing} variant={pendingDecision === 3 ? "destructive" : "outline"}
+                              className={`flex-1 font-semibold ${DECISION_TONE[pendingDecision]}`}
                             >
                               {decisionCopy.button}
-                            </button>
+                            </Button>
                           </div>
                         </motion.div>
                       ) : actionState === "idle" ? (
@@ -591,23 +561,17 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                           exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
                         >
                           <div className="flex items-center gap-3">
-                            <button type="button" onClick={() => requestDecision(2)} disabled={isPending} aria-label="Onayla" title="Onayla"
-                              className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Check size={16} className="mx-auto" />
-                            </button>
+                            <Button size="lg" onClick={() => requestDecision(2)} disabled={isPending} aria-label="Onayla" title="Onayla" className={`flex-1 rounded-xl ${DECISION_TONE[2]}`}>
+                              <Check />
+                            </Button>
                             {canReturn && (
-                              <button type="button" onClick={() => requestDecision(RETURNED)} disabled={isPending} aria-label="Düzeltme iste" title="Düzeltme iste"
-                                className="flex-1 rounded-xl border border-sky-400/40 bg-sky-400/10 px-3 py-2.5 text-xs font-semibold text-sky-100 transition hover:bg-sky-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <FilePenLine size={16} className="mx-auto" />
-                              </button>
+                              <Button size="lg" onClick={() => requestDecision(RETURNED)} disabled={isPending} aria-label="Düzeltme iste" title="Düzeltme iste" className={`flex-1 rounded-xl ${DECISION_TONE[RETURNED]}`}>
+                                <FilePenLine />
+                              </Button>
                             )}
-                            <button type="button" onClick={() => requestDecision(3)} disabled={isPending} aria-label="Reddet" title="Reddet"
-                              className="flex-1 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <X size={16} className="mx-auto" />
-                            </button>
+                            <Button size="lg" variant="destructive" onClick={() => requestDecision(3)} disabled={isPending} aria-label="Reddet" title="Reddet" className="flex-1 rounded-xl">
+                              <X />
+                            </Button>
                           </div>
                           {isWorkflowStep && (approveOutcome || declineOutcome) && (
                             <div className="mt-3 space-y-1">
@@ -642,23 +606,17 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                     </AnimatePresence>
 
                     <motion.div layout className="mt-4">
-                      <label htmlFor="review-note" className="text-3xs font-medium text-neutral-500 mb-1.5 block">
-                        Açıklama{pendingDecision === RETURNED && <span className="text-sky-200/80"> · adaya gider</span>}
-                      </label>
-                      <textarea id="review-note" ref={noteRef} rows={3} value={note} onChange={(event) => setNote(event.target.value)} maxLength={REVIEW_NOTE_MAX_LENGTH}
-                        placeholder={pendingDecision === RETURNED ? "Neyi düzeltmesi gerektiğini yazın..." : "Açıklama ekle..."}
-                        className={`w-full rounded-lg border bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 ${noteMissing ? "border-sky-400/40" : "border-ink/10"}`}
-                      />
-                      <p className="mt-1 text-right text-3xs tabular-nums text-neutral-600">{note?.length ?? 0}/{REVIEW_NOTE_MAX_LENGTH}</p>
+                      <Field label={<>Açıklama{pendingDecision === RETURNED && <span className="text-sky-200/80"> · adaya gider</span>}</>}>
+                        <Textarea ref={noteRef} size="sm" rows={3} value={note} onChange={(event) => setNote(event.target.value)} maxLength={REVIEW_NOTE_MAX_LENGTH} showCount
+                          placeholder={pendingDecision === RETURNED ? "Neyi düzeltmesi gerektiğini yazın..." : "Açıklama ekle..."}
+                          className={noteMissing ? "border-sky-400/40" : undefined}
+                        />
+                      </Field>
                       {actionError && (
                         <p role="alert" className="mt-1 text-3xs text-red-300">{actionError}</p>
                       )}
                       {reviewedAt && (
-                        <button type="button" onClick={() => { setIsEditing(false); setNote(reviewDescription); }} aria-label="Değişiklikten vazgeç" title="Değişiklikten vazgeç"
-                          className="mt-2 inline-flex items-center justify-center rounded-lg border border-ink/10 bg-neutral-900/60 px-2 py-1 text-3xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
-                        >
-                          <Undo2 size={14} />
-                        </button>
+                        <IconButton icon={Undo2} label="Değişiklikten vazgeç" size="icon-sm" className="mt-2" onClick={() => { setIsEditing(false); setNote(reviewDescription); }} />
                       )}
                     </motion.div>
                   </motion.div>

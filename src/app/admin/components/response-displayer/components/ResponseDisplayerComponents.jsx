@@ -1,6 +1,7 @@
 "use client";
 
 import { Flag } from "lucide-react";
+import { Badge, Button, Skeleton } from "@skylab-kulubu/skylcn-ui";
 import { FilePreview } from "./FilePreview";
 import { RichText } from "@/app/components/rich-text/RichText";
 
@@ -22,12 +23,12 @@ const formatAnswer = (answer) => {
 function RevisionMarker({ requested, flag }) {
   if (flag) {
     return (
-      <button type="button" onClick={flag.onToggle} aria-pressed={flag.selected} title={flag.selected ? "İşareti kaldır" : "Düzeltilecek olarak işaretle"}
-        className={`flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 text-3xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${flag.selected ? "border-sky-400/40 bg-sky-400/15 text-sky-200" : "border-ink/10 text-neutral-500 hover:border-sky-400/30 hover:text-sky-200"}`}
+      <Button size="sm" onClick={flag.onToggle} aria-pressed={flag.selected} title={flag.selected ? "İşareti kaldır" : "Düzeltilecek olarak işaretle"}
+        className="-my-0.5 gap-1 hover:border-sky-400/30 hover:text-sky-200 aria-pressed:border-sky-400/40 aria-pressed:bg-sky-400/15 aria-pressed:text-sky-200"
       >
-        <Flag size={11} />
+        <Flag className="size-3" />
         {flag.selected ? "İşaretli" : "İşaretle"}
-      </button>
+      </Button>
     );
   }
 
@@ -100,7 +101,7 @@ export function ResponseListItem({ questionNumber, question, answer, type, respo
       <div className="mt-3 pl-9">
         <p className="mb-1.5 flex items-center gap-1.5 text-3xs font-medium text-neutral-500">
           Cevap{type === "repeater" && groupRows && groupRows.length > 0 ? ` · ${groupRows.length} kayıt` : ""}
-          {changed && <span className="rounded-full border border-sky-400/30 bg-sky-400/10 px-1.5 leading-4 text-sky-200">değişti</span>}
+          {changed && <Badge tone="info">değişti</Badge>}
         </p>
 
         {type === "file" && answerText ? (
@@ -168,9 +169,9 @@ export function ResponseListItem({ questionNumber, question, answer, type, respo
 export function ResponseHeaderSkeleton() {
   return (
     <div className="flex items-center gap-2 px-1 lg:h-7">
-      <div className="shimmer h-3.5 w-24 rounded-md" />
+      <Skeleton className="h-3.5 w-24" />
       <span className="h-px flex-1 bg-ink/5" />
-      <div className="shimmer h-3 w-16 rounded-md" />
+      <Skeleton className="h-3 w-16" />
     </div>
   );
 }
@@ -181,14 +182,14 @@ export function ResponseListSkeleton({ rows = 4 }) {
       {Array.from({ length: rows }).map((_, index) => (
         <li key={index} className="py-5 first:pt-0 last:pb-0">
           <div className="flex gap-3">
-            <div className="shimmer h-6 w-6 shrink-0 rounded-md" />
+            <Skeleton className="h-6 w-6 shrink-0" />
             <div className="flex-1">
-              <div className="shimmer h-3 w-40 rounded-md" />
+              <Skeleton className="h-3 w-40" />
             </div>
           </div>
           <div className="mt-3 space-y-2 pl-9">
-            <div className="shimmer h-2.5 w-14 rounded-md" />
-            <div className="shimmer h-3 w-3/4 rounded-md" />
+            <Skeleton className="h-2.5 w-14" />
+            <Skeleton className="h-3 w-3/4" />
           </div>
         </li>
       ))}

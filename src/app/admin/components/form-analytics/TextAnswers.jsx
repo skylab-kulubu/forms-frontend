@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { IconButton, Skeleton } from "@skylab-kulubu/skylcn-ui";
 import { PanelInput } from "@/app/admin/components/utils/SidePanel";
 import { questionAnswersQuery } from "@/lib/hooks/useFormAdmin";
 import { personOf, shortWhen } from "../form-responses/response-data";
@@ -29,8 +30,8 @@ export default function TextAnswers({ formId, questionId, filter = null, onOpen 
         <PanelInput value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Cevaplarda ya da kişilerde ara" aria-label="Bu sorunun cevaplarında ara" />
       </form>
       {result.isPending ? (
-        <div className="space-y-2" aria-hidden="true">
-          {[0, 1, 2].map((index) => <span key={index} className="shimmer block h-14 rounded-lg" />)}
+        <div className="space-y-2">
+          {[0, 1, 2].map((index) => <Skeleton key={index} className="h-14 rounded-lg" />)}
         </div>
       ) : result.isError ? (
         <p className="text-2xs text-neutral-500">Cevaplar yüklenemedi.</p>
@@ -59,17 +60,9 @@ export default function TextAnswers({ formId, questionId, filter = null, onOpen 
         <span className="tabular-nums">{search ? `${total} sonuç` : `${total} yazılı cevap`}</span>
         {pages > 1 ? (
           <span className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page <= 1} aria-label="Önceki sayfa"
-              className="grid size-6 place-items-center rounded text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:text-neutral-700"
-            >
-              <ChevronLeft size={13} />
-            </button>
+            <IconButton icon={ChevronLeft} label="Önceki sayfa" variant="ghost" size="icon-sm" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page <= 1} />
             <span className="px-1 tabular-nums text-neutral-400">{page} / {pages}</span>
-            <button type="button" onClick={() => setPage((value) => Math.min(pages, value + 1))} disabled={page >= pages} aria-label="Sonraki sayfa"
-              className="grid size-6 place-items-center rounded text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:text-neutral-700"
-            >
-              <ChevronRight size={13} />
-            </button>
+            <IconButton icon={ChevronRight} label="Sonraki sayfa" variant="ghost" size="icon-sm" onClick={() => setPage((value) => Math.min(pages, value + 1))} disabled={page >= pages} />
           </span>
         ) : null}
       </div>

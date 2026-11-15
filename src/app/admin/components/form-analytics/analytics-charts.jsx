@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { BarList, ProportionBar } from "@skylab-kulubu/skylcn-ui";
+import { DonutChart } from "@skylab-kulubu/skylcn-ui/charts";
 import { formatNumber, formatPercent } from "../form-overview/overview-stats";
 
-export const PIE_COLORS = ["#d8b4fe", "#6366f1", "#c084fc", "#7c3aed", "#9d84f0"];
 export const KIND_LABEL = { 0: "Ayraç", 1: "Metin", 2: "Dosya", 3: "Seçim", 4: "Çoklu seçim", 5: "Aç/Kapa", 6: "Sayı", 7: "Matris", 8: "Tarih", 9: "Saat", 10: "Tekrarlanan grup" };
 export const MONTH_SHORT = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
 const MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 const BUCKET_STEPS = [5, 10, 15, 30, 60, 120, 180, 360, 720, 1440, 2880, 10080];
-const GROW = "transition-[width] duration-500 ease-out";
+
+const valueLabel = (value) => (value === "" || value == null ? "—" : String(value));
+
+// The server's share in forms' percent format, so a bar never reads %19,6 beside a table that reads %19.6
+function Share({ count, percentage, extra = null }) {
+  return <><span className="text-secondary-foreground">{count}</span> · {formatPercent(percentage)}{extra ? ` · ${extra}` : ""}</>;
+}
+
+function shareRows(buckets, labelOf = (bucket) => valueLabel(bucket.value)) {
+  return buckets.map((bucket, index) => {
+    const label = labelOf(bucket);
+    return { key: `${label}-${index}`, label: <span title={label}>{label}</span>, value: Number(bucket.percentage) || 0, detail: <Share count={bucket.count} percentage={bucket.percentage} /> };
+  });
+}
 
 export function EmptyNote({ children = "Yanıt yok" }) {
   return <p className="py-3 text-center text-3xs text-neutral-600">{children}</p>;
@@ -29,98 +42,18 @@ function topIndex(items) {
   return items.reduce((best, item, index) => (item.count > items[best].count ? index : best), 0);
 }
 
+// BarList rows carry their own 10px inset; pulling the list out by it lines the labels up with the question text
 export function Bars({ buckets, className = "mt-3" }) {
   if (!buckets?.length) return <EmptyNote />;
-
-  return (
-    <div className={`${className} space-y-3`}>
-      {buckets.map((bucket, index) => {
-        const label = bucket.value === "" || bucket.value == null ? "—" : String(bucket.value);
-        return (
-          <div key={`${label}-${index}`}>
-            <div className="mb-1.5 flex items-baseline justify-between gap-3">
-              <span className="min-w-0 truncate text-2xs text-neutral-300" title={label}>{label}</span>
-              <span className="shrink-0 text-2xs tabular-nums text-neutral-500"><span className="text-neutral-300">{bucket.count}</span> · {formatPercent(bucket.percentage)}</span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-ink/5">
-              <div className={`h-full rounded-full bg-skylab-500 ${GROW}`} style={{ width: `${Math.min(100, Number(bucket.percentage) || 0)}%` }} />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function arc(cx, cy, inner, outer, from, to) {
-  const point = (radius, angle) => [cx + radius * Math.sin(angle), cy - radius * Math.cos(angle)];
-  const large = to - from > Math.PI ? 1 : 0;
-  const [x0, y0] = point(outer, from);
-  const [x1, y1] = point(outer, to);
-  const [x2, y2] = point(inner, to);
-  const [x3, y3] = point(inner, from);
-  return `M ${x0} ${y0} A ${outer} ${outer} 0 ${large} 1 ${x1} ${y1} L ${x2} ${y2} A ${inner} ${inner} 0 ${large} 0 ${x3} ${y3} Z`;
+  return <BarList className={`-mx-2.5 ${className}`} max={100} items={shareRows(buckets)} />;
 }
 
 export function Donut({ buckets }) {
-  const [hover, setHover] = useState(null);
   if (!buckets?.length) return <EmptyNote />;
-
-  const items = buckets.length > 5
-    ? [
-      ...buckets.slice(0, 4),
-      {
-        value: "Diğer",
-        count: buckets.slice(4).reduce((sum, bucket) => sum + bucket.count, 0),
-        percentage: Math.round(buckets.slice(4).reduce((sum, bucket) => sum + (Number(bucket.percentage) || 0), 0) * 10) / 10,
-        rest: buckets.length - 4,
-      },
-    ]
-    : buckets;
-  const total = items.reduce((sum, bucket) => sum + bucket.count, 0) || 1;
-  const gap = items.length > 1 ? Math.PI / 90 : 0;
-  const slices = items.reduce((list, bucket, index) => {
-    const start = list.length ? list[list.length - 1].end : 0;
-    const span = (bucket.count / total) * Math.PI * 2;
-    return [...list, { from: start + gap / 2, to: start + span - gap / 2, end: start + span, color: PIE_COLORS[index % PIE_COLORS.length], bucket, full: span >= Math.PI * 2 - 0.0001 }];
-  }, []);
-
   return (
-    <div className="mt-3 flex flex-col items-center justify-center gap-6 py-2 sm:flex-row sm:gap-10">
-      <div className="relative size-44 shrink-0">
-        <svg viewBox="0 0 176 176" className="size-44" role="img" aria-label="Pasta grafiği">
-          {slices.map((slice, index) => (slice.full ? (
-            <circle key={index} cx="88" cy="88" r="63" fill="none" stroke={slice.color} strokeWidth="30"
-              opacity={hover == null || hover === index ? 1 : 0.4} onMouseEnter={() => setHover(index)} onMouseLeave={() => setHover(null)}
-            />
-          ) : slice.to > slice.from ? (
-            <path key={index} d={arc(88, 88, 48, 78, slice.from, slice.to)} fill={slice.color}
-              opacity={hover == null || hover === index ? 1 : 0.4} onMouseEnter={() => setHover(index)} onMouseLeave={() => setHover(null)}
-            />
-          ) : null))}
-        </svg>
-        {hover != null ? (
-          <div className="pointer-events-none absolute inset-0 grid place-items-center px-12 text-center">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold tabular-nums text-neutral-100">{formatPercent(slices[hover].bucket.percentage)}</p>
-              <p className="truncate text-3xs text-neutral-400">{slices[hover].bucket.value}</p>
-            </div>
-          </div>
-        ) : null}
-      </div>
-      <ul className="w-full max-w-[16rem] space-y-2">
-        {slices.map((slice, index) => (
-          <li key={index} className="flex items-center gap-2 text-2xs" onMouseEnter={() => setHover(index)} onMouseLeave={() => setHover(null)}>
-            <span className="size-2 shrink-0 rounded-sm" style={{ backgroundColor: slice.color }} />
-            <span className="min-w-0 flex-1 truncate text-neutral-300">
-              {slice.bucket.value}
-              {slice.bucket.rest ? <span className="text-neutral-500"> · {slice.bucket.rest} seçenek</span> : null}
-            </span>
-            <span className="shrink-0 tabular-nums text-neutral-500">{slice.bucket.count} · {formatPercent(slice.bucket.percentage)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <DonutChart framed={false} title="Pasta grafiği" className="mt-3"
+      data={buckets.map((bucket, index) => ({ key: `${valueLabel(bucket.value)}-${index}`, label: valueLabel(bucket.value), value: bucket.count }))}
+    />
   );
 }
 
@@ -130,22 +63,11 @@ export function ChoiceRows({ field, q }) {
   const extra = distribution.map((bucket) => bucket.value).filter((value) => !choices.includes(value));
   const values = [...choices, ...extra];
   if (values.length === 0) return <EmptyNote />;
-  const top = Math.max(0, ...distribution.map((bucket) => bucket.count));
+  const buckets = values.map((value) => distribution.find((item) => item.value === value) ?? { value, count: 0, percentage: 0 });
 
   return (
     <div>
-      <div className="mt-3 flex flex-col gap-2">
-        {values.map((value, index) => {
-          const bucket = distribution.find((item) => item.value === value) ?? { count: 0, percentage: 0 };
-          return (
-            <div key={`${value}-${index}`} className={`relative flex items-center gap-3 overflow-hidden rounded-md border bg-neutral-900/60 p-2 ${top > 0 && bucket.count === top ? "border-skylab-400/25" : "border-ink/10"}`}>
-              <span className={`absolute inset-y-0 left-0 bg-skylab-500/[0.14] ${GROW}`} style={{ width: `${Math.min(100, Number(bucket.percentage) || 0)}%` }} />
-              <span className="relative min-w-0 flex-1 truncate text-sm text-neutral-200">{value}</span>
-              <span className="relative shrink-0 text-2xs tabular-nums text-neutral-400"><span className="text-neutral-100">{bucket.count}</span> · {formatPercent(bucket.percentage)}</span>
-            </div>
-          );
-        })}
-      </div>
+      <BarList className="-mx-2.5 mt-3" max={100} items={shareRows(buckets)} />
       <p className="mt-2 text-3xs text-neutral-600">Çoklu seçim: yüzdeler toplamı %100&apos;ü aşabilir.</p>
     </div>
   );
@@ -154,22 +76,10 @@ export function ChoiceRows({ field, q }) {
 export function ToggleSplit({ field, q }) {
   const on = field.props?.trueLabel || "Evet";
   const off = field.props?.falseLabel || "Hayır";
-  const yes = (q.distribution ?? []).find((bucket) => bucket.value === on) ?? { count: 0, percentage: 0 };
-  const no = (q.distribution ?? []).find((bucket) => bucket.value === off) ?? { count: 0, percentage: 0 };
+  const countOf = (label) => (q.distribution ?? []).find((bucket) => bucket.value === label)?.count ?? 0;
   if (!q.answeredCount) return <EmptyNote />;
 
-  return (
-    <div className="mt-3 rounded-lg border border-ink/10 bg-neutral-900/60 px-4 py-3">
-      <div className="mb-2 flex items-baseline justify-between gap-3 text-2xs">
-        <span className="min-w-0 truncate font-medium text-skylab-300">{on} <span className="font-normal tabular-nums text-neutral-400">{yes.count} · {formatPercent(yes.percentage)}</span></span>
-        <span className="min-w-0 truncate text-right font-medium text-neutral-300">{off} <span className="font-normal tabular-nums text-neutral-400">{no.count} · {formatPercent(no.percentage)}</span></span>
-      </div>
-      <div className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full">
-        <span className={`h-full rounded-l-full bg-skylab-400 ${GROW}`} style={{ width: `${Math.min(100, Number(yes.percentage) || 0)}%` }} />
-        <span className="h-full flex-1 rounded-r-full bg-neutral-700" />
-      </div>
-    </div>
-  );
+  return <ProportionBar className="mt-3" segments={[{ key: "on", label: on, value: countOf(on) }, { key: "off", label: off, value: countOf(off) }]} />;
 }
 
 function sliderBins(field, q) {
@@ -349,7 +259,7 @@ export function MatrixHeat({ field, q }) {
                 return (
                   <td key={column} className="px-1 py-1.5 text-center">
                     <span className="inline-flex h-7 w-full min-w-10 items-center justify-center rounded-md text-2xs tabular-nums text-neutral-100" title={`${bucket.count} kişi`}
-                      style={{ backgroundColor: `rgba(224, 200, 229, ${0.05 + ((Number(bucket.percentage) || 0) / 100) * 0.5})` }}
+                      style={{ backgroundColor: `color-mix(in oklab, var(--chart-1) ${5 + (Number(bucket.percentage) || 0) * 0.5}%, transparent)` }}
                     >
                       {formatPercent(bucket.percentage)}
                     </span>
@@ -367,24 +277,14 @@ export function MatrixHeat({ field, q }) {
 
 export function FunnelBars({ items, total }) {
   return (
-    <div className="space-y-3">
-      {items.map(([label, count, extra]) => {
-        const share = total > 0 ? (count / total) * 100 : 0;
-        return (
-          <div key={label}>
-            <div className="mb-1.5 flex items-baseline justify-between gap-3">
-              <span className="min-w-0 truncate text-2xs text-neutral-300">{label}</span>
-              <span className="shrink-0 text-2xs tabular-nums text-neutral-500">
-                <span className="text-neutral-300">{count}</span> · {formatPercent(Math.round(share * 10) / 10)}{extra ? ` · ${extra}` : ""}
-              </span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-ink/5">
-              <div className={`h-full rounded-full bg-skylab-500 ${GROW}`} style={{ width: `${Math.min(share, 100)}%` }} />
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <BarList className="-mx-2.5" max={total}
+      items={items.map(([label, count, extra]) => ({
+        key: label,
+        label,
+        value: count,
+        detail: <Share count={count} percentage={total > 0 ? Math.round((count / total) * 1000) / 10 : 0} extra={extra} />,
+      }))}
+    />
   );
 }
 

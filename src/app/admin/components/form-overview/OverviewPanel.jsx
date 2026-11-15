@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, Copy, Link2, ListChecks, Share2 } from "lucide-react";
+import { Link2, ListChecks, Share2 } from "lucide-react";
+import { CopyButton, ProportionBar, SegmentedControl, Skeleton } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { PANEL_SECTION, PANEL_STACK, PanelButton, SectionHeader } from "@/app/admin/components/utils/SidePanel";
 import { RoleBadge, formatUpdatedAt } from "@/app/admin/components/ListItem";
@@ -11,29 +12,12 @@ import { effectiveFormSettings } from "@/lib/form-settings";
 import { currentTime, formatShortDate, shortDuration, spanText } from "@/lib/form-timing";
 import { publicShortUrl } from "@/lib/short-url";
 import { useShortLinkQuery } from "@/lib/hooks/useShortLink";
-import { ChannelsTable, LifeBars, SourceBreakdownBar, TrendBadge, WindowBars, formatDuration } from "./components/FormMetrics";
+import { ChannelsTable, LifeBars, TrendBadge, WindowBars, formatDuration } from "./components/FormMetrics";
 import { formatPersonName } from "../form-responses/response-data";
 import { decisionRows, lifeSeries } from "./overview-stats";
 import { KV } from "../form-room/RoomParts";
 
-
-function Shimmer({ className = "" }) {
-  return <span aria-hidden="true" className={`shimmer block rounded-md ${className}`} />;
-}
-
-function Segmented({ options, value, onChange }) {
-  return (
-    <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-ink/10 bg-ink/5 p-0.5">
-      {options.map(([key, label]) => (
-        <button key={key} type="button" onClick={() => onChange(key)} aria-pressed={value === key}
-          className={`rounded px-2 py-1.5 text-3xs transition sm:py-0.5 ${value === key ? "bg-ink/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-}
+const segmentsOf = (options) => options.map(([value, label]) => ({ value, label }));
 
 function Hairline({ children, right = null }) {
   return (
@@ -49,9 +33,9 @@ function ResponseCounts({ metrics, reviewed, inFlow, canReview, onReview }) {
   if (!metrics) {
     return (
       <section className={PANEL_SECTION}>
-        <Shimmer className="h-8 w-24" />
-        <Shimmer className="h-1.5 w-full rounded-full" />
-        <div className="space-y-2">{[0, 1, 2].map((index) => <Shimmer key={index} className="h-5 w-full" />)}</div>
+        <Skeleton className="h-8 w-24" />
+        <Skeleton className="h-1.5 w-full rounded-full" />
+        <div className="space-y-2">{[0, 1, 2].map((index) => <Skeleton key={index} className="h-5 w-full" />)}</div>
       </section>
     );
   }
@@ -117,10 +101,10 @@ function TrendSection({ metrics }) {
     <section className={PANEL_SECTION}>
       <div className="flex items-center justify-between gap-3">
         <p className="font-semibold text-neutral-100">Cevap trendi</p>
-        <Segmented options={TREND_RANGES.filter(([key]) => key !== "life" || life)} value={mode} onChange={setPicked} />
+        <SegmentedControl aria-label="Aralık" options={segmentsOf(TREND_RANGES.filter(([key]) => key !== "life" || life))} value={mode} onValueChange={setPicked} />
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-[1.625rem] font-semibold leading-none tabular-nums text-neutral-50">{count}</span>
+        <span className="text-2xl font-semibold leading-none tabular-nums text-neutral-50">{count}</span>
         <span className="text-2xs text-neutral-400">{range}</span>
         {whole ? null : <span className="ml-auto"><TrendBadge value={daily ? metrics.dailyTrendPercentage : metrics.hourlyTrendPercentage} /></span>}
       </div>
@@ -173,19 +157,10 @@ function ReviewSection({ review, team = [], onOpenResponse }) {
 
 function ShareSection({ formId, metrics, stepForm, canShare, onShare, reviewed = false }) {
   const { data: link } = useShortLinkQuery(formId);
-  const [copied, setCopied] = useState(false);
   const [channelView, setChannelView] = useState("clicks");
   const decided = reviewed && (metrics?.channels ?? []).some((channel) => (channel.approved ?? 0) + (channel.declined ?? 0) > 0);
   const view = decided ? channelView : "clicks";
   const url = link?.alias ? publicShortUrl(link.alias) : "";
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {}
-  };
 
   return (
     <section className={PANEL_SECTION}>
@@ -193,18 +168,12 @@ function ShareSection({ formId, metrics, stepForm, canShare, onShare, reviewed =
         description={stepForm ? "Bu form akışın bir adımı; başvuranlar önceki adımı geçince açılır." : "Kısa linki kopyala ya da Paylaş'tan kanal seç; kanaldan gelenler aşağıda ayrı sayılır."}
       />
       <div className="flex items-center gap-2">
-        <div className="flex h-11 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-ink/10 bg-black/20 pl-2.5 pr-1 sm:h-8">
-          <Link2 size={13} className="shrink-0 text-neutral-500" />
-          <span className={`min-w-0 flex-1 truncate font-mono text-2xs ${url ? "text-skylab-300" : "text-neutral-500"}`}>
+        <div className="flex h-11 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-input bg-background/60 pl-2.5 pr-1 sm:h-8">
+          <Link2 size={13} className="shrink-0 text-subtle-foreground" />
+          <span className={`min-w-0 flex-1 truncate font-mono text-2xs ${url ? "text-skylab-300" : "text-subtle-foreground"}`}>
             {url ? url.replace(/^https?:\/\//, "") : "Henüz kısa link yok"}
           </span>
-          {url ? (
-            <button type="button" onClick={copy} title="Kopyala" aria-label="Kısa linki kopyala"
-              className={`grid size-9 shrink-0 place-items-center rounded-md transition-colors sm:size-6 ${copied ? "text-emerald-300" : "text-neutral-400 hover:bg-ink/5 hover:text-neutral-100"}`}
-            >
-              {copied ? <Check size={12} /> : <Copy size={12} />}
-            </button>
-          ) : null}
+          {url ? <CopyButton value={url} label="Kısa linki kopyala" /> : null}
         </div>
         <PanelButton touch icon={Share2} onClick={onShare} disabled={!canShare}>Paylaş</PanelButton>
       </div>
@@ -213,7 +182,9 @@ function ShareSection({ formId, metrics, stepForm, canShare, onShare, reviewed =
           <Hairline right={(
             <>
               <span className="text-3xs text-neutral-600">Son 90 gün</span>
-              {decided ? <Segmented options={[["clicks", "Tıklama"], ["decisions", "Karar"]]} value={view} onChange={setChannelView} /> : null}
+              {decided ? (
+                <SegmentedControl aria-label="Kanal görünümü" options={segmentsOf([["clicks", "Tıklama"], ["decisions", "Karar"]])} value={view} onValueChange={setChannelView} />
+              ) : null}
             </>
           )}>Kanallar</Hairline>
           <div className="mt-3"><ChannelsTable channels={metrics.channels} view={view} /></div>
@@ -257,7 +228,11 @@ function ParticipationSection({ metrics, attempts, timed }) {
           ) : <KV label="Ortalama süre"><span className="font-semibold tabular-nums text-neutral-100">{formatDuration(metrics.averageCompletionTime)}</span></KV>
         )}
       </div>
-      <SourceBreakdownBar registered={metrics.sourceBreakdown?.registered ?? 0} anonymous={metrics.sourceBreakdown?.anonymous ?? 0} />
+      <ProportionBar segments={[
+        { key: "registered", label: "Kayıtlı", value: metrics.sourceBreakdown?.registered ?? 0 },
+        { key: "anonymous", label: "Anonim", value: metrics.sourceBreakdown?.anonymous ?? 0 },
+      ]}
+      />
     </section>
   );
 }

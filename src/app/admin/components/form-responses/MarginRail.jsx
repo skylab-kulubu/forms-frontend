@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect } from "react";
 import { AnimatePresence, MotionConfig } from "framer-motion";
 import { FilePenLine, Flag } from "lucide-react";
+import { Badge } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { BoardNote, placeBoardNotes } from "../form-studio/StudioBoard";
 import { formatDateTime, formatPersonName, noteOf, plainAnswer } from "./response-data";
@@ -50,7 +51,7 @@ export function ChangeNote({ field, number, previous, previousAnswer, requested 
   return (
     <div className="space-y-2">
       <p className="flex flex-wrap items-center gap-1.5 text-3xs font-medium">
-        <span className="rounded-full border border-sky-400/30 bg-sky-400/10 px-1.5 leading-4 text-sky-200">değişti</span>
+        <Badge tone="info">değişti</Badge>
         {requested ? <span className="inline-flex items-center gap-1 text-sky-300/80"><Flag size={10} />istenmişti</span> : null}
         <span className="text-neutral-600">{number}. soru</span>
       </p>

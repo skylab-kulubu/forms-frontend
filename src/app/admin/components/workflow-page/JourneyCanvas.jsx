@@ -6,6 +6,7 @@ import Avatar from "@/app/components/utils/Avatar";
 import { durationText, formatShortDate, shortDuration, spanText } from "@/lib/form-timing";
 import { TRIGGER } from "../workflow-editor/workflow-graph";
 import { triggerStyle } from "../form-studio/studio-flow";
+import { FunnelBars } from "../form-analytics/analytics-charts";
 import { FINISHED_ROWS, GROUPS, NEUTRAL_STROKE, RUN_STATE, STROKE, endTriggerOf, possessive, runSubtitle } from "./journey-data";
 
 const PILL_TONE = {
@@ -18,8 +19,8 @@ const PILL_TONE = {
 const LINE = {
   [TRIGGER.SUBMITTED]: NEUTRAL_STROKE,
   [TRIGGER.APPROVED]: STROKE,
-  [TRIGGER.DECLINED]: "rgba(248,113,113,0.5)",
-  [TRIGGER.TIMED_OUT]: "rgba(251,191,36,0.5)",
+  [TRIGGER.DECLINED]: "color-mix(in oklab, var(--destructive) 50%, transparent)",
+  [TRIGGER.TIMED_OUT]: "color-mix(in oklab, var(--warning) 50%, transparent)",
 };
 
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -47,13 +48,18 @@ export function scrollToSection(root, id, smooth = true) {
   root.scrollTo({ top: Math.max(0, top), behavior: smooth && !reduced() ? "smooth" : "auto" });
 }
 
+// Read off the element, so a flash follows the theme it sits in (dark, light or a nested data-theme)
+export function brandTint(element, percent) {
+  return `color-mix(in oklab, ${getComputedStyle(element).getPropertyValue("--skylab-500").trim()} ${percent}%, transparent)`;
+}
+
 function useFlash(ref, token) {
   useEffect(() => {
     if (!token || !ref.current || reduced()) return;
     ref.current.animate([
-      { boxShadow: "0 0 0 0 rgba(224,200,229,0)" },
-      { boxShadow: "0 0 0 6px rgba(224,200,229,0.22)", offset: 0.25 },
-      { boxShadow: "0 0 0 6px rgba(224,200,229,0)" },
+      { boxShadow: `0 0 0 0 ${brandTint(ref.current, 0)}` },
+      { boxShadow: `0 0 0 6px ${brandTint(ref.current, 22)}`, offset: 0.25 },
+      { boxShadow: `0 0 0 6px ${brandTint(ref.current, 0)}` },
     ], { duration: 1500, delay: 220, easing: "ease-out" });
   }, [ref, token]);
 }
@@ -136,9 +142,9 @@ function Fork({ trunk, left, right, height = 92 }) {
       {width ? (
         <>
           <svg className="absolute inset-0" width={width} height={height} aria-hidden="true">
-            <path d={`M ${center} 0 V ${bend}`} fill="none" stroke={LINE[trunk?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
-            <path d={`M ${center} ${bend} H ${leftX + radius} Q ${leftX} ${bend} ${leftX} ${bend + radius} V ${height}`} fill="none" stroke={LINE[left?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
-            <path d={`M ${center} ${bend} H ${rightX - radius} Q ${rightX} ${bend} ${rightX} ${bend + radius} V ${height}`} fill="none" stroke={LINE[right?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
+            <path d={`M ${center} 0 V ${bend}`} fill="none" strokeWidth="1.5" style={{ stroke: LINE[trunk?.trigger] ?? NEUTRAL_STROKE }} />
+            <path d={`M ${center} ${bend} H ${leftX + radius} Q ${leftX} ${bend} ${leftX} ${bend + radius} V ${height}`} fill="none" strokeWidth="1.5" style={{ stroke: LINE[left?.trigger] ?? NEUTRAL_STROKE }} />
+            <path d={`M ${center} ${bend} H ${rightX - radius} Q ${rightX} ${bend} ${rightX} ${bend + radius} V ${height}`} fill="none" strokeWidth="1.5" style={{ stroke: LINE[right?.trigger] ?? NEUTRAL_STROKE }} />
           </svg>
           {hasPill(trunk) ? <EdgePill trigger={trunk.label ? trunk.trigger : null} x={center} y={14}><EdgeContent edge={trunk} /></EdgePill> : null}
           {hasPill(left) ? <EdgePill trigger={left.label ? left.trigger : null} x={leftX} y={64} maxWidth={branchMax}><EdgeContent edge={left} /></EdgePill> : null}
@@ -164,9 +170,9 @@ function Merge({ left, right, trunk, height = 92 }) {
       {width ? (
         <>
           <svg className="absolute inset-0" width={width} height={height} aria-hidden="true">
-            <path d={`M ${leftX} 0 V ${bend - radius} Q ${leftX} ${bend} ${leftX + radius} ${bend} H ${center}`} fill="none" stroke={LINE[left?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
-            <path d={`M ${rightX} 0 V ${bend - radius} Q ${rightX} ${bend} ${rightX - radius} ${bend} H ${center}`} fill="none" stroke={LINE[right?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
-            <path d={`M ${center} ${bend} V ${height}`} fill="none" stroke={LINE[trunk?.trigger] ?? NEUTRAL_STROKE} strokeWidth="1.5" />
+            <path d={`M ${leftX} 0 V ${bend - radius} Q ${leftX} ${bend} ${leftX + radius} ${bend} H ${center}`} fill="none" strokeWidth="1.5" style={{ stroke: LINE[left?.trigger] ?? NEUTRAL_STROKE }} />
+            <path d={`M ${rightX} 0 V ${bend - radius} Q ${rightX} ${bend} ${rightX - radius} ${bend} H ${center}`} fill="none" strokeWidth="1.5" style={{ stroke: LINE[right?.trigger] ?? NEUTRAL_STROKE }} />
+            <path d={`M ${center} ${bend} V ${height}`} fill="none" strokeWidth="1.5" style={{ stroke: LINE[trunk?.trigger] ?? NEUTRAL_STROKE }} />
           </svg>
           {hasPill(left) ? <EdgePill trigger={left.label ? left.trigger : null} x={leftX} y={26} maxWidth={branchMax}><EdgeContent edge={left} /></EdgePill> : null}
           {hasPill(right) ? <EdgePill trigger={right.label ? right.trigger : null} x={rightX} y={26} maxWidth={branchMax}><EdgeContent edge={right} /></EdgePill> : null}
@@ -239,30 +245,6 @@ function PeopleGroup({ state, count, runs, max, narrow, onOpenRun, onMore }) {
           <ArrowRight size={11} />
         </button>
       ) : null}
-    </div>
-  );
-}
-
-function FunnelBars({ items, total }) {
-  return (
-    <div className="space-y-3">
-      {items.map(([label, count, extra]) => {
-        const share = total > 0 ? (count / total) * 100 : 0;
-        const rounded = Math.round(share * 10) / 10;
-        return (
-          <div key={label}>
-            <div className="mb-1.5 flex items-baseline justify-between gap-3">
-              <span className="min-w-0 truncate text-2xs text-neutral-300">{label}</span>
-              <span className="shrink-0 text-2xs tabular-nums text-neutral-500">
-                <span className="text-neutral-300">{count}</span> · %{rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)}{extra ? ` · ${extra}` : ""}
-              </span>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-ink/5">
-              <div className="h-full rounded-full bg-skylab-500 transition-[width] duration-500" style={{ width: `${Math.min(share, 100)}%` }} />
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }

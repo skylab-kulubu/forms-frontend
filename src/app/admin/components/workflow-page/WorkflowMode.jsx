@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 import { ListTree, PencilLine, Users, Workflow } from "lucide-react";
+import { Button, Tab, Tabs, TabsList } from "@skylab-kulubu/skylcn-ui";
 import StateCard from "@/app/components/StateCard";
 import { StatePill } from "@/app/admin/components/utils/SidePanel";
 import { durationText, formatDay, formatShortDate } from "@/lib/form-timing";
@@ -20,7 +21,7 @@ import RoomFrame from "../form-room/RoomFrame";
 import RoomHeader, { HeaderButton, HeaderTouch } from "../form-room/RoomHeader";
 import { useRoom, useRoomKeys, useRoomState } from "../form-room/room-context";
 import { sameId } from "../form-room/room-flow";
-import JourneyCanvas, { scrollToSection, useElementWidth } from "./JourneyCanvas";
+import JourneyCanvas, { brandTint, scrollToSection, useElementWidth } from "./JourneyCanvas";
 import JourneyOutline from "./JourneyOutline";
 import { OperationsPanel, RunsList } from "./JourneyPanel";
 import { PAGE_SIZE, STEP_PEOPLE, endTriggerOf, finishedTotal, intakeOf, intakePill, payloadOf } from "./journey-data";
@@ -174,7 +175,7 @@ export default function WorkflowMode() {
         root.scrollTop = initial.restore.top;
         const row = initial.restore.run ? root.querySelector(`[data-run="${CSS.escape(initial.restore.run)}"]`) : null;
         if (row && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          row.animate([{ backgroundColor: "rgba(224,200,229,0.14)" }, { backgroundColor: "rgba(224,200,229,0)" }], { duration: 1600, easing: "ease-out" });
+          row.animate([{ backgroundColor: brandTint(row, 14) }, { backgroundColor: brandTint(row, 0) }], { duration: 1600, easing: "ease-out" });
         }
         return;
       }
@@ -316,19 +317,14 @@ export default function WorkflowMode() {
     </div>
   );
 
+  // The header row draws the rule, so the list drops its own and its underline sits on that rule
   const inspectorHeader = (
-    <div role="tablist" className="flex w-full min-w-0 items-center">
-      {[["runs", "Başvuranlar"], ["ops", "Ayarlar"]].map(([id, label], index) => (
-        <Fragment key={id}>
-          {index ? <span className="mx-2 h-3 w-px shrink-0 bg-neutral-800" /> : null}
-          <button type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-            className={`min-h-10 w-full min-w-0 truncate rounded transition-colors ${tab === id ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
-          >
-            {label}
-          </button>
-        </Fragment>
-      ))}
-    </div>
+    <Tabs value={tab} onValueChange={setTab} className="min-w-0 flex-1 self-end">
+      <TabsList className="gap-0 border-b-0">
+        <Tab value="runs" className="flex-1 justify-center font-semibold">Başvuranlar</Tab>
+        <Tab value="ops" className="flex-1 justify-center font-semibold">Ayarlar</Tab>
+      </TabsList>
+    </Tabs>
   );
 
   const stepForms = (flow?.stages.ordered ?? NO_ITEMS).map((node) => ({ ...node, depth: depthOf(node.nodeKey) }));
@@ -351,9 +347,9 @@ export default function WorkflowMode() {
       <RoomHeader
         desktop={(
           <>
-            <button type="button" onClick={showOps} title="Ayarlar" className="rounded-md px-1.5 transition-colors hover:bg-ink/5">
+            <Button variant="ghost" size="sm" onClick={showOps} title="Ayarlar" className="px-1.5">
               <StatePill tone={pill.tone}>{pill.label}</StatePill>
-            </button>
+            </Button>
             <HeaderButton icon={PencilLine} label="Düzenle" primary onClick={edit} disabled={!editable} />
           </>
         )}

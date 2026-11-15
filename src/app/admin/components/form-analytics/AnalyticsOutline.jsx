@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Activity } from "lucide-react";
+import { Skeleton } from "@skylab-kulubu/skylcn-ui";
 import { fieldLabel, questionNumbers } from "../form-studio/studio-schema";
 import { askedCount, formatPercent, percentOf } from "../form-overview/overview-stats";
 import { PARTICIPATION } from "./AnalyticsCard";
@@ -48,8 +49,8 @@ export default function AnalyticsOutline({ form, analytics, participation = null
           <div className="space-y-2 px-2.5 py-2">
             {Array.from({ length: 6 }, (_, index) => (
               <div key={index} className="space-y-1.5 py-1">
-                <span className="shimmer block h-2.5 w-32 rounded-md" />
-                <span className="shimmer block h-1.5 w-full rounded-full" />
+                <Skeleton className="h-2.5 w-32" />
+                <Skeleton className="h-1.5 w-full rounded-full" />
               </div>
             ))}
           </div>

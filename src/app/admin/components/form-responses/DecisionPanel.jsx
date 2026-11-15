@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowRight, Check, ClockPlus, FileCheck, FilePenLine, FileX, Flag, Loader2, Mail, PencilLine, ShieldAlert, X } from "lucide-react";
+import { Badge, Button, Checkbox, Field, Kbd, Textarea } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import ChannelIcon from "@/app/admin/components/share/ChannelIcon";
 import { PANEL_SECTION, PANEL_STACK, PanelButton, SectionHeader, StatePill } from "@/app/admin/components/utils/SidePanel";
@@ -17,17 +18,15 @@ import { KV } from "../form-room/RoomParts";
 
 const REVIEW_NOTE_MAX_LENGTH = 500;
 
+// skylcn has no success or revision button, so approve and return tint the outline one; reject is its destructive
 const DECISION = {
-  2: { title: "Cevabı onayla", button: "Onayla", tone: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20" },
-  3: { title: "Cevabı reddet", button: "Reddet", tone: "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20" },
-  [RETURNED]: { title: "Düzeltme iste", button: "Düzeltme iste", tone: "border-sky-400/40 bg-sky-400/10 text-sky-100 hover:bg-sky-400/20" },
+  2: { title: "Cevabı onayla", button: "Onayla", variant: "outline", tone: "border-success/40 bg-success/10 text-success hover:border-success/60 hover:bg-success/20" },
+  3: { title: "Cevabı reddet", button: "Reddet", variant: "destructive", tone: "" },
+  [RETURNED]: { title: "Düzeltme iste", button: "Düzeltme iste", variant: "outline", tone: "border-sky-400/40 bg-sky-400/10 text-sky-200 hover:border-sky-400/60 hover:bg-sky-400/20" },
 };
 
 const VERDICT_TONE = { 2: "emerald", 3: "red", [RETURNED]: "neutral", [FLAGGED]: "amber" };
-
-function Kbd({ children }) {
-  return <span className="ml-0.5 hidden h-4 min-w-4 place-items-center rounded border border-ink/15 px-1 font-mono text-4xs font-medium leading-none opacity-70 lg:grid">{children}</span>;
-}
+const KEY_HINT = "hidden lg:inline-flex";
 
 function RouteHint({ label, dot, text }) {
   if (!text) return null;
@@ -77,22 +76,15 @@ function NoteField({ state, setState, pendingReturn }) {
   const missing = pendingReturn && !note.trim();
 
   return (
-    <div>
-      <label htmlFor="room-review-note" className="mb-1.5 block text-3xs font-medium text-neutral-500">
-        Açıklama{pendingReturn ? <span className="text-sky-200/80"> · adaya gider, zorunlu</span> : null}
-      </label>
-      <textarea id="room-review-note" data-note rows={3} value={note} maxLength={REVIEW_NOTE_MAX_LENGTH}
+    <Field label={<>Açıklama{pendingReturn ? <span className="text-sky-200/80"> · adaya gider, zorunlu</span> : null}</>}
+      hint={pendingReturn ? <span className={missing ? "text-sky-200" : undefined}>{missing ? "Adayın neyi düzelteceğini yazın; not ona e-postayla gider." : "Not adaya e-postayla gider."}</span> : null}
+    >
+      <Textarea data-note size="sm" rows={3} value={note} maxLength={REVIEW_NOTE_MAX_LENGTH} showCount
         onChange={(event) => setState({ note: event.target.value })}
         placeholder={pendingReturn ? "Neyi düzeltmesi gerektiğini yazın" : "Açıklama ekle"}
-        className={`w-full resize-none rounded-lg border bg-transparent px-3 py-2 text-sm text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 sm:text-xs ${missing ? "border-sky-400/40" : "border-ink/10"}`}
+        className={missing ? "border-sky-400/40" : undefined}
       />
-      <div className="mt-1 flex items-start justify-between gap-3">
-        <p className={`text-3xs leading-relaxed ${missing ? "text-sky-200" : "text-neutral-600"}`}>
-          {pendingReturn ? (missing ? "Adayın neyi düzelteceğini yazın; not ona e-postayla gider." : "Not adaya e-postayla gider.") : ""}
-        </p>
-        <p className="shrink-0 text-3xs tabular-nums text-neutral-600">{note.length}/{REVIEW_NOTE_MAX_LENGTH}</p>
-      </div>
-    </div>
+    </Field>
   );
 }
 
@@ -113,7 +105,7 @@ function EvaluationSection({ detail, numbers, state, setState, access, onStart, 
     <section className={PANEL_SECTION}>
       <SectionHeader title="Değerlendirme" />
       {state.phase === "loading" || state.phase === "success" ? (
-        <div className={`flex w-full items-center justify-center rounded-xl border px-3 py-2.5 ${state.phase === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-ink/10 bg-ink/5 text-neutral-200"}`}>
+        <div className={`flex w-full items-center justify-center rounded-xl border px-3 py-2.5 ${state.phase === "success" ? "border-success/30 bg-success/10 text-success" : "border-border bg-muted text-foreground"}`}>
           {state.phase === "loading" ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
         </div>
       ) : pending ? (
@@ -147,39 +139,35 @@ function EvaluationSection({ detail, numbers, state, setState, access, onStart, 
             </div>
           ) : null}
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onCancel}
-              className="flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-ink/10 px-2 py-3 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 sm:py-1.5"
-            >
-              Vazgeç<Kbd>Esc</Kbd>
-            </button>
-            <button type="button" data-act="confirm" disabled={noteMissing} onClick={onConfirm}
-              className={`flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-2 py-3 text-2xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:py-1.5 ${DECISION[pending].tone}`}
-            >
-              {DECISION[pending].button}<Kbd>Enter</Kbd>
-            </button>
+            <Button onClick={onCancel} className="flex-1 gap-1.5">
+              Vazgeç<Kbd className={KEY_HINT}>Esc</Kbd>
+            </Button>
+            <Button data-act="confirm" disabled={noteMissing} onClick={onConfirm} variant={DECISION[pending].variant} className={`flex-1 gap-1.5 font-semibold ${DECISION[pending].tone}`}>
+              {DECISION[pending].button}<Kbd className={KEY_HINT}>Enter</Kbd>
+            </Button>
           </div>
         </div>
       ) : (
         <>
           <div>
             <div className="flex gap-2">
-              <button type="button" data-act="approve" title="Onayla (1)" onClick={() => onStart(2)}
-                className="flex h-11 min-w-0 flex-[1_1_0] items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20 sm:h-10"
+              <Button size="lg" data-act="approve" title="Onayla (1)" onClick={() => onStart(2)} variant={DECISION[2].variant}
+                className={`min-w-0 flex-[1_1_0] gap-1.5 rounded-xl px-1 font-semibold sm:h-10 ${DECISION[2].tone}`}
               >
-                <Check size={14} />Onayla
-              </button>
+                <Check />Onayla
+              </Button>
               {access.canReturn ? (
-                <button type="button" data-act="revise" title="Düzeltme iste (2)" onClick={() => onStart(RETURNED)}
-                  className="flex h-11 min-w-0 flex-[1.35_1_0] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-sky-400/40 bg-sky-400/10 px-1 text-xs font-semibold text-sky-100 transition hover:bg-sky-400/20 sm:h-10"
+                <Button size="lg" data-act="revise" title="Düzeltme iste (2)" onClick={() => onStart(RETURNED)} variant={DECISION[RETURNED].variant}
+                  className={`min-w-0 flex-[1.35_1_0] gap-1.5 rounded-xl px-1 font-semibold sm:h-10 ${DECISION[RETURNED].tone}`}
                 >
-                  <FilePenLine size={14} className="shrink-0" />Düzeltme iste
-                </button>
+                  <FilePenLine />Düzeltme iste
+                </Button>
               ) : null}
-              <button type="button" data-act="decline" title="Reddet (3)" onClick={() => onStart(3)}
-                className="flex h-11 min-w-0 flex-[1_1_0] items-center justify-center gap-1.5 rounded-xl border border-red-500/40 bg-red-500/10 text-xs font-semibold text-red-100 transition hover:bg-red-500/20 sm:h-10"
+              <Button size="lg" data-act="decline" title="Reddet (3)" onClick={() => onStart(3)} variant={DECISION[3].variant}
+                className="min-w-0 flex-[1_1_0] gap-1.5 rounded-xl px-1 font-semibold sm:h-10"
               >
-                <X size={14} />Reddet
-              </button>
+                <X />Reddet
+              </Button>
             </div>
             {inFlow && (approve || decline || revise) ? (
               <div className="mt-3 space-y-1">
@@ -211,7 +199,7 @@ function EvaluationSection({ detail, numbers, state, setState, access, onStart, 
       {state.error ? <p role="alert" className="text-3xs leading-relaxed text-red-300">{state.error}</p> : null}
       {showAutoNext ? (
         <label className="flex min-h-10 cursor-pointer items-center gap-2 text-2xs text-neutral-400 sm:min-h-8">
-          <input type="checkbox" className="checkbox" checked={autoNext} onChange={(event) => setAutoNext(event.target.checked)} />
+          <Checkbox checked={autoNext} onCheckedChange={(checked) => setAutoNext(checked)} />
           Karardan sonra sıradaki bekleyeni aç
         </label>
       ) : null}
@@ -256,12 +244,10 @@ function VerdictSection({ detail, access, state, setState, nextPending, onOpenNe
         <PanelButton touch icon={PencilLine} className="w-full" onClick={() => setState({ editing: true, note: noteOf(detail), pending: null })}>Kararı değiştir</PanelButton>
       ) : null}
       {nextPending && state.decidedHere ? (
-        <button type="button" onClick={onOpenNext}
-          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-ink/10 bg-ink/5 px-4 py-2.5 text-left text-xs text-neutral-400 transition-colors hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300"
-        >
-          <span className="min-w-0 truncate">Sıradaki: <span className="font-medium text-neutral-100">{nextPending.name}</span></span>
-          <ArrowRight size={14} className="shrink-0" />
-        </button>
+        <Button size="lg" onClick={onOpenNext} className="w-full justify-between gap-3 rounded-xl px-4 font-normal">
+          <span className="min-w-0 truncate">Sıradaki: <span className="font-medium text-foreground">{nextPending.name}</span></span>
+          <ArrowRight />
+        </Button>
       ) : null}
     </section>
   );
@@ -403,24 +389,18 @@ function RunPanel({ run, instanceId }) {
                 <li key={line} className="flex gap-2 text-2xs leading-relaxed text-neutral-300"><span className="mt-1.75 size-1 shrink-0 rounded-full bg-neutral-500" />{line}</li>
               ))}
             </ul>
-            <label htmlFor="room-run-void-note" className="mb-1.5 mt-3 block text-3xs font-medium text-neutral-500">Adaya gidecek not · isteğe bağlı</label>
-            <textarea id="room-run-void-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={NOTE_MAX_LENGTH}
-              placeholder="Neden yeniden başvurabileceğini yazın"
-              className="w-full rounded-lg border border-ink/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
-            />
-            <p className="mt-1.5 text-3xs leading-relaxed text-neutral-500">Aday e-postayla bilgilendirilir.</p>
+            <Field label="Adaya gidecek not · isteğe bağlı" hint="Aday e-postayla bilgilendirilir." className="mt-3">
+              <Textarea size="sm" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={NOTE_MAX_LENGTH}
+                placeholder="Neden yeniden başvurabileceğini yazın"
+              />
+            </Field>
             <div className="mt-3 flex items-center gap-2">
-              <button type="button" onClick={() => setConfirming(false)} disabled={mutation.isPending}
-                className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200"
-              >
-                Vazgeç
-              </button>
-              <button type="button" disabled={mutation.isPending}
+              <Button onClick={() => setConfirming(false)} disabled={mutation.isPending} className="flex-1">Vazgeç</Button>
+              <Button variant={copy.danger ? "destructive" : "primary"} pending={mutation.isPending} className="flex-1 font-semibold"
                 onClick={() => mutation.mutate({ instanceId, note: note.trim() }, { onSuccess: () => { setConfirming(false); setNote(""); } })}
-                className={`flex flex-1 items-center justify-center rounded-lg border px-3 py-1.5 text-2xs font-semibold transition-colors disabled:opacity-60 ${copy.danger ? "border-red-500/40 bg-red-500/10 text-red-100 hover:bg-red-500/20" : "border-skylab-400/40 bg-skylab-500/10 text-skylab-200 hover:bg-skylab-500/20"}`}
               >
-                {mutation.isPending ? <Loader2 size={13} className="animate-spin" /> : copy.button}
-              </button>
+                {copy.button}
+              </Button>
             </div>
           </div>
         ) : (
@@ -488,7 +468,7 @@ export default function DecisionPanel({
             <KV label="Kaynak">
               <span className="text-neutral-400"><ChannelIcon source={attribution.source} size={12} /></span>
               <span>{sourceLabel(attribution.source)}</span>
-              {scannedFromQr ? <span className="rounded-full border border-ink/10 px-1.5 text-3xs leading-4 text-neutral-400">QR</span> : null}
+              {scannedFromQr ? <Badge>QR</Badge> : null}
               {attribution.campaign ? <span className="max-w-24 truncate font-mono text-3xs text-neutral-600">{attribution.campaign}</span> : null}
             </KV>
           ) : null}

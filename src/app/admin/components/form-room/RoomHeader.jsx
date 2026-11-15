@@ -2,43 +2,25 @@
 
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import Tip from "@/app/admin/components/utils/Tip";
+import { Button, IconButton } from "@skylab-kulubu/skylcn-ui";
 
 const emptySubscribe = () => () => {};
 
-export function HeaderIcon({ icon: Icon, label, onClick, disabled = false }) {
-  return (
-    <Tip label={label}>
-      <button type="button" aria-label={label} onClick={onClick} disabled={disabled}
-        className="rounded-lg p-1.5 text-neutral-500 transition-colors hover:bg-neutral-800/70 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-inherit"
-      >
-        <Icon size={16} />
-      </button>
-    </Tip>
-  );
+export function HeaderIcon({ icon, label, onClick, disabled = false, pending = false }) {
+  return <IconButton icon={icon} label={label} onClick={onClick} disabled={disabled} pending={pending} variant="ghost" size="icon-sm" />;
 }
 
-export function HeaderButton({ icon: Icon, label, onClick, disabled = false, primary = false }) {
+export function HeaderButton({ icon: Icon, label, onClick, disabled = false, pending = false, primary = false }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} title={label} aria-label={label}
-      className={`ml-1 flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:pointer-events-none disabled:opacity-50 lg:px-2.5 ${
-        primary ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300 hover:bg-skylab-500/25" : "border-ink/15 bg-ink/5 text-neutral-200 hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300"
-      }`}
-    >
-      <Icon size={14} />
+    <Button variant={primary ? "primary" : "outline"} size="sm" onClick={onClick} disabled={disabled} pending={pending} title={label} aria-label={label} className="ml-1">
+      <Icon />
       <span className="hidden lg:inline">{label}</span>
-    </button>
+    </Button>
   );
 }
 
-export function HeaderTouch({ icon: Icon, label, onClick, disabled = false }) {
-  return (
-    <button type="button" aria-label={label} title={label} onClick={onClick} disabled={disabled}
-      className="grid size-11 place-items-center rounded-lg text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:opacity-40"
-    >
-      <Icon size={17} />
-    </button>
-  );
+export function HeaderTouch({ icon, label, onClick, disabled = false, pending = false }) {
+  return <IconButton icon={icon} label={label} onClick={onClick} disabled={disabled} pending={pending} variant="ghost" size="icon-lg" tooltip={false} />;
 }
 
 export default function RoomHeader({ desktop = null, mobile = null }) {

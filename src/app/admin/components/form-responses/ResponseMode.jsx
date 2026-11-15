@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Download, FileXCorner, GitCompare, History, Inbox, ListChecks, Loader2, Mail, PencilLine, RefreshCw, Users, X } from "lucide-react";
+import { Button, IconButton, Notice, Skeleton } from "@skylab-kulubu/skylcn-ui";
 import StateCard from "@/app/components/StateCard";
 import Avatar from "@/app/components/utils/Avatar";
 import { ATTEMPT_STATUS, STATUS_FILTERS } from "@/lib/attempt-status";
@@ -74,13 +75,13 @@ export function prefetchResponses(queryClient, route) {
   ]);
 }
 
-function Spinner(props) {
-  return <Loader2 {...props} className="animate-spin" />;
+function Spinning({ className }) {
+  return <Loader2 className={`${className} animate-spin`} />;
 }
 
 function StateBox({ title, description, Icon = FileXCorner }) {
   return (
-    <div className="rounded-3xl border border-ink/10 bg-panel-soft p-10">
+    <div className="rounded-3xl border border-ink/10 bg-panel-soft px-10">
       <StateCard title={title} Icon={Icon} description={description} />
     </div>
   );
@@ -88,30 +89,18 @@ function StateBox({ title, description, Icon = FileXCorner }) {
 
 function PanelSkeleton() {
   return (
-    <div className="space-y-4 p-4" aria-hidden="true">
-      <span className="shimmer block h-11 w-2/3 rounded-lg" />
-      {Array.from({ length: 4 }, (_, index) => <span key={index} className="shimmer block h-9 rounded-lg" />)}
+    <div className="space-y-4 p-4">
+      <Skeleton className="h-11 w-2/3 rounded-lg" />
+      {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-9 rounded-lg" />)}
     </div>
   );
 }
 
-function NavButton({ label, disabled, onClick, children }) {
+function BarButton({ label, onClick, className = "", children }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} title={label} aria-label={label}
-      className="grid size-10 place-items-center rounded-md text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:opacity-30 sm:size-7"
-    >
+    <Button variant="ghost" size="lg" aria-label={label} title={label} onClick={onClick} className={className}>
       {children}
-    </button>
-  );
-}
-
-function BarButton({ label, onClick, className = "text-neutral-300", children }) {
-  return (
-    <button type="button" aria-label={label} title={label} onClick={onClick}
-      className={`flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-2xs font-medium transition-colors hover:bg-ink/5 hover:text-neutral-100 ${className}`}
-    >
-      {children}
-    </button>
+    </Button>
   );
 }
 
@@ -521,12 +510,12 @@ export default function ResponseMode() {
           <X size={10} className="shrink-0" />
         </button>
       ) : null}
-      <NavButton label="Önceki (←)" disabled={atStart} onClick={() => stepResponse(-1)}><ChevronLeft size={15} /></NavButton>
+      <IconButton icon={ChevronLeft} label="Önceki (←)" variant="ghost" size="icon-sm" disabled={atStart} onClick={() => stepResponse(-1)} />
       <span className="flex min-w-12 items-center justify-center gap-1 text-2xs tabular-nums text-neutral-500" title="← → ile listedeki sıradaki kişiye geçilir">
         {filterOn ? <span title={`Filtre: ${filterInfo.label}`} className={`size-1.5 rounded-full sm:hidden ${filterInfo.dot ?? ""}`} /> : null}
         {position ?? "–"} / {total}
       </span>
-      <NavButton label="Sonraki (→)" disabled={atEnd} onClick={() => stepResponse(1)}><ChevronRight size={15} /></NavButton>
+      <IconButton icon={ChevronRight} label="Sonraki (→)" variant="ghost" size="icon-sm" disabled={atEnd} onClick={() => stepResponse(1)} />
     </span>
   );
 
@@ -547,16 +536,14 @@ export default function ResponseMode() {
     <>
       <JourneyChips steps={steps} viewKey={viewKey} ownKey={ownKey} onPick={pickJourney} />
       {previous ? (
-        <button type="button" onClick={() => setChangesChoice(!showChanges)} aria-pressed={showChanges}
+        <Button variant="outline" size="sm" onClick={() => setChangesChoice(!showChanges)} aria-pressed={showChanges}
           title={onBoard ? "Önceki cevapları yanda göster" : `${previousStep?.round ?? 1}. gönderimden farklı cevapları vurgula`}
-          className={`flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-3xs font-medium transition-colors sm:h-6 sm:px-2 ${
-            showChanges ? "border-sky-400/40 bg-sky-400/10 text-sky-200" : "border-ink/10 text-neutral-400 hover:text-neutral-200"
-          }`}
+          className="gap-1.5 aria-pressed:border-sky-400/40 aria-pressed:bg-sky-400/10 aria-pressed:text-sky-200"
         >
-          <GitCompare size={11} />
+          <GitCompare className="size-3.5" />
           Değişenler
           <span className="tabular-nums opacity-70">{changedIds.length}</span>
-        </button>
+        </Button>
       ) : null}
     </>
   ) : null;
@@ -568,26 +555,14 @@ export default function ResponseMode() {
         <span className="font-medium text-neutral-200">{sameStage ? `${viewedStep.round ?? 1}. gönderim` : viewedStep.formTitle || "Adsız form"}</span>
         {shown ? <> · {formatDateTime(shown.submittedAt)} · <span className={shownView.text}>{shownView.label}</span></> : null}
       </p>
-      <button type="button" onClick={() => pickJourney(ownStep ?? { stage: own.workflow?.stage, round: own.workflow?.round })}
-        className="flex min-h-9 shrink-0 items-center rounded-lg border border-ink/10 bg-ink/5 px-2.5 text-2xs font-medium text-neutral-200 transition-colors hover:bg-ink/10 sm:min-h-7"
-      >
+      <Button size="sm" onClick={() => pickJourney(ownStep ?? { stage: own.workflow?.stage, round: own.workflow?.round })}>
         {sameStage ? `${own.workflow?.round ?? 1}. gönderime dön` : "Geri dön"}
-      </button>
+      </Button>
     </div>
   ) : null;
 
   const mailNotice = mail.message ? (
-    <div role="status" className="flex items-start gap-3 rounded-xl border border-ink/10 bg-neutral-900/80 px-3 py-2.5">
-      <Mail size={14} className="mt-0.5 shrink-0 text-neutral-500" />
-      <p className="min-w-0 flex-1 text-2xs leading-relaxed text-neutral-300">{mail.message}</p>
-      {mail.loading ? <Loader2 size={13} className="mt-0.5 shrink-0 animate-spin text-neutral-500" /> : (
-        <button type="button" onClick={mail.dismiss} aria-label="Bildirimi kapat"
-          className="-my-1 grid size-8 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200 sm:size-6"
-        >
-          <X size={13} />
-        </button>
-      )}
-    </div>
+    <Notice icon={mail.loading ? Spinning : Mail} onDismiss={mail.loading ? undefined : mail.dismiss} dismissLabel="Bildirimi kapat">{mail.message}</Notice>
   ) : null;
   const above = mailNotice || banner ? <div className="flex flex-col gap-2">{mailNotice}{banner}</div> : null;
 
@@ -655,10 +630,10 @@ export default function ResponseMode() {
     right: stacked && panel ? { label: "Karar", Icon: ListChecks, title: "Karara git", onClick: () => scrollToDecision() } : null,
     bar: phone && flagMode ? (
       <>
-        <BarButton label="İşaretlemeyi bırak" onClick={cancelDecision}><X size={15} />Vazgeç</BarButton>
+        <BarButton label="İşaretlemeyi bırak" onClick={cancelDecision}><X />Vazgeç</BarButton>
         <span className="px-2 text-2xs tabular-nums text-sky-200">{flags.length ? `${flags.length} soru işaretli` : "Soruları işaretle"}</span>
         <BarButton label="Açıklama yaz" className="text-sky-100" onClick={() => { scrollToDecision(); focusNote(400, true); }}>
-          <PencilLine size={15} />
+          <PencilLine />
           Açıklama yaz
         </BarButton>
       </>
@@ -679,11 +654,11 @@ export default function ResponseMode() {
         desktop={(
           <>
             <HeaderIcon icon={RefreshCw} label="Yenile" onClick={refresh} />
-            <HeaderIcon icon={mail.loading ? Spinner : Mail} label="Yanıtlayanlara mail gönder" onClick={mail.start} disabled={mail.loading || !canView || !listResult.isSuccess} />
-            <HeaderButton icon={exporting ? Spinner : Download} label="Excel" onClick={exportToExcel} disabled={exporting || !canView} />
+            <HeaderIcon icon={Mail} label="Yanıtlayanlara mail gönder" onClick={mail.start} pending={mail.loading} disabled={!canView || !listResult.isSuccess} />
+            <HeaderButton icon={Download} label="Excel" onClick={exportToExcel} pending={exporting} disabled={!canView} />
           </>
         )}
-        mobile={<HeaderTouch icon={exporting ? Spinner : Download} label="Excel İndir" onClick={exportToExcel} disabled={exporting || !canView} />}
+        mobile={<HeaderTouch icon={Download} label="Excel İndir" onClick={exportToExcel} pending={exporting} disabled={!canView} />}
       />
       <RoomFrame {...room.frameProps} outline={outline} outlineFill center={center} toolbar={toolbar}
         inspectorHeader={panelHead} inspector={rightDocked ? inspector : null} inspectorWidth="flex-[0_1_340px]"

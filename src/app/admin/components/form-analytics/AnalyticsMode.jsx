@@ -194,7 +194,7 @@ export default function AnalyticsMode() {
   ) : null;
 
   const card = analyticsResult.isError ? (
-    <div className="rounded-3xl border border-ink/10 bg-panel-soft p-10">
+    <div className="rounded-3xl border border-ink/10 bg-panel-soft px-10">
       <StateCard title="Analitik yüklenemedi" Icon={ListX} description="Analiz verileri yüklenirken bir hata oluştu." />
     </div>
   ) : form && analytics ? (
@@ -212,9 +212,9 @@ export default function AnalyticsMode() {
         <>
           {room.cardPhone ? null : <span className="text-2xs tabular-nums text-neutral-500">{total} cevap</span>}
           {room.settings.requiresManualReview ? (
-            <MenuPill value={filter.status ?? "all"} options={STATUS_OPTIONS} onSelect={(value) => setFilter({ status: value === "all" ? null : value })} />
+            <MenuPill label="Cevap durumu" value={filter.status ?? "all"} options={STATUS_OPTIONS} onSelect={(value) => setFilter({ status: value === "all" ? null : value })} />
           ) : null}
-          <MenuPill value={filter.sinceDays ? String(filter.sinceDays) : "all"} options={TIME_OPTIONS} onSelect={(value) => setFilter({ sinceDays: value === "all" ? null : Number(value) })} />
+          <MenuPill label="Zaman aralığı" value={filter.sinceDays ? String(filter.sinceDays) : "all"} options={TIME_OPTIONS} onSelect={(value) => setFilter({ sinceDays: value === "all" ? null : Number(value) })} />
         </>
       ) : null })}
       card={card}

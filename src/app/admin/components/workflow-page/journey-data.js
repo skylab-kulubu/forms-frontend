@@ -20,8 +20,8 @@ export const FINISHED_ROWS = [["completed", 4], ["declined", 5], ["timedOut", 6]
 export const RUN_TABS = [[0, "Devam eden"], [1, "Onay bekleyen"], [2, "Bitenler"]];
 export const PAGE_SIZE = 20;
 export const STEP_PEOPLE = 24;
-export const STROKE = "rgba(52,211,153,0.5)";
-export const NEUTRAL_STROKE = "#595959";
+export const STROKE = "color-mix(in oklab, var(--success) 50%, transparent)";
+export const NEUTRAL_STROKE = "var(--faint-foreground)";
 
 export function payloadOf(data) {
   return data?.data ?? data ?? null;
