@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BookOpen, ChevronsUpDown, GraduationCap, Lock, Plus, X } from "lucide-react";
+import { Combobox } from "@skylab-kulubu/skylcn-ui";
 import { FieldShell, LOCKED_OPTION_HINT } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { RichText } from "@/app/components/rich-text/RichText";
 import { CompactField } from "./CompactField";
-import SearchPicker from "@/app/components/utils/SearchPicker";
 import { useRespondent } from "@/lib/hooks/useRespondent";
 import { UNIVERSITIES } from "../../../data/presets/universities";
 import { DEPARTMENTS } from "../../../data/presets/departments";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { QuestionField, questionLabel } from "./QuestionParts";
 
 const CHOICE_PRESETS = [
   { id: "universities", label: "Üniversite", icon: GraduationCap, data: UNIVERSITIES },
@@ -202,9 +201,6 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
 export function DisplayFormCombobox({ question, questionNumber, description, required = false, choices = [], allowCustom = false, preset = null, disableAutoFill = false, compact = false, value, onChange, missing = false }) {
   const { kind, user } = useRespondent();
   const [internalValue, setInternalValue] = useState(value ?? "");
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const triggerRef = useRef(null);
 
   const normalized = useMemo(() => normalizeOptions(choices), [choices]);
   const currentValue = value !== undefined ? (value ?? "") : internalValue;
@@ -225,10 +221,17 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
     }
   }, [autoValue]);
 
-  const selectedLabel = useMemo(() => {
-    const found = normalized.find((o) => o.id === currentValue || o.label === currentValue);
-    return found?.label ?? (currentValue || "");
-  }, [normalized, currentValue]);
+  const selected = useMemo(
+    () => (currentValue ? normalized.find((o) => o.id === currentValue) ?? normalized.find((o) => o.label === currentValue) ?? null : null),
+    [normalized, currentValue]
+  );
+
+  // A typed-in answer is in no list; it joins the items so the box can show it
+  const items = useMemo(() => {
+    const list = normalized.map((o) => ({ value: o.id, label: o.label }));
+    if (currentValue && !selected) list.push({ value: currentValue, label: currentValue });
+    return list;
+  }, [normalized, currentValue, selected]);
 
   const commit = (next) => {
     if (onChange) {
@@ -238,129 +241,24 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
     }
   };
 
-  const closePicker = () => {
-    setOpen(false);
-    setQuery("");
-  };
-
-  useEffect(() => {
-    const onDoc = (e) => {
-      if (!open) return;
-      const t = e.target;
-      if (triggerRef.current && !triggerRef.current.contains(t)) {
-        setOpen(false);
-        setQuery("");
-      }
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
-
-  const pickerItems = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let items = q ? normalized.filter((o) => o.label.toLowerCase().includes(q)) : [...normalized];
-    const exactMatch = normalized.some((o) => o.label.toLowerCase() === q);
-    if (allowCustom && q && !exactMatch) {
-      items.push({
-        id: `__custom__${q}`,
-        label: q,
-        isCustomAction: true
-      });
-    }
-    return items;
-  }, [normalized, query, allowCustom]);
-
-  const handleSelect = (item) => {
-    if (item.isCustomAction) {
-      commit(item.label);
-    } else {
-      commit(item.id);
-    }
-    setOpen(false);
-    setQuery("");
-  };
-
-  const clear = () => {
-    commit("");
-    setQuery("");
-  };
-
   const isAutoFilled = autoValue != null && currentValue === autoValue;
-  const displayText = selectedLabel || "Bir seçenek seçin";
 
   const control = (
-    <>
-      <div className="relative" ref={triggerRef}>
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-          <ChevronsUpDown size={16} />
-        </span>
-        <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => { if (isAutoFilled) return; if (open) closePicker(); else setOpen(true); }}
-          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition ${isAutoFilled ? "cursor-default opacity-70" : "hover:bg-ink/5 focus:ring-2 focus:ring-skylab-400/20"} ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
-        >
-          <span className={currentValue ? "text-neutral-100" : "text-neutral-500"}>{displayText}</span>
-          {currentValue && !isAutoFilled && (
-            <span className="ml-2 text-neutral-400 hover:text-neutral-200" onClick={(e) => { e.stopPropagation(); clear(); }}>
-              <X size={16} />
-            </span>
-          )}
-        </button>
-
-        <AnimatePresence>
-          {open && (
-            <SearchPicker items={pickerItems} itemsPerPage={5} activeItemId={currentValue}
-              getItemId={(item) => item.id} onSelect={handleSelect} searchValue={query} onSearchChange={setQuery}
-              createLabel={allowCustom ? "Yeni seçenek oluştur" : ""}
-              autoFocus={true} className="w-full" showClear={!!currentValue} onClear={() => { clear(); setOpen(false); }}
-              renderItem={(item, { active, onSelect }) => {
-                if (item.isCustomAction) {
-                  return (
-                    <button type="button" onClick={onSelect}
-                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-ink/10 ${active ? "bg-ink/15 text-neutral-100 ring-1 ring-ink/20" : "text-skylab-300/80"}`}
-                    >
-                      <Plus size={14} className="opacity-70" />
-                      <span>
-                        Yeni oluştur: <span className="font-semibold">"{item.label}"</span>
-                      </span>
-                    </button>
-                  );
-                }
-                return (
-                  <button type="button" onClick={onSelect}
-                    className={`block w-full text-left px-3 py-2 text-sm transition hover:bg-ink/10 ${active ? "bg-ink/15 text-neutral-100 ring-1 ring-ink/20" : "text-neutral-200"}`}
-                  >
-                    {item.label}
-                  </button>
-                );
-              }}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-      <input type="hidden" name="combobox" value={currentValue} aria-required={required} />
-    </>
+    <Combobox items={items} value={selected?.id ?? (currentValue || null)} onValueChange={(next) => commit(next ?? "")}
+      onCreate={allowCustom ? commit : undefined} readOnly={isAutoFilled} placeholder="Bir seçenek seçin"
+      aria-label={questionLabel(question)} className={missing ? "border-destructive/50" : undefined}
+    />
   );
 
   if (compact) {
-    return <CompactField question={question} required={required}>{control}</CompactField>;
+    return <CompactField question={question} required={required} missing={missing}>{control}</CompactField>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <div className="flex gap-3">
-          <QuestionNumber number={questionNumber} missing={missing} />
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
-            </p>
-            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-          </div>
-        </div>
-
-        <div className="mt-3">{control}</div>
-
-        {isAutoFilled ? <span className="px-0.5 text-2xs text-neutral-500 mt-1">Oturumunuzdan otomatik dolduruldu</span> : <QuestionHint required={required} missing={missing} />}
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}
+      hint={isAutoFilled ? "Oturumunuzdan otomatik dolduruldu" : undefined}
+    >
+      {control}
+    </QuestionField>
   );
 }

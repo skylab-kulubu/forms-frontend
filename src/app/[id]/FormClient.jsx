@@ -11,8 +11,8 @@ import FormDisplayer from "@/app/components/form-displayer/FormDisplayer";
 import StatusScreen from "@/app/components/form-displayer/components/StatusScreen";
 import FormSkeleton from "@/app/components/form-displayer/components/FormSkeleton";
 
-const PAGE_SHELL = "relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar";
-const EMBEDDED_SHELL = "relative w-full font-sans text-neutral-200";
+const PAGE_SHELL = "relative h-dvh w-full font-sans text-secondary-foreground overflow-y-auto scrollbar";
+const EMBEDDED_SHELL = "relative w-full font-sans text-secondary-foreground";
 
 const LAST_RUN_SCREEN = {
   [WORKFLOW_STATE.COMPLETED]: "fullyCompleted",

@@ -1,65 +1,49 @@
 import { Check, Clock, Pause, PencilLine, X } from "lucide-react";
+import { Timeline } from "@skylab-kulubu/skylcn-ui";
 
-const MARK_TONE = {
-  done: "border-emerald-400/30 bg-emerald-400/10 text-emerald-400",
-  review: "border-amber-400/30 bg-amber-400/10 text-amber-400",
-  declined: "border-red-400/30 bg-red-400/10 text-red-300",
-  paused: "border-ink/15 bg-ink/5 text-neutral-400",
-  current: "border-skylab-400/40 bg-skylab-500/10 text-skylab-300",
-  returned: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-  future: "border-dashed border-neutral-700 bg-transparent",
+// forms' journey tones as skylcn marks; "future" is an upcoming step and "current" carries its number
+const MARK = {
+  done: { tone: "success", icon: Check },
+  review: { tone: "warning", icon: Clock },
+  declined: { tone: "danger", icon: X },
+  paused: { tone: "neutral", icon: Pause },
+  current: { tone: "brand" },
+  returned: { tone: "info", icon: PencilLine },
 };
-
-function Mark({ tone, number }) {
-  return (
-    <span className={`grid size-6 place-items-center rounded-md border text-2xs font-semibold ${MARK_TONE[tone] ?? MARK_TONE.future}`}>
-      {tone === "done" && <Check size={13} strokeWidth={2.5} />}
-      {tone === "review" && <Clock size={13} strokeWidth={2.2} />}
-      {tone === "declined" && <X size={13} strokeWidth={2.5} />}
-      {tone === "paused" && <Pause size={11} strokeWidth={2.2} />}
-      {tone === "returned" && <PencilLine size={12} strokeWidth={2.2} />}
-      {tone === "current" && number}
-    </span>
-  );
-}
 
 export function ReviewNote({ note, date, className = "" }) {
   if (!note) return null;
 
   return (
-    <div className={`relative text-left before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-full before:bg-neutral-700 ${className}`}>
-      <p className="text-2xs text-neutral-500">{date ? `Ekibin notu · ${date}` : "Ekibin notu"}</p>
-      <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-neutral-200">{note}</p>
+    <div className={`relative text-left before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:rounded-full before:bg-border-strong ${className}`}>
+      <p className="text-2xs text-subtle-foreground">{date ? `Ekibin notu · ${date}` : "Ekibin notu"}</p>
+      <p className="mt-0.5 whitespace-pre-wrap text-xs leading-relaxed text-secondary-foreground">{note}</p>
     </div>
   );
+}
+
+function markOf(item) {
+  if (item.tone === "current") return { ...MARK.current, marker: item.number, current: true };
+  return MARK[item.tone] ?? { upcoming: true };
 }
 
 export default function JourneyTimeline({ items, className = "" }) {
   if (!items?.length) return null;
 
   return (
-    <ol className={`w-full max-w-88 text-left ${className}`}>
-      {items.map((item, index) => {
-        const isLast = index === items.length - 1;
-        const isFuture = item.tone === "future";
-
-        return (
-          <li key={item.key ?? index} className={`relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 ${isLast ? "" : "pb-4.5"}`}>
-            {(!isLast || item.note) && (
-              <span aria-hidden className={`absolute left-3 top-7.5 w-px -translate-x-1/2 bg-ink/10 ${isLast ? "bottom-0" : "bottom-1.5"}`} />
-            )}
-            <Mark tone={item.tone} number={item.number} />
-            <div className="min-w-0">
-              <div className="flex items-baseline justify-between gap-3 pt-0.5">
-                <span className={`text-sm ${isFuture ? "text-neutral-400" : "font-medium text-neutral-100"}`}>{item.title}</span>
-                {item.date && <span className="shrink-0 text-2xs tabular-nums text-neutral-500">{item.date}</span>}
-              </div>
-              {item.detail && <p className={`mt-px text-xs leading-5 ${item.tone === "returned" ? "text-sky-200/80" : "text-neutral-400"}`}>{item.detail}</p>}
-              {item.note && <ReviewNote note={item.note} className="-ml-6.25 mt-2.5 pl-6.25" />}
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+    <Timeline className={`w-full max-w-88 text-left ${className}`}
+      items={items.map((item, index) => ({
+        id: String(item.key ?? index),
+        title: item.title,
+        time: item.date ?? undefined,
+        ...markOf(item),
+        description: item.detail || item.note ? (
+          <>
+            {item.detail && <span className={item.tone === "returned" ? "text-info" : undefined}>{item.detail}</span>}
+            {item.note && <ReviewNote note={item.note} className="mt-2 pl-3" />}
+          </>
+        ) : undefined,
+      }))}
+    />
   );
 }

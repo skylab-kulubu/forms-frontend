@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { DatePicker } from "@skylab-kulubu/skylcn-ui";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { RichText } from "@/app/components/rich-text/RichText";
-import { AnimatePresence } from "framer-motion";
-import DatePicker from "../utils/DatePicker";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { QuestionField, pickerLabel } from "./QuestionParts";
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 
@@ -29,11 +26,6 @@ function parseYMD(s) {
   if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
   return dt;
 }
-
-const months = [
-  "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
-];
 
 export function CreateFormDatePicker({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
   const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
@@ -67,9 +59,6 @@ export function CreateFormDatePicker({ questionNumber, props, onPropsChange, rea
 
 export function DisplayFormDatePicker({ question, questionNumber, description, required = false, compact = false, value, onChange, missing = false }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef(null);
-  const popoverRef = useRef(null);
 
   const selected = useMemo(() => parseYMD(value ?? internalValue), [value, internalValue]);
 
@@ -78,56 +67,21 @@ export function DisplayFormDatePicker({ question, questionNumber, description, r
     else setInternalValue(next);
   };
 
-  const display = selected ? `${pad2(selected.getDate())} ${months[selected.getMonth()]} ${selected.getFullYear()}` : "Tarih seçin";
+  const chosen = selected?.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
 
   const control = (
-    <>
-      <div className="relative" ref={triggerRef}>
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-          <Calendar size={16} />
-        </span>
-        <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((s) => !s)}
-          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition hover:bg-ink/5 focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
-        >
-          <span className={selected ? "text-neutral-100" : "text-neutral-500"}>{display}</span>
-        </button>
-
-        <AnimatePresence>
-          {open && (
-            <DatePicker value={selected} anchor={triggerRef}
-              onChange={(date) => { commit(toYMD(date)); }}
-              onClose={() => setOpen(false)}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-
-      <input type="hidden" name="date" value={value !== undefined ? (value ?? "") : internalValue} />
-    </>
+    <DatePicker value={selected} onValueChange={(date) => commit(date ? toYMD(date) : "")} placeholder="Tarih seçin"
+      aria-label={pickerLabel(question, chosen)} className={missing ? "border-destructive/50" : undefined}
+    />
   );
 
   if (compact) {
-    return <CompactField question={question} required={required}>{control}</CompactField>;
+    return <CompactField question={question} required={required} missing={missing}>{control}</CompactField>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <div className="flex gap-3">
-          <QuestionNumber number={questionNumber} missing={missing} />
-
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
-            </p>
-            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-          </div>
-        </div>
-
-        <div className="mt-3">{control}</div>
-
-        <QuestionHint required={required} missing={missing} />
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}>
+      {control}
+    </QuestionField>
   );
 }

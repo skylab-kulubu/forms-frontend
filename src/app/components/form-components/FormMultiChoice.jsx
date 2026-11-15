@@ -1,14 +1,14 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import { X, Plus, ChevronsUpDown, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChoiceList } from "@skylab-kulubu/skylcn-ui";
 import { FieldShell, LOCKED_OPTION_HINT } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { RichText } from "@/app/components/rich-text/RichText";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { QuestionField, questionLabel } from "./QuestionParts";
 
 export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, readOnly, compact = false, workflowLock = null, ...rest }) {
   const { prop, bind, toggle, patch } = useProp(props, onPropsChange, readOnly);
@@ -131,17 +131,14 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
 }
 
 export function DisplayFormMultiChoice({ question, questionNumber, description, required = false, allowMultiple = true, choices = [], compact = false, value, onChange, missing = false }) {
-  const normalized = choices.map((choice, idx) => {
+  const options = choices.map((choice, idx) => {
     if (typeof choice === "string") {
-      return { id: String(idx), label: choice };
+      return { value: String(idx), label: choice };
     }
-    const id = String(choice?.id ?? choice?.value ?? idx);
-    return { id, label: String(choice?.label ?? choice?.value ?? `Seçenek ${idx + 1}`) };
+    return { value: String(choice?.id ?? choice?.value ?? idx), label: String(choice?.label ?? choice?.value ?? `Seçenek ${idx + 1}`) };
   });
   const [internalValue, setInternalValue] = useState(Array.isArray(value) ? value : []);
   const currentValue = value !== undefined ? (Array.isArray(value) ? value : []) : internalValue;
-  const optionBorderClass = missing ? "border-red-400/60" : "border-ink/10";
-  const instanceId = useId();
 
   const commit = (next) => {
     if (onChange) {
@@ -151,66 +148,22 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
     }
   };
 
-  const toggle = (id) => {
-    const exists = currentValue.includes(id);
-    if (!allowMultiple) {
-      commit(exists ? [] : [id]);
-      return;
-    }
-    commit(exists ? currentValue.filter((v) => v !== id) : [...currentValue, id]);
-  };
-
-  const choiceItems = normalized.map((choice, idx) => {
-    const id = `mc-${instanceId}-${idx}-${choice.id}`;
-    const checked = currentValue.includes(choice.id);
-    return (
-      <label key={id} htmlFor={id}
-        className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-ink/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`}
-      >
-        {allowMultiple ? (
-          <input id={id} name="multi_choice" type="checkbox" aria-required={required}
-            checked={checked} onChange={() => toggle(choice.id)}
-            className="checkbox shrink-0"
-          />
-        ) : (
-          <input id={id} name={`mc-${instanceId}`} type="radio"
-            checked={checked} onChange={() => {}} onClick={() => toggle(choice.id)}
-            className="checkbox shrink-0"
-          />
-        )}
-        <span className="text-sm text-neutral-200">{choice.label}</span>
-      </label>
-    );
-  });
+  // A single answer is still kept as a list, so a question switched between one and several answers reads the same
+  const control = allowMultiple ? (
+    <ChoiceList multiple options={options} value={currentValue} onValueChange={commit} invalid={missing} aria-label={questionLabel(question)} />
+  ) : (
+    <ChoiceList clearable options={options} value={currentValue[0] ?? null} onValueChange={(next) => commit(next == null ? [] : [next])}
+      invalid={missing} aria-label={questionLabel(question)}
+    />
+  );
 
   if (compact) {
-    return (
-      <CompactField question={question} required={required}>
-        <div className="flex flex-col gap-2">{choiceItems}</div>
-      </CompactField>
-    );
+    return <CompactField question={question} required={required} missing={missing}>{control}</CompactField>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <div className="flex gap-3">
-          <QuestionNumber number={questionNumber} missing={missing} />
-
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
-            </p>
-            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-col gap-2">
-          {choiceItems}
-        </div>
-
-        <QuestionHint required={required} missing={missing} />
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}>
+      {control}
+    </QuestionField>
   );
 }

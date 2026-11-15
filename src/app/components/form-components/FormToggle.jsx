@@ -6,8 +6,10 @@ import { FieldShell, LOCKED_OPTION_HINT } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { RichText } from "@/app/components/rich-text/RichText";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { ToggleRow } from "@skylab-kulubu/skylcn-ui";
+import { QuestionField } from "./QuestionParts";
+
+const CONSENT_HINT = "Devam etmek için onaylamalısınız";
 
 export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnly, compact = false, workflowLock = null, ...rest }) {
     const { prop, bind, toggle } = useProp(props, onPropsChange, readOnly);
@@ -62,7 +64,6 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
 export function DisplayFormToggle({ question, questionNumber, description, required = false, trueLabel = "Evet", falseLabel = "Hayır", compact = false, value, onChange, missing = false }) {
     const [internalValue, setInternalValue] = useState(value === true);
     const currentValue = value !== undefined ? (value === true) : internalValue;
-    const optionBorderClass = missing ? "border-red-400/60" : "border-ink/10";
 
     useEffect(() => {
         if (value === undefined && onChange) {
@@ -70,8 +71,7 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
         }
     }, []);
 
-    const handleToggle = () => {
-        const next = !currentValue;
+    const handleToggle = (next) => {
         if (onChange) {
             onChange({ target: { value: next } });
         } else {
@@ -80,45 +80,20 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
     };
 
     const control = (
-        <div onClick={handleToggle}
-            className={`flex items-center justify-between gap-4 w-full rounded-lg border ${optionBorderClass} bg-neutral-900/60 px-4 py-1.5 cursor-pointer transition-colors hover:bg-ink/4`}
-        >
-            <span className={`text-sm font-medium select-none transition-colors ${currentValue ? "text-skylab-300" : "text-neutral-400"}`}>
-                {currentValue ? trueLabel : falseLabel}
-            </span>
-
-            <button type="button" role="switch" aria-checked={currentValue}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-lg border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${currentValue ? 'bg-skylab-400' : 'bg-neutral-700'}`}
-            >
-                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-md bg-white shadow ring-0 transition duration-200 ease-in-out ${currentValue ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
-            </button>
-        </div>
+        <ToggleRow title={falseLabel} checkedTitle={trueLabel} checked={currentValue} onCheckedChange={handleToggle}
+            className={missing ? "border-destructive/50" : undefined}
+        />
     );
 
     if (compact) {
-        return <CompactField question={question} required={required}>{control}</CompactField>;
+        return <CompactField question={question} required={required} missing={missing}>{control}</CompactField>;
     }
 
     return (
-        <div className="mx-auto w-full max-w-2xl rounded-xl">
-            <div className="flex flex-col p-2 md:p-4">
-
-                <div className="flex gap-3">
-                    <QuestionNumber number={questionNumber} missing={missing} />
-                    <div className="flex flex-col w-full">
-                        <p className="text-sm font-medium text-neutral-100">
-                            {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-200/70">*</span>}
-                        </p>
-                        {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-                    </div>
-                </div>
-
-                <div className="mt-3 flex flex-col gap-2">
-                    {control}
-                </div>
-
-                <QuestionHint required={required} missing={missing} text="Devam etmek için onaylamalısınız" missingText="Devam etmek için onaylamalısınız" className="mt-1.5" />
-            </div>
-        </div>
+        <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}
+            requiredText={CONSENT_HINT} missingText={CONSENT_HINT}
+        >
+            {control}
+        </QuestionField>
     );
 }

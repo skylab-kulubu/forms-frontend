@@ -49,24 +49,24 @@ export default function StepIntro({ workflow, stage, formTitle, arrivedTitle = n
       <div className="flex w-full flex-1 items-center justify-center">
         <div className="flex w-full max-w-104 flex-col items-center text-center">
           {revision
-            ? <FilePenLine className="size-7.5 text-sky-300" strokeWidth={1.6} />
+            ? <FilePenLine className="size-7.5 text-info" strokeWidth={1.6} />
             : <Route className="size-7.5 text-skylab-300" strokeWidth={1.6} />}
-          <p className="mt-4.5 text-xs text-neutral-500">
+          <p className="mt-4.5 text-xs text-subtle-foreground">
             {workflow?.title}
             {!arrived && stage > 0 && <> · <span className="text-skylab-300">{stage}. adım</span></>}
           </p>
-          <h1 data-slot="screen-title" className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-neutral-50">
+          <h1 data-slot="screen-title" className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-foreground-strong">
             {revision ? `${formTitle} için düzeltme istendi` : arrived ? `${arrivedTitle} kaydedildi` : formTitle}
           </h1>
           {revision && (
-            <p className="mt-2 max-w-96 text-balance text-sm leading-relaxed text-neutral-400">
+            <p className="mt-2 max-w-96 text-balance text-sm leading-relaxed text-muted-foreground">
               Ekip cevaplarınızı inceledi ve bir düzeltme istedi. Önceki cevaplarınız formda hazır; gerekenleri değiştirip yeniden gönderin.
             </p>
           )}
           <JourneyTimeline items={items} className="mt-7" />
           <div className="mt-7.5 flex flex-col items-center gap-3.5">
             {autoAdvance && (
-              <span className="h-0.5 w-40 overflow-hidden rounded-full bg-ink/8">
+              <span className="h-0.5 w-40 overflow-hidden rounded-full bg-muted">
                 <motion.span className="block h-full w-full origin-left rounded-full bg-skylab-500"
                   initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: INTRO_MS / 1000, ease: "linear" }}
                 />

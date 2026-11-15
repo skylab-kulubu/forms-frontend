@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus, X } from "lucide-react";
-import { RichText } from "@/app/components/rich-text/RichText";
+import { Button, IconButton } from "@skylab-kulubu/skylcn-ui";
 import { REGISTRY } from "../form-registry";
 import { formatFieldAnswer } from "../form-answer-format";
-import { QuestionNumber } from "./QuestionParts";
+import { QuestionField } from "./QuestionParts";
+
+const ONE_RECORD = "En az bir kayıt girin";
+const FILL_RECORDS = "Kayıtlardaki zorunlu alanları doldurun";
 
 function emptyCellFor(type) {
   if (type === "multi_choice") return [];
@@ -122,70 +125,53 @@ export function DisplayFormRepeater({ question, questionNumber, description, req
 
   const hasFields = cols.length > 0;
   const missingCells = missing ? repeaterMissing(rules, rows, required) : new Map();
+  const started = rows.some((row) => cols.some((child) => isAnswered(child, row?.[child.id])));
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <div className="flex gap-3">
-          <QuestionNumber number={questionNumber} missing={missing} />
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-200/70">*</span>}
-            </p>
-            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-          </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}
+      requiredText={ONE_RECORD} missingText={started ? FILL_RECORDS : ONE_RECORD}
+    >
+      {!hasFields ? (
+        <p className="text-xs italic text-subtle-foreground">Bu grup için henüz alan tanımlanmadı.</p>
+      ) : (
+        <div className={`flex flex-col gap-3 rounded-xl ${missing ? "ring-1 ring-destructive/40" : ""}`}>
+          <AnimatePresence initial={false}>
+            {rows.map((row, rowIdx) => (
+              <motion.div key={rowIdx} layout
+                initial={{ opacity: 0, height: 0, y: -8 }}
+                animate={{ opacity: 1, height: "auto", y: 0 }}
+                exit={{ opacity: 0, height: 0, scale: 0.97 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="rounded-lg border border-border bg-card"
+              >
+                <div className="flex min-h-9 items-center justify-between border-b border-border-subtle py-1 pr-1 pl-3">
+                  <span className="text-3xs font-medium text-subtle-foreground">{rowIdx + 1}. kayıt</span>
+                  {rows.length > 1 && (
+                    <IconButton icon={X} label="Kaydı kaldır" variant="ghost" size="icon-sm" onClick={() => removeRow(rowIdx)} />
+                  )}
+                </div>
+                <div className="flex flex-col gap-3 p-3">
+                  {cols.map((child) => {
+                    const entry = REGISTRY[child.type];
+                    const ChildDisplay = entry?.Display;
+                    if (!ChildDisplay) return null;
+                    return (
+                      <ChildDisplay key={child.id} {...child.props} required={isChildRequired(rules, child)} disableAutoFill compact questionNumber={null}
+                        value={row[child.id]} onChange={(e) => updateCell(rowIdx, child.id, e.target.value)}
+                        missing={Boolean(missingCells.get(rowIdx)?.includes(child.id))}
+                      />
+                    );
+                  })}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          <Button variant="outline" size="lg" onClick={addRow} className="w-full border-dashed">
+            <Plus /> Kayıt Ekle
+          </Button>
         </div>
-
-        {!hasFields ? (
-          <p className="mt-3 text-xs italic text-neutral-500">Bu grup için henüz alan tanımlanmadı.</p>
-        ) : (
-          <div className={`mt-3 flex flex-col gap-3 rounded-xl ${missing ? "ring-1 ring-red-400/40" : ""}`}>
-            <AnimatePresence initial={false}>
-              {rows.map((row, rowIdx) => (
-                <motion.div key={rowIdx} layout
-                  initial={{ opacity: 0, height: 0, y: -8 }}
-                  animate={{ opacity: 1, height: "auto", y: 0 }}
-                  exit={{ opacity: 0, height: 0, scale: 0.97 }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="rounded-lg border border-ink/10 bg-neutral-900/40"
-                >
-                  <div className="flex items-center justify-between border-b border-ink/5 px-3 py-1.5">
-                    <span className="text-3xs font-medium text-neutral-500">{rowIdx + 1}. kayıt</span>
-                    {rows.length > 1 && (
-                      <button type="button" onClick={() => removeRow(rowIdx)} aria-label="Kaydı kaldır"
-                        className="inline-flex items-center justify-center rounded-md border border-ink/10 bg-ink/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-3 p-3">
-                    {cols.map((child) => {
-                      const entry = REGISTRY[child.type];
-                      const ChildDisplay = entry?.Display;
-                      if (!ChildDisplay) return null;
-                      return (
-                        <ChildDisplay key={child.id} {...child.props} required={isChildRequired(rules, child)} disableAutoFill compact questionNumber={null}
-                          value={row[child.id]} onChange={(e) => updateCell(rowIdx, child.id, e.target.value)}
-                          missing={Boolean(missingCells.get(rowIdx)?.includes(child.id))}
-                        />
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            <button type="button" onClick={addRow}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink/15 bg-ink/3 px-3 py-2 text-xs font-medium text-neutral-400 transition-colors hover:border-skylab-400/40 hover:text-skylab-300"
-            >
-              <Plus size={14} /> Kayıt Ekle
-            </button>
-          </div>
-        )}
-
-        {required && <span className="px-0.5 text-2xs text-neutral-500 mt-2">En az bir kayıt girin</span>}
-      </div>
-    </div>
+      )}
+    </QuestionField>
   );
 }

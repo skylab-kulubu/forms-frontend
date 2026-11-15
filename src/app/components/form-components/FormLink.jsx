@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, createElement } from "react";
+import { useState } from "react";
 import { Link as LinkIcon, Github, Linkedin, Instagram, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RichText } from "@/app/components/rich-text/RichText";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { IconButton, Input } from "@skylab-kulubu/skylcn-ui";
+import { QuestionField } from "./QuestionParts";
+
+// Links are often typed without a scheme, which type="url" calls invalid on Enter; text with the URL keyboard keeps them
+const LINK_INPUT = { type: "text", inputMode: "url", autoCapitalize: "none", autoCorrect: "off", spellCheck: false };
 
 function getProviderIcon(input) {
   if (!input || typeof input !== "string") return LinkIcon;
@@ -25,10 +28,6 @@ function getProviderIcon(input) {
   return LinkIcon;
 }
 
-function ProviderIcon({ input, size = 16 }) {
-  return createElement(getProviderIcon(input), { size });
-}
-
 function isValidUrl(input) {
   if (!input || typeof input !== "string") return false;
   let u;
@@ -44,7 +43,7 @@ function isValidUrl(input) {
   return typeof u.hostname === "string" && u.hostname.includes(".");
 }
 
-function SingleLinkInput({ required = false, value, onChange, missing = false }) {
+function SingleLinkInput({ required = false, value, onChange }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
   const currentValue = value !== undefined ? value : internalValue;
   const handleChange = (e) => {
@@ -52,20 +51,13 @@ function SingleLinkInput({ required = false, value, onChange, missing = false })
     else setInternalValue(e.target.value);
   };
   return (
-    <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-        <ProviderIcon input={currentValue} size={16} />
-      </span>
-      <input name="link" type="url" aria-required={required}
-        value={currentValue} onChange={handleChange}
-        placeholder="https://ornek.com"
-        className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
-      />
-    </div>
+    <Input {...LINK_INPUT} icon={getProviderIcon(currentValue)} name="link" aria-required={required || undefined}
+      value={currentValue ?? ""} onChange={handleChange} placeholder="https://ornek.com"
+    />
   );
 }
 
-function MultiLinkInput({ required = false, value, onChange, missing = false }) {
+function MultiLinkInput({ required = false, value, onChange }) {
   const normalizeIncoming = (v) => {
     if (Array.isArray(v)) return v;
     if (typeof v === "string" && v.length > 0) return [v];
@@ -112,7 +104,6 @@ function MultiLinkInput({ required = false, value, onChange, missing = false }) 
         {fields.map((v, index) => {
           const placeholder = index === fields.length - 1 && v === "" ? "Yeni bağlantı ekleyin..." : "https://ornek.com/profil";
           const isTrailingEmpty = index === fields.length - 1 && v === "";
-          const isMissingField = missing && index === 0 && v === "";
 
           return (
             <motion.div key={index} layout className="relative"
@@ -121,58 +112,36 @@ function MultiLinkInput({ required = false, value, onChange, missing = false }) 
               exit={{ opacity: 0, height: 0, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
             >
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                <ProviderIcon input={v} size={16} />
-              </span>
-
-              <input name="link[]" type="url" aria-required={required && index === 0}
+              <Input {...LINK_INPUT} icon={getProviderIcon(v)} name="link[]" aria-required={(required && index === 0) || undefined}
                 value={v} onChange={(e) => updateAt(index, e.target.value)} placeholder={placeholder}
-                className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${isMissingField ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
+                className={isTrailingEmpty ? undefined : "[&_input]:pr-10"}
               />
 
               {!isTrailingEmpty && (
-                <button type="button" onClick={() => removeAt(index)} aria-label="Linki kaldır"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-md border border-ink/10 bg-ink/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
-                >
-                  <X size={14} />
-                </button>
+                <IconButton icon={X} label="Linki kaldır" variant="ghost" size="icon-sm" onClick={() => removeAt(index)}
+                  className="absolute inset-y-0 right-1.5 my-auto"
+                />
               )}
             </motion.div>
           );
         })}
       </AnimatePresence>
-      <span className="px-0.5 text-2xs text-neutral-500">Geçerli bir bağlantı girildiğinde yeni alan açılır</span>
+      <span className="text-2xs leading-relaxed text-subtle-foreground">Geçerli bir bağlantı girildiğinde yeni alan açılır</span>
     </div>
   );
 }
 
-export function LinkAnswerInput({ allowMultiple = false, required = false, value, onChange, missing = false }) {
+// The surrounding Field marks the boxes red while the question is missing
+export function LinkAnswerInput({ allowMultiple = false, required = false, value, onChange }) {
   return allowMultiple
-    ? <MultiLinkInput required={required} value={value} onChange={onChange} missing={missing} />
-    : <SingleLinkInput required={required} value={value} onChange={onChange} missing={missing} />;
+    ? <MultiLinkInput required={required} value={value} onChange={onChange} />
+    : <SingleLinkInput required={required} value={value} onChange={onChange} />;
 }
 
 export function DisplayFormLink({ question, questionNumber, description, required = false, allowMultiple = false, value, onChange, missing = false }) {
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <div className="flex gap-3">
-          <QuestionNumber number={questionNumber} missing={missing} />
-
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
-            </p>
-            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-          </div>
-        </div>
-
-        <div className="mt-3">
-          <LinkAnswerInput allowMultiple={allowMultiple} required={required} value={value} onChange={onChange} missing={missing} />
-        </div>
-
-        <QuestionHint required={required} missing={missing} />
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}>
+      <LinkAnswerInput allowMultiple={allowMultiple} required={required} value={value} onChange={onChange} />
+    </QuestionField>
   );
 }

@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronRight, CircleAlert, ClockPlus, Loader2, Timer } from "lucide-react";
+import { ChevronRight, ClockPlus, Timer } from "lucide-react";
+import { Button, Notice } from "@skylab-kulubu/skylcn-ui";
 import { HOUR, MINUTE, clock, durationAdjective, durationText, formatLongDate, formatShortDate, leftText } from "@/lib/form-timing";
 import { HeaderNote } from "./FormDisplayerComponents";
-
-const LINK_BUTTON = "underline underline-offset-3 transition-colors";
 
 function useRemaining(deadlineAt, now) {
   const deadline = deadlineAt ? new Date(deadlineAt).getTime() : null;
@@ -23,8 +22,8 @@ function useRemaining(deadlineAt, now) {
 }
 
 function toneOf(remaining) {
-  if (remaining <= 10 * MINUTE) return "text-red-300";
-  if (remaining <= HOUR) return "text-amber-300";
+  if (remaining <= 10 * MINUTE) return "text-destructive";
+  if (remaining <= HOUR) return "text-warning";
   return "text-skylab-300";
 }
 
@@ -78,7 +77,7 @@ export function TaskMeta({ attempt, closesAt, now }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <Timer size={12} />
-        Bitiş <span className="tabular-nums text-neutral-300">{formatShortDate(attempt.deadlineAt)}</span> · <TimeLeft deadlineAt={attempt.deadlineAt} now={now} />
+        Bitiş <span className="tabular-nums text-secondary-foreground">{formatShortDate(attempt.deadlineAt)}</span> · <TimeLeft deadlineAt={attempt.deadlineAt} now={now} />
       </span>
     );
   }
@@ -87,7 +86,7 @@ export function TaskMeta({ attempt, closesAt, now }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <Timer size={12} />
-        Kapanış <span className="tabular-nums text-neutral-300">{formatShortDate(closesAt)}</span> · <TimeLeft deadlineAt={closesAt} now={now} />
+        Kapanış <span className="tabular-nums text-secondary-foreground">{formatShortDate(closesAt)}</span> · <TimeLeft deadlineAt={closesAt} now={now} />
       </span>
     );
   }
@@ -102,7 +101,7 @@ export function ExtensionNotice({ attempt }) {
   return (
     <HeaderNote icon={ClockPlus}>
       Ekip sürenize {durationText(extension.minutes)} ekledi
-      <span className="text-neutral-500"> · <span className="whitespace-nowrap">yeni bitiş {formatShortDate(attempt.deadlineAt)}</span></span>
+      <span className="text-subtle-foreground"> · <span className="whitespace-nowrap">yeni bitiş {formatShortDate(attempt.deadlineAt)}</span></span>
     </HeaderNote>
   );
 }
@@ -112,10 +111,10 @@ export function DeliverablesHeader() {
     <div className="mx-auto w-full max-w-2xl rounded-xl">
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex items-center gap-3">
-          <p className="min-w-0 max-w-[70%] wrap-break-word text-lg font-medium text-neutral-100">Teslim</p>
-          <div className="h-px flex-1 bg-ink/10" />
+          <p className="min-w-0 max-w-[70%] wrap-break-word text-lg font-medium text-foreground">Teslim</p>
+          <div className="h-px flex-1 bg-border" />
         </div>
-        <p className="mt-1 wrap-break-word text-xs text-neutral-400">Görevi bitirdiğinizde aşağıdaki soruları doldurun.</p>
+        <p className="mt-1 wrap-break-word text-xs leading-relaxed text-muted-foreground">Görevi bitirdiğinizde aşağıdaki soruları doldurun.</p>
       </div>
     </div>
   );
@@ -124,8 +123,8 @@ export function DeliverablesHeader() {
 function GateRow({ label, children }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-2.5">
-      <dt className="shrink-0 text-neutral-500">{label}</dt>
-      <dd className="min-w-0 text-right tabular-nums text-neutral-200">{children}</dd>
+      <dt className="shrink-0 text-subtle-foreground">{label}</dt>
+      <dd className="min-w-0 text-right tabular-nums text-secondary-foreground">{children}</dd>
     </div>
   );
 }
@@ -141,18 +140,18 @@ export function TaskGate({ attempt, now, onStart, starting = false, error = null
       <div className="flex gap-3">
         <Timer size={18} strokeWidth={1.8} className="mt-0.5 shrink-0 text-skylab-300" />
         <div>
-          <p className="text-sm font-medium text-neutral-100">Bu görev süreli</p>
-          <p className="mt-1 text-xs leading-5 text-neutral-400">
+          <p className="text-sm font-medium text-foreground">Bu görev süreli</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
             Başlattığınız anda {durationAdjective(minutes)} süreniz başlar ve durdurulamaz. Süre sunucuda işler; sekmeyi kapatsanız ya da başka bir cihazdan girseniz de devam eder.
           </p>
         </div>
       </div>
 
-      <dl className="mt-5 divide-y divide-ink/5 border-y border-ink/5 text-xs">
+      <dl className="mt-5 divide-y divide-border-subtle border-y border-border-subtle text-xs">
         <GateRow label="Süre">{durationText(minutes)}</GateRow>
         <GateRow label="Bitiş">
           {formatLongDate(end)}
-          <span className="block text-2xs text-neutral-500">şimdi başlatırsanız</span>
+          <span className="block text-2xs text-subtle-foreground">şimdi başlatırsanız</span>
         </GateRow>
         {attempt?.startClosesAt && <GateRow label="Son başlama">{formatLongDate(attempt.startClosesAt)}</GateRow>}
         {deliverables.length > 0 && <GateRow label="Teslim">{deliverables.join(", ")}</GateRow>}
@@ -161,39 +160,28 @@ export function TaskGate({ attempt, now, onStart, starting = false, error = null
       <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2.5">
         {confirming ? (
           <>
-            <p className="w-full text-xs leading-5 text-neutral-300">
-              Süreniz şimdi başlayacak. Bitiş <span className="tabular-nums text-neutral-100">{formatLongDate(end)}</span>.
+            <p className="w-full text-xs leading-5 text-secondary-foreground">
+              Süreniz şimdi başlayacak. Bitiş <span className="tabular-nums text-foreground">{formatLongDate(end)}</span>.
             </p>
-            <button type="button" onClick={onStart} disabled={starting}
-              className="relative inline-flex h-8 min-w-24 items-center justify-center overflow-hidden rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-3 py-2 text-xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 disabled:opacity-60"
-            >
-              {starting ? <Loader2 size={14} className="animate-spin" /> : "Başlat"}
-            </button>
-            <button type="button" onClick={() => setConfirming(false)} disabled={starting}
-              className={`text-xs ${LINK_BUTTON} text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50`}
-            >
+            <Button variant="primary" size="md" onClick={onStart} pending={starting} className="min-w-24">
+              Başlat
+            </Button>
+            <Button variant="ghost" size="md" onClick={() => setConfirming(false)} disabled={starting}>
               Vazgeç
-            </button>
+            </Button>
           </>
         ) : (
           <>
-            <button type="button" onClick={() => setConfirming(true)}
-              className="relative inline-flex h-8 min-w-24 items-center justify-center gap-1.5 overflow-hidden rounded-lg border border-ink/10 bg-ink/5 px-3 py-2 text-xs font-semibold text-neutral-100 transition-colors hover:border-pink-100/40 hover:bg-pink-100/30 hover:text-pink-100"
-            >
+            <Button variant="outline" size="md" onClick={() => setConfirming(true)} className="min-w-24">
               Görevi başlat
-              <ChevronRight size={14} />
-            </button>
-            <span className="text-xs text-neutral-500">Görev metni ve sorular başlatınca açılır.</span>
+              <ChevronRight />
+            </Button>
+            <span className="text-xs text-subtle-foreground">Görev metni ve sorular başlatınca açılır.</span>
           </>
         )}
       </div>
 
-      {error && (
-        <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-red-200" role="alert">
-          <CircleAlert size={14} className="mt-0.5 shrink-0 text-red-300" />
-          {error}
-        </p>
-      )}
+      {error && <Notice tone="danger" className="mt-3">{error}</Notice>}
     </div>
   );
 }

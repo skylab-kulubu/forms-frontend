@@ -17,6 +17,7 @@ import StatusScreen from "./components/StatusScreen";
 import TaskBlock from "./components/TaskBlock";
 import { Countdown, DeliverablesHeader, ExtensionNotice, TaskGate, TaskMeta, useIsLate } from "./components/TimedParts";
 import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
+import ThemeSwitch from "./components/ThemeSwitch";
 import Background from "../Background";
 import { BrandSlot } from "@/brands/BrandContext";
 import NoticeDock, { NoticeDockPlacement } from "../utils/NoticeDock";
@@ -24,7 +25,8 @@ import LoginButton from "../utils/LoginButton";
 import { formatLongDate, settledScreenOf } from "@/lib/form-timing";
 import { hasEventIdentity } from "@/lib/event-handoff";
 import { guestNoticeCopy } from "./guestNoticeCopy";
-import { CalendarClock, CircleAlert, History, Loader2, LogIn, LogOut, RotateCcw, ShieldAlert, Timer, TimerOff } from "lucide-react";
+import { CalendarClock, CircleAlert, History, LogIn, LogOut, RotateCcw, Send, ShieldAlert, Timer, TimerOff } from "lucide-react";
+import { Button, ControlSizeProvider, SkylabLoader } from "@skylab-kulubu/skylcn-ui";
 import { motion, AnimatePresence } from "framer-motion";
 
 const containerVariants = {
@@ -71,7 +73,7 @@ function hasValue(field, value) {
 function PageFooter() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }}
-      data-slot="page-footer" className="font-platform shrink-0 mt-12 mb-8 pb-[env(safe-area-inset-bottom)] flex flex-col items-center gap-4 text-xs font-medium text-neutral-500"
+      data-slot="page-footer" className="font-platform shrink-0 mt-12 mb-8 pb-[env(safe-area-inset-bottom)] flex flex-col items-center gap-4 text-xs font-medium text-subtle-foreground"
     >
       <div className="flex flex-col items-center gap-1.5">
         <div className="flex items-center gap-2">
@@ -81,28 +83,30 @@ function PageFooter() {
             <span role="img" aria-label="Skylab Logo" className="mt-1 size-5 shrink-0 bg-skylab-500 mask-[url(/skylab.svg)] mask-contain mask-center mask-no-repeat" />
             <span className="text-sm font-semibold uppercase tracking-wide text-skylab-400">SKY LAB Forms</span>
           </a>
-          <span className="text-neutral-600">by WEBLAB</span>
+          <span className="text-faint-foreground">by WEBLAB</span>
         </div>
 
         <a href="https://github.com/fatiihnaz" target="_blank" rel="noopener noreferrer"
-          className="text-3xs text-neutral-300/50 hover:text-skylab-500 -mt-1 transition-colors">
+          className="text-3xs text-subtle-foreground/70 hover:text-skylab-500 -mt-1 transition-colors">
           Developed by Fatih Naz
         </a>
       </div>
 
       <div className="flex items-center gap-3 md:gap-4 text-2xs">
-        <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
+        <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-secondary-foreground">
           Kullanım Koşulları
         </a>
-        <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
-        <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-neutral-300">
+        <span className="h-1 w-1 rounded-full bg-border-strong"></span>
+        <a href="https://skyl.app/kvkk-metni" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-secondary-foreground">
           Gizlilik Politikası
         </a>
-        <span className="h-1 w-1 rounded-full bg-neutral-700"></span>
+        <span className="h-1 w-1 rounded-full bg-border-strong"></span>
         <a href="mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%20Sorun%20Bildirimi" className="transition-colors hover:text-skylab-400">
           Sorun Bildir
         </a>
       </div>
+
+      <ThemeSwitch />
     </motion.div>
   );
 }
@@ -372,16 +376,17 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
       return (
         <RestoreNoticeDock key="draft" icon={RotateCcw} duration={LINKED_INFO_SECONDS} onClose={hideDraftPrompt} onDiscard={handleDiscardDraft}>
           Kaldığınız yerden devam ediyorsunuz
-          {draftTime && <span className="text-neutral-500"> · <span className="whitespace-nowrap">taslak {draftTime}</span></span>}
+          {draftTime && <span className="text-subtle-foreground"> · <span className="whitespace-nowrap">taslak {draftTime}</span></span>}
         </RestoreNoticeDock>
       );
     }
     return null;
   };
   const notice = renderNotice();
+  const isWaiting = isSubmitting || isAnyFileUploading || isScanWaiting;
 
   const page = (
-    <div ref={scrollRef} className={embedded ? "relative w-full font-sans text-neutral-200" : "relative h-dvh w-full font-sans text-neutral-200 overflow-y-auto scrollbar"}>
+    <div ref={scrollRef} className={embedded ? "relative w-full font-sans text-secondary-foreground" : "relative h-dvh w-full font-sans text-secondary-foreground overflow-y-auto scrollbar"}>
 
       <AnimatePresence>
         {!isFinished && !embedded && (
@@ -410,7 +415,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
           >
             {!embedded && <div className="h-12 w-full shrink-0" />}
 
-            <div data-slot="form-card" className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-ink/10 bg-ink/3 shadow-2xl">
+            <div data-slot="form-card" className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-border bg-card shadow-2xl">
               <BrandSlot name="CardTop" />
               <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
 
@@ -434,8 +439,8 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                       )}
                       {!isTimed && activeClosesAt && (
                         <SwapNote key="closing" swapKey={isAuthed ? "user" : "guest"} icon={CalendarClock}>
-                          <span className="whitespace-nowrap text-neutral-200">{formatLongDate(activeClosesAt)}</span> itibarıyla kapanır
-                          {isAuthed && <span className="text-neutral-500"> · gönderilmemiş taslaklar alınmaz</span>}
+                          <span className="whitespace-nowrap text-secondary-foreground">{formatLongDate(activeClosesAt)}</span> itibarıyla kapanır
+                          {isAuthed && <span className="text-subtle-foreground"> · gönderilmemiş taslaklar alınmaz</span>}
                         </SwapNote>
                       )}
                       <IdentityNote key="identity" />
@@ -481,7 +486,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                         const isMissing = missingFieldIds.includes(field.id);
                         const isRequested = Boolean(activeRevision?.questionIds?.includes(field.id));
                         const requestedAccent = isRequested
-                          ? `before:absolute before:-left-3 before:top-2 before:w-0.5 before:rounded-full before:bg-sky-400/50 sm:before:-left-5 ${isLast ? "before:bottom-2" : "before:bottom-8"}`
+                          ? `before:absolute before:-left-3 before:top-2 before:w-0.5 before:rounded-full before:bg-info/50 sm:before:-left-5 ${isLast ? "before:bottom-2" : "before:bottom-8"}`
                           : "";
 
                         return (
@@ -504,7 +509,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                               if (el) el.style.overflow = "visible";
                             }}
                             style={{ zIndex: visibleFields.length - index }}
-                            className={`relative ${isLast || isSeparator ? "" : "border-b border-ink/5 pb-6"} ${requestedAccent}`}
+                            className={`relative ${isLast || isSeparator ? "" : "border-b border-border-subtle pb-6"} ${requestedAccent}`}
                           >
                             {isRequested && <RevisionFlag />}
                             <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionNumbers.get(field.id)} value={formValues[field.id]}
@@ -519,24 +524,24 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     </AnimatePresence>
                     </div>
 
-                    <motion.div variants={itemVariants} className="mt-auto border-t border-ink/5 px-2 pt-6 md:px-4">
+                    <motion.div variants={itemVariants} className="mt-auto border-t border-border-subtle px-2 pt-6 md:px-4">
                       <div className={`flex flex-col items-stretch gap-4 sm:flex-row sm:justify-between sm:gap-6 ${nextCopy ? "sm:items-end" : "sm:items-center"}`}>
                         {nextCopy ? <NextStepNote text={nextCopy} /> : (
                           <div className="order-2 min-w-0 sm:order-1">
                             <RespondentLine savedAt={isAuthed ? lastSavedAt : null} compact />
                           </div>
                         )}
-                        <motion.button data-slot="submit" onClick={() => onSubmit()} disabled={isSubmitting || isAnyFileUploading || isScanWaiting} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                          className={`relative order-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-8 py-3 min-w-30 text-sm border-[1.5px] font-semibold transition-all disabled:opacity-50 disabled:pointer-events-none sm:order-2 sm:ml-auto sm:shrink-0
-                          ${isSubmitting ? "bg-neutral-400/40 border-neutral-200/50 text-neutral-400" : "bg-skylab-400/40 border-skylab-300/50 hover:bg-pink-200/60"}`}
+                        {/* Button's pending state would hide why the form waits, so the reason stays written beside the mark */}
+                        <Button data-slot="submit" variant="solid" size="lg" onClick={() => onSubmit()} disabled={isWaiting} hoverIcon={isWaiting ? undefined : Send}
+                          className="order-1 min-w-30 sm:order-2 sm:ml-auto sm:shrink-0"
                         >
-                          {isSubmitting || isAnyFileUploading || isScanWaiting ? (
+                          {isWaiting ? (
                             <>
-                              <Loader2 className="animate-spin" size={16} />
+                              <SkylabLoader size={16} className="text-current" />
                               <span>{isSubmitting ? "Gönderiliyor" : isAnyFileUploading ? "Dosya yükleniyor" : "Dosya taranıyor"}</span>
                             </>
                           ) : "Gönder"}
-                        </motion.button>
+                        </Button>
                       </div>
                       {nextCopy ? (
                         <RespondentLine savedAt={isAuthed ? lastSavedAt : null}
@@ -548,7 +553,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     </motion.div>
                   </GuestUploadContext.Provider>
                 ) : (
-                  <motion.div variants={itemVariants} className="flex flex-1 min-h-[30vh] items-center justify-center text-sm text-neutral-400">
+                  <motion.div variants={itemVariants} className="flex flex-1 min-h-[30vh] items-center justify-center text-sm text-muted-foreground">
                     Bu formda gösterilecek soru yok.
                   </motion.div>
                 )}
@@ -567,7 +572,9 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
 
   return (
     <FormAuthContext.Provider value={authValue}>
-      {embedded ? <NoticeDockPlacement.Provider value="contained">{page}</NoticeDockPlacement.Provider> : page}
+      <ControlSizeProvider size="lg">
+        {embedded ? <NoticeDockPlacement.Provider value="contained">{page}</NoticeDockPlacement.Provider> : page}
+      </ControlSizeProvider>
     </FormAuthContext.Provider>
   );
 }

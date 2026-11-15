@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
+import { Textarea } from "@skylab-kulubu/skylcn-ui";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { RichText } from "@/app/components/rich-text/RichText";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { QuestionField } from "./QuestionParts";
+
+// field-sizing grows the box where it is supported; this keeps it growing in browsers without it
+function growToContent(event) {
+  const box = event.currentTarget;
+  box.style.height = "auto";
+  box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`;
+}
 
 export function CreateFormLongText({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
   const {prop, bind, toggle} = useProp(props, onPropsChange, readOnly);
@@ -43,45 +50,20 @@ export function DisplayFormLongText({ question, questionNumber, description, req
   const currentValue = value !== undefined ? value : internalValue;
   const handleChange = onChange !== undefined ? onChange : (e) => setInternalValue(e.target.value);
 
-  const textareaRef = useRef(null);
-
-  const handleInput = (e) => {
-    const textarea = textareaRef.current;
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
-  };
-
   const control = (
-    <textarea name="long_text" rows={3} aria-required={required}
-      value={currentValue} ref={textareaRef}
-      onChange={handleChange} onInput={handleInput}
+    <Textarea name="long_text" rows={3} aria-required={required || undefined}
+      value={currentValue ?? ""} onChange={handleChange} onInput={growToContent}
       placeholder="Cevabınızı buraya yazın."
-      className={`block overflow-hidden w-full resize-y rounded-lg border bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
     />
   );
 
   if (compact) {
-    return <CompactField question={question} required={required}>{control}</CompactField>;
+    return <CompactField question={question} required={required} missing={missing}>{control}</CompactField>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <div className="flex gap-3">
-          <QuestionNumber number={questionNumber} missing={missing} />
-
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-xs text-red-200/70">*</span>}
-            </p>
-            {description && ( <RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-          </div>
-        </div>
-
-        <div className="mt-3">{control}</div>
-
-        <QuestionHint required={required} missing={missing} />
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}>
+      {control}
+    </QuestionField>
   );
 }

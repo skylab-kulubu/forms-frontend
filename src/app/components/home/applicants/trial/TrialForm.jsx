@@ -3,7 +3,8 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { CircleAlert, Loader2 } from "lucide-react";
+import { CircleAlert, Send } from "lucide-react";
+import { Button, SkylabLoader } from "@skylab-kulubu/skylcn-ui";
 import { REGISTRY } from "@/app/components/form-registry";
 import {
   CopyEmailNote, FormAuthContext, FormDisplayerHeader, GuestNoticeDock, IdentityNote, MissingFields, RespondentLine, WARNING_SECONDS,
@@ -143,19 +144,18 @@ function TrialNotice({ trial }) {
   return <AnimatePresence mode="wait">{notice}</AnimatePresence>;
 }
 
+// The form page's send button, so the trial sends the way the real form does
 function SubmitButton({ trial }) {
   const busy = trial.isSubmitting || trial.isAnyFileUploading;
   return (
-    <motion.button type="button" data-slot="submit" onClick={() => trial.submit()} disabled={busy} layout transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      className={`relative inline-flex min-w-30 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border-[1.5px] px-8 py-3 text-sm font-semibold transition-all disabled:pointer-events-none disabled:opacity-50 ${busy ? "border-neutral-200/50 bg-neutral-400/40 text-neutral-400" : "border-skylab-300/50 bg-skylab-400/40 hover:bg-pink-200/60"}`}
-    >
+    <Button data-slot="submit" variant="solid" size="lg" onClick={() => trial.submit()} disabled={busy} hoverIcon={busy ? undefined : Send} className="min-w-30 shrink-0">
       {busy ? (
         <>
-          <Loader2 className="animate-spin" size={16} />
+          <SkylabLoader size={16} className="text-current" />
           <span>{trial.isSubmitting ? "Gönderiliyor" : "Dosya yükleniyor"}</span>
         </>
       ) : "Gönder"}
-    </motion.button>
+    </Button>
   );
 }
 

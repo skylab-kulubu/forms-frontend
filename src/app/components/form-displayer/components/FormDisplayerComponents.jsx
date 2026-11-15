@@ -3,6 +3,7 @@
 import { createContext, Fragment, useContext, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock, FilePenLine, Flag, LogOut, Mail, TimerOff, UserRound, UserRoundX } from "lucide-react";
+import { Notice } from "@skylab-kulubu/skylcn-ui";
 import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 import NoticeDock from "@/app/components/utils/NoticeDock";
 import LoginButton from "@/app/components/utils/LoginButton";
@@ -10,8 +11,8 @@ import { loginWithKeycloak } from "@/lib/authActions";
 import { formatJourneyDate } from "@/lib/workflow-journey";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors";
-const LINK_NEUTRAL = `${LINK_BUTTON} text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50`;
-const LINK_DANGER = `${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`;
+const LINK_NEUTRAL = `${LINK_BUTTON} text-secondary-foreground decoration-border-strong hover:text-foreground hover:decoration-foreground/50`;
+const LINK_DANGER = `${LINK_BUTTON} text-destructive decoration-destructive/35 hover:decoration-destructive/80`;
 const NOTE_EASE = [0.22, 1, 0.36, 1];
 
 export const WARNING_SECONDS = 30;
@@ -66,21 +67,21 @@ export function FormDisplayerHeader({ title, description, children }) {
   return (
     <div className="max-w-2xl px-2 md:px-4">
       {hasTitle && (
-        <h1 data-slot="form-title" className="text-2xl font-semibold tracking-tight text-neutral-50 sm:text-3xl">
+        <h1 data-slot="form-title" className="text-2xl font-semibold tracking-tight text-foreground-strong sm:text-3xl">
           {title}
         </h1>
       )}
 
       {hasDescription && (
         <div
-          className="mt-3 space-y-2 text-sm leading-relaxed text-neutral-300
-            [&_p]:m-0 [&_p+p]:mt-2 [&_strong]:text-neutral-100 [&_em]:text-neutral-300
+          className="mt-3 space-y-2 text-sm leading-relaxed text-secondary-foreground
+            [&_p]:m-0 [&_p+p]:mt-2 [&_strong]:text-foreground [&_em]:text-secondary-foreground
             [&_a]:text-skylab-300 [&_a]:underline [&_a]:decoration-skylab-300/30 [&_a]:underline-offset-2 [&_a]:wrap-break-word [&_a:hover]:decoration-skylab-300/70
-            [&_blockquote]:border-l-2 [&_blockquote]:border-ink/10 [&_blockquote]:pl-3 [&_blockquote]:text-neutral-100 [&_blockquote]:italic
+            [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-foreground [&_blockquote]:italic
             [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
-            [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:text-neutral-100
-            [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-neutral-100
-            [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-neutral-100"
+            [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:text-foreground
+            [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-foreground
+            [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-foreground"
           dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
         />
       )}
@@ -92,12 +93,12 @@ export function FormDisplayerHeader({ title, description, children }) {
 
 export function HeaderNote({ icon: Icon, children }) {
   return (
-    <motion.div className="flex items-start gap-2 text-xs leading-5 text-neutral-400"
+    <motion.div className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"
       initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6, transition: { duration: 0.15, ease: NOTE_EASE } }}
       transition={{ duration: 0.2, ease: NOTE_EASE }}
     >
-      <span className="flex h-5 shrink-0 items-center text-neutral-500">
+      <span className="flex h-5 shrink-0 items-center text-subtle-foreground">
         <Icon size={13} />
       </span>
       <p className="min-w-0 flex-1">{children}</p>
@@ -111,26 +112,23 @@ export function RevisionNote({ revision }) {
   const count = revision.questionIds?.length ?? 0;
 
   return (
-    <motion.div className="rounded-xl border border-sky-400/20 bg-sky-400/5 px-3.5 py-3"
-      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6, transition: { duration: 0.15, ease: NOTE_EASE } }}
       transition={{ duration: 0.2, ease: NOTE_EASE }}
     >
-      <p className="flex items-center gap-1.5 text-2xs font-medium text-sky-300">
-        <FilePenLine size={12} className="shrink-0" />
-        {date ? `Ekip düzeltme istedi · ${date}` : "Ekip düzeltme istedi"}
-      </p>
-      {revision.note && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-neutral-200">{revision.note}</p>}
-      <p className="mt-2 text-2xs leading-relaxed text-neutral-400">
-        {count > 0 ? `İşaretli ${count} soru aşağıda vurgulandı. ` : ""}Önceki cevaplarınız dolu; yalnız gerekenleri değiştirip gönderin.
-      </p>
+      <Notice tone="info" icon={FilePenLine} title={date ? `Ekip düzeltme istedi · ${date}` : "Ekip düzeltme istedi"}>
+        {revision.note && <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{revision.note}</p>}
+        <p className={`text-2xs ${revision.note ? "mt-1.5" : ""}`}>
+          {count > 0 ? `İşaretli ${count} soru aşağıda vurgulandı. ` : ""}Önceki cevaplarınız dolu; yalnız gerekenleri değiştirip gönderin.
+        </p>
+      </Notice>
     </motion.div>
   );
 }
 
 export function RevisionFlag() {
   return (
-    <p className="flex items-center gap-1.5 px-2 pt-2 text-2xs font-medium text-sky-300 md:px-4">
+    <p className="flex items-center gap-1.5 px-2 pt-2 text-2xs font-medium text-info md:px-4">
       <Flag size={11} className="shrink-0" />
       Ekip bu soruda düzeltme istedi
     </p>
@@ -160,7 +158,7 @@ export function useLoginPrompt() {
 export function LoginConfirm({ prompt }) {
   return (
     <>
-      <span className="text-neutral-300">Yüklediğiniz dosyaları girişten sonra yeniden yüklemeniz gerekecek.</span>{" "}
+      <span className="text-secondary-foreground">Yüklediğiniz dosyaları girişten sonra yeniden yüklemeniz gerekecek.</span>{" "}
       <NoteLink onClick={prompt.confirm} danger>Yine de giriş yap</NoteLink>{" "}
       <NoteLink onClick={prompt.cancel}>Vazgeç</NoteLink>
     </>
@@ -168,7 +166,7 @@ export function LoginConfirm({ prompt }) {
 }
 
 function identityNoteOf(auth, prompt) {
-  const dot = <span className="text-neutral-600"> · </span>;
+  const dot = <span className="text-faint-foreground"> · </span>;
 
   if (auth.respondent === "user" && auth.logoutConfirming) {
     return {
@@ -190,7 +188,7 @@ function identityNoteOf(auth, prompt) {
       key: "user", icon: UserRound,
       content: (
         <>
-          <span className="text-neutral-200">{displayName(auth.user)}</span> olarak yanıtlıyorsunuz.{" "}
+          <span className="text-secondary-foreground">{displayName(auth.user)}</span> olarak yanıtlıyorsunuz.{" "}
           <NoteLink onClick={auth.requestLogout}>Çıkış yap</NoteLink>
         </>
       ),
@@ -254,7 +252,7 @@ export function MissingFields({ fields, onJump }) {
         <Fragment key={field.id}>
           {index > 0 && ", "}
           <button type="button" onClick={() => onJump(field.id)}
-            className={`${LINK_BUTTON} text-red-200 decoration-red-200/35 hover:decoration-red-200/80`}
+            className={`${LINK_BUTTON} text-destructive-foreground decoration-destructive-foreground/35 hover:decoration-destructive-foreground/80`}
           >
             {field.number}. soru
           </button>
@@ -276,7 +274,7 @@ export function GuestNoticeDock({ notice, onClose, onJump, onRetry = null }) {
       {prompt.confirming ? <LoginConfirm prompt={prompt} /> : (
         <>
           {notice.jump && (
-            <button type="button" onClick={() => onJump(notice.jump.id)} className={`${LINK_BUTTON} text-neutral-100 decoration-ink/30 hover:decoration-ink/70`}>
+            <button type="button" onClick={() => onJump(notice.jump.id)} className={`${LINK_BUTTON} text-foreground decoration-border-strong hover:decoration-foreground/70`}>
               {notice.jump.label}
             </button>
           )}
@@ -292,18 +290,18 @@ export function NextStepNote({ text }) {
 
   return (
     <div className="min-w-0 max-w-104">
-      <p className="text-2xs text-neutral-500">Gönderdikten sonra</p>
-      <p className="mt-0.5 text-xs leading-5 text-neutral-300">{text}</p>
+      <p className="text-2xs text-subtle-foreground">Gönderdikten sonra</p>
+      <p className="mt-0.5 text-xs leading-5 text-secondary-foreground">{text}</p>
     </div>
   );
 }
 
 export function CopyEmailNote({ email, className = "mt-1.5" }) {
   return (
-    <p className={`${className} flex items-center gap-1.5 text-2xs text-neutral-500`}>
+    <p className={`${className} flex items-center gap-1.5 text-2xs text-subtle-foreground`}>
       <Mail size={12} className="shrink-0" />
       <span className="min-w-0">
-        Bu formla ilgili e-postalar <span className="break-all text-neutral-200">{email}</span> adresine gönderilecek.
+        Bu formla ilgili e-postalar <span className="break-all text-secondary-foreground">{email}</span> adresine gönderilecek.
       </span>
     </p>
   );
@@ -324,7 +322,7 @@ export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
 
   if (!isAuthed && prompt.confirming) {
     return (
-      <p className={`${compact ? "" : "mt-5 "}flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500`}>
+      <p className={`${compact ? "" : "mt-5 "}flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-subtle-foreground`}>
         <UserRoundX size={12} className="shrink-0" />
         <LoginConfirm prompt={prompt} />
       </p>
@@ -333,16 +331,16 @@ export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
 
   if (compact) {
     return (
-      <p className="flex h-4 min-w-0 flex-wrap items-center gap-x-2 overflow-hidden text-2xs text-neutral-500">
+      <p className="flex h-4 min-w-0 flex-wrap items-center gap-x-2 overflow-hidden text-2xs text-subtle-foreground">
         <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
           {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
           {isAuthed
-            ? <span className="min-w-0 truncate"><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
+            ? <span className="min-w-0 truncate"><span className="text-secondary-foreground">{fullName}</span> olarak yanıtlıyorsunuz</span>
             : <span className="min-w-0 truncate">{guestText}</span>}
         </span>
         {!isAuthed && (
           <span className="inline-flex items-center gap-x-2 whitespace-nowrap">
-            <span className="text-neutral-700">·</span>
+            <span className="text-faint-foreground">·</span>
             <button type="button" onClick={prompt.request} className={LINK_NEUTRAL}>
               {loginLabel}
             </button>
@@ -350,7 +348,7 @@ export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
         )}
         {isAuthed && savedTime && (
           <span className="inline-flex items-center gap-x-2 whitespace-nowrap">
-            <span className="text-neutral-700">·</span>
+            <span className="text-faint-foreground">·</span>
             <span className="inline-flex items-center gap-1.5">
               <Clock size={11} className="shrink-0" />
               Taslak kaydedildi {savedTime}
@@ -363,16 +361,16 @@ export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
 
   return (
     <>
-      <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-neutral-500">
+      <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-subtle-foreground">
         <span className="inline-flex items-center gap-1.5">
           {isAuthed ? <UserRound size={12} className="shrink-0" /> : <UserRoundX size={12} className="shrink-0" />}
           {isAuthed
-            ? <span><span className="text-neutral-300">{fullName}</span> olarak yanıtlıyorsunuz</span>
+            ? <span><span className="text-secondary-foreground">{fullName}</span> olarak yanıtlıyorsunuz</span>
             : <span>{guestText}</span>}
         </span>
         {!isAuthed && (
           <>
-            <span className="text-neutral-700">·</span>
+            <span className="text-faint-foreground">·</span>
             {!lockedOut && <span>Taslak kaydedilmiyor</span>}
             <button type="button" onClick={prompt.request} className={LINK_NEUTRAL}>
               {loginLabel}
@@ -381,7 +379,7 @@ export function RespondentLine({ savedAt, copyEmail = null, compact = false }) {
         )}
         {isAuthed && savedTime && (
           <>
-            <span className="text-neutral-700">·</span>
+            <span className="text-faint-foreground">·</span>
             <span className="inline-flex items-center gap-1.5">
               <Clock size={11} className="shrink-0" />
               Taslak kaydedildi {savedTime}

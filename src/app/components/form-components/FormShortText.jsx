@@ -5,11 +5,13 @@ import { useRespondent } from "@/lib/hooks/useRespondent";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { RichText } from "@/app/components/rich-text/RichText";
-import { Type, Mail, Phone, Hash, UserRound, Link as LinkIcon } from "lucide-react";
+import { Input } from "@skylab-kulubu/skylcn-ui";
+import { Type, Mail, Phone, Hash, UserRound, Link as LinkIcon, Lock } from "lucide-react";
 import { LinkAnswerInput } from "./FormLink";
 import { CompactField } from "./CompactField";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { QuestionField } from "./QuestionParts";
+
+const AUTOFILL_NOTE = "Oturumunuzdan otomatik dolduruldu";
 
 export const INPUT_TYPES = [
   { id: "text", label: "Düz Metin", icon: Type, placeholder: "Yanıtınızı yazın." },
@@ -126,11 +128,7 @@ export function DisplayFormShortText({ question, questionNumber, description, re
     }
   }, [autoFilled, autoDefault]);
 
-  const inputBorderClass = missing ? "border-red-400/60 focus:border-red-400 focus:ring-red-400/20" : "border-ink/10 focus:border-skylab-400/50 focus:ring-skylab-400/20";
-
   const currentTypeObj = INPUT_TYPES.find(t => t.id === inputType) || INPUT_TYPES[0];
-  const Icon = currentTypeObj.icon;
-  const placeholderText = currentTypeObj.placeholder;
   const htmlInputType = inputType === "name" ? "text" : inputType;
 
   const commit = (e) => {
@@ -141,53 +139,25 @@ export function DisplayFormShortText({ question, questionNumber, description, re
     else setInternalValue(next);
   };
 
-  const textControl = (
-    <div className="relative flex items-center w-full">
-      <div className="absolute left-3.5 text-neutral-500 pointer-events-none flex items-center justify-center">
-        <Icon size={16} strokeWidth={2} />
-      </div>
-
-      <input type={htmlInputType} value={autoFilled || currentValue} onChange={commit} readOnly={isReadOnly} placeholder={placeholderText}
-        className={`block w-full rounded-lg border ${inputBorderClass} bg-neutral-900/60 pl-10 pr-4 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition focus:ring-2 ${isReadOnly ? "cursor-default opacity-70" : ""}`}
-      />
-    </div>
-  );
-
   const control = inputType === "link"
-    ? <LinkAnswerInput allowMultiple={!!allowMultiple} required={required} value={value} onChange={onChange} missing={missing} />
-    : textControl;
+    ? <LinkAnswerInput allowMultiple={!!allowMultiple} required={required} value={value} onChange={onChange} />
+    : (
+      <Input icon={isReadOnly ? Lock : currentTypeObj.icon} type={htmlInputType} value={autoFilled || (currentValue ?? "")} onChange={commit} readOnly={isReadOnly}
+        placeholder={currentTypeObj.placeholder} aria-required={required || undefined}
+      />
+    );
 
   if (compact) {
-    return <CompactField question={question} required={required}>{control}</CompactField>;
+    return <CompactField question={question} required={required} missing={missing}>{control}</CompactField>;
   }
 
+  // A locked name says where it came from instead of "Zorunlu alan"; a prefilled e-mail stays editable and says both
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-
-        <div className="flex gap-3">
-          <QuestionNumber number={questionNumber} missing={missing} />
-          <div className="flex flex-col w-full">
-            <p className="text-sm font-medium text-neutral-100">
-              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-200/70">*</span>}
-            </p>
-            {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-          </div>
-        </div>
-
-        {inputType === "link" ? (
-          <div className="mt-3 w-full">
-            {control}
-          </div>
-        ) : (
-          <div className="mt-3 flex flex-col gap-2 w-full">
-            {control}
-            {(isReadOnly || wasAutoFilled) && <span className="px-0.5 text-2xs text-neutral-500">Oturumunuzdan otomatik dolduruldu</span>}
-          </div>
-        )}
-
-        {!isReadOnly && <QuestionHint required={required} missing={missing} className="mt-1.5" />}
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}
+      hint={isReadOnly ? AUTOFILL_NOTE : undefined}
+    >
+      {control}
+      {wasAutoFilled && !isReadOnly && <span className="text-2xs leading-relaxed text-subtle-foreground">{AUTOFILL_NOTE}</span>}
+    </QuestionField>
   );
 }

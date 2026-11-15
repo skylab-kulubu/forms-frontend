@@ -61,7 +61,7 @@ function StickyShell({ zIndex, label, stuck, sentinelRef, children }) {
       <div className="sticky top-2.5 -mx-3.5 -my-2.5" style={{ zIndex }}>
         <div role="group" aria-label={label}
           className={`rounded-2xl border px-3.5 py-2.5 transition-[background-color,border-color,box-shadow] duration-200
-            ${stuck ? "border-ink/10 bg-neutral-900/95 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl" : "border-transparent"}`}
+            ${stuck ? "border-border bg-background/95 shadow-overlay backdrop-blur-xl" : "border-transparent"}`}
         >
           {children}
         </div>
@@ -76,7 +76,7 @@ export function TimerBar({ title, timer, zIndex = 30 }) {
   return (
     <StickyShell zIndex={zIndex} label="Kalan süre" stuck={stuck} sentinelRef={sentinelRef}>
       <div className="flex items-center justify-between gap-3">
-        <span className="min-w-0 flex-1 truncate text-xs font-medium text-neutral-300">{title}</span>
+        <span className="min-w-0 flex-1 truncate text-xs font-medium text-secondary-foreground">{title}</span>
         {timer}
       </div>
     </StickyShell>
@@ -94,23 +94,23 @@ export default function WorkflowProgress({ workflow, stage, formTitle, fill = 0,
     <StickyShell zIndex={zIndex} label={label} stuck={stuck} sentinelRef={sentinelRef}>
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="relative h-4 min-w-0 flex-1">
-          <span className={`absolute inset-0 truncate text-xs font-medium text-neutral-300 transition duration-200 ${stuck ? "-translate-y-1.5 opacity-0" : ""}`}>
+          <span className={`absolute inset-0 truncate text-xs font-medium text-secondary-foreground transition duration-200 ${stuck ? "-translate-y-1.5 opacity-0" : ""}`}>
             {workflow?.title}
           </span>
-          <span className={`absolute inset-0 truncate text-xs font-medium text-neutral-100 transition duration-200 ${stuck ? "" : "translate-y-1.5 opacity-0"}`}>
+          <span className={`absolute inset-0 truncate text-xs font-medium text-foreground transition duration-200 ${stuck ? "" : "translate-y-1.5 opacity-0"}`}>
             {formTitle}
           </span>
         </span>
         {timer}
-        <span className="shrink-0 whitespace-nowrap text-3xs font-semibold uppercase tracking-[0.14em] tabular-nums text-neutral-300">
+        <span className="shrink-0 whitespace-nowrap text-3xs font-semibold uppercase tracking-[0.14em] tabular-nums text-secondary-foreground">
           Adım {model.stage}
-          {total != null && <span className="text-neutral-500"> / {total}</span>}
+          {total != null && <span className="text-subtle-foreground"> / {total}</span>}
         </span>
       </div>
 
       <div className="flex items-center gap-1">
         {model.segments.map((kind, index) => <Segment key={index} kind={kind} fill={fill} />)}
-        {model.tail && <span className="ml-1 h-0 w-10 shrink-0 border-t border-dashed border-neutral-700" />}
+        {model.tail && <span className="ml-1 h-0 w-10 shrink-0 border-t border-dashed border-border-strong" />}
       </div>
     </StickyShell>
   );

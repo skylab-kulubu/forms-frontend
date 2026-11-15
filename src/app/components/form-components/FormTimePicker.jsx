@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Clock, X } from "lucide-react";
-import { AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { TimePicker } from "@skylab-kulubu/skylcn-ui";
 import { FieldShell } from "./FieldShell";
 import { AutoResizeTextarea } from "./AutoResizeTextarea";
 import { CompactField } from "./CompactField";
 import { useProp } from "@/app/admin/components/form-editor/hooks/useProp";
-import { RichText } from "@/app/components/rich-text/RichText";
-import TimePicker from "../utils/TimePicker";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { QuestionField, pickerLabel } from "./QuestionParts";
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -28,16 +25,6 @@ function parseTime(str) {
 
 function formatTime24({ h, m }) {
   return `${pad2(h)}:${pad2(m)}`;
-}
-
-function toDisplay({ h, m }) {
-  return `${pad2(h)}:${pad2(m)}`;
-}
-
-function clampStep(minute, step) {
-  if (step <= 1) return minute;
-  const r = Math.round(minute / step) * step;
-  return Math.max(0, Math.min(59, r));
 }
 
 export function CreateFormTimePicker({ questionNumber, props, onPropsChange, readOnly, compact = false, ...rest }) {
@@ -72,99 +59,29 @@ export function CreateFormTimePicker({ questionNumber, props, onPropsChange, rea
 
 export function DisplayFormTimePicker({ question, questionNumber, description, required = false, compact = false, value, onChange, missing = false }) {
   const [internalValue, setInternalValue] = useState(value ?? "");
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef(null);
 
   const currentValue = value !== undefined ? (value ?? "") : internalValue;
-  const parsed = parseTime(currentValue) ?? null;
-
-  const initial = useMemo(() => {
-    const now = new Date();
-    return { h: now.getHours(), m: clampStep(now.getMinutes(), 5) };
-  }, []);
-
-  const [tempHour, setTempHour] = useState(parsed?.h ?? initial.h);
-  const [tempMinute, setTempMinute] = useState(parsed?.m ?? initial.m);
-
-  useEffect(() => {
-    if (open) {
-      const p = parseTime(currentValue);
-      setTempHour(p?.h ?? initial.h);
-      setTempMinute(p?.m ?? initial.m);
-    }
-  }, [open, currentValue, initial]);
+  const parsed = parseTime(currentValue);
+  const chosen = parsed ? formatTime24(parsed) : null;
 
   const commit = (nextStr) => {
     if (onChange) onChange({ target: { value: nextStr } });
     else setInternalValue(nextStr);
   };
 
-  const handleApply = () => {
-    commit(formatTime24({ h: tempHour, m: tempMinute }));
-    setOpen(false);
-  };
-
-  const handleClear = () => {
-    commit("");
-    setOpen(false);
-  };
-
-  const display = parsed ? toDisplay(parsed) : "Saat seçin";
-
   const control = (
-    <>
-      <div className="relative" ref={triggerRef}>
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-          <Clock size={16} />
-        </span>
-        <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((s) => !s)}
-          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition hover:bg-ink/5 focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
-        >
-          <span className={parsed ? "text-neutral-100" : "text-neutral-500"}>{display}</span>
-          {parsed && (
-            <span className="ml-2 text-neutral-400 hover:text-neutral-200" onClick={(e) => { e.stopPropagation(); handleClear(); }}>
-              <X size={16} />
-            </span>
-          )}
-        </button>
-
-        <AnimatePresence>
-          {open && (
-            <TimePicker hour={tempHour} minute={tempMinute} anchor={triggerRef}
-              onChange={(h, m) => { setTempHour(h); setTempMinute(m); }}
-              onCancel={() => setOpen(false)}
-              onConfirm={handleApply}
-              onClear={handleClear}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-
-      <input type="hidden" name="time" value={currentValue} />
-    </>
+    <TimePicker value={chosen} onValueChange={(next) => commit(next ?? "")} minuteStep={5} placeholder="Saat seçin"
+      aria-label={pickerLabel(question, chosen)} className={missing ? "border-destructive/50" : undefined}
+    />
   );
 
   if (compact) {
-    return <CompactField question={question} required={required}>{control}</CompactField>;
+    return <CompactField question={question} required={required} missing={missing}>{control}</CompactField>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <div className="flex gap-3">
-          <QuestionNumber number={questionNumber} missing={missing} />
-          <div className="flex flex-col">
-            <p className="text-sm font-medium text-neutral-100">
-              {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>}{" "} {required && <span className="ml-1 text-red-200/70">*</span>}
-            </p>
-            {description && ( <RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-          </div>
-        </div>
-
-        <div className="mt-3">{control}</div>
-
-        <QuestionHint required={required} missing={missing} />
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}>
+      {control}
+    </QuestionField>
   );
 }

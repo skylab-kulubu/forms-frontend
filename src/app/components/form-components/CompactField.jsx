@@ -1,14 +1,11 @@
+import { Field } from "@skylab-kulubu/skylcn-ui";
 import { RichText } from "@/app/components/rich-text/RichText";
 
-export function CompactField({ question, required = false, children }) {
+// A repeater row's field; `invalid` marks its control red without a message, as forms' rows did
+export function CompactField({ question, required = false, missing = false, children }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      {question ? (
-        <label className="px-0.5 text-xs font-medium text-neutral-300">
-          <RichText text={question} />{required && <span className="ml-0.5 text-red-200/70">*</span>}
-        </label>
-      ) : null}
+    <Field label={question ? <RichText text={question} /> : undefined} required={required} invalid={missing || undefined} className="min-w-0">
       {children}
-    </div>
+    </Field>
   );
 }

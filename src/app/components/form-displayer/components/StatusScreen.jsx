@@ -13,16 +13,16 @@ const REPORT_MAILTO = "mailto:info@yildizskylab.com?subject=Skylab%20Forms%20-%2
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "/";
 
 const ICON_TONE = {
-  ok: "text-emerald-400",
-  wait: "text-amber-400",
-  bad: "text-red-300",
+  ok: "text-success",
+  wait: "text-warning",
+  bad: "text-destructive",
   brand: "text-skylab-300",
-  neutral: "text-neutral-300",
+  neutral: "text-secondary-foreground",
 };
 
 export function FooterMark() {
   return (
-    <div data-slot="footer-mark" className="font-platform mt-10 flex items-center gap-1.5 text-2xs text-neutral-600">
+    <div data-slot="footer-mark" className="font-platform mt-10 flex items-center gap-1.5 text-2xs text-faint-foreground">
       <span aria-hidden="true" className="size-3.5 shrink-0 bg-skylab-500 opacity-70 mask-[url(/skylab.svg)] mask-contain mask-center mask-no-repeat" />
       <span>SKY LAB Forms</span>
     </div>
@@ -188,7 +188,7 @@ function PastRun({ items }) {
   return (
     <>
       <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open}
-        className="mt-6 inline-flex items-center gap-1.5 text-xs text-neutral-400 transition-colors hover:text-neutral-200"
+        className="mt-6 inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
       >
         Önceki başvurunuz
         <ChevronDown size={13} className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
@@ -219,9 +219,9 @@ export default function StatusScreen({ onRerun = null, ...props }) {
       <div className="flex w-full flex-1 items-center justify-center">
         <div className="flex w-full max-w-104 flex-col items-center text-center">
           <Icon className={`size-8 ${ICON_TONE[screen.tone] ?? ICON_TONE.neutral}`} strokeWidth={1.6} />
-          {screen.context && <p className="mt-4.5 text-xs text-neutral-500">{screen.context}</p>}
-          <h1 data-slot="screen-title" className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-neutral-50">{screen.title}</h1>
-          {screen.description && <p className="mt-2 max-w-96 text-balance text-sm leading-relaxed text-neutral-400">{screen.description}</p>}
+          {screen.context && <p className="mt-4.5 text-xs text-subtle-foreground">{screen.context}</p>}
+          <h1 data-slot="screen-title" className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-foreground-strong">{screen.title}</h1>
+          {screen.description && <p className="mt-2 max-w-96 text-balance text-sm leading-relaxed text-muted-foreground">{screen.description}</p>}
           <JourneyTimeline items={screen.timeline} className="mt-7" />
           {screen.note && <ReviewNote note={screen.note.note} date={screen.note.date} className="mt-5.5 w-full max-w-88 pl-3" />}
           {screen.past && <PastRun items={screen.past} />}
@@ -229,13 +229,13 @@ export default function StatusScreen({ onRerun = null, ...props }) {
             <div className="mt-7 flex flex-wrap items-center justify-center gap-x-4.5 gap-y-2.5">
               {screen.action && <LoginButton onClick={screen.action.onClick} label={screen.action.label} hoverIcon={screen.action.hoverIcon ?? "arrow"} />}
               {screen.link && (
-                <a href={screen.link.href} className="text-xs text-neutral-300 underline decoration-ink/20 underline-offset-3 transition-colors hover:text-neutral-100 hover:decoration-ink/50">
+                <a href={screen.link.href} className="text-xs text-secondary-foreground underline decoration-border-strong underline-offset-3 transition-colors hover:text-foreground hover:decoration-foreground/50">
                   {screen.link.label}
                 </a>
               )}
             </div>
           )}
-          {screen.hint && <p className="mt-2.5 text-xs text-neutral-500">{screen.hint}</p>}
+          {screen.hint && <p className="mt-2.5 text-xs text-subtle-foreground">{screen.hint}</p>}
         </div>
       </div>
       <FooterMark />

@@ -8,12 +8,12 @@ export function DisplayFormSeparator({ title, description }) {
             <div className="flex flex-col p-2 md:p-4">
                 <div className="flex items-center gap-3">
                     {title && (
-                        <RichText as="p" text={title} className="min-w-0 max-w-[70%] wrap-break-word text-lg font-medium text-neutral-100" />
+                        <RichText as="p" text={title} className="min-w-0 max-w-[70%] wrap-break-word text-lg font-medium text-foreground" />
                     )}
-                    <div className="h-px flex-1 bg-ink/10" />
+                    <div className="h-px flex-1 bg-border" />
                 </div>
                 {description && (
-                    <RichText as="p" text={description} className={`text-xs text-neutral-400 wrap-break-word ${title ? "mt-1" : ""}`} />
+                    <RichText as="p" text={description} className={`text-xs leading-relaxed text-muted-foreground wrap-break-word ${title ? "mt-1" : ""}`} />
                 )}
             </div>
         </div>

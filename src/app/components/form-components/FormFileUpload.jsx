@@ -1,27 +1,17 @@
 "use client";
 
 import { useContext, useMemo, useRef, useState, useEffect } from "react";
-import { CircleAlert, CloudOff, Hourglass, Upload, X, File as FileIcon, Loader2, LockKeyhole, ShieldAlert } from "lucide-react";
-import { RichText } from "@/app/components/rich-text/RichText";
+import { CircleAlert, CloudOff, Hourglass, LockKeyhole, ShieldAlert } from "lucide-react";
+import { FileUpload } from "@skylab-kulubu/skylcn-ui";
 import { GuestUploadContext } from "@/app/components/form-displayer/GuestUploadContext";
 import { LoginConfirm, useLoginPrompt } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import { request, uploadWithProgress } from "@/lib/apiClient";
 import { accountFileRules, fileMatchesGuestTypes, fileStatusOfReason, guestFileRules, guestReasonOf, scanResultCopy, waitCopy } from "@/lib/guest-uploads";
 import { useGuestUploadCapabilityQuery } from "@/lib/hooks/useGuestUploadCapability";
 import { POLL_LIMIT, pollDelay } from "@/app/components/form-displayer/hooks/useGuestUploads";
-import { QuestionNumber, QuestionHint } from "./QuestionParts";
+import { QuestionField, questionLabel } from "./QuestionParts";
 
-const LINK_BUTTON = "underline underline-offset-3 transition-colors text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50";
-
-function formatBytes(bytes) {
-  if (!Number.isFinite(bytes)) return "-";
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const value = bytes / Math.pow(k, i);
-  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${sizes[i]}`;
-}
+const LINK_BUTTON = "underline underline-offset-3 transition-colors text-secondary-foreground decoration-border-strong hover:text-foreground hover:decoration-foreground/50";
 
 function formatMegabytes(bytes) {
   return `${Math.round(bytes / 1024 / 1024)} MB`;
@@ -62,18 +52,13 @@ export function GuestUploadHint({ acceptedFiles, maxSize }) {
   );
 }
 
-function FileQuestionHeader({ question, questionNumber, description, required, missing }) {
-  return (
-    <div className="flex gap-3">
-      <QuestionNumber number={questionNumber} missing={missing} />
-      <div className="flex flex-col">
-        <p className="text-sm font-medium text-neutral-100">
-          {question ? <RichText text={question} /> : <span className="font-normal italic text-neutral-500">Bu soru için metin yok</span>} {required && <span className="ml-1 text-red-400/80">*</span>}
-        </p>
-        {description && (<RichText as="p" text={description} className="my-1 text-xs text-neutral-400" />)}
-      </div>
-    </div>
-  );
+function rulesText(rules) {
+  return `${rules.label} • MAKS ${Math.round(rules.maxBytes / 1024 / 1024)}MB`;
+}
+
+// One file as skylcn's FileUpload draws it; the question takes one file, so its id never changes
+function fileItem(file, status, extra = {}) {
+  return { id: "answer", name: file?.name ?? "", size: Number(file?.size) || 0, status, ...extra };
 }
 
 function AccountFileUpload({ question, questionNumber, description, required = false, acceptedFiles = "", maxSize = 0, onChange, missing = false, onUploadStateChange, fileProblem = null }) {
@@ -81,13 +66,11 @@ function AccountFileUpload({ question, questionNumber, description, required = f
 
   const [internalFile, setInternalFile] = useState(null);
   const [error, setError] = useState("");
-  const [dragging, setDragging] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [scan, setScan] = useState(null);
 
-  const inputRef = useRef(null);
   const pollRef = useRef({ mediaId: null, timer: null });
   const reportUploadingRef = useRef(onUploadStateChange);
 
@@ -210,35 +193,7 @@ function AccountFileUpload({ question, questionNumber, description, required = f
     handleUpload(f);
   };
 
-  const handleInputChange = (e) => {
-    const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-    validateAndSet(f);
-    if (inputRef.current) inputRef.current.value = ""; // allow same file reselect
-  };
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragging(false);
-    if (isUploading) return;
-    const f = e.dataTransfer?.files && e.dataTransfer.files[0] ? e.dataTransfer.files[0] : null;
-    validateAndSet(f);
-  };
-
-  const onDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragging(true);
-  };
-
-  const onDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragging(false);
-  };
-
   const clear = () => {
-    if (inputRef.current) inputRef.current.value = "";
     setError("");
     setInternalFile(null);
     setUploadProgress(0);
@@ -258,114 +213,25 @@ function AccountFileUpload({ question, questionNumber, description, required = f
 
   if (!rules.types.length) {
     return (
-      <div className="mx-auto w-full max-w-2xl rounded-xl">
-        <div className="flex flex-col p-2 md:p-4">
-          <FileQuestionHeader question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} />
-          <LockedBox lock={{ icon: LockKeyhole, title: "Bu soruya dosya yüklenemiyor", detail: "Sorunun istediği dosya türü desteklenmiyor. Form sahibine haber verin." }} />
-        </div>
-      </div>
+      <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} hint={null}>
+        <LockedBox lock={{ icon: LockKeyhole, title: "Bu soruya dosya yüklenemiyor", detail: "Sorunun istediği dosya türü desteklenmiyor. Form sahibine haber verin." }} />
+      </QuestionField>
     );
   }
 
+  const shown = isUploading ? fileItem(currentFile, "uploading", { progress: uploadProgress })
+    : issue ? fileItem(currentFile, "error", { name: issue.title, error: issue.detail, rejected: Boolean(issue.security) })
+      : currentFile ? fileItem(currentFile, scanning ? "scanning" : "ready")
+        : null;
+
+  // A refused pick or a failed upload says why under the drop area until the two-second timer above clears it
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-
-        <FileQuestionHeader question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} />
-
-        <input ref={inputRef} type="file" name="file" accept={rules.accept || undefined} aria-required={required} onChange={handleInputChange} className="sr-only" />
-
-        <div role="button" tabIndex={0} onClick={() => !isUploading && inputRef.current?.click()}
-          onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !isUploading) inputRef.current?.click(); }}
-          onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
-          className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border px-4 py-3 transition-all duration-300 ${issue && !dragging ? "min-h-16" : "h-16"} ${dragging ? "border-skylab-400/50 bg-skylab-500/10"
-              : issue ? "border-solid border-red-400/30 bg-red-900/15 cursor-pointer hover:bg-red-900/25"
-              : missing && !currentFile && !error ? "border-dashed border-red-400/60 bg-red-900/20"
-                : currentFile || isUploading ? "border-solid border-ink/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
-                  : "border-dashed border-ink/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
-            }`}
-        >
-          {!currentFile && !isUploading && !issue && (
-            <div className="flex items-center gap-4 w-full animate-in fade-in duration-300">
-              <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-skylab-500/20 text-skylab-400" : error ? "bg-red-500/20 text-red-400" : "bg-ink/5 text-neutral-400"} transition-colors`}>
-                <Upload size={18} />
-              </div>
-              <div className="flex flex-col text-left">
-                <span className={`text-sm font-medium transition-colors duration-300 ${error ? "text-red-400" : "text-neutral-200"}`}>
-                  {error ? error : "Dosya yükle veya sürükle"}
-                </span>
-                <span className="mt-0.5 text-2xs font-medium tracking-wide text-neutral-500 uppercase">
-                  {rules.label} • MAKS {Math.round(rules.maxBytes / 1024 / 1024)}MB
-                </span>
-              </div>
-            </div>
-          )}
-
-          {issue && <IssueContent issue={issue} onClear={clear} />}
-
-          {(currentFile || isUploading) && !issue && (
-            <div className="flex items-center justify-between w-full animate-in fade-in duration-300">
-
-              <div className="flex items-center gap-4 overflow-hidden">
-                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${isUploading || scanning ? 'bg-skylab-500/10 text-skylab-400' : 'bg-ink/10 text-neutral-300'}`}>
-                  {isUploading || scanning ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
-                </div>
-
-                <div className="flex flex-col truncate text-left">
-                  <span className="truncate text-sm font-medium text-neutral-200" title={currentFile?.name}>
-                    {currentFile?.name}
-                  </span>
-                  <div className="mt-0.5 flex items-center gap-2 text-2xs font-medium text-neutral-500">
-                    <span>{formatBytes(currentFile?.size)}</span>
-                    {isUploading ? (
-                      <>
-                        <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
-                        <span className="text-skylab-400/80">Yükleniyor... {uploadProgress}%</span>
-                      </>
-                    ) : scanning ? (
-                      <>
-                        <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
-                        <span className="text-skylab-400/80">Virüs taraması yapılıyor</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
-                        {scan?.status === "ready" && (
-                          <>
-                            <span className="text-emerald-300/80">Tarandı</span>
-                            <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
-                          </>
-                        )}
-                        <span className="text-neutral-400">Değiştirmek için tıkla</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {!isUploading && (
-                <button type="button" onClick={(e) => { e.stopPropagation(); clear(); }} aria-label="Dosyayı kaldır"
-                  className="ml-4 shrink-0 inline-flex items-center justify-center rounded-sm p-2 text-neutral-400 hover:bg-red-500/20 hover:text-red-400 transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              )}
-
-              {isUploading && (
-                <div className="absolute bottom-0 left-0 h-0.5 w-full bg-neutral-800/50">
-                  <div
-                    className="h-full bg-skylab-500 transition-all duration-300 ease-out"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {!error && <QuestionHint required={required} missing={missing} className="mt-2" />}
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} error={error || undefined}>
+      <FileUpload files={shown ? [shown] : []} onFiles={(files) => validateAndSet(files[0] ?? null)} onRemove={isUploading ? undefined : clear}
+        accept={rules.accept || undefined} rules={rulesText(rules)} invalid={Boolean(error) || (missing && !shown)}
+        variant="compact" aria-label={questionLabel(question)}
+      />
+    </QuestionField>
   );
 }
 
@@ -425,17 +291,18 @@ function guestProblem(error, rules) {
   }
 }
 
+// Where the drop area would be, saying why it is closed; skylcn's FileUpload has no closed state with a reason
 function LockedBox({ lock }) {
   const Icon = lock.icon ?? CircleAlert;
 
   return (
-    <div className="relative mt-3 flex w-full min-h-16 items-center gap-4 overflow-hidden rounded-lg border border-dashed border-ink/10 bg-neutral-900/40 px-4 py-3 opacity-60 cursor-not-allowed select-none">
-      <div className="flex shrink-0 items-center justify-center size-10 rounded-sm bg-ink/5 text-neutral-500">
-        <Icon size={18} />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col text-left">
-        <span className="text-sm font-medium text-neutral-300">{lock.title}</span>
-        <span className="mt-0.5 text-2xs text-neutral-500">{lock.detail}</span>
+    <div className="flex min-h-16 w-full cursor-not-allowed items-center gap-3 rounded-lg border border-dashed border-border px-3 py-2.5 select-none">
+      <span className="grid size-10 shrink-0 place-items-center rounded-md bg-muted text-subtle-foreground">
+        <Icon className="size-4.5" aria-hidden />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="text-sm font-medium text-muted-foreground">{lock.title}</span>
+        <span className="mt-0.5 text-2xs text-subtle-foreground">{lock.detail}</span>
       </div>
     </div>
   );
@@ -460,60 +327,25 @@ function GuestLoginRequired({ question, questionNumber, description, required, m
   const prompt = useLoginPrompt();
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-        <FileQuestionHeader question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} />
-
-        <div className={`relative mt-3 flex w-full items-center gap-4 overflow-hidden rounded-lg border border-dashed h-16 px-4 py-3 ${missing ? "border-red-400/60 bg-red-900/20" : "border-ink/10 bg-neutral-900/40"}`}>
-          <div className="flex shrink-0 items-center justify-center size-10 rounded-sm bg-ink/5 text-neutral-500">
-            <LockKeyhole size={18} />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col text-left">
-            <span className="text-sm font-medium text-neutral-200">Dosya yüklemek için giriş yapın</span>
-            <span className="mt-0.5 truncate text-2xs text-neutral-500">{reason}</span>
-          </div>
-          {!prompt.confirming && <span className="shrink-0 text-xs"><LoginLink prompt={prompt} /></span>}
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}
+      hint={prompt.confirming ? null : undefined}
+    >
+      <div className={`flex h-16 w-full items-center gap-3 rounded-lg border border-dashed px-3 ${missing ? "border-destructive/50 bg-destructive/5" : "border-border"}`}>
+        <span className="grid size-10 shrink-0 place-items-center rounded-md bg-muted text-subtle-foreground">
+          <LockKeyhole className="size-4.5" aria-hidden />
+        </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="text-sm font-medium text-foreground">Dosya yüklemek için giriş yapın</span>
+          <span className="mt-0.5 truncate text-2xs text-subtle-foreground">{reason}</span>
         </div>
-
-        {prompt.confirming ? (
-          <p className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-2xs text-neutral-500">
-            <LoginConfirm prompt={prompt} />
-          </p>
-        ) : (
-          <QuestionHint required={required} missing={missing} className="mt-2" />
-        )}
+        {!prompt.confirming && <span className="shrink-0 text-xs"><LoginLink prompt={prompt} /></span>}
       </div>
-    </div>
-  );
-}
-
-function IssueContent({ issue, onRetry, onClear }) {
-  const Icon = issue.security ? ShieldAlert : CircleAlert;
-
-  return (
-    <div className="flex w-full items-center gap-4 animate-in fade-in duration-300">
-      <div className="flex shrink-0 items-center justify-center size-10 rounded-sm bg-red-500/15 text-red-400">
-        <Icon size={18} />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col text-left">
-        <span className="truncate text-sm font-medium text-red-100" title={issue.title}>{issue.title}</span>
-        <span className="mt-0.5 text-2xs text-red-300/80">{issue.detail}</span>
-      </div>
-      {onRetry && (
-        <button type="button" onClick={(event) => { event.stopPropagation(); onRetry(); }}
-          className="shrink-0 rounded-md border border-ink/10 bg-ink/5 px-2.5 py-1.5 text-2xs font-semibold text-neutral-100 transition-colors hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-        >
-          Tekrar dene
-        </button>
+      {prompt.confirming && (
+        <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-2xs leading-relaxed text-subtle-foreground">
+          <LoginConfirm prompt={prompt} />
+        </p>
       )}
-      {onClear && (
-        <button type="button" onClick={(event) => { event.stopPropagation(); onClear(); }} aria-label="Dosyayı kaldır"
-          className="shrink-0 inline-flex items-center justify-center rounded-sm p-2 text-red-300/70 hover:bg-red-500/20 hover:text-red-300 transition-colors"
-        >
-          <X size={16} />
-        </button>
-      )}
-    </div>
+    </QuestionField>
   );
 }
 
@@ -525,8 +357,6 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
   const [queued, setQueued] = useState(null);
   const [progress, setProgress] = useState(0);
   const [problem, setProblem] = useState(null);
-  const [dragging, setDragging] = useState(false);
-  const inputRef = useRef(null);
   const startRef = useRef(null);
   const reportUploadingRef = useRef(onUploadStateChange);
 
@@ -536,9 +366,6 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
   const entryIssue = busy ? null : entryProblem(entry, rules);
   const lock = busy || entry ? null : VERIFICATION_LOCKS[guest.verification] ?? (problem?.lock ? problem : null);
   const issue = busy || lock ? null : entryIssue ?? (problem?.lock ? null : problem);
-  const shown = uploading ? { name: pending.name, size: pending.size }
-    : queued ? { name: queued.file.name, size: queued.file.size }
-      : entryIssue ? null : entry;
 
   useEffect(() => {
     if (!problem?.until) return undefined;
@@ -614,136 +441,36 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
   };
 
   const remove = () => {
-    if (inputRef.current) inputRef.current.value = "";
     setProblem(null);
     guest.remove(fieldId);
     onChange?.({ target: { value: null } });
   };
 
-  const handleInputChange = (event) => {
-    choose(event.target.files?.[0] ?? null);
-    if (inputRef.current) inputRef.current.value = "";
-  };
+  // A pick refused before upload (type, size) is said under the drop area; what went wrong with a sent file stays on its row
+  const pickError = issue && !entryIssue && !issue.file ? `${issue.title}. ${issue.detail}` : undefined;
+  const failed = issue && !pickError ? issue : null;
 
-  const onDrop = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setDragging(false);
-    if (uploading || lock) return;
-    choose(event.dataTransfer?.files?.[0] ?? null);
-  };
+  const shown = uploading ? fileItem(pending, "uploading", { progress })
+    : queued ? fileItem(queued.file, "uploading")
+      : entryIssue ? fileItem(entry, "error", { error: entryIssue.detail, rejected: Boolean(entryIssue.security) })
+        : failed ? fileItem(failed.file, "error", { error: `${failed.title}. ${failed.detail}`, rejected: Boolean(failed.security) })
+          : entry ? fileItem(entry, scanning ? "scanning" : "ready")
+            : null;
 
-  const onDragOver = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setDragging(!lock);
-  };
-
-  const onDragLeave = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setDragging(false);
-  };
-
-  const openPicker = () => {
-    if (!uploading && !lock) inputRef.current?.click();
-  };
+  const removeShown = uploading ? undefined : queued ? cancelQueued : failed ? () => setProblem(null) : remove;
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-xl">
-      <div className="flex flex-col p-2 md:p-4">
-
-        <FileQuestionHeader question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} />
-
-        <input ref={inputRef} type="file" name="file" accept={rules.accept || undefined} aria-required={required} disabled={Boolean(lock)} onChange={handleInputChange} className="sr-only" />
-
-        {lock ? <LockedBox lock={lock} /> : (
-          <div role="button" tabIndex={0} onClick={openPicker}
-            onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") openPicker(); }}
-            onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
-            className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border px-4 py-3 transition-all duration-300 ${issue && !dragging ? "min-h-16" : "h-16"} ${dragging ? "border-skylab-400/50 bg-skylab-500/10"
-                : issue ? "border-solid border-red-400/30 bg-red-900/15 cursor-pointer hover:bg-red-900/25"
-                  : missing && !shown ? "border-dashed border-red-400/60 bg-red-900/20"
-                    : shown ? "border-solid border-ink/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
-                      : "border-dashed border-ink/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
-              }`}
-          >
-            {issue && !dragging && (
-              <IssueContent issue={issue} onRetry={!entryIssue && problem?.retry && problem.file ? () => start(problem.file) : null}
-                onClear={entryIssue ? remove : null}
-              />
-            )}
-
-            {(!issue || dragging) && !shown && (
-              <div className="flex items-center gap-4 w-full animate-in fade-in duration-300">
-                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-skylab-500/20 text-skylab-400" : "bg-ink/5 text-neutral-400"} transition-colors`}>
-                  <Upload size={18} />
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-sm font-medium text-neutral-200">Dosya yükle veya sürükle</span>
-                  <span className="mt-0.5 text-2xs font-medium tracking-wide text-neutral-500 uppercase">
-                    {rules.label} • MAKS {Math.round(rules.maxBytes / 1024 / 1024)}MB
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {!issue && shown && (
-              <div className="flex items-center justify-between w-full animate-in fade-in duration-300">
-                <div className="flex items-center gap-4 overflow-hidden">
-                  <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${busy || scanning ? "bg-skylab-500/10 text-skylab-400" : "bg-ink/10 text-neutral-300"}`}>
-                    {busy || scanning ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
-                  </div>
-
-                  <div className="flex flex-col truncate text-left">
-                    <span className="truncate text-sm font-medium text-neutral-200" title={shown.name}>
-                      {shown.name}
-                    </span>
-                    <div className="mt-0.5 flex items-center gap-2 text-2xs font-medium text-neutral-500">
-                      <span>{formatBytes(shown.size)}</span>
-                      <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
-                      {uploading ? (
-                        <span className="text-skylab-400/80">Yükleniyor... {progress}%</span>
-                      ) : queued ? (
-                        <span className="text-skylab-400/80">Sırada, birkaç saniye içinde yüklenecek</span>
-                      ) : scanning ? (
-                        <span className="text-skylab-400/80">Virüs taraması yapılıyor</span>
-                      ) : (
-                        <>
-                          {entry?.status === "ready" && (
-                            <>
-                              <span className="text-emerald-300/80">Tarandı</span>
-                              <span className="w-1 h-1 rounded-sm bg-neutral-600"></span>
-                            </>
-                          )}
-                          <span className="text-neutral-400">Değiştirmek için tıkla</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {!uploading && (
-                  <button type="button" onClick={(event) => { event.stopPropagation(); if (queued) cancelQueued(); else remove(); }} aria-label="Dosyayı kaldır"
-                    className="ml-4 shrink-0 inline-flex items-center justify-center rounded-sm p-2 text-neutral-400 hover:bg-red-500/20 hover:text-red-400 transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-
-                {uploading && (
-                  <div className="absolute bottom-0 left-0 h-0.5 w-full bg-neutral-800/50">
-                    <div className="h-full bg-skylab-500 transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        <QuestionHint required={required} missing={missing} className="mt-2" />
-      </div>
-    </div>
+    <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}
+      error={pickError} hint={queued ? "Sırada, birkaç saniye içinde yüklenecek" : undefined}
+    >
+      {lock ? <LockedBox lock={lock} /> : (
+        <FileUpload files={shown ? [shown] : []} onFiles={(files) => choose(files[0] ?? null)} onRemove={removeShown}
+          onRetry={failed?.retry ? () => start(failed.file) : undefined}
+          accept={rules.accept || undefined} rules={rulesText(rules)} invalid={Boolean(pickError) || (missing && !shown)}
+          variant="compact" aria-label={questionLabel(question)}
+        />
+      )}
+    </QuestionField>
   );
 }
 

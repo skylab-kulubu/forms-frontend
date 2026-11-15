@@ -71,6 +71,12 @@
   --bg-tint: 62, 214, 240;
   --bg-tint-deep: 62, 214, 240;
 
+  /* skylcn's parts on the page: chosen marks, focus rings and the fields' ground */
+  --primary: var(--skylab-500);
+  --primary-foreground: var(--al-on-cyan);
+  --ring: color-mix(in oklab, var(--al-cyan) 60%, transparent);
+  --input-background: var(--al-surface-2);
+
   background-color: var(--al-bg);
   color-scheme: dark;
 }
@@ -147,7 +153,7 @@
   }
 }
 
-[data-brand="artlab"] [data-slot="question-number"]:not([data-missing]) {
+[data-brand="artlab"] [data-slot="field"]:not([data-invalid]) [data-slot="field-number"] {
   border-color: color-mix(in oklab, var(--al-amber-soft) 35%, transparent);
   background: transparent;
   color: var(--al-amber-soft);
@@ -176,24 +182,6 @@
 
 [data-brand="artlab"] [data-slot="submit"]:active {
   translate: 0 1px;
-}
-
-[data-brand="artlab"] .checkbox:not([type="radio"]) {
-  border-radius: 0;
-}
-
-[data-brand="artlab"]:not([data-brand-paper]) .checkbox {
-  border-color: color-mix(in oklab, var(--al-ink) 25%, transparent);
-  background-color: var(--al-surface-2);
-}
-
-[data-brand="artlab"] .checkbox:checked {
-  background-color: var(--skylab-500);
-  border-color: var(--skylab-500);
-}
-
-[data-brand="artlab"] .checkbox::before {
-  box-shadow: inset 1em 1em var(--al-on-cyan);
 }
 
 [data-brand="artlab"] .al-guide,
