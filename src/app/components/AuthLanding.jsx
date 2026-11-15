@@ -1,15 +1,20 @@
 "use client";
 
-import { CircleAlert, LayoutTemplate, Share2, ShieldAlert, User2 } from "lucide-react";
+import { CircleAlert, LayoutTemplate, Share2, ShieldAlert } from "lucide-react";
+import { Avatar, TaskPage } from "@skylab-kulubu/skylcn-ui";
 import { loginWithKeycloak } from "@/lib/authActions";
 import Background from "@/app/components/Background";
 import LoginButton from "@/app/components/utils/LoginButton";
-import StateCard from "@/app/components/StateCard";
 
 const ICON_MAP = {
     "component-group": LayoutTemplate,
     response: Share2,
 };
+
+// Transparent and positioned, so the fixed Background layers show through and stay underneath
+function Gate(props) {
+    return <TaskPage align="center" className="relative bg-transparent" {...props} />;
+}
 
 export default function AuthLanding({
     callbackUrl,
@@ -27,54 +32,52 @@ export default function AuthLanding({
     const handleLogin = () => loginWithKeycloak(callbackUrl);
     const ResourceIcon = ICON_MAP[resource] ?? LayoutTemplate;
 
-    let content;
+    let page;
 
     if (isLoggedIn && !hasAccess) {
-        content = (
-            <StateCard
+        page = (
+            <Gate
                 tone="danger"
-                Icon={ShieldAlert}
+                icon={ShieldAlert}
                 title="Yetkin yok"
                 description="Bu içeriği görüntüleyebilmek için Skyforms erişimine ihtiyacın var. Yöneticinle iletişime geç."
             />
         );
     } else if (hasToken && !hasMeta) {
-        content = (
-            <StateCard
+        page = (
+            <Gate
                 tone="warning"
-                Icon={CircleAlert}
+                icon={CircleAlert}
                 title="Bağlantı geçersiz"
                 description="Bu paylaşım bağlantısı geçersiz veya süresi dolmuş. Paylaşan kişiden yeni bir bağlantı isteyebilirsin."
             />
         );
     } else {
-        content = (
-            <StateCard
+        page = (
+            <Gate
                 tone="brand"
-                Icon={ResourceIcon}
+                icon={ResourceIcon}
                 title={title || fallbackTitle}
                 description={description}
-                meta={sharedByName ? (
-                    <div className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-ink/5 px-3 py-1.5 text-2xs text-neutral-300">
-                        <User2 size={12} />
-                        <span>{sharedByName} paylaştı</span>
-                    </div>
-                ) : null}
+                actions={<LoginButton onClick={handleLogin} />}
             >
-                <div className="flex flex-col items-center gap-3">
-                    <p className="text-2xs text-neutral-500">{actionHint}</p>
-                    <LoginButton onClick={handleLogin} />
+                <div className="flex flex-col items-center gap-3 text-center">
+                    {sharedByName ? (
+                        <div className="inline-flex items-center gap-2 text-xs text-secondary-foreground">
+                            <Avatar name={sharedByName} size="sm" />
+                            <span>{sharedByName} paylaştı</span>
+                        </div>
+                    ) : null}
+                    <p className="text-2xs text-muted-foreground">{actionHint}</p>
                 </div>
-            </StateCard>
+            </Gate>
         );
     }
 
     return (
         <>
             <Background />
-            <div className="relative flex min-h-dvh items-center justify-center px-6">
-                {content}
-            </div>
+            {page}
         </>
     );
 }

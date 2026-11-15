@@ -2,9 +2,9 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { FilePenLine, FileCheckIcon, FileClock, FileLock2, Loader2, Shredder, FileSearchCorner, FileXCorner } from "lucide-react";
+import { Card, StateCard } from "@skylab-kulubu/skylcn-ui";
 import { loginWithKeycloak } from "@/lib/authActions";
 import LoginButton from "./utils/LoginButton";
-import StateCard from "./StateCard";
 import Background from "./Background";
 
 export const FORM_ACCESS_STATUS = {
@@ -201,23 +201,21 @@ export function FormStatusDisplayer({ state, message, stage = 0, startFormId = n
         <motion.div key={state} className="relative z-10 flex min-h-[85vh] w-full flex-col items-center p-4"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
         >
-            <StateCard title={config.title} description={description} Icon={Icon} isLoading={state === "loading"}>
+            <StateCard title={config.title} description={description} icon={Icon} loading={state === "loading"}>
                 {showReviewDetails && (
-                    <div className={`rounded-xl border mx-auto px-4 py-3 max-w-xs text-left bg-neutral-800/50 border-neutral-700`}>
-                        <div className="">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <p className="text-3xs font-semibold uppercase tracking-[0.24em] text-neutral-400/90">
-                                    İnceleme Detayları
-                                </p>
-                                <p className="text-2xs text-neutral-400">{formatReviewDate(reviewedAt)}</p>
-                            </div>
-                            {normalizedReviewNote && (
-                                <p className="mt-1 text-xs text-neutral-200 whitespace-pre-wrap leading-relaxed">
-                                    {normalizedReviewNote}
-                                </p>
-                            )}
+                    <Card className="mx-auto max-w-xs px-4 py-3 text-left">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-3xs font-semibold uppercase tracking-label text-subtle-foreground">
+                                İnceleme Detayları
+                            </p>
+                            <p className="text-2xs text-muted-foreground">{formatReviewDate(reviewedAt)}</p>
                         </div>
-                    </div>
+                        {normalizedReviewNote && (
+                            <p className="mt-1 text-xs text-secondary-foreground whitespace-pre-wrap leading-relaxed">
+                                {normalizedReviewNote}
+                            </p>
+                        )}
+                    </Card>
                 )}
 
                 {showSignIn && (
