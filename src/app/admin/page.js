@@ -68,7 +68,7 @@ const QUICK_ACTIONS = [
 
 function QuickActions() {
   return (
-    <ListPanel status={{ kind: "ready" }} framed={false} className="-mx-3">
+    <ListPanel status={{ kind: "ready" }} framed={false}>
       {QUICK_ACTIONS.map(({ icon: Icon, label, href, primary }) => (
         <ListItem key={href} href={href} title={label}
           leading={<Icon className={`size-4 shrink-0 ${primary ? "text-skylab-400" : "text-subtle-foreground"}`} strokeWidth={1.75} aria-hidden="true" />}
@@ -152,7 +152,7 @@ function RecentFormsPanel({ greeting, firstName, sessionReady, note, forms, isLo
     >
       <div className="flex flex-col lg:h-full">
         <div className="scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-          <ListPanel status={status} framed={false} className="-mx-3" emptyIcon={FileText}
+          <ListPanel status={status} framed={false} emptyIcon={FileText}
             emptyAction={<Button size="sm" variant="primary" render={<Link href="/admin/forms/new-form" />}>İlk formunu oluştur</Button>}
           >
             {forms.map((form) => <RecentFormItem key={form.id} form={form} />)}
