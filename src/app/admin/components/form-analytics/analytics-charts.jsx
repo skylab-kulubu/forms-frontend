@@ -48,10 +48,10 @@ export function Bars({ buckets, className = "mt-3" }) {
   return <BarList className={`-mx-2.5 ${className}`} max={100} items={shareRows(buckets)} />;
 }
 
-export function Donut({ buckets }) {
+export function Donut({ buckets, title = "Pasta grafiği" }) {
   if (!buckets?.length) return <EmptyNote />;
   return (
-    <DonutChart framed={false} title="Pasta grafiği" className="mt-3"
+    <DonutChart framed={false} title={title} hideTitle className="mt-3"
       data={buckets.map((bucket, index) => ({ key: `${valueLabel(bucket.value)}-${index}`, label: valueLabel(bucket.value), value: bucket.count }))}
     />
   );
@@ -67,7 +67,7 @@ export function ChoiceRows({ field, q }) {
 
   return (
     <div>
-      <BarList className="-mx-2.5 mt-3" max={100} items={shareRows(buckets)} />
+      <BarList className="mt-3" variant="fill" highlightTop max={100} items={shareRows(buckets)} />
       <p className="mt-2 text-3xs text-neutral-600">Çoklu seçim: yüzdeler toplamı %100&apos;ü aşabilir.</p>
     </div>
   );

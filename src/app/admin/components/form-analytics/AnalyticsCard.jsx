@@ -10,7 +10,7 @@ import { RichText } from "@/app/components/rich-text/RichText";
 import { durationText, shortDuration, spanText } from "@/lib/form-timing";
 import { CardShell, DeliverablesHeader, StepBar } from "../form-studio/StudioCard";
 import { QuestionBadge } from "../form-studio/StudioField";
-import { conditionLabel, questionNumbers } from "../form-studio/studio-schema";
+import { conditionLabel, fieldLabel, questionNumbers } from "../form-studio/studio-schema";
 import { formatDuration } from "../form-overview/components/FormMetrics";
 import { askedCount, formatPercent, percentOf, questionStats } from "../form-overview/overview-stats";
 import {
@@ -27,12 +27,12 @@ const HOVER = "cursor-pointer hover:ring-1 hover:ring-ink/15";
 export function ResultBody({ field, q, view }) {
   const kind = Number(q.kind);
   if (field.type === "multi_choice" || kind === 4) return <ChoiceRows field={field} q={q} />;
-  if (field.type === "toggle" || kind === 5) return view === "pie" ? <Donut buckets={q.distribution} /> : <ToggleSplit field={field} q={q} />;
+  if (field.type === "toggle" || kind === 5) return view === "pie" ? <Donut title={fieldLabel(field)} buckets={q.distribution} /> : <ToggleSplit field={field} q={q} />;
   if (kind === 6) return field.type === "slider" ? <SliderHistogram field={field} q={q} /> : <NumberHistogram q={q} />;
   if (kind === 7) return <MatrixHeat field={field} q={q} />;
   if (kind === 8) return <MonthColumns q={q} />;
   if (kind === 9) return <HourColumns q={q} />;
-  if (kind === 3) return view === "pie" ? <Donut buckets={q.distribution} /> : <Bars buckets={q.distribution} />;
+  if (kind === 3) return view === "pie" ? <Donut title={fieldLabel(field)} buckets={q.distribution} /> : <Bars buckets={q.distribution} />;
   return null;
 }
 
