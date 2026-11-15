@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 import {
-  Badge, Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, Input, MenuItem, MenuSeparator, Notice, Select, StatusDot,
-  Switch as SkylcnSwitch, Textarea, ToggleRow as SkylcnToggleRow, cn,
+  Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, Input, MenuItem, MenuSeparator, Notice, Select, StatusDot,
+  Switch as SkylcnSwitch, Textarea, ToggleRow as SkylcnToggleRow, ValuePill, cn,
 } from "@skylab-kulubu/skylcn-ui";
 
 export const FOCUS_RING = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -102,8 +102,9 @@ export function PanelNotice({ tone = "amber", className = "", children }) {
   return <Notice tone={NOTICE_TONE[tone] ?? "warning"} className={className}>{children}</Notice>;
 }
 
+// The same box as the role pills beside it, so a row whose role cannot change still lines up
 export function PillBadge({ children }) {
-  return <Badge size="md" className="min-w-22 max-w-36 justify-center">{children}</Badge>;
+  return <ValuePill>{children}</ValuePill>;
 }
 
 const stop = (event) => event.stopPropagation();
@@ -111,7 +112,7 @@ const keyOf = (value) => String(value);
 
 // The menu's own pill, written out because skylcn keeps its Select pill classes to itself; it
 // matches Select's pill so a row never shows two kinds of trigger
-const PILL_TRIGGER = "group/pill inline-flex h-6.5 min-w-22 shrink-0 items-center justify-between gap-1 rounded-lg border border-border bg-muted px-2.5 text-2xs font-medium text-secondary-foreground outline-hidden pointer-coarse:h-8 transition-colors duration-(--motion-duration-fast) hover:border-border-strong hover:bg-accent-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-skylab-600/25 data-popup-open:border-border-strong data-popup-open:bg-popover data-popup-open:text-foreground";
+const PILL_TRIGGER = "group/pill inline-flex h-6.5 min-w-22 shrink-0 items-center justify-between gap-1 rounded-lg border border-border bg-muted px-2.5 text-2xs text-secondary-foreground outline-hidden pointer-coarse:h-8 transition-colors duration-(--motion-duration-fast) hover:border-border-strong hover:bg-accent-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-skylab-600/25 data-popup-open:border-border-strong data-popup-open:bg-popover data-popup-open:text-foreground";
 const QUIET_TRIGGER = `group/pill flex min-w-0 max-w-full items-start gap-1.5 rounded-lg border border-transparent px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent hover:text-foreground data-popup-open:border-border-strong data-popup-open:bg-popover data-popup-open:text-foreground ${FOCUS_RING}`;
 
 /*
