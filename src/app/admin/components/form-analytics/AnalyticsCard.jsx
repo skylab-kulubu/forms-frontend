@@ -3,7 +3,7 @@
 import { Fragment, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Activity, ChartColumn, ChevronDown, CornerDownRight, Timer } from "lucide-react";
-import { Badge } from "@skylab-kulubu/skylcn-ui";
+import { Badge, Collapse } from "@skylab-kulubu/skylcn-ui";
 import { FormDisplayerHeader } from "@/app/components/form-displayer/components/FormDisplayerComponents";
 import TaskBlock from "@/app/components/form-displayer/components/TaskBlock";
 import { RichText } from "@/app/components/rich-text/RichText";
@@ -168,12 +168,18 @@ function AnalyticsField({ field, q, number, condText, stats, asked, total, open,
           </div>
         </div>
 
-        {open && aggregatable ? (
-          <motion.div key={`${field.id}-${view}`} {...FADE}><ResultBody field={field} q={q} view={view} /></motion.div>
-        ) : aggregatable ? (
-          <p className="mt-2 flex items-center gap-1.5 pl-9 text-2xs text-neutral-500">
-            <span className="min-w-0 truncate">{stats?.signal ? <SummaryLine signal={stats.signal} /> : "Henüz cevap yok"}</span>
-          </p>
+        {aggregatable ? (
+          // The result and its one-line summary trade places in height, so closing one opens the other
+          <>
+            <Collapse open={open}>
+              <motion.div key={`${field.id}-${view}`} {...FADE}><ResultBody field={field} q={q} view={view} /></motion.div>
+            </Collapse>
+            <Collapse open={!open}>
+              <p className="mt-2 flex items-center gap-1.5 pl-9 text-2xs text-neutral-500">
+                <span className="min-w-0 truncate">{stats?.signal ? <SummaryLine signal={stats.signal} /> : "Henüz cevap yok"}</span>
+              </p>
+            </Collapse>
+          </>
         ) : (
           <p className="mt-1.5 flex items-center gap-1.5 pl-9 text-2xs text-neutral-500">
             <span className="min-w-0 truncate">{plainNote({ field, q, asked, total })}</span>
