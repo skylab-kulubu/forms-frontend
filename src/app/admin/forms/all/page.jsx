@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { keepPreviousData } from "@tanstack/react-query";
 import { FileSearchCorner, FileXCorner, X } from "lucide-react";
+import { ActiveFilters, Button } from "@skylab-kulubu/skylcn-ui";
 import StateCard from "@/app/components/StateCard";
 import { DatabaseHeader } from "../../components/Headers";
 import Pagination from "../../components/utils/Pagination";
@@ -21,7 +22,7 @@ function currentState() {
 
 function FooterLink({ onClick, children }) {
   return (
-    <button type="button" onClick={onClick} className="rounded tabular-nums underline decoration-ink/15 underline-offset-2 transition-colors hover:text-neutral-200 hover:decoration-ink/40">
+    <button type="button" onClick={onClick} className="rounded tabular-nums underline decoration-border-strong underline-offset-2 outline-hidden transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring">
       {children}
     </button>
   );
@@ -71,9 +72,9 @@ function DatabasePage() {
     ? "Sahipsiz"
     : formatPersonName(owners.find((owner) => owner.id === state.owner)?.fullName) || "Seçili sahip";
   const chips = [
-    state.status !== "all" && ["status", STATUS_LABEL[state.status], () => update({ status: "all" })],
-    state.owner !== "all" && ["owner", ownerLabel, () => update({ owner: "all" })],
-    ...FLAG_KEYS.map(([key, label]) => state[key] !== null && [key, `${label} ${state[key] ? "açık" : "kapalı"}`, () => update({ [key]: null })]),
+    state.status !== "all" && { key: "status", label: STATUS_LABEL[state.status], onRemove: () => update({ status: "all" }) },
+    state.owner !== "all" && { key: "owner", label: ownerLabel, onRemove: () => update({ owner: "all" }) },
+    ...FLAG_KEYS.map(([key, label]) => state[key] !== null && { key, label: `${label} ${state[key] ? "açık" : "kapalı"}`, onRemove: () => update({ [key]: null }) }),
   ].filter(Boolean);
 
   const restoring = (id) => restore.isPending && restore.variables === id;
@@ -85,20 +86,10 @@ function DatabasePage() {
       />
 
       {chips.length || state.status === "deleted" ? (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {chips.map(([key, label, clear]) => (
-            <span key={key} className="inline-flex items-center gap-1 rounded-md border border-ink/10 bg-ink/5 py-0.5 pl-2 pr-1 text-2xs text-neutral-300">
-              {label}
-              <button type="button" onClick={clear} aria-label={`${label} filtresini kaldır`} className="grid size-5 place-items-center rounded text-neutral-500 hover:bg-ink/10 hover:text-neutral-200">
-                <X size={11} />
-              </button>
-            </span>
-          ))}
-          {chips.length > 1 ? (
-            <button type="button" onClick={clearFilters} className="px-1 text-2xs text-neutral-500 transition-colors hover:text-neutral-200">Hepsini kaldır</button>
-          ) : null}
+        <div className="flex flex-col gap-1.5">
+          <ActiveFilters filters={chips} onClear={clearFilters} />
           {state.status === "deleted" ? (
-            <p className="basis-full pt-1 text-2xs text-neutral-500">Geri yüklenen form kapalı olarak döner; cevapları ve ayarları silinmeden durur.</p>
+            <p className="text-2xs text-subtle-foreground">Geri yüklenen form kapalı olarak döner; cevapları ve ayarları silinmeden durur.</p>
           ) : null}
         </div>
       ) : null}
@@ -116,16 +107,14 @@ function DatabasePage() {
               description={narrowed ? "Aramayı ya da filtreleri değiştirip yeniden deneyin." : null}
             >
               {narrowed ? (
-                <button type="button" onClick={clearAll}
-                  className="mx-auto flex h-8 items-center gap-1.5 rounded-md border border-ink/10 px-3 text-2xs font-medium text-neutral-200 transition-colors hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300"
-                >
-                  <X size={12} />
+                <Button variant="outline" onClick={clearAll}>
+                  <X aria-hidden="true" />
                   {filters ? "Filtreleri temizle" : "Aramayı temizle"}
-                </button>
+                </Button>
               ) : null}
             </StateCard>
           ) : (
-            <div className="divide-y divide-ink/5">
+            <div className="divide-y divide-border-subtle">
               {forms.map((form) => (
                 <DatabaseRow key={form.id} form={form} open={state.open === form.id}
                   onToggle={() => update({ open: state.open === form.id ? null : form.id }, { resetPage: false })}
@@ -137,9 +126,9 @@ function DatabasePage() {
         </div>
 
         {!isLoading && !error && forms.length > 0 ? (
-          <div className="flex items-center justify-between gap-3 border-t border-ink/10">
-            <p className="pt-3 text-2xs text-neutral-500">
-              <span className="font-semibold tabular-nums text-neutral-200">{totalCount}</span> {state.status === "deleted" ? "silinmiş form" : "form"}
+          <div className="flex items-center justify-between gap-3 border-t border-border">
+            <p className="pt-3 text-2xs text-subtle-foreground">
+              <span className="font-semibold tabular-nums text-foreground">{totalCount}</span> {state.status === "deleted" ? "silinmiş form" : "form"}
               {summary?.orphaned > 0 && state.owner !== "orphaned" && state.status !== "deleted" ? <> · <FooterLink onClick={() => update({ owner: "orphaned" })}>{summary.orphaned} sahipsiz</FooterLink></> : null}
               {summary?.deleted > 0 && state.status !== "deleted" ? <> · <FooterLink onClick={() => update({ status: "deleted" })}>{summary.deleted} silinmiş</FooterLink></> : null}
             </p>

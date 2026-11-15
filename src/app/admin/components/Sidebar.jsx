@@ -1,17 +1,17 @@
 "use client";
 
-import { useRef, useState, useMemo } from "react";
-import Link from "next/link";
+import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { BookOpen, ChartColumn, Database, FilePlus, FileText, LayoutDashboard, LayoutTemplate, List, LogOut, PencilLine, Plus, UserX, Workflow } from "lucide-react";
+import {
+  AppShell, AppShellFill, MenuItem, MenuLabel, MenuSeparator, SidebarBrand, SidebarContent, SidebarFooter, SidebarGroup, SidebarItem,
+  SidebarSection, SidebarUser, TooltipProvider, useTheme,
+} from "@skylab-kulubu/skylcn-ui";
 import { logout } from "@/lib/authActions";
+import ThemeToggle from "@/app/components/ThemeToggle";
 import { useFormContext, useTemplateContext, useWorkflowContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
-import Avatar from "@/app/components/utils/Avatar";
-import ThemeToggle from "@/app/components/ThemeToggle";
-import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow, UserX } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { TooltipProvider } from "@skylab-kulubu/skylcn-ui";
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
@@ -25,13 +25,7 @@ const breadcrumbLabels = {
   "/admin/ownership": "Sahipsiz içerikler",
 };
 
-function SectionLabel({ children }) {
-  return (
-    <div className="px-2 text-xs font-medium text-neutral-400 tracking-wide select-none">
-      {children}
-    </div>
-  );
-}
+const DESKTOP = "(min-width: 48rem)";
 
 function getRoleLabel(roles = []) {
   if (roles.some((r) => (r ?? "").toLowerCase().includes("admin"))) return "AÇMACILAB";
@@ -51,217 +45,139 @@ function getRoleLabel(roles = []) {
   return "KULLANICI";
 }
 
-function NavItem({ href, icon: Icon, label, active, onClick, variant = "default" }) {
-  const base = "group flex items-center gap-3 rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
-  const defaultState = active ? "bg-neutral-800 text-neutral-200 px-3 py-2" : "text-neutral-400 hover:bg-neutral-800/60 hover:text-neutral-100 px-3 py-2";
-  const subtleState = active ? "text-neutral-100 text-xs px-2 py-1" : "text-neutral-400 hover:text-neutral-100 text-xs px-2 py-1";
-  const state = variant === "subtle" ? subtleState : defaultState;
+const isActive = (item, pathname) => item.href === pathname || Boolean(item.children?.some((child) => isActive(child, pathname)));
 
+function NavItems({ items, pathname }) {
+  return items.map((item) => (
+    <SidebarItem key={item.href} href={item.href} icon={item.icon} label={item.label} active={isActive(item, pathname)}>
+      {item.children?.length ? <NavItems items={item.children} pathname={pathname} /> : null}
+    </SidebarItem>
+  ));
+}
+
+function NavGroup({ icon, label, items, pathname }) {
   return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={`${base} ${state}`} onClick={onClick}>
-      <Icon className={`${variant === "subtle" ? "h-4 w-4" : "h-5 w-5"} shrink-0`} strokeWidth={1.75} />
-      <span className="font-medium truncate">{label}</span>
-      {variant !== "subtle" && (
-        <ChevronRight className="ml-auto h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-      )}
-    </Link>
+    <SidebarGroup icon={icon} label={label} active={items.some((item) => isActive(item, pathname))}>
+      <NavItems items={items} pathname={pathname} />
+    </SidebarGroup>
   );
 }
 
-function NavGroup({ icon: Icon, label, items = [], pathname, onItemClick }) {
-  const itemIsActive = (item) => {
-    if (!item) return false;
-    if (item.href === pathname) return true;
-    if (!item.children?.length) return false;
-    return item.children.some((child) => itemIsActive(child));
-  };
+function Account({ user, roles, status, theme, onThemeChange }) {
+  // Holds the row's height while the session loads, so the footer does not jump
+  if (status === "loading") return <div aria-hidden="true" className="h-11" />;
 
-  const hasActive = items.some((item) => itemIsActive(item));
-  const [open, setOpen] = useState(hasActive);
-
-  const [prevHasActive, setPrevHasActive] = useState(hasActive);
-  if (hasActive !== prevHasActive) {
-    setPrevHasActive(hasActive);
-    if (hasActive) setOpen(true);
-  }
-
-  const base = "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
-  const state = "text-neutral-400 hover:bg-neutral-800/60 hover:text-neutral-100";
-
-  return (
-    <div className="space-y-1">
-      <button type="button" aria-expanded={open} className={`${base} ${state} w-full text-left`} onClick={() => setOpen((v) => !v)}>
-        <Icon className="h-5 w-5 shrink-0" strokeWidth={1.75} />
-        <span className="font-medium truncate">{label}</span>
-        <ChevronDown className={`ml-auto h-4 w-4 transition-transform ${open ? "rotate-180" : "rotate-0"}`} />
-      </button>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div key="nav-group" className="pl-4 ml-5 space-y-1 border-l-3 border-neutral-800/80 overflow-hidden"
-            initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {items.map((item, i) => (
-              <motion.div key={item.href}
-                initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.15, delay: i * 0.04 }}
-              >
-                <NavItem href={item.href} icon={item.icon} label={item.label} active={itemIsActive(item)} variant="subtle" onClick={onItemClick}/>
-                {item.children?.length ? (
-                  <div className="mt-1 ml-3 space-y-1 border-l border-neutral-800/60 pl-3">
-                    {item.children.map((child) => (
-                      <div key={child.href}>
-                        <NavItem href={child.href} icon={child.icon} label={child.label} active={itemIsActive(child)} variant="subtle" onClick={onItemClick}/>
-                        {child.children?.length ? (
-                          <div className="mt-1 ml-3 space-y-1 border-l border-neutral-800/60 pl-3">
-                            {child.children.map((grandChild) => (
-                              <NavItem key={grandChild.href} href={grandChild.href} icon={grandChild.icon} label={grandChild.label} active={itemIsActive(grandChild)} variant="subtle" onClick={onItemClick}/>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, onItemClick, status, formId, form, formLoading, workflowId, workflow, workflowLoading }) {
-  const isSuperAdmin = skyformsRoles.includes("skyforms:*");
-  const subtitle = user?.email?.trim() || user?.username?.trim() || "--";
+  const contact = user?.email?.trim() || user?.username?.trim() || "";
   const imageUrl = user?.profilePictureUrl?.trim() || user?.image?.trim() || "";
-  const roles = realmRoles.filter(Boolean);
-
   const displayName = user?.fullName?.trim().toLocaleLowerCase("tr-TR").split(/\s+/)
     .map(w => w.replace(/^\p{L}/u, c => c.toLocaleUpperCase("tr-TR")))
     .join(" ") || "Kullanıcı";
 
-  const handleLogout = async () => {
-    logout({ callbackUrl: window.location.origin });
-  };
+  return (
+    <SidebarUser name={displayName} email={contact || null} subtitle={getRoleLabel(roles)} avatarSrc={imageUrl || null}
+      menu={
+        <>
+          {contact ? <MenuLabel>{contact}</MenuLabel> : null}
+          <ThemeToggle theme={theme} onThemeChange={onThemeChange} />
+          <MenuSeparator />
+          <MenuItem icon={LogOut} destructive onClick={() => logout({ callbackUrl: window.location.origin })}>Çıkış yap</MenuItem>
+        </>
+      }
+    />
+  );
+}
 
-  const activeFormLabel = formLoading ? "..." : (form?.title?.trim() || "...");
+/** The admin navigation as AppShell's sidebar: what a person sees follows their roles and the open form or flow. */
+export function AdminSidebar({ pathname, user, status, realmRoles = [], skyformsRoles = [], formId, form, formLoading, workflowId, workflow, workflowLoading, theme, onThemeChange }) {
+  const isSuperAdmin = skyformsRoles.includes("skyforms:*");
   const canViewResponses = form?.access?.canViewResponses ?? Number(form?.userRole) >= 1;
   const canEditForm = form?.access?.canEdit ?? Number(form?.userRole) >= 2;
 
   const activeFormItem = formId
-  ? {
-      href: `/admin/forms/${formId}`,
-      icon: FileText,
-      label: activeFormLabel,
-      children: [
-        ...(canViewResponses ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
-        ...(canViewResponses ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
-        ...(canEditForm ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
-      ],
-    }
-  : null;
-
-  const activeWorkflowItem = workflowId
     ? {
-        href: `/admin/workflows/${workflowId}`,
-        icon: Workflow,
-        label: workflowLoading ? "..." : (workflow?.name?.trim() || "..."),
+        href: `/admin/forms/${formId}`,
+        icon: FileText,
+        label: formLoading ? "..." : (form?.title?.trim() || "..."),
+        children: [
+          ...(canViewResponses ? [{ href: `/admin/forms/${formId}/responses`, icon: List, label: "Cevaplar" }] : []),
+          ...(canViewResponses ? [{ href: `/admin/forms/${formId}/analytics`, icon: ChartColumn, label: "Analitik" }] : []),
+          ...(canEditForm ? [{ href: `/admin/forms/${formId}/edit`, icon: PencilLine, label: "Düzenle" }] : []),
+        ],
       }
     : null;
 
+  const activeWorkflowItem = workflowId
+    ? { href: `/admin/workflows/${workflowId}`, icon: Workflow, label: workflowLoading ? "..." : (workflow?.name?.trim() || "...") }
+    : null;
+
   return (
-    <div className="flex h-full w-full flex-col gap-4 px-4 py-6">
-      <div className="flex items-center gap-3 px-2">
-        {status === "loading" ? (
-          <Avatar size="lg" />
-        ) : (
-          <Avatar name={displayName} email={subtitle === "--" ? "" : subtitle} photoUrl={imageUrl} size="lg" />
-        )}
-        {status === "loading" ? null : (
-          <>
-            <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }}
-              className="min-w-0"
-            >
-              <p className="text-sm font-semibold text-neutral-100 truncate">{displayName}</p>
-              <p className="text-xs text-neutral-500 truncate">{subtitle}</p>
-            </motion.div>
-            <motion.button type="button" onClick={handleLogout} aria-label="Çıkış yap"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ opacity: { duration: 0.3, delay: 0.2 } }}
-              whileHover={{ x: 2 }}
-              className="rounded-lg bg-transparent text-xs py-1  ml-auto font-semibold text-neutral-500 transition-colors hover:text-skylab-500"
-            >
-              <LogOut size={16} />
-            </motion.button>
-          </>
-        )}
-      </div>
+    <>
+      <SidebarBrand name="SKY LAB Forms" href="/admin" />
+      <SidebarContent>
+        <SidebarSection>
+          <SidebarItem href="/admin" icon={LayoutDashboard} label="Dashboard" active={pathname === "/admin"} />
+        </SidebarSection>
 
-      <div className="w-full rounded-md text-center border border-ink/10 bg-ink/3 px-2 py-1 text-2xs text-neutral-200">
-        <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: 1.2 }}>{getRoleLabel(roles)}</motion.span>
-      </div>
+        <SidebarSection label="Platform">
+          <NavGroup icon={FileText} label="Formlar" pathname={pathname}
+            items={[
+              { href: "/admin/forms/new-form", icon: FilePlus, label: "Yeni Form" },
+              { href: "/admin/forms", icon: List, label: "Formları Görüntüle" },
+              ...(activeFormItem ? [activeFormItem] : []),
+            ]}
+          />
+          <NavGroup icon={Workflow} label="Akışlar" pathname={pathname}
+            items={[
+              { href: "/admin/workflows", icon: List, label: "Akışları Görüntüle" },
+              ...(activeWorkflowItem ? [activeWorkflowItem] : []),
+            ]}
+          />
+          <NavGroup icon={LayoutTemplate} label="Şablonlar" pathname={pathname}
+            items={[
+              { href: "/admin/templates/new-template", icon: Plus, label: "Yeni Şablon" },
+              { href: "/admin/templates", icon: List, label: "Şablonları Görüntüle" },
+            ]}
+          />
+        </SidebarSection>
 
-      <div className="space-y-2">
-        <div className="space-y-1">
-          <NavItem href="/admin" icon={LayoutDashboard} label="Dashboard" active={pathname === "/admin"} onClick={onItemClick} />
-        </div>
-      </div>
+        {isSuperAdmin ? (
+          <SidebarSection label="Yönetim">
+            <SidebarItem href="/admin/forms/all" icon={Database} label="Veritabanı" active={pathname === "/admin/forms/all"} />
+            <SidebarItem href="/admin/ownership" icon={UserX} label="Sahipsiz içerikler" active={pathname === "/admin/ownership"} />
+          </SidebarSection>
+        ) : null}
+      </SidebarContent>
 
-      <div className="space-y-2">
-        <SectionLabel>Platform</SectionLabel>
-        <NavGroup icon={FileText} label="Formlar"
-          pathname={pathname} onItemClick={onItemClick}
-          items={[
-            { href: "/admin/forms/new-form", icon: FilePlus, label: "Yeni Form" },
-            {
-              href: "/admin/forms",
-              icon: List,
-              label: "Formları Görüntüle"
-            },
-            ...(activeFormItem ? [activeFormItem] : []),
-          ]}
-        />
-        <NavGroup icon={Workflow} label="Akışlar"
-          pathname={pathname} onItemClick={onItemClick}
-          items={[
-            { href: "/admin/workflows", icon: List, label: "Akışları Görüntüle" },
-            ...(activeWorkflowItem ? [activeWorkflowItem] : []),
-          ]}
-        />
-        <NavGroup icon={LayoutTemplate} label="Şablonlar"
-          pathname={pathname} onItemClick={onItemClick}
-          items={[
-            { href: "/admin/templates/new-template", icon: Plus, label: "Yeni Şablon" },
-            { href: "/admin/templates", icon: List, label: "Şablonları Görüntüle" },
-          ]}
-        />
-      </div>
+      <SidebarFooter>
+        <SidebarItem href="/admin/how-to-use" icon={BookOpen} label="Nasıl Kullanılır" active={pathname === "/admin/how-to-use"} />
+        <Account user={user} roles={realmRoles.filter(Boolean)} status={status} theme={theme} onThemeChange={onThemeChange} />
+      </SidebarFooter>
+    </>
+  );
+}
 
-      {isSuperAdmin ? (
-        <div className="space-y-2">
-          <SectionLabel>Yönetim</SectionLabel>
-          <div className="space-y-1">
-            <NavItem href="/admin/forms/all" icon={Database} label="Veritabanı" active={pathname === "/admin/forms/all"} onClick={onItemClick} />
-            <NavItem href="/admin/ownership" icon={UserX} label="Sahipsiz içerikler" active={pathname === "/admin/ownership"} onClick={onItemClick} />
-          </div>
-        </div>
-      ) : null}
+// AppShell draws the header twice, in the phone bar and in the desktop row, and hides one with CSS. The Studio
+// and the room portal their actions into these ids by name, so each copy names its slot after the row it is in.
+// Once both use AppShellActions, the slot and this function can go.
+function nameSlot(node) {
+  if (!node) return;
+  const shown = node.offsetParent !== null;
+  node.id = shown === window.matchMedia(DESKTOP).matches ? "admin-header-slot" : "admin-header-slot-mobile";
+}
 
-      <div className="mt-auto">
-        <NavItem href="/admin/how-to-use" icon={BookOpen} label="Nasıl Kullanılır" active={pathname === "/admin/how-to-use"} onClick={onItemClick} />
-        <ThemeToggle className="mt-3 w-full" />
-      </div>
+function ShellHeader({ labels }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <Breadcrumbs labels={labels} />
+      <div ref={nameSlot} className="ml-auto flex shrink-0 items-center" />
     </div>
   );
 }
 
 export default function Sidebar({ user, children }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const panelRef = useRef(null);
   const { data: session, status } = useSession();
+  const { theme, setTheme } = useTheme();
   const resolvedUser = user ?? session?.user;
 
   const { formId, form, loading: formLoading } = useFormContext();
@@ -298,61 +214,19 @@ export default function Sidebar({ user, children }) {
   }, [formId, form?.title, formLoading, workflowId, workflow?.name, workflowLoading, pathname, templateTitle]);
 
   return (
-    <div className="min-h-dvh md:h-dvh md:bg-neutral-950 md:pl-66 md:pr-2 md:py-2">
-
-      <aside className="hidden md:flex fixed inset-y-0 left-0 w-64 bg-neutral-950">
-        <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} workflowId={workflowId} workflow={workflow} workflowLoading={workflowLoading} />
-      </aside>
-
-      <div className="md:hidden sticky top-0 z-40 border-b border-neutral-950/70 bg-neutral-950/40 backdrop-blur">
-        <div className="flex h-14 items-center px-3">
-          <button onClick={() => setOpen(true)}
-            className="inline-flex items-center justify-center rounded-md p-2 text-neutral-200 hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div className="ml-2 min-w-0 flex-1">
-            <Breadcrumbs labels={dynamicBreadcrumbLabels} />
-          </div>
-          <div id="admin-header-slot-mobile" className="ml-2 flex shrink-0 items-center" />
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {open && (
-          <div className="md:hidden fixed inset-0 z-70">
-            <motion.div className="absolute inset-0 bg-black/40"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setOpen(false)}
-            />
-            <motion.div
-              className="absolute inset-y-0 left-0 flex h-full pointer-events-none"
-              initial={{ x: "-100%" }} animate={{ x: "0%" }} exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
-            >
-              <div ref={panelRef} className="pointer-events-auto h-full w-72 border-r border-neutral-800 bg-sidebar shadow-xl">
-                <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} workflowId={workflowId} workflow={workflow} workflowLoading={workflowLoading} onItemClick={() => setOpen(false)} />
-              </div>
-              <button type="button" onClick={() => setOpen(false)}
-                className="group pointer-events-auto relative flex w-5 -ml-0.5 h-full flex-col items-center justify-center rounded-r-full border-y border-r border-neutral-800 bg-sidebar text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"
-                title="Paneli kapat"
-              >
-                <ChevronsLeft size={14} strokeWidth={2.5} className="opacity-60 transition-transform duration-200 group-hover:scale-110 group-hover:opacity-100" />
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <div className="md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden md:rounded-xl md:border md:border-ink/5 md:bg-neutral-900">
-        <div className="hidden md:flex h-10 shrink-0 items-center border-b border-ink/5 px-6">
-          <Breadcrumbs labels={dynamicBreadcrumbLabels} />
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <div id="admin-header-slot" className="flex shrink-0 items-center" />
-          </div>
-        </div>
-        <div className="md:min-h-0 md:flex-1"><TooltipProvider>{children}</TooltipProvider></div>
-      </div>
-    </div>
+    <TooltipProvider>
+      <AppShell
+        header={<ShellHeader labels={dynamicBreadcrumbLabels} />}
+        sidebar={
+          <AdminSidebar pathname={pathname} user={resolvedUser} status={status} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []}
+            formId={formId} form={form} formLoading={formLoading} workflowId={workflowId} workflow={workflow} workflowLoading={workflowLoading}
+            theme={theme} onThemeChange={setTheme}
+          />
+        }
+      >
+        {/* forms' pages pad themselves and size to the panel (h-[calc(100dvh-3.5rem)]), so they get all of it */}
+        <AppShellFill className="-m-4 gap-0 sm:-m-6 md:h-[calc(100%+3rem)] md:overflow-hidden">{children}</AppShellFill>
+      </AppShell>
+    </TooltipProvider>
   );
 }

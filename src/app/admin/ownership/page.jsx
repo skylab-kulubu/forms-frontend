@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { Archive, ArrowRightLeft, ArrowUpRight, Clock, FileText, LayoutTemplate, Workflow } from "lucide-react";
-import HeaderShell from "../components/Headers";
-import { ListItemSkeleton } from "../components/ListItem";
+import { Button, Collapse, IconButton, ListPanel, PageHeader, Section, Skeleton } from "@skylab-kulubu/skylcn-ui";
 import Pagination from "../components/utils/Pagination";
 import ApprovalOverlay from "../components/ApprovalOverlay";
 import { OwnershipTransferControls } from "../components/OwnershipTransfer";
-import { actionClass } from "../components/utils/SidePanel";
 import { useOrphanedQuery } from "@/lib/hooks/useOwnership";
 import { useArchiveWorkflowMutation } from "@/lib/hooks/useWorkflowAdmin";
 
@@ -42,7 +39,6 @@ const formatDate = (value) => {
 
 function OrphanRow({ section, item }) {
   const [transferOpen, setTransferOpen] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const queryClient = useQueryClient();
   const archiveMutation = useArchiveWorkflowMutation();
@@ -63,8 +59,8 @@ function OrphanRow({ section, item }) {
     <div className="px-4 py-2.5">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-neutral-100">{section.name(item) || "--"}</p>
-          <div className="mt-0.5 flex min-w-0 items-center gap-3 text-3xs text-neutral-600">
+          <p className="truncate text-sm font-medium text-foreground">{section.name(item) || "--"}</p>
+          <div className="mt-0.5 flex min-w-0 items-center gap-3 text-3xs text-subtle-foreground">
             {meta ? <span className="truncate">{meta}</span> : null}
             {updatedAt ? (
               <span className="inline-flex shrink-0 items-center gap-1" title="Güncellenme"><Clock size={9} />{updatedAt}</span>
@@ -74,45 +70,47 @@ function OrphanRow({ section, item }) {
 
         <div className="flex shrink-0 items-center gap-1.5">
           {section.kind === "workflow" && item.status !== 2 ? (
-            <button type="button" onClick={() => setArchiveOpen(true)} disabled={archiveMutation.isPending} className={actionClass({ danger: true })}>
-              <Archive size={13} className="shrink-0 opacity-70" />
+            <Button size="sm" variant="destructive" onClick={() => setArchiveOpen(true)} disabled={archiveMutation.isPending}>
+              <Archive aria-hidden="true" />
               Arşivle
-            </button>
+            </Button>
           ) : null}
-          <button type="button" onClick={() => setTransferOpen((open) => !open)} aria-expanded={transferOpen} className={actionClass({ active: transferOpen })}>
-            <ArrowRightLeft size={13} className="shrink-0 opacity-70" />
+          <Button size="sm" variant={transferOpen ? "primary" : "outline"} onClick={() => setTransferOpen((open) => !open)} aria-expanded={transferOpen}>
+            <ArrowRightLeft aria-hidden="true" />
             Devret
-          </button>
+          </Button>
           {section.href ? (
-            <Link href={section.href(item)} aria-label="Aç"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-ink/10 text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
-            >
-              <ArrowUpRight size={13} />
-            </Link>
+            <IconButton icon={ArrowUpRight} label="Aç" variant="outline" size="icon-sm" render={<Link href={section.href(item)} />} />
           ) : null}
         </div>
       </div>
 
-      <AnimatePresence initial={false}>
-        {transferOpen && (
-          <motion.div key="transfer" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} onAnimationStart={() => setIsAnimating(true)} onAnimationComplete={() => setIsAnimating(false)}
-            className={isAnimating ? "overflow-hidden" : ""}
-          >
-            <div className="max-w-md pt-3">
-              <OwnershipTransferControls kind={section.kind} itemId={item.id} preset="transfer-orphaned"
-                context={{ kind: section.kind, itemLabel: section.label(item) }}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <Collapse open={transferOpen}>
+        <div className="max-w-md pt-3">
+          <OwnershipTransferControls kind={section.kind} itemId={item.id} preset="transfer-orphaned"
+            context={{ kind: section.kind, itemLabel: section.label(item) }}
+          />
+        </div>
+      </Collapse>
 
       {section.kind === "workflow" ? (
         <ApprovalOverlay open={archiveOpen} preset="archive-workflow" context={{ isPending: archiveMutation.isPending }}
           onApprove={handleArchive} onReject={() => setArchiveOpen(false)}
         />
       ) : null}
+    </div>
+  );
+}
+
+function OrphanSkeleton() {
+  return (
+    <div aria-hidden="true" className="divide-y divide-border-subtle">
+      {[0, 1].map((index) => (
+        <div key={index} className="space-y-1.5 px-4 py-3">
+          <Skeleton className="h-3.5 w-48 max-w-full" />
+          <Skeleton className="h-2.5 w-28" />
+        </div>
+      ))}
     </div>
   );
 }
@@ -125,44 +123,41 @@ function OrphanSection({ section }) {
   const totalCount = meta.totalCount ?? items.length;
   const Icon = section.icon;
 
-  return (
-    <section className="space-y-2">
-      <div className="flex items-center gap-2 px-1">
-        <Icon size={14} className="text-neutral-500" />
-        <h2 className="text-sm font-semibold text-neutral-200">{section.title}</h2>
-        <span className="text-2xs tabular-nums text-neutral-500">{isLoading ? "--" : totalCount}</span>
-      </div>
+  const title = (
+    <span className="inline-flex items-center gap-2">
+      <Icon size={14} aria-hidden="true" />
+      {section.title}
+      <span className="tabular-nums text-subtle-foreground">{isLoading ? "--" : totalCount}</span>
+    </span>
+  );
 
-      <div className="rounded-xl border border-ink/10">
+  return (
+    <Section title={title}>
+      <div className="overflow-hidden rounded-lg border border-border">
         {isLoading ? (
-          <ListItemSkeleton count={2} />
+          <OrphanSkeleton />
         ) : error ? (
-          <p className="px-4 py-3 text-2xs text-red-300">{error.message || `${section.title} yüklenemedi.`}</p>
+          <p className="px-4 py-3 text-2xs text-destructive">{error.message || `${section.title} yüklenemedi.`}</p>
         ) : items.length === 0 ? (
-          <p className="px-4 py-3 text-2xs text-neutral-500">{section.empty}</p>
+          <p className="px-4 py-3 text-2xs text-subtle-foreground">{section.empty}</p>
         ) : (
-          items.map((item, index) => (
-            <div key={item.id}>
-              {index > 0 && <div className="mx-4 h-px bg-ink/10" />}
-              <OrphanRow section={section} item={item} />
-            </div>
-          ))
+          <ListPanel status={{ kind: "ready" }} framed={false}>
+            {items.map((item) => <OrphanRow key={item.id} section={section} item={item} />)}
+          </ListPanel>
         )}
       </div>
 
       {meta.totalPages > 1 ? (
-        <Pagination current={meta.page ?? page} totalPages={meta.totalPages} totalCount={totalCount} pageSize={meta.pageSize ?? items.length}
-          entriesLength={items.length} onPageChange={setPage}
-        />
+        <Pagination current={meta.page ?? page} totalPages={meta.totalPages} onPageChange={setPage} />
       ) : null}
-    </section>
+    </Section>
   );
 }
 
 export default function OwnershipPage() {
   return (
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col gap-6 overflow-y-auto p-4 scrollbar lg:p-6">
-      <HeaderShell title="Sahipsiz içerikler" description="Hesabı silinen kişilerden kalan formları, akışları ve şablonları yeni sahiplerine devredin." />
+      <PageHeader title="Sahipsiz içerikler" description="Hesabı silinen kişilerden kalan formları, akışları ve şablonları yeni sahiplerine devredin." />
       {SECTIONS.map((section) => <OrphanSection key={section.kind} section={section} />)}
     </div>
   );

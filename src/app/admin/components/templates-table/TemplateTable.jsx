@@ -109,7 +109,7 @@ export default function TemplateTable() {
               {found.length === 0 ? (
                 <StateCard title="Şablon bulunamadı" Icon={SearchX} description="Aradığın kelime hiçbir şablonun adında ya da sorusunda geçmiyor." />
               ) : (
-                <div className="divide-y divide-ink/5">
+                <div className="divide-y divide-border-subtle">
                   {visible.map((row) => (
                     <TableRow key={row.key} row={row} open={openKeys.has(row.key)} onToggle={() => toggleOpen(row.key)} query={query} matched={matches.get(row.key).questions}
                       fresh={fresh === row.key} copying={saving} onShare={() => setShareTarget(row)} onCopy={() => copy(row)} onDelete={() => setDeleteTarget(row)}
@@ -119,9 +119,9 @@ export default function TemplateTable() {
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-t border-ink/10">
-              <p className="pt-3 text-2xs text-neutral-500">
-                {query ? <><span className="font-semibold tabular-nums text-neutral-200">{found.length}</span> / {rows.length} şablon</> : <><span className="font-semibold tabular-nums text-neutral-200">{rows.length}</span> şablon</>}
+            <div className="flex items-center justify-between gap-3 border-t border-border">
+              <p className="pt-3 text-2xs text-subtle-foreground">
+                {query ? <><span className="font-semibold tabular-nums text-foreground">{found.length}</span> / {rows.length} şablon</> : <><span className="font-semibold tabular-nums text-foreground">{rows.length}</span> şablon</>}
               </p>
               <Pagination current={current} totalPages={totalPages} onPageChange={goToPage} />
             </div>

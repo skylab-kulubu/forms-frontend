@@ -1,182 +1,74 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown, ArrowUp, ClipboardCheck, Crown, Eye, PencilLine, Repeat2, UserX, Users } from "lucide-react";
+import { Button, FilterPills, SegmentedControl } from "@skylab-kulubu/skylcn-ui";
 
-function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
-  const count = Math.max(options.length, 1);
-  const activeIndex = Math.max(0, options.findIndex((option) => option.value === value));
-  const indicatorStyle = {
-    width: `calc((100% - 0.5rem) / ${count})`,
-    transform: `translateX(${activeIndex * 100}%)`,
-  };
+const SORT_OPTIONS = [
+  { value: "desc", label: "Azalan", icon: ArrowDown },
+  { value: "asc", label: "Artan", icon: ArrowUp },
+];
 
+const ROLE_OPTIONS = [
+  { value: "all", label: "Hepsi", icon: Users },
+  { value: "viewer", label: "Okuyucu", icon: Eye },
+  { value: "editor", label: "Editör", icon: PencilLine },
+  { value: "owner", label: "Sahip", icon: Crown },
+];
+
+const nextOf = (value) => (value === null ? true : value === true ? false : null);
+const stateOf = (value) => (value === true ? "açık olanlar" : value === false ? "kapalı olanlar" : "hepsi");
+
+export function FilterGroup({ label, children }) {
   return (
-    <div className="relative grid w-full rounded-lg border border-ink/10 bg-neutral-900/60 p-1 text-2xs"
-      style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
-    >
-      <span className="absolute inset-y-1 left-1 rounded-md border border-skylab-400/40 bg-skylab-500/15 shadow-sm transition-transform duration-200"
-        style={indicatorStyle}
-      />
-      {options.map((option) => {
-        const isActive = option.value === value;
-        const Icon = option.icon;
-        return (
-          <button type="button" key={option.value} onClick={() => onChange?.(option.value)} aria-pressed={isActive}
-            aria-label={ariaLabel ? `${ariaLabel}: ${option.label}` : option.label} title={option.label}
-            className={`relative z-10 flex h-7 w-full items-center justify-center rounded-md px-2 text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isActive ? "text-skylab-300" : "text-neutral-300 hover:text-skylab-300"}`}
-          >
-            {Icon ? <Icon className="h-4 w-4" aria-hidden="true" /> : <span className="block truncate">{option.label}</span>}
-          </button>
-        );
-      })}
+    <div className="flex flex-col gap-2">
+      <p className="text-2xs font-medium text-muted-foreground">{label}</p>
+      {children}
     </div>
   );
 }
 
-function TriStateIconButton({ value, onChange, icon: Icon, label }) {
-  const nextValue = value === null ? true : value === true ? false : null;
-  const stateClass = value === true ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300"
-    : value === false ? "border-red-400/40 bg-red-500/15 text-red-100"
-    : "border-ink/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300";
-
+// Each press steps through all, on and off; the colour and the label say which one holds
+function TriStateButton({ value, onChange, icon: Icon, label }) {
+  const text = `${label}: ${stateOf(value)}`;
   return (
-    <button type="button" onClick={() => onChange?.(nextValue)} aria-label={label} title={label}
-      className={`flex h-7 flex-1 items-center justify-center rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${stateClass}`}
+    <Button size="sm" variant={value === true ? "primary" : value === false ? "destructive" : "outline"} aria-label={text} title={text}
+      onClick={() => onChange?.(nextOf(value))} className="flex-1"
     >
-      <Icon className="h-4 w-4" aria-hidden="true" />
-    </button>
+      <Icon aria-hidden="true" />
+    </Button>
   );
 }
 
-function StateOptions({ options, counts, value, onChange }) {
-  return (
-    <div className="grid w-full gap-0.5 rounded-lg border border-ink/10 bg-neutral-900/60 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
-      {options.map((option) => {
-        const active = option.id === value;
-        const count = counts?.[option.id] ?? 0;
-        return (
-          <button key={option.id} type="button" onClick={() => onChange?.(option.id)} aria-pressed={active}
-            className={`flex min-w-0 flex-col items-center gap-px rounded-md border py-1 text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-transparent text-neutral-400 hover:text-neutral-100"}`}
-          >
-            <span className="max-w-full truncate">{option.label}</span>
-            <span className={`text-3xs tabular-nums ${option.id === "pending" && count ? "text-amber-300/90" : "text-neutral-500"}`}>{count}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-export const panelVariants = {
-  hidden: { opacity: 0, y: -8, scale: 0.98 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
-  exit: { opacity: 0, y: -6, scale: 0.98, transition: { duration: 0.15, ease: [0.22, 1, 0.36, 1] } },
-};
-
-const contentVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: -8, height: 0 },
-  visible: { opacity: 1, y: 0, height: "auto", transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } },
-};
-
-export function useDismissPanel({ open, anchorRef, panelRef, onClose }) {
-  useEffect(() => {
-    if (!open) return undefined;
-    const handleClick = (event) => {
-      if (panelRef.current?.contains(event.target) || anchorRef?.current?.contains(event.target)) return;
-      onClose?.();
-    };
-    const handleKey = (event) => {
-      if (event.key === "Escape") onClose?.();
-    };
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [open, anchorRef, panelRef, onClose]);
-}
-
-export default function FormsFilterShell({ open, anchorRef, onClose, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange,
+/** The forms list's filters, drawn in the header's filter popover. */
+export default function FormsFilterShell({ sortValue = "desc", onSortChange, roleValue = "all", onRoleChange,
   allowAnonymous = null, onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange,
-  requiresManualReview = null, onRequiresManualReviewChange, className = "", align = "center", stateOptions = null, stateCounts = null, stateValue = "all", onStateChange
+  requiresManualReview = null, onRequiresManualReviewChange, stateOptions = null, stateCounts = null, stateValue = "all", onStateChange
 }) {
-  const panelRef = useRef(null);
-
-  useDismissPanel({ open, anchorRef, panelRef, onClose });
-
-  const sortOptions = [
-    { value: "desc", label: "Azalan", icon: ArrowDown },
-    { value: "asc", label: "Artan", icon: ArrowUp },
-  ];
-
-  const roleOptions = [
-    { value: "all", label: "Hepsi", icon: Users },
-    { value: "viewer", label: "Okuyucu", icon: Eye },
-    { value: "editor", label: "Editör", icon: PencilLine },
-    { value: "owner", label: "Sahip", icon: Crown },
-  ];
-
   return (
-    <AnimatePresence>
-      {open ? (
-        <motion.div ref={panelRef} role="dialog" aria-label="Forms filters" layout
-          initial="hidden" animate="visible" exit="exit" variants={panelVariants}
-          transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2 max-md:fixed max-md:inset-x-2 max-md:top-29 max-md:w-auto max-md:max-w-none max-md:translate-x-0"} rounded-xl border border-ink/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
-        >
-          <motion.div variants={contentVariants} className="flex flex-col p-4 text-center">
-            {stateOptions ? (
-              <motion.div variants={itemVariants} className="overflow-hidden">
-                <div className="space-y-2 pb-4">
-                  <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                    Form Durumu
-                  </p>
-                  <StateOptions options={stateOptions} counts={stateCounts} value={stateValue} onChange={onStateChange} />
-                </div>
-              </motion.div>
-            ) : null}
-
-            <motion.div variants={itemVariants} className="overflow-hidden">
-              <div className="space-y-2">
-                <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Tarih Sıralaması
-                </p>
-                <SegmentedControl options={sortOptions} value={sortValue} onChange={onSortChange} ariaLabel="Siralama" />
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="overflow-hidden">
-              <div className="space-y-2 pt-4">
-                <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Form Yetkisi
-                </p>
-                <SegmentedControl options={roleOptions} value={roleValue} onChange={onRoleChange} ariaLabel="Rol" />
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="overflow-hidden">
-              <div className="space-y-2 pt-4">
-                <p className="text-3xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Form Özellikleri
-                </p>
-                <div className="flex items-center gap-2">
-                  <TriStateIconButton value={allowAnonymous} onChange={onAllowAnonymousChange} icon={UserX} label="Anonim cevap" />
-                  <TriStateIconButton value={allowMultiple} onChange={onAllowMultipleChange} icon={Repeat2} label="Coklu cevap" />
-                  <TriStateIconButton value={requiresManualReview} onChange={onRequiresManualReviewChange} icon={ClipboardCheck} label="Manuel onay" />
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </motion.div>
+    <div className="flex flex-col gap-4">
+      {stateOptions ? (
+        <FilterGroup label="Form Durumu">
+          <FilterPills aria-label="Form Durumu" value={stateValue} onValueChange={onStateChange} className="w-full justify-between overflow-x-auto scrollbar-hidden"
+            options={stateOptions.map((option) => ({ value: option.id, label: option.label, count: stateCounts?.[option.id] ?? 0 }))}
+          />
+        </FilterGroup>
       ) : null}
-    </AnimatePresence>
+
+      <FilterGroup label="Tarih Sıralaması">
+        <SegmentedControl aria-label="Tarih Sıralaması" options={SORT_OPTIONS} value={sortValue} onValueChange={onSortChange} className="w-full" />
+      </FilterGroup>
+
+      <FilterGroup label="Form Yetkisi">
+        <SegmentedControl aria-label="Form Yetkisi" options={ROLE_OPTIONS} value={roleValue} onValueChange={onRoleChange} className="w-full" />
+      </FilterGroup>
+
+      <FilterGroup label="Form Özellikleri">
+        <div className="flex items-center gap-2">
+          <TriStateButton value={allowAnonymous} onChange={onAllowAnonymousChange} icon={UserX} label="Anonim cevap" />
+          <TriStateButton value={allowMultiple} onChange={onAllowMultipleChange} icon={Repeat2} label="Coklu cevap" />
+          <TriStateButton value={requiresManualReview} onChange={onRequiresManualReviewChange} icon={ClipboardCheck} label="Manuel onay" />
+        </div>
+      </FilterGroup>
+    </div>
   );
 }

@@ -31,7 +31,8 @@ export const TABLE_COLUMNS = [
   { id: "week", label: "7 gün", sizes: { 4: "6rem", 6: "7rem" } },
 ];
 
-const ACTION_SIZES = { 0: "1.75rem", 2: "3.75rem", 4: "8rem" };
+// Room for skylcn's 28px icon buttons: three quick actions, the peek toggle and the open link
+const ACTION_SIZES = { 0: "1.75rem", 2: "3.75rem", 4: "9.5rem" };
 const GRID_STEPS = [0, 2, 4, 5, 6];
 
 function sizeAt(sizes, step) {

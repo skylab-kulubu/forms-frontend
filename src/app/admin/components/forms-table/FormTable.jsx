@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { FilePlus, FileSearchCorner, FileXCorner } from "lucide-react";
+import { Button } from "@skylab-kulubu/skylcn-ui";
 import StateCard from "@/app/components/StateCard";
 import { useWorkflowsQuery } from "@/lib/hooks/useWorkflowAdmin";
 import { FormsHeader } from "../Headers";
@@ -139,12 +140,10 @@ export default function FormTable() {
             <StateCard title="Bu durumda form yok" Icon={FileSearchCorner} description="Filtreden başka bir durum seçebilirsin." />
           ) : rows.length === 0 ? (
             <StateCard title="Henüz formun yok" Icon={FilePlus} description="Oluşturduğun formlar ve eklendiğin formlar burada görünür.">
-              <Link href="/admin/forms/new-form" className="inline-flex h-9 items-center rounded-md border border-skylab-400/30 bg-skylab-500/10 px-3 text-xs font-medium text-skylab-300 transition-colors hover:bg-skylab-400/20">
-                İlk formunu oluştur
-              </Link>
+              <Button variant="primary" size="lg" render={<Link href="/admin/forms/new-form" />}>İlk formunu oluştur</Button>
             </StateCard>
           ) : (
-            <div className="divide-y divide-ink/5">
+            <div className="divide-y divide-border-subtle">
               {visible.map((row) => (
                 <TableRow key={row.key} row={row} peak={peak} open={openKeys.has(row.key)} onToggle={() => toggleOpen(row.key)} shown={shown} />
               ))}
@@ -153,11 +152,11 @@ export default function FormTable() {
         </div>
 
         {!isLoading && !error && inTab.length > 0 ? (
-          <div className="flex items-center justify-between gap-3 border-t border-ink/10">
-            <p className="pt-3 text-2xs text-neutral-500">
-              <span className="font-semibold tabular-nums text-neutral-200">{tab === "all" ? forms.length : inTab.length}</span> form gösteriliyor
-              {totals.pending ? <> · <span className="tabular-nums text-neutral-300">{totals.pending}</span> onay bekliyor</> : null}
-              {" "}· son 7 günde <span className="tabular-nums text-neutral-300">{totals.week}</span> cevap
+          <div className="flex items-center justify-between gap-3 border-t border-border">
+            <p className="pt-3 text-2xs text-subtle-foreground">
+              <span className="font-semibold tabular-nums text-foreground">{tab === "all" ? forms.length : inTab.length}</span> form gösteriliyor
+              {totals.pending ? <> · <span className="tabular-nums text-secondary-foreground">{totals.pending}</span> onay bekliyor</> : null}
+              {" "}· son 7 günde <span className="tabular-nums text-secondary-foreground">{totals.week}</span> cevap
             </p>
             <Pagination current={current} totalPages={totalPages} onPageChange={setPage} />
           </div>

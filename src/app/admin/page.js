@@ -3,22 +3,15 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { motion } from "framer-motion";
-import { FileText, Plus, LayoutTemplate, ChartColumn, ArrowRight, ArrowUpRight, BookOpen, PencilLine } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { FileText, Plus, LayoutTemplate, ChartColumn, ArrowRight, BookOpen, PencilLine } from "lucide-react";
+import { Button, DataListActions, IconButton, ListItem, ListPanel, Section, StatCard, TrendBadge } from "@skylab-kulubu/skylcn-ui";
+import { AreaChart } from "@skylab-kulubu/skylcn-ui/charts";
 import { useUserFormsQuery, useServiceMetricsQuery } from "@/lib/hooks/useFormAdmin";
 import { useGroupsQuery } from "@/lib/hooks/useGroupAdmin";
 import { DashboardHeader } from "./components/Headers";
-import { FeatureIcons, StatusDot, formatUpdatedAt } from "./components/ListItem";
-import { Section, SectionTitle, TrendBadge, TrendTooltip } from "./components/form-overview/components/FormMetrics";
+import { FeatureIcons, IconTile, StatusDot, formatUpdatedAt } from "./components/ListItem";
 
 const RECENT_FORMS_COUNT = 8;
-
-const fadeIn = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
-};
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -50,26 +43,18 @@ function Greeting({ greeting, firstName, ready }) {
   if (!ready) return <span className="shimmer inline-block h-3 w-32 rounded-md align-middle lg:h-4 lg:w-44" />;
 
   return (
-    <motion.span {...fadeIn} className="inline-block">
-      {greeting}, <span className="text-neutral-300">{firstName}</span>
-    </motion.span>
+    <span className="inline-block enter-fade">
+      {greeting}, <span className="text-foreground">{firstName}</span>
+    </span>
   );
 }
 
-function PanelHeading({ mobileTitle, desktopTitle, mobileNote, desktopNote, emphasizeDesktop = false }) {
+// The greeting heads the forms on wide screens and the metrics on phones, where the metrics come first
+function Responsive({ mobile, desktop }) {
   return (
     <>
-      <div className="flex items-center gap-2 px-1 lg:h-7">
-        <span className={`min-w-0 truncate text-2xs font-medium text-neutral-500 ${emphasizeDesktop ? "lg:text-base" : ""}`}>
-          <span className="lg:hidden">{mobileTitle}</span>
-          <span className="hidden lg:inline">{desktopTitle}</span>
-        </span>
-        <span className="h-px flex-1 bg-ink/5" />
-      </div>
-      <p className="mt-0.5 h-4 truncate px-1 text-3xs leading-4 text-neutral-600">
-        <span className="lg:hidden">{mobileNote}</span>
-        <span className="hidden lg:inline">{desktopNote}</span>
-      </p>
+      <span className="lg:hidden">{mobile}</span>
+      <span className="hidden lg:inline">{desktop}</span>
     </>
   );
 }
@@ -83,104 +68,42 @@ const QUICK_ACTIONS = [
 
 function QuickActions() {
   return (
-    <div className="flex flex-col gap-0.5">
+    <ListPanel status={{ kind: "ready" }} framed={false} className="-mx-3">
       {QUICK_ACTIONS.map(({ icon: Icon, label, href, primary }) => (
-        <Link key={href} href={href}
-          className="group/action flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-ink/5"
-        >
-          <Icon size={12} className={`shrink-0 ${primary ? "text-skylab-400" : "text-neutral-600"}`} strokeWidth={1.75} />
-          <span className={`min-w-0 flex-1 truncate text-2xs ${primary ? "font-medium text-skylab-300" : "text-neutral-300"}`}>{label}</span>
-          <ArrowUpRight size={12} className="shrink-0 text-neutral-700 transition-colors group-hover/action:text-neutral-400" />
-        </Link>
+        <ListItem key={href} href={href} title={label}
+          leading={<Icon className={`size-4 shrink-0 ${primary ? "text-skylab-400" : "text-subtle-foreground"}`} strokeWidth={1.75} aria-hidden="true" />}
+        />
       ))}
-    </div>
+    </ListPanel>
   );
 }
 
 const SERVICE_STATS = [
-  { key: "forms", label: "Sistemdeki toplam form", dot: "bg-neutral-500", tone: "text-neutral-100", href: "/admin/forms/all", superAdminOnly: true },
-  { key: "responses", label: "Sistemdeki toplam cevap", dot: "bg-skylab-400 shadow-[0_0_6px] shadow-skylab-400/40", tone: "text-neutral-100" },
-  { key: "pending", label: "Sistemdeki bekleyen onay", dot: "bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40", tone: "text-amber-300" },
-  { key: "groups", label: "Sana ait şablon", dot: "bg-neutral-500", tone: "text-neutral-100", href: "/admin/templates" },
+  { key: "forms", label: "Sistemdeki toplam form", dot: "neutral", href: "/admin/forms/all", superAdminOnly: true },
+  { key: "responses", label: "Sistemdeki toplam cevap", dot: "brand" },
+  { key: "pending", label: "Sistemdeki bekleyen onay", dot: "warning", valueTone: "warning" },
+  { key: "groups", label: "Sana ait şablon", dot: "neutral", href: "/admin/templates" },
 ];
 
 function ServiceStats({ values, isLoading, isSuperAdmin }) {
   return (
     <div className="grid grid-cols-2 gap-2">
-      {SERVICE_STATS.map((stat) => {
-        const body = (
-          <>
-            <span className={`size-1.5 shrink-0 rounded-full ${stat.dot}`} />
-            <div className="min-w-0">
-              <p className="truncate text-3xs text-neutral-500" title={stat.label}>{stat.label}</p>
-              <p className={`text-lg font-semibold leading-tight tabular-nums ${stat.tone}`}>
-                {isLoading ? "--" : values[stat.key] ?? 0}
-              </p>
-            </div>
-          </>
-        );
-
-        const className = "flex items-center gap-2.5 rounded-md border border-ink/5 bg-ink/3 px-3 py-2.5 transition-colors";
-        const href = stat.href && (!stat.superAdminOnly || isSuperAdmin) ? stat.href : null;
-
-        if (href) {
-          return (
-            <Link key={stat.key} href={href} className={`${className} hover:border-ink/10 hover:bg-ink/5`}>
-              {body}
-            </Link>
-          );
-        }
-        return <div key={stat.key} className={className}>{body}</div>;
-      })}
+      {SERVICE_STATS.map((stat) => (
+        <StatCard key={stat.key} label={stat.label} dot={stat.dot} valueTone={stat.valueTone}
+          value={isLoading ? "--" : values[stat.key] ?? 0}
+          href={stat.href && (!stat.superAdminOnly || isSuperAdmin) ? stat.href : undefined}
+        />
+      ))}
     </div>
   );
 }
 
-function WeeklyTrend({ title, data, trendPercentage, gradientId }) {
-  const hasData = Array.isArray(data) && data.length > 0;
-
+function WeeklyTrend({ title, data, trendPercentage, series, loading }) {
   return (
-    <div>
-      <div className="mb-3 flex items-center gap-2">
-        <SectionTitle>{title}</SectionTitle>
-        <span className="-mt-3"><TrendBadge value={trendPercentage} /></span>
-        <span className="-mt-3 ml-auto text-3xs text-neutral-600">son 7 gün, önceki 7 güne göre</span>
-      </div>
-
-      {hasData ? (
-        <div className="h-24 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 5, right: 10, bottom: -2, left: 10 }}>
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#e0c8e5" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#e0c8e5" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 8, fill: "rgb(100,100,110)" }} interval={0} dy={4} />
-              <YAxis hide domain={[0, "auto"]} />
-              <Tooltip content={<TrendTooltip />} cursor={{ stroke: "#e0c8e5", strokeWidth: 0.5, strokeDasharray: "3 3" }} />
-              <Area type="monotone" dataKey="count" stroke="#e0c8e5" strokeWidth={2} fill={`url(#${gradientId})`}
-                dot={{ r: 2.5, fill: "#e0c8e5", strokeWidth: 0 }} activeDot={{ r: 4, fill: "#f3e8f5", strokeWidth: 0 }} animationDuration={500} animationEasing="ease-out"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <p className="py-6 text-center text-3xs text-neutral-600">Veri bulunamadı</p>
-      )}
-    </div>
-  );
-}
-
-function TrendSkeleton() {
-  return (
-    <div>
-      <div className="mb-3 flex items-center gap-2">
-        <div className="shimmer h-2.5 w-32 rounded-md" />
-      </div>
-      <div className="shimmer h-24 w-full rounded-md" />
-    </div>
+    <AreaChart compact markers framed={false} title={title} badge={<TrendBadge value={trendPercentage} />}
+      description="son 7 gün, önceki 7 güne göre" data={Array.isArray(data) ? data : []} x="label" xLabel="Gün"
+      series={{ count: { label: series } }} loading={loading} emptyMessage="Veri bulunamadı" height={96}
+    />
   );
 }
 
@@ -189,160 +112,89 @@ function RecentFormItem({ form }) {
   const canEdit = Number(form.userRole) >= 2;
 
   return (
-    <div className="group/row relative transition-colors hover:bg-ink/3">
-      <Link href={viewHref} className="absolute inset-0 z-0" aria-label={form.title ?? "Form"} tabIndex={-1} />
-      <div className="flex items-center gap-3 px-2 py-2.5">
-        <StatusDot status={form.status} />
-
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3">
-          <FileText className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">{form.title || "--"}</h3>
-          <div className="mt-0.5 flex min-w-0 items-center gap-2">
-            <span className="text-3xs tabular-nums text-neutral-500">{form.responseCount ?? 0} yanıt</span>
-            <FeatureIcons form={form} />
-          </div>
-        </div>
-
-        <span className="hidden shrink-0 text-2xs tabular-nums text-neutral-500 sm:block">
-          {formatUpdatedAt(form.updatedAt ?? form.createdAt)}
+    <ListItem href={viewHref} title={form.title || "--"}
+      leading={
+        <span className="flex shrink-0 items-center gap-3">
+          <StatusDot form={form} />
+          <IconTile icon={FileText} />
         </span>
-
-        <div className="flex shrink-0 items-center gap-1 lg:w-14 lg:justify-end lg:opacity-0 lg:transition-opacity lg:group-hover/row:opacity-100">
-          <Link href={`${viewHref}/responses`} title="Cevaplar" aria-label="Cevaplar"
-            className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-ink/10 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 lg:pointer-events-none lg:group-hover/row:pointer-events-auto"
-          >
-            <ChartColumn className="h-3 w-3" />
-          </Link>
-          {canEdit ? (
-            <Link href={`${viewHref}/edit`} title="Düzenle" aria-label="Düzenle"
-              className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-skylab-400/30 bg-skylab-500/10 text-skylab-300 transition-colors hover:bg-skylab-400/20 lg:pointer-events-none lg:group-hover/row:pointer-events-auto"
-            >
-              <PencilLine className="h-3 w-3" />
-            </Link>
-          ) : (
-            <span title="Düzenleme yetkiniz yok" className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-ink/5 text-neutral-700">
-              <PencilLine className="h-3 w-3" />
-            </span>
-          )}
-        </div>
-
-        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-neutral-700 transition-all group-hover/row:translate-x-0.5 group-hover/row:text-neutral-400" />
-      </div>
-    </div>
-  );
-}
-
-function RecentFormsSkeleton() {
-  return (
-    <div className="divide-y divide-ink/5">
-      {Array.from({ length: 5 }, (_, i) => (
-        <div key={i} className="flex items-center gap-3 px-2 py-2.5">
-          <div className="shimmer size-1.5 shrink-0 rounded-full" />
-          <div className="shimmer h-9 w-9 shrink-0 rounded-lg" />
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="shimmer h-3.5 w-40 rounded-md" />
-            <div className="shimmer h-2.5 w-20 rounded-md" />
-          </div>
-          <div className="shimmer hidden h-2.5 w-16 rounded-md sm:block" />
-        </div>
-      ))}
-    </div>
+      }
+      subtitle={
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="tabular-nums">{form.responseCount ?? 0} yanıt</span>
+          <FeatureIcons form={form} />
+        </span>
+      }
+      trailing={
+        <>
+          <span className="hidden shrink-0 text-2xs tabular-nums text-subtle-foreground sm:block">{formatUpdatedAt(form.updatedAt ?? form.createdAt)}</span>
+          <DataListActions hoverFrom="lg">
+            <IconButton icon={ChartColumn} label="Cevaplar" variant="outline" size="icon-sm" render={<Link href={`${viewHref}/responses`} />} />
+            {canEdit ? (
+              <IconButton icon={PencilLine} label="Düzenle" variant="primary" size="icon-sm" render={<Link href={`${viewHref}/edit`} />} />
+            ) : (
+              <IconButton icon={PencilLine} label="Düzenleme yetkiniz yok" variant="ghost" size="icon-sm" disabled />
+            )}
+          </DataListActions>
+        </>
+      }
+    />
   );
 }
 
 function RecentFormsPanel({ greeting, firstName, sessionReady, note, forms, isLoading }) {
+  const status = isLoading ? { kind: "loading" } : forms.length === 0 ? { kind: "empty", message: "Henüz form oluşturulmamış" } : { kind: "ready" };
+
   return (
-    <div className="flex flex-col lg:h-full lg:overflow-hidden">
-      <PanelHeading
-        mobileTitle="Formların"
-        desktopTitle={<Greeting greeting={greeting} firstName={firstName} ready={sessionReady} />}
-        mobileNote=""
-        desktopNote={note}
-        emphasizeDesktop
-      />
+    <Section className="lg:h-full"
+      title={<Responsive mobile="Formların" desktop={<span className="lg:text-base"><Greeting greeting={greeting} firstName={firstName} ready={sessionReady} /></span>} />}
+      description={<Responsive mobile="" desktop={note} />}
+    >
+      <div className="flex flex-col lg:h-full">
+        <div className="scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+          <ListPanel status={status} framed={false} className="-mx-3" emptyIcon={FileText}
+            emptyAction={<Button size="sm" variant="primary" render={<Link href="/admin/forms/new-form" />}>İlk formunu oluştur</Button>}
+          >
+            {forms.map((form) => <RecentFormItem key={form.id} form={form} />)}
+          </ListPanel>
+        </div>
 
-      <div className="pt-3 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-        {isLoading ? (
-          <RecentFormsSkeleton />
-        ) : forms.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-1 py-12 text-center">
-            <FileText className="mb-1 h-7 w-7 text-neutral-700" strokeWidth={1.5} />
-            <p className="text-2xs text-neutral-400">Henüz form oluşturulmamış</p>
-            <Link href="/admin/forms/new-form" className="text-2xs font-medium text-skylab-300 transition-colors hover:text-skylab-200">
-              İlk formunu oluştur
-            </Link>
-          </div>
-        ) : (
-          <div className="divide-y divide-ink/5">
-            {forms.map((form, i) => (
-              <motion.div key={form.id} {...fadeIn} transition={{ ...fadeIn.transition, delay: Math.min(i, 6) * 0.03 }}>
-                <RecentFormItem form={form} />
-              </motion.div>
-            ))}
-          </div>
-        )}
+        <div className="mt-3 flex shrink-0 items-center justify-between gap-3 border-t border-border-subtle pt-3">
+          <span className="text-2xs text-subtle-foreground">{isLoading ? "--" : forms.length > 0 ? `Son güncellenen ${forms.length} form` : ""}</span>
+          <Button size="sm" variant="ghost" render={<Link href="/admin/forms" />}>
+            Tümünü gör
+            <ArrowRight aria-hidden="true" />
+          </Button>
+        </div>
       </div>
-
-      <div className="mt-3 flex shrink-0 items-center justify-between gap-3 border-t border-ink/5 px-1 pt-3">
-        <span className="text-2xs text-neutral-600">{isLoading ? "--" : forms.length > 0 ? `Son güncellenen ${forms.length} form` : ""}</span>
-        <Link href="/admin/forms" className="inline-flex items-center gap-1 text-2xs font-medium text-neutral-400 transition-colors hover:text-neutral-200">
-          Tümünü gör
-          <ArrowRight className="h-3 w-3" />
-        </Link>
-      </div>
-    </div>
+    </Section>
   );
 }
 
 function MetricsPanel({ greeting, firstName, sessionReady, note, stats, statsLoading, isSuperAdmin, metrics, metricsLoading }) {
   return (
-    <div className="flex flex-col lg:h-full lg:overflow-hidden">
-      <PanelHeading
-        mobileTitle={<Greeting greeting={greeting} firstName={firstName} ready={sessionReady} />}
-        desktopTitle="Metrikler"
-        mobileNote={note}
-        desktopNote=""
-      />
+    <Section className="lg:h-full"
+      title={<Responsive mobile={<Greeting greeting={greeting} firstName={firstName} ready={sessionReady} />} desktop="Metrikler" />}
+      description={<Responsive mobile={note} desktop="" />}
+    >
+      <div className="flex flex-col gap-6 scrollbar lg:h-full lg:overflow-y-auto lg:pr-1">
+        <Section title="Genel" level={3}>
+          <ServiceStats values={stats} isLoading={statsLoading} isSuperAdmin={isSuperAdmin} />
+        </Section>
 
-      <div className="pt-3 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-        <div className="divide-y divide-ink/5">
+        <WeeklyTrend title="Haftalık form trendi" data={metrics?.formsCreatedWeeklyTrend} trendPercentage={metrics?.formsWeeklyTrendPercentage}
+          series="Form" loading={metricsLoading}
+        />
 
-          <Section delay={0}>
-            <SectionTitle>Genel</SectionTitle>
-            <ServiceStats values={stats} isLoading={statsLoading} isSuperAdmin={isSuperAdmin} />
-          </Section>
+        <WeeklyTrend title="Haftalık cevap trendi" data={metrics?.responsesWeeklyTrend} trendPercentage={metrics?.responsesWeeklyTrendPercentage}
+          series="Cevap" loading={metricsLoading}
+        />
 
-          <Section delay={0.05}>
-            {metricsLoading ? (
-              <TrendSkeleton />
-            ) : (
-              <WeeklyTrend title="Haftalık form trendi" data={metrics?.formsCreatedWeeklyTrend}
-                trendPercentage={metrics?.formsWeeklyTrendPercentage} gradientId="dashboardFormsTrend"
-              />
-            )}
-          </Section>
-
-          <Section delay={0.1}>
-            {metricsLoading ? (
-              <TrendSkeleton />
-            ) : (
-              <WeeklyTrend title="Haftalık cevap trendi" data={metrics?.responsesWeeklyTrend}
-                trendPercentage={metrics?.responsesWeeklyTrendPercentage} gradientId="dashboardResponsesTrend"
-              />
-            )}
-          </Section>
-
-          <Section delay={0.15}>
-            <SectionTitle>Hızlı işlemler</SectionTitle>
-            <QuickActions />
-          </Section>
-
-        </div>
+        <Section title="Hızlı işlemler" level={3}>
+          <QuickActions />
+        </Section>
       </div>
-    </div>
+    </Section>
   );
 }
 
@@ -394,20 +246,11 @@ export default function AdminDashboard() {
       <div className="min-h-0 flex-1 overflow-y-auto pr-1 scrollbar lg:overflow-hidden lg:pr-0">
         <div className="grid grid-cols-1 gap-6 lg:h-full lg:grid-cols-12">
           <div className="order-2 lg:order-1 lg:col-span-7 lg:min-h-0">
-            <RecentFormsPanel
-              {...greetingProps}
-              forms={forms.slice(0, RECENT_FORMS_COUNT)}
-              isLoading={formsLoading}
-            />
+            <RecentFormsPanel {...greetingProps} forms={forms.slice(0, RECENT_FORMS_COUNT)} isLoading={formsLoading} />
           </div>
           <div className="order-1 lg:order-2 lg:col-span-5 lg:min-h-0">
-            <MetricsPanel
-              {...greetingProps}
-              stats={stats}
-              statsLoading={metricsLoading || groupsLoading}
-              isSuperAdmin={isSuperAdmin}
-              metrics={metrics}
-              metricsLoading={metricsLoading}
+            <MetricsPanel {...greetingProps} stats={stats} statsLoading={metricsLoading || groupsLoading} isSuperAdmin={isSuperAdmin}
+              metrics={metrics} metricsLoading={metricsLoading}
             />
           </div>
         </div>

@@ -3,14 +3,16 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronRight, FileText, Loader2, RotateCcw, UserX, Workflow } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, RotateCcw, UserX, Workflow } from "lucide-react";
+import { Badge, Button, IconButton, Skeleton, StatusDot as Dot, badgeVariants, cn } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { isDeletedUser } from "@/lib/deleted-user";
-import { COLUMN_LABEL, FeatureIcons, SortHeader, StatusDot, formatUpdatedAt } from "../ListItem";
+import { COLUMN_LABEL, FeatureIcons, IconTile, SortHeader, StatusDot, formatUpdatedAt } from "../ListItem";
 import { formatPersonName } from "../form-responses/response-data";
 
 const DatabaseRowDetails = dynamic(() => import("./DatabaseRowDetails"));
 
+// Viewport steps up to 2xl, which DataList does not have, so the list keeps its own grid
 export const DB_GRID = [
   "grid items-center gap-3",
   "grid-cols-[1.25rem_minmax(0,1fr)_auto]",
@@ -37,7 +39,7 @@ const ownerNameOf = (owner) => formatPersonName(owner?.fullName) || owner?.email
 export function DatabaseListHeader({ sort, dir, onSort }) {
   const props = { sortField: sort, sortDirection: dir, onSort };
   return (
-    <div className={`${DB_GRID} sticky top-0 z-20 border-b border-ink/10 bg-neutral-900 px-3 pb-2`}>
+    <div className={`${DB_GRID} sticky top-0 z-20 border-b border-border bg-background px-3 pb-2`}>
       <SortHeader field="status" title={SORT_TITLES.status} {...props} />
       <SortHeader label="Form" field="title" align="left" title={SORT_TITLES.title} {...props} />
       <SortHeader label="Sahip" field="owner" align="left" visibility="hidden md:flex" title={SORT_TITLES.owner} {...props} />
@@ -54,11 +56,11 @@ function FlowTag({ workflow }) {
   const name = workflow.name || "Adsız akış";
   return (
     <Link href={`/admin/workflows/${workflow.id}`} title={`Akışa git: ${name}`}
-      className="relative z-10 inline-flex min-w-0 max-w-56 items-center gap-1 rounded border border-ink/10 bg-ink/3 px-1.5 py-px text-3xs text-neutral-400 transition-colors hover:border-ink/20 hover:text-neutral-200"
+      className="relative z-10 inline-flex min-w-0 max-w-56 items-center gap-1 rounded border border-border bg-muted px-1.5 py-px text-3xs text-muted-foreground transition-colors hover:border-border-strong hover:text-secondary-foreground"
     >
-      <Workflow size={10} className="shrink-0 text-neutral-500" />
+      <Workflow size={10} className="shrink-0 text-subtle-foreground" />
       <span className="truncate">{name}</span>
-      <span className="shrink-0 text-neutral-600">· {workflow.isStart ? "başlangıç" : "adım"}</span>
+      <span className="shrink-0 text-faint-foreground">· {workflow.isStart ? "başlangıç" : "adım"}</span>
     </Link>
   );
 }
@@ -66,9 +68,9 @@ function FlowTag({ workflow }) {
 function OrphanChip({ compact = false }) {
   return (
     <Link href="/admin/ownership" title="Sahibinin hesabı silinmiş. Sahipsiz içeriklerden yeni sahibine devredin."
-      className={`relative z-10 inline-flex min-w-0 items-center gap-1 rounded-md border border-amber-400/25 bg-amber-400/5 text-amber-200/90 transition-colors hover:border-amber-300/40 hover:bg-amber-400/10 ${compact ? "px-1.5 py-px text-3xs" : "h-7 px-2 text-2xs"}`}
+      className={cn(badgeVariants({ tone: "warning", size: compact ? "sm" : "md" }), "relative z-10 min-w-0 shrink transition-colors hover:bg-warning/15", compact ? "py-px" : "h-7")}
     >
-      <UserX size={compact ? 10 : 12} className="shrink-0" />
+      <UserX className="shrink-0" />
       <span className="truncate">Silinmiş kullanıcı</span>
     </Link>
   );
@@ -81,13 +83,13 @@ function OwnerCell({ form }) {
   return (
     <span className="flex min-w-0 items-center gap-2" title={owner?.email || name}>
       <Avatar name={name} email={owner?.email} photoUrl={owner?.profilePictureUrl} size="sm" />
-      <span className="min-w-0 truncate text-2xs text-neutral-300">{name}</span>
+      <span className="min-w-0 truncate text-2xs text-secondary-foreground">{name}</span>
     </span>
   );
 }
 
 function DeletedDot() {
-  return <span title="Silinmiş form" className="relative z-10 size-1.5 shrink-0 rounded-full border border-neutral-500 bg-transparent" />;
+  return <span title="Silinmiş form" className="relative z-10 size-1.5 shrink-0 rounded-full border border-subtle-foreground bg-transparent" />;
 }
 
 export function DatabaseRow({ form, open, onToggle, onRestore, restoring = false }) {
@@ -98,32 +100,30 @@ export function DatabaseRow({ form, open, onToggle, onRestore, restoring = false
   const responses = form.responseCount ?? 0;
 
   return (
-    <div className={open ? "bg-ink/2.5" : ""}>
-      <div className={`group/row relative transition-colors ${open ? "" : "hover:bg-ink/3"}`}>
+    <div className={open ? "bg-row-highlight" : ""}>
+      <div className={`group/row relative transition-colors ${open ? "" : "hover:bg-row-highlight"}`}>
         {deleted ? null : (
           <button type="button" onClick={onToggle} aria-expanded={open} aria-label={`${title}: ${open ? "ayrıntıyı kapat" : "ayrıntıyı aç"}`}
-            className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-skylab-400/40"
+            className="absolute inset-0 z-0 cursor-pointer outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           />
         )}
         <div className={`${DB_GRID} px-3 py-2.5`}>
           <div className="flex justify-center">{deleted ? <DeletedDot /> : <StatusDot form={form} />}</div>
 
           <div className="flex min-w-0 items-center gap-3">
-            <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3 ${deleted ? "opacity-50" : ""}`}>
-              <FileText className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
-            </div>
+            <IconTile icon={FileText} className={deleted ? "opacity-50" : ""} />
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-2">
-                <h3 className={`truncate text-sm font-medium transition-colors ${deleted ? "text-neutral-500" : open ? "text-neutral-50" : "text-neutral-200 group-hover/row:text-neutral-50"}`}>{title}</h3>
-                {deleted ? <span className="shrink-0 rounded-md border border-ink/10 px-1 py-0.5 text-4xs uppercase tracking-[0.18em] text-neutral-500">Silindi</span> : null}
+                <h3 className={`truncate text-sm font-medium transition-colors ${deleted ? "text-subtle-foreground" : open ? "text-foreground-strong" : "text-secondary-foreground group-hover/row:text-foreground-strong"}`}>{title}</h3>
+                {deleted ? <Badge size="xs">Silindi</Badge> : null}
               </div>
               <div className="mt-0.5 flex min-h-4 min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap">
                 <FeatureIcons form={form} />
                 {form.workflow ? <FlowTag workflow={form.workflow} /> : null}
-                <span className="text-3xs tabular-nums text-neutral-500 sm:hidden">{responses} yanıt</span>
-                {pending > 0 ? <span className="inline-flex items-center gap-1 text-3xs tabular-nums text-amber-300/90 lg:hidden"><span className="size-1 rounded-full bg-amber-400" />{pending} bekliyor</span> : null}
+                <span className="text-3xs tabular-nums text-subtle-foreground sm:hidden">{responses} yanıt</span>
+                {pending > 0 ? <span className="inline-flex items-center gap-1 text-3xs tabular-nums text-warning lg:hidden"><Dot tone="warning" glow={false} className="size-1" />{pending} bekliyor</span> : null}
                 <span className="min-w-0 md:hidden">
-                  {orphaned ? <OrphanChip compact /> : <span className="block truncate text-3xs text-neutral-500">{ownerNameOf(form.createdBy)}</span>}
+                  {orphaned ? <OrphanChip compact /> : <span className="block truncate text-3xs text-subtle-foreground">{ownerNameOf(form.createdBy)}</span>}
                 </span>
               </div>
             </div>
@@ -131,37 +131,31 @@ export function DatabaseRow({ form, open, onToggle, onRestore, restoring = false
 
           <div className="hidden min-w-0 md:block"><OwnerCell form={form} /></div>
 
-          <span className="hidden text-center text-sm font-medium tabular-nums text-neutral-200 sm:block">{responses}</span>
+          <span className="hidden text-center text-sm font-medium tabular-nums text-secondary-foreground sm:block">{responses}</span>
 
           <span className="hidden items-center justify-center gap-1.5 text-sm tabular-nums lg:flex">
             {pending > 0 ? (
               <>
-                <span className="size-1.5 rounded-full bg-amber-400 shadow-[0_0_6px] shadow-amber-400/40" />
-                <span className="font-medium text-amber-200">{pending}</span>
+                <Dot tone="warning" />
+                <span className="font-medium text-warning">{pending}</span>
               </>
-            ) : <span className="text-neutral-700">—</span>}
+            ) : <span className="text-faint-foreground">—</span>}
           </span>
 
-          <span className="hidden text-center text-2xs tabular-nums text-neutral-500 xl:block">{form.lastResponseAt ? formatUpdatedAt(form.lastResponseAt) : "—"}</span>
+          <span className="hidden text-center text-2xs tabular-nums text-subtle-foreground xl:block">{form.lastResponseAt ? formatUpdatedAt(form.lastResponseAt) : "—"}</span>
 
-          <span className="hidden text-center text-2xs tabular-nums text-neutral-500 2xl:block">{formatUpdatedAt(form.updatedAt ?? form.createdAt)}</span>
+          <span className="hidden text-center text-2xs tabular-nums text-subtle-foreground 2xl:block">{formatUpdatedAt(form.updatedAt ?? form.createdAt)}</span>
 
           <div className="flex items-center justify-end gap-1">
             {deleted ? (
-              <button type="button" onClick={onRestore} disabled={restoring} title="Formu geri yükle; kapalı olarak döner"
-                className="relative z-10 inline-flex h-8 items-center gap-1.5 rounded-md border border-ink/10 px-2 text-2xs font-medium text-neutral-200 transition-colors hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300 disabled:opacity-60"
-              >
-                {restoring ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+              <Button variant="outline" onClick={onRestore} pending={restoring} title="Formu geri yükle; kapalı olarak döner" className="relative z-10">
+                <RotateCcw aria-hidden="true" />
                 <span className="hidden sm:inline">Geri yükle</span>
-              </button>
+              </Button>
             ) : (
               <>
-                <ChevronDown aria-hidden="true" className={`hidden h-4 w-4 transition-[transform,color] sm:block ${open ? "rotate-180 text-neutral-300" : "text-neutral-600 group-hover/row:text-neutral-400"}`} />
-                <Link href={`/admin/forms/${form.id}`} title="Formu aç" aria-label={`${title} formunu aç`}
-                  className="relative z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-ink/5 hover:text-skylab-300"
-                >
-                  <ChevronRight className="h-4.5 w-4.5 transition-transform group-hover/row:translate-x-0.5" />
-                </Link>
+                <ChevronDown aria-hidden="true" className={`hidden size-4 transition-[transform,color] sm:block ${open ? "rotate-180 text-secondary-foreground" : "text-faint-foreground group-hover/row:text-muted-foreground"}`} />
+                <IconButton icon={ChevronRight} label={`${title} formunu aç`} title="Formu aç" variant="ghost" className="relative z-10" render={<Link href={`/admin/forms/${form.id}`} />} />
               </>
             )}
           </div>
@@ -174,32 +168,28 @@ export function DatabaseRow({ form, open, onToggle, onRestore, restoring = false
   );
 }
 
-function SkeletonBlock({ className = "" }) {
-  return <div aria-hidden="true" className={`shimmer ${className}`} />;
-}
-
 export function DatabaseSkeleton({ count = 6 }) {
   return (
-    <div className="divide-y divide-ink/5">
+    <div aria-hidden="true" className="divide-y divide-border-subtle">
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className={`${DB_GRID} px-3 py-2.5`}>
-          <div className="flex justify-center"><SkeletonBlock className="size-1.5 rounded-full" /></div>
+          <div className="flex justify-center"><Skeleton className="size-1.5 rounded-full" /></div>
           <div className="flex min-w-0 items-center gap-3">
-            <SkeletonBlock className="h-9 w-9 shrink-0 rounded-lg" />
+            <Skeleton className="size-9 shrink-0 rounded-lg" />
             <div className="min-w-0 flex-1 space-y-1.5">
-              <SkeletonBlock className="h-3.5 w-48 max-w-full rounded-md" />
-              <SkeletonBlock className="h-2.5 w-24 rounded" />
+              <Skeleton className="h-3.5 w-48 max-w-full" />
+              <Skeleton className="h-2.5 w-24" />
             </div>
           </div>
           <div className="hidden items-center gap-2 md:flex">
-            <SkeletonBlock className="h-7 w-7 shrink-0 rounded-lg" />
-            <SkeletonBlock className="h-3 w-24 rounded-md" />
+            <Skeleton className="size-7 shrink-0 rounded-lg" />
+            <Skeleton className="h-3 w-24" />
           </div>
-          <div className="hidden justify-center sm:flex"><SkeletonBlock className="h-3.5 w-6 rounded-md" /></div>
-          <div className="hidden justify-center lg:flex"><SkeletonBlock className="h-3.5 w-5 rounded-md" /></div>
-          <div className="hidden justify-center xl:flex"><SkeletonBlock className="h-3 w-14 rounded-md" /></div>
-          <div className="hidden justify-center 2xl:flex"><SkeletonBlock className="h-3 w-14 rounded-md" /></div>
-          <div className="flex items-center justify-end"><SkeletonBlock className="h-4 w-8 rounded" /></div>
+          <div className="hidden justify-center sm:flex"><Skeleton className="h-3.5 w-6" /></div>
+          <div className="hidden justify-center lg:flex"><Skeleton className="h-3.5 w-5" /></div>
+          <div className="hidden justify-center xl:flex"><Skeleton className="h-3 w-14" /></div>
+          <div className="hidden justify-center 2xl:flex"><Skeleton className="h-3 w-14" /></div>
+          <div className="flex items-center justify-end"><Skeleton className="h-4 w-8" /></div>
         </div>
       ))}
     </div>

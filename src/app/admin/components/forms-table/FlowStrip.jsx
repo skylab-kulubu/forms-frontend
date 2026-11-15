@@ -6,8 +6,8 @@ import { motion } from "framer-motion";
 import { CircleCheck } from "lucide-react";
 import { columnsOf } from "./table-data";
 
-const LINE = "bg-ink/15";
-const STEP_CARD = "flex h-12 min-w-0 items-center gap-2 rounded-lg border border-ink/8 bg-ink/2 px-2.5 outline-none transition-colors hover:border-ink/15 hover:bg-ink/4 focus-visible:ring-2 focus-visible:ring-skylab-400/40";
+const LINE = "bg-border-strong";
+const STEP_CARD = "flex h-12 min-w-0 items-center gap-2 rounded-lg border border-border bg-card px-2.5 outline-hidden transition-colors hover:border-border-strong hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring";
 
 function Reveal({ index, className = "", children }) {
   return (
@@ -28,12 +28,12 @@ function Connector({ index }) {
 function StepCard({ step }) {
   return (
     <Link href={step.href} title={step.title} className={STEP_CARD}>
-      <span className="w-3 shrink-0 text-center text-3xs tabular-nums text-neutral-500">{step.number}</span>
+      <span className="w-3 shrink-0 text-center text-3xs tabular-nums text-subtle-foreground">{step.number}</span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-2xs font-medium text-neutral-200">{step.title}</span>
-        <span className="mt-px flex min-w-0 items-center gap-1.5 text-3xs text-neutral-500">
+        <span className="block truncate text-2xs font-medium text-secondary-foreground">{step.title}</span>
+        <span className="mt-px flex min-w-0 items-center gap-1.5 text-3xs text-subtle-foreground">
           {step.people != null ? <span className="shrink-0 tabular-nums">{step.people} kişi</span> : null}
-          {step.waiting ? <span className="truncate tabular-nums text-amber-200/80">{step.waiting} bekliyor</span> : null}
+          {step.waiting ? <span className="truncate tabular-nums text-warning">{step.waiting} bekliyor</span> : null}
         </span>
       </span>
     </Link>
@@ -42,8 +42,8 @@ function StepCard({ step }) {
 
 function Column({ steps, index, hasNext }) {
   const forked = steps.length > 1;
-  const tickIn = "@2xl:before:absolute @2xl:before:-left-2.5 @2xl:before:top-1/2 @2xl:before:h-px @2xl:before:w-2.5 @2xl:before:bg-ink/15";
-  const tickOut = hasNext ? "@2xl:mr-2.5 @2xl:after:absolute @2xl:after:-right-2.5 @2xl:after:top-1/2 @2xl:after:h-px @2xl:after:w-2.5 @2xl:after:bg-ink/15" : "";
+  const tickIn = "@2xl:before:absolute @2xl:before:-left-2.5 @2xl:before:top-1/2 @2xl:before:h-px @2xl:before:w-2.5 @2xl:before:bg-border-strong";
+  const tickOut = hasNext ? "@2xl:mr-2.5 @2xl:after:absolute @2xl:after:-right-2.5 @2xl:after:top-1/2 @2xl:after:h-px @2xl:after:w-2.5 @2xl:after:bg-border-strong" : "";
 
   return (
     <Reveal index={index} className="relative flex min-w-0 flex-col justify-center gap-1.5 @2xl:w-48 @2xl:flex-none">
@@ -74,10 +74,10 @@ export default function FlowStrip({ row }) {
           <Connector index={columns.length} />
           <Reveal index={columns.length} className="flex shrink-0 flex-col justify-center @2xl:w-24">
             <Link href={row.href} className={`${STEP_CARD.replace("px-2.5", "px-2")} whitespace-nowrap`}>
-              <CircleCheck size={13} className="shrink-0 text-neutral-500" />
+              <CircleCheck size={13} className="shrink-0 text-subtle-foreground" />
               <span className="min-w-0">
-                <span className="block text-2xs font-medium text-neutral-300">Bitenler</span>
-                <span className="mt-px block text-3xs tabular-nums text-neutral-500">{done} başvuru</span>
+                <span className="block text-2xs font-medium text-secondary-foreground">Bitenler</span>
+                <span className="mt-px block text-3xs tabular-nums text-subtle-foreground">{done} başvuru</span>
               </span>
             </Link>
           </Reveal>

@@ -7,7 +7,7 @@ export default function Highlight({ text, query }) {
   return (
     <>
       {text.slice(0, index)}
-      <mark className="rounded-[2px] bg-skylab-500/25 text-neutral-50">{text.slice(index, index + needle.length)}</mark>
+      <mark className="rounded-[2px] bg-skylab-500/25 text-foreground-strong">{text.slice(index, index + needle.length)}</mark>
       {text.slice(index + needle.length)}
     </>
   );

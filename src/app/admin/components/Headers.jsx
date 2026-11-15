@@ -1,249 +1,127 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
-import { motion } from "framer-motion";
-import { LayoutTemplate, Plus, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
-import ActionButton from "./utils/ActionButton";
+import Link from "next/link";
+import { LayoutTemplate, Plus, RefreshCw } from "lucide-react";
+import { AppShellActions, FilterButton, IconButton, Popover, PopoverContent, PopoverTrigger, SearchInput } from "@skylab-kulubu/skylcn-ui";
 import FormsFilterShell from "./utils/FormsFilterShell";
 import DatabaseFilters from "./form-database/DatabaseFilters";
 import { filterCount } from "./form-database/database-params";
 import WorkflowsFilterShell from "./utils/WorkflowsFilterShell";
 
-const fadeIn = {
-  initial: { opacity: 0, y: -6 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
-};
-
-const LABEL_STYLES = {
-  1: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
-  2: "border-red-500/30 bg-red-500/10 text-red-200",
-};
-
-const emptySubscribe = () => () => {};
-
-function HeaderSlotPortal({ children }) {
-  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const target = isMounted ? document.getElementById("admin-header-slot") : null;
-  return target ? createPortal(children, target) : null;
-}
-
-function SearchInput({ value, onChange, placeholder = "Ara", compact = false }) {
-  if (compact) {
-    return (
-      <div className="relative w-56 transition-[width] duration-200 focus-within:w-72">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-600" />
-        <input type="search" value={value} onChange={(e) => onChange?.(e.target.value)} placeholder={placeholder}
-          className="h-8 w-full rounded-md border border-ink/10 bg-ink/3 pl-8 pr-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:border-skylab-400/50 focus:bg-ink/5 focus:outline-none transition-colors"
-        />
-      </div>
-    );
-  }
-
+// From md the toolbar sits in the shell's header row; on phones that row is the top bar, so it goes above the list
+function ListToolbar({ title, toolbar }) {
   return (
-    <div className="relative flex-1 min-w-[180px] max-w-sm">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-600" />
-      <input type="search" value={value} onChange={(e) => onChange?.(e.target.value)} placeholder={placeholder}
-        className="h-9 w-full rounded-lg border border-ink/10 bg-ink/3 pl-8 pr-3 text-xs text-neutral-100 placeholder:text-neutral-600 focus:border-skylab-400/50 focus:bg-ink/5 focus:outline-none transition-colors"
-      />
-    </div>
+    <>
+      <h1 className="sr-only">{title}</h1>
+      <AppShellActions>
+        <div className="hidden items-center gap-1.5 md:flex">{toolbar(true)}</div>
+      </AppShellActions>
+      <div className="flex w-full items-center gap-2 md:hidden">{toolbar(false)}</div>
+    </>
   );
 }
 
-function HeaderShell({ title, description, label, labelType = 1, actions, children }) {
+const iconSize = (inHeader) => (inHeader ? "icon" : "icon-lg");
+
+function FilterMenu({ inHeader, count, label, className, children }) {
   return (
-    <motion.header {...fadeIn} className="space-y-3">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-lg font-semibold text-neutral-100 truncate">{title}</h1>
-            {label && (
-              <span className={`shrink-0 rounded-md border px-2 py-0.5 text-3xs uppercase tracking-[0.18em] ${LABEL_STYLES[labelType]}`}>
-                {label}
-              </span>
-            )}
-          </div>
-          {description && <p className="mt-0.5 text-2xs text-neutral-500">{description}</p>}
-        </div>
-        {actions && <div className="shrink-0">{actions}</div>}
-      </div>
-
-      <div className="h-px bg-ink/10" />
-
-      {children && (
-        <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
-          {children}
-        </div>
-      )}
-    </motion.header>
+    <Popover>
+      <PopoverTrigger render={<FilterButton count={count} size={inHeader ? "md" : "lg"} />} />
+      <PopoverContent align={inHeader ? "end" : "center"} aria-label={label} className={className}>{children}</PopoverContent>
+    </Popover>
   );
 }
 
-export default HeaderShell;
+function Search({ inHeader, value = "", onChange, placeholder }) {
+  return <SearchInput compact={inHeader} value={value} onValueChange={(next) => onChange?.(next)} placeholder={placeholder} />;
+}
 
-function FormsToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", onSortChange, roleValue = "all", onRoleChange, allowAnonymous = null,
-  onAllowAnonymousChange, allowMultiple = null, onAllowMultipleChange, requiresManualReview = null, onRequiresManualReviewChange, onRefresh, onCreate,
-  stateOptions = null, stateCounts = null, stateValue = "all", onStateChange
-}) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filterButtonRef = useRef(null);
-  const activeFilters = [stateValue !== "all", sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
-  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
-  const buttonSize = compact ? "sm" : "md";
+function FormsToolbar({ inHeader, searchValue, onSearchChange, onRefresh, onCreate, ...filters }) {
+  const { sortValue = "desc", roleValue = "all", allowAnonymous = null, allowMultiple = null, requiresManualReview = null, stateValue = "all" } = filters;
+  const active = [stateValue !== "all", sortValue !== "desc", roleValue !== "all", allowAnonymous !== null, allowMultiple !== null, requiresManualReview !== null].filter(Boolean).length;
 
   return (
-    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
-      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Form ara" />
-      <div className="flex items-center gap-1.5 shrink-0">
-        <div ref={filterButtonRef} className="relative">
-          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
-            variant={filtersOpen || activeFilters > 0 ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
-          />
-          <FormsFilterShell stateOptions={stateOptions} stateCounts={stateCounts} stateValue={stateValue} onStateChange={onStateChange} open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
-            sortValue={sortValue} onSortChange={onSortChange} roleValue={roleValue} onRoleChange={onRoleChange}
-            allowAnonymous={allowAnonymous} onAllowAnonymousChange={onAllowAnonymousChange}
-            allowMultiple={allowMultiple} onAllowMultipleChange={onAllowMultipleChange}
-            requiresManualReview={requiresManualReview} onRequiresManualReviewChange={onRequiresManualReviewChange}
-          />
-        </div>
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni form ekle" aria-label="Yeni form ekle" />
+    <>
+      <Search inHeader={inHeader} value={searchValue} onChange={onSearchChange} placeholder="Form ara" />
+      <div className="flex shrink-0 items-center gap-1.5">
+        {/* Wider than the other panels so the five state pills and their counts fit on one line */}
+        <FilterMenu inHeader={inHeader} count={active} label="Form filtreleri" className="w-96">
+          <FormsFilterShell {...filters} />
+        </FilterMenu>
+        <IconButton icon={RefreshCw} label="Yenile" variant="ghost" size={iconSize(inHeader)} onClick={onRefresh} />
+        <IconButton icon={Plus} label="Yeni form ekle" variant="primary" size={iconSize(inHeader)} onClick={onCreate} />
       </div>
-    </div>
+    </>
   );
 }
 
 export function FormsHeader(toolbarProps) {
-  return (
-    <>
-      <HeaderSlotPortal>
-        <FormsToolbar compact {...toolbarProps} />
-      </HeaderSlotPortal>
-      <div className="md:hidden">
-        <FormsToolbar {...toolbarProps} />
-      </div>
-    </>
-  );
+  return <ListToolbar title="Formlar" toolbar={(inHeader) => <FormsToolbar inHeader={inHeader} {...toolbarProps} />} />;
 }
 
 export function DashboardHeader({ onRefresh }) {
   return (
-    <HeaderSlotPortal>
+    <AppShellActions>
       <div className="hidden items-center gap-1.5 lg:flex">
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size="sm" tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={LayoutTemplate} href="/admin/templates" size="sm" tone="header" title="Şablonlar" aria-label="Şablonlar" />
-        <ActionButton icon={Plus} variant="primary" href="/admin/forms/new-form" size="sm" tone="header" title="Yeni form ekle" aria-label="Yeni form ekle" />
+        <IconButton icon={RefreshCw} label="Yenile" variant="ghost" onClick={onRefresh} />
+        <IconButton icon={LayoutTemplate} label="Şablonlar" variant="ghost" render={<Link href="/admin/templates" />} />
+        <IconButton icon={Plus} label="Yeni form ekle" variant="primary" render={<Link href="/admin/forms/new-form" />} />
       </div>
-    </HeaderSlotPortal>
+    </AppShellActions>
   );
 }
 
-function GroupsToolbar({ compact = false, searchValue = "", onSearchChange, onRefresh, onCreate }) {
-  const buttonSize = compact ? "sm" : "md";
-
+function GroupsToolbar({ inHeader, searchValue, onSearchChange, onRefresh, onCreate }) {
   return (
-    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
-      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Şablon ara" />
-      <div className="flex items-center gap-1.5 shrink-0">
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
-        <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni şablon ekle" aria-label="Yeni şablon ekle" />
+    <>
+      <Search inHeader={inHeader} value={searchValue} onChange={onSearchChange} placeholder="Şablon ara" />
+      <div className="flex shrink-0 items-center gap-1.5">
+        <IconButton icon={RefreshCw} label="Yenile" variant="ghost" size={iconSize(inHeader)} onClick={onRefresh} />
+        <IconButton icon={Plus} label="Yeni şablon ekle" variant="primary" size={iconSize(inHeader)} onClick={onCreate} />
       </div>
-    </div>
+    </>
   );
 }
 
 export function GroupsHeader(toolbarProps) {
-  return (
-    <>
-      <HeaderSlotPortal>
-        <GroupsToolbar compact {...toolbarProps} />
-      </HeaderSlotPortal>
-      <div className="md:hidden">
-        <GroupsToolbar {...toolbarProps} />
-      </div>
-    </>
-  );
+  return <ListToolbar title="Şablonlar" toolbar={(inHeader) => <GroupsToolbar inHeader={inHeader} {...toolbarProps} />} />;
 }
 
-function WorkflowsToolbar({ compact = false, searchValue = "", onSearchChange, sortValue = "desc", onSortChange,
-  showArchived = false, onShowArchivedChange, onRefresh, onCreate
-}) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filterButtonRef = useRef(null);
-  const activeFilters = [sortValue !== "desc", showArchived !== false].filter(Boolean).length;
-  const filtersLabel = activeFilters ? `Filtreler (${activeFilters})` : "Filtreler";
-  const buttonSize = compact ? "sm" : "md";
+function WorkflowsToolbar({ inHeader, searchValue, onSearchChange, sortValue = "desc", onSortChange, showArchived = false, onShowArchivedChange, onRefresh, onCreate }) {
+  const active = [sortValue !== "desc", showArchived !== false].filter(Boolean).length;
 
   return (
-    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
-      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Akış ara" />
-      <div className="flex items-center gap-1.5 shrink-0">
-        <div ref={filterButtonRef} className="relative">
-          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
-            variant={filtersOpen ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
-          />
-          <WorkflowsFilterShell open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)} align={compact ? "right" : "center"}
-            sortValue={sortValue} onSortChange={onSortChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange}
-          />
-        </div>
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
-        {onCreate ? <ActionButton icon={Plus} variant="primary" onClick={onCreate} size={buttonSize} tone="header" title="Yeni akış ekle" aria-label="Yeni akış ekle" /> : null}
+    <>
+      <Search inHeader={inHeader} value={searchValue} onChange={onSearchChange} placeholder="Akış ara" />
+      <div className="flex shrink-0 items-center gap-1.5">
+        <FilterMenu inHeader={inHeader} count={active} label="Akış filtreleri">
+          <WorkflowsFilterShell sortValue={sortValue} onSortChange={onSortChange} showArchived={showArchived} onShowArchivedChange={onShowArchivedChange} />
+        </FilterMenu>
+        <IconButton icon={RefreshCw} label="Yenile" variant="ghost" size={iconSize(inHeader)} onClick={onRefresh} />
+        {onCreate ? <IconButton icon={Plus} label="Yeni akış ekle" variant="primary" size={iconSize(inHeader)} onClick={onCreate} /> : null}
       </div>
-    </div>
+    </>
   );
 }
 
 export function WorkflowsHeader(toolbarProps) {
-  return (
-    <>
-      <HeaderSlotPortal>
-        <WorkflowsToolbar compact {...toolbarProps} />
-      </HeaderSlotPortal>
-      <div className="md:hidden">
-        <WorkflowsToolbar {...toolbarProps} />
-      </div>
-    </>
-  );
+  return <ListToolbar title="Akışlar" toolbar={(inHeader) => <WorkflowsToolbar inHeader={inHeader} {...toolbarProps} />} />;
 }
 
-function DatabaseToolbar({ compact = false, searchValue = "", onSearchChange, state, onChange, onClear, summary = null, owners = [], onRefresh }) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filterButtonRef = useRef(null);
-  const active = filterCount(state);
-  const filtersLabel = active ? `Filtreler (${active})` : "Filtreler";
-  const buttonSize = compact ? "sm" : "md";
-
+function DatabaseToolbar({ inHeader, searchValue, onSearchChange, state, onChange, onClear, summary = null, owners = [], onRefresh }) {
   return (
-    <div className={`flex items-center ${compact ? "gap-1.5" : "w-full gap-2"}`}>
-      <SearchInput compact={compact} value={searchValue} onChange={onSearchChange} placeholder="Form adı ya da ID" />
-      <div className="flex items-center gap-1.5 shrink-0">
-        <div ref={filterButtonRef} className="relative">
-          <ActionButton icon={SlidersHorizontal} onClick={() => setFiltersOpen((prev) => !prev)} size={buttonSize} tone="header"
-            variant={filtersOpen || active ? "primary" : "ghost"} title={filtersLabel} aria-label={filtersLabel} aria-expanded={filtersOpen}
-          />
-          {active ? (
-            <span className="pointer-events-none absolute -right-1 -top-1 grid size-3.5 place-items-center rounded-full bg-skylab-400 text-4xs font-semibold text-neutral-900">{active}</span>
-          ) : null}
-          <DatabaseFilters open={filtersOpen} anchorRef={filterButtonRef} onClose={() => setFiltersOpen(false)}
-            state={state} onChange={onChange} onClear={onClear} summary={summary} owners={owners}
-          />
-        </div>
-        <ActionButton icon={RefreshCw} onClick={onRefresh} size={buttonSize} tone="header" title="Yenile" aria-label="Yenile" />
+    <>
+      <Search inHeader={inHeader} value={searchValue} onChange={onSearchChange} placeholder="Form adı ya da ID" />
+      <div className="flex shrink-0 items-center gap-1.5">
+        <FilterMenu inHeader={inHeader} count={filterCount(state)} label="Veritabanı filtreleri">
+          <DatabaseFilters state={state} onChange={onChange} onClear={onClear} summary={summary} owners={owners} />
+        </FilterMenu>
+        <IconButton icon={RefreshCw} label="Yenile" variant="ghost" size={iconSize(inHeader)} onClick={onRefresh} />
       </div>
-    </div>
+    </>
   );
 }
 
 export function DatabaseHeader(toolbarProps) {
-  return (
-    <>
-      <HeaderSlotPortal>
-        <DatabaseToolbar compact {...toolbarProps} />
-      </HeaderSlotPortal>
-      <div className="md:hidden">
-        <DatabaseToolbar {...toolbarProps} />
-      </div>
-    </>
-  );
+  return <ListToolbar title="Veritabanı" toolbar={(inHeader) => <DatabaseToolbar inHeader={inHeader} {...toolbarProps} />} />;
 }

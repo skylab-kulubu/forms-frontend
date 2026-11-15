@@ -1,20 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronRight, ClipboardCheck, Crown, Eye, FileText, PencilLine, Repeat2, UserX, ChartColumn, Workflow } from "lucide-react";
-import Avatar from "@/app/components/utils/Avatar";
-import { eventRefFromForm } from "@/lib/return-to";
+import { ArrowDown, ArrowUp, ClipboardCheck, Crown, Eye, PencilLine, Repeat2, UserX } from "lucide-react";
+import { StatusDot as Dot, badgeVariants, cn } from "@skylab-kulubu/skylcn-ui";
 import { effectiveFormSettings } from "@/lib/form-settings";
 
-const FORM_GRID = [
-  "grid items-center gap-3",
-  "grid-cols-[1.5rem_minmax(0,1.5fr)_minmax(0,1fr)_auto]",
-  "sm:grid-cols-[1.5rem_minmax(0,1.5fr)_minmax(0,1fr)_7rem_auto]",
-  "lg:grid-cols-[1.5rem_minmax(0,1.5fr)_minmax(0,1fr)_7rem_4rem_6.5rem_5rem]",
-  "xl:grid-cols-[1.5rem_minmax(0,22rem)_minmax(0,1fr)_7rem_4rem_6.5rem_5rem]",
-].join(" ");
 const COLUMN_TYPE = "text-2xs font-medium";
-export const COLUMN_LABEL = `${COLUMN_TYPE} text-neutral-500`;
+export const COLUMN_LABEL = `${COLUMN_TYPE} text-subtle-foreground`;
 
 const FEATURES = [
   { key: "allowMultipleResponses", Icon: Repeat2, on: "Birden fazla cevap açık", managed: "Akışta tekrar başlatma açık" },
@@ -27,47 +18,38 @@ export function FeatureIcons({ form, className = "" }) {
   const items = FEATURES.filter((f) => settings[f.key]);
   if (items.length === 0) return null;
 
+  // A span, so it can sit in a row's subtitle line, which is a paragraph
   return (
-    <div className={`flex items-center gap-1.5 ${className}`}>
+    <span className={`flex items-center gap-1.5 ${className}`}>
       {items.map(({ key, Icon, on, managed }) => (
         <span key={key} title={settings.managedByWorkflow && managed ? managed : on} className="relative z-10 inline-flex">
           <Icon size={11} className="text-skylab-400" strokeWidth={1.75} />
         </span>
       ))}
-    </div>
+    </span>
+  );
+}
+
+/** The square icon at the start of a list row: a form, a flow, a template. */
+export function IconTile({ icon: Icon, className = "" }) {
+  return (
+    <span className={`grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-muted text-muted-foreground ${className}`}>
+      <Icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
+    </span>
   );
 }
 
 export function StatusDot({ form }) {
   const { isOpen, managedByWorkflow } = effectiveFormSettings(form);
-  const tone = isOpen ? "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/40" : "bg-red-400 shadow-[0_0_6px] shadow-red-400/40";
-  const title = isOpen ? "Aktif form" : managedByWorkflow ? "Akış bu formda cevap almıyor" : "Pasif form";
-  return <span title={title} className={`relative z-10 size-1.5 shrink-0 rounded-full ${tone}`} />;
-}
-
-function WorkflowChip({ workflow }) {
-  const role = workflow.isStart ? "Başlangıç formu" : "Akış adımı";
-  const name = workflow.name || "Adsız akış";
-
-  return (
-    <Link href={`/admin/workflows/${workflow.id}`} title={`Akışa git: ${name}`}
-      className="relative z-10 flex w-full min-w-0 max-w-60 items-center gap-2 rounded-md border border-ink/10 bg-ink/3 px-2 py-1 transition-colors hover:border-ink/20 hover:bg-ink/5"
-    >
-      <Workflow size={12} className="shrink-0 text-neutral-500" />
-      <span className="min-w-0">
-        <span className="block truncate text-2xs font-medium text-neutral-200">{name}</span>
-        <span className="block truncate text-3xs text-neutral-500">{workflow.isPublished ? role : `${role} · Taslak`}</span>
-      </span>
-    </Link>
-  );
+  const label = isOpen ? "Aktif form" : managedByWorkflow ? "Akış bu formda cevap almıyor" : "Pasif form";
+  return <Dot tone={isOpen ? "success" : "danger"} label={label} className="relative z-10" />;
 }
 
 export function EventChip({ event }) {
   if (!event?.href) return null;
   return (
-    <a href={event.href} target="_blank" rel="noreferrer" title={`Etkinliği aç: ${event.name || event.id}`}
-      className="relative z-10 inline-flex max-w-48 items-center truncate rounded-md border border-skylab-400/30 bg-skylab-500/10 px-1.5 py-0.5 text-3xs font-medium text-skylab-200 hover:border-skylab-300/50"
-      onClick={(e) => e.stopPropagation()}
+    <a href={event.href} target="_blank" rel="noreferrer" title={`Etkinliği aç: ${event.name || event.id}`} onClick={(e) => e.stopPropagation()}
+      className={cn(badgeVariants({ tone: "brand" }), "relative z-10 block max-w-48 truncate transition-colors hover:border-skylab-300/60")}
     >
       {event.name || "Etkinlik"}
     </a>
@@ -80,7 +62,7 @@ export function SortHeader({ label, field, sortField, sortDirection, onSort, ali
 
   return (
     <button type="button" onClick={() => onSort?.(field)} title={title}
-      className={`group/sort ${visibility} ${justify} min-w-0 items-center gap-1 ${COLUMN_TYPE} transition-colors ${active ? "text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+      className={`group/sort ${visibility} ${justify} min-w-0 items-center gap-1 rounded ${COLUMN_TYPE} outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring ${active ? "text-secondary-foreground" : "text-subtle-foreground hover:text-secondary-foreground"}`}
     >
       {label ? <span className="truncate">{label}</span> : null}
       {active ? (
@@ -88,68 +70,25 @@ export function SortHeader({ label, field, sortField, sortDirection, onSort, ali
           ? <ArrowUp size={11} strokeWidth={2} className="shrink-0 text-skylab-300" />
           : <ArrowDown size={11} strokeWidth={2} className="shrink-0 text-skylab-300" />
       ) : (
-        <span className="size-1 shrink-0 rounded-full bg-neutral-600 transition-colors group-hover/sort:bg-neutral-400" />
+        <span className="size-1 shrink-0 rounded-full bg-faint-foreground transition-colors group-hover/sort:bg-muted-foreground" />
       )}
     </button>
   );
 }
 
 export const ROLE_MARK = {
-  3: { label: "Sahip", Icon: Crown, text: "text-neutral-300", icon: "text-skylab-300" },
-  2: { label: "Editör", Icon: PencilLine, text: "text-neutral-300", icon: "text-neutral-400" },
-  1: { label: "Okuyucu", Icon: Eye, text: "text-neutral-500", icon: "text-neutral-500" },
+  3: { label: "Sahip", Icon: Crown, text: "text-secondary-foreground", icon: "text-skylab-300" },
+  2: { label: "Editör", Icon: PencilLine, text: "text-secondary-foreground", icon: "text-muted-foreground" },
+  1: { label: "Okuyucu", Icon: Eye, text: "text-subtle-foreground", icon: "text-subtle-foreground" },
 };
 
 export function RoleBadge({ role }) {
   const { label, Icon, text, icon } = ROLE_MARK[role] ?? ROLE_MARK[1];
-
   return (
     <span className={`inline-flex items-center gap-1.5 text-2xs ${text}`}>
       <Icon size={12} strokeWidth={1.75} className={`shrink-0 ${icon}`} />
       {label}
     </span>
-  );
-}
-
-function SkeletonBlock({ className = "" }) {
-  return <div aria-hidden="true" className={`shimmer ${className}`} />;
-}
-
-export function FormListHeader({ sortField, sortDirection, onSort }) {
-  const sortProps = { sortField, sortDirection, onSort };
-  return (
-    <div className={`${FORM_GRID} sticky top-0 z-20 border-b border-ink/10 bg-neutral-900 px-3 pb-2`}>
-      <SortHeader field="status" title="Duruma göre sırala" {...sortProps} />
-      <span className={COLUMN_LABEL}>Form Adı</span>
-      <SortHeader label="Akış" field="workflow" align="left" title="Akışa göre sırala" {...sortProps} />
-      <SortHeader label="Güncellendi" field="updatedAt" visibility="hidden sm:flex" title="Güncellenme tarihine göre sırala" {...sortProps} />
-      <SortHeader label="Yanıt" field="responseCount" visibility="hidden lg:flex" title="Yanıt sayısına göre sırala" {...sortProps} />
-      <SortHeader label="Yetki" field="userRole" visibility="hidden lg:flex" title="Yetkiye göre sırala" {...sortProps} />
-      <span className={`text-right ${COLUMN_LABEL}`}>İşlem</span>
-    </div>
-  );
-}
-
-export function ListItemSkeleton({ count = 4, className = "" }) {
-  return (
-    <div className={`divide-y divide-ink/5 ${className}`}>
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className={`${FORM_GRID} px-3 py-2.5`}>
-          <div className="flex justify-center"><SkeletonBlock className="size-1.5 rounded-full" /></div>
-          <div className="flex min-w-0 items-center gap-3">
-            <SkeletonBlock className="h-9 w-9 shrink-0 rounded-lg" />
-            <SkeletonBlock className="h-3.5 w-40 rounded-md" />
-          </div>
-          <SkeletonBlock className="h-9 w-40 max-w-full rounded-md" />
-          <div className="hidden justify-center sm:flex"><SkeletonBlock className="h-3 w-16 rounded-md" /></div>
-          <div className="hidden justify-center lg:flex"><SkeletonBlock className="h-3.5 w-5 rounded-md" /></div>
-          <div className="hidden justify-center lg:flex"><SkeletonBlock className="h-4 w-14 rounded-md" /></div>
-          <div className="flex items-center justify-end">
-            <SkeletonBlock className="h-4 w-4 rounded" />
-          </div>
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -166,88 +105,3 @@ export const formatUpdatedAt = (value) => {
   }
   return date.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", ...(date.getFullYear() === now.getFullYear() ? {} : { year: "numeric" }) });
 };
-
-export default function ListItem({ form, viewHref, editHref, className = "" }) {
-  if (!form) return null;
-
-  const event = eventRefFromForm(form);
-  const responsesHref = viewHref ? `${viewHref}/responses` : undefined;
-  const canEdit = Number(form.userRole) >= 2;
-  const responseCount = form.responseCount ?? 0;
-
-  return (
-    <div className={`group/row relative transition-colors hover:bg-ink/3 ${className}`}>
-      {viewHref && <Link href={viewHref} className="absolute inset-0 z-0" aria-label={form.title ?? "Form"} tabIndex={-1} />}
-      <div className={`${FORM_GRID} px-3 py-2.5`}>
-
-        <div className="flex justify-center">
-          <StatusDot form={form} />
-        </div>
-
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3">
-            <FileText className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
-          </div>
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2">
-              <h3 className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">{form.title || "--"}</h3>
-              <EventChip event={event} />
-              <span className="md:hidden"><RoleBadge role={form.userRole} /></span>
-            </div>
-            <div className="mt-0.5 flex min-w-0 items-center gap-2">
-              <span className="text-3xs tabular-nums text-neutral-500 sm:hidden">{responseCount} yanıt</span>
-              <FeatureIcons form={form} />
-            </div>
-          </div>
-        </div>
-
-        <div className="min-w-0">
-          {form.workflow ? <WorkflowChip workflow={form.workflow} /> : <span className="pl-1 text-2xs text-neutral-700">—</span>}
-        </div>
-
-        <span className="hidden text-center text-2xs tabular-nums text-neutral-500 sm:block">
-          {formatUpdatedAt(form.updatedAt ?? form.createdAt)}
-        </span>
-
-        <div className="hidden text-center text-sm font-medium tabular-nums text-neutral-200 lg:block">
-          {responseCount}
-        </div>
-
-        <div className="hidden justify-center lg:flex">
-          <RoleBadge role={form.userRole} />
-        </div>
-
-        <div className="flex items-center justify-end gap-1">
-          <div className="flex items-center gap-1 overflow-hidden transition-all duration-200 ease-out lg:max-w-0 lg:opacity-0 lg:group-hover/row:max-w-16 lg:group-hover/row:opacity-100">
-            {responsesHref && (
-              <Link href={responsesHref} title="Cevaplar" aria-label="Cevaplar"
-                className="relative z-10 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-ink/10 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200"
-              >
-                <ChartColumn className="h-3 w-3" />
-              </Link>
-            )}
-            {editHref && (canEdit ? (
-              <Link href={editHref} title="Düzenle" aria-label="Düzenle"
-                className="relative z-10 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-skylab-400/30 bg-skylab-500/10 text-skylab-300 transition-colors hover:bg-skylab-400/20"
-              >
-                <PencilLine className="h-3 w-3" />
-              </Link>
-            ) : (
-              <span title="Düzenleme yetkiniz yok" className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-ink/5 text-neutral-700">
-                <PencilLine className="h-3 w-3" />
-              </span>
-            ))}
-          </div>
-          {viewHref && (
-            <Link href={viewHref} title="Formu aç" aria-label="Formu aç"
-              className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center text-neutral-400 transition-colors hover:text-skylab-300"
-            >
-              <ChevronRight className="h-4.5 w-4.5 transition-transform group-hover/row:translate-x-0.5" />
-            </Link>
-          )}
-        </div>
-
-      </div>
-    </div>
-  );
-}

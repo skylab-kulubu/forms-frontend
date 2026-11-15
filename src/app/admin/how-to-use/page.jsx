@@ -10,6 +10,7 @@ import {
   Archive, Filter, GitBranch, CheckCircle, XCircle,
   CircleDot, MessageSquare, ArrowRightLeft, Save, UserRound,
 } from "lucide-react";
+import { Notice, PageHeader } from "@skylab-kulubu/skylcn-ui";
 import {
   DemoFormCreate, DemoDragDrop, DemoConditional, DemoSettings,
   DemoFormLink, DemoCollaboration, DemoResponses, DemoApproval,
@@ -47,21 +48,11 @@ const componentTypes = [
 ];
 
 function Tip({ children }) {
-  return (
-    <div className="flex gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-200/80">
-      <span className="shrink-0 text-amber-400">!</span>
-      <span>{children}</span>
-    </div>
-  );
+  return <Notice tone="warning">{children}</Notice>;
 }
 
 function Warning({ children }) {
-  return (
-    <div className="flex gap-2 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-200/80">
-      <span className="shrink-0 text-red-400">!</span>
-      <span>{children}</span>
-    </div>
-  );
+  return <Notice tone="danger">{children}</Notice>;
 }
 
 function BulletList({ items }) {
@@ -83,7 +74,7 @@ function SectionHeader({ icon: Icon, title }) {
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-skylab-500/10 border border-skylab-400/20">
         <Icon className="h-4 w-4 text-skylab-400" strokeWidth={1.75} />
       </div>
-      <h2 className="text-base font-semibold text-neutral-100">{title}</h2>
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
     </div>
   );
 }
@@ -159,14 +150,14 @@ export default function HowToUsePage() {
           <div className="flex gap-10">
             <motion.nav initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3, delay: 0.05 }} className="hidden lg:block w-40 shrink-0">
               <div className="sticky top-6 space-y-0.5">
-                <p className="mb-2 text-3xs font-semibold text-neutral-600 tracking-[0.18em] uppercase">İçindekiler</p>
+                <p className="mb-2 text-3xs font-semibold text-subtle-foreground tracking-[0.18em] uppercase">İçindekiler</p>
                 {sections.map((s, i) => (
-                  <button key={s.id} onClick={() => scrollToSection(s.id)}
-                    className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-2xs transition-colors ${
-                      activeSection === s.id ? "text-skylab-300 font-medium" : "text-neutral-600 hover:text-neutral-400"
+                  <button key={s.id} type="button" onClick={() => scrollToSection(s.id)} aria-current={activeSection === s.id ? "location" : undefined}
+                    className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-2xs outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring ${
+                      activeSection === s.id ? "text-skylab-300 font-medium" : "text-subtle-foreground hover:text-secondary-foreground"
                     }`}
                   >
-                    <span className="text-3xs text-neutral-700 w-3 text-right tabular-nums">{i + 1}</span>
+                    <span className="text-3xs text-faint-foreground w-3 text-right tabular-nums">{i + 1}</span>
                     <span>{s.label}</span>
                   </button>
                 ))}
@@ -174,10 +165,7 @@ export default function HowToUsePage() {
             </motion.nav>
 
             <div className="flex-1 min-w-0">
-          <div className="mb-8">
-            <h1 className="text-xl font-semibold text-neutral-100">Nasıl Kullanılır</h1>
-            <p className="mt-1 text-sm text-neutral-500">Platform özellikleri ve kullanım rehberi</p>
-          </div>
+          <PageHeader title="Nasıl Kullanılır" description="Platform özellikleri ve kullanım rehberi" className="mb-8" />
 
           <div className="space-y-10">
 

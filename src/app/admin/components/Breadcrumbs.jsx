@@ -1,12 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight } from "lucide-react";
-
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+import { Breadcrumbs as Trail } from "@skylab-kulubu/skylcn-ui";
 
 function formatLabel(part) {
   return part
@@ -48,99 +43,35 @@ function getPatternLabel(href, labels) {
   return bestLabel;
 }
 
-export default function Breadcrumbs({ segments, labels = {}, includeRoot = true, rootLabel = "Dashboard", className }) {
-  const pathname = usePathname() || "/";
+function trailOf(pathname, labels, includeRoot, rootLabel) {
+  const parts = pathname.split("/").filter(Boolean);
+  const adminIdx = parts.indexOf("admin");
+  const labelOf = (href, seg) => labels[href] || getPatternLabel(href, labels) || labels[seg] || formatLabel(seg);
 
-  let items = segments;
-
-  if (!items) {
-    const parts = pathname.split("/").filter(Boolean);
-    const adminIdx = parts.indexOf("admin");
-
-    let computed = [];
-
-    if (adminIdx >= 0) {
-      const baseParts = parts.slice(0, adminIdx + 1);
-      const rest = parts.slice(adminIdx + 1);
-
-      computed = rest.map((seg, i) => {
-        const href = "/" + baseParts.concat(rest.slice(0, i + 1)).join("/");
-        const label = labels[href] || getPatternLabel(href, labels) || labels[seg] || formatLabel(seg);
-        return { href, label };
-      });
-
-      if (includeRoot) {
-        const baseHref = "/" + baseParts.join("/");
-        const baseLabel = labels[baseHref] || rootLabel;
-        computed = [{ href: baseHref, label: baseLabel }, ...computed];
-      }
-    } else {
-      const acc = [];
-      computed = parts.map((seg) => {
-        acc.push(seg);
-        const href = "/" + acc.join("/");
-        const label = labels[href] || getPatternLabel(href, labels) || labels[seg] || formatLabel(seg);
-        return { href, label };
-      });
-    }
-
-    items = computed;
+  if (adminIdx < 0) {
+    const acc = [];
+    return parts.map((seg) => {
+      acc.push(seg);
+      const href = "/" + acc.join("/");
+      return { href, label: labelOf(href, seg) };
+    });
   }
 
-  const prev = items?.length > 1 ? items[items.length - 2] : null;
-  const current = items?.[items.length - 1];
+  const baseParts = parts.slice(0, adminIdx + 1);
+  const rest = parts.slice(adminIdx + 1);
+  const computed = rest.map((seg, i) => {
+    const href = "/" + baseParts.concat(rest.slice(0, i + 1)).join("/");
+    return { href, label: labelOf(href, seg) };
+  });
 
-  return (
-    <nav aria-label="Breadcrumb" className={cn("min-w-0 text-sm text-neutral-500", className)}>
-      {items?.length > 1 && (
-        <div className="flex items-center gap-1.5 min-w-0 md:hidden">
-          {prev && (
-            <Link href={prev.href} className="inline-flex min-w-0 items-center gap-1 rounded-md py-1 text-neutral-400 transition-colors hover:text-neutral-100">
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 rotate-180" />
-              <span className="truncate max-w-[120px] text-xs">{prev.label}</span>
-            </Link>
-          )}
-          <ChevronRight className="h-3.5 w-3.5 text-neutral-600 shrink-0" />
-          <span aria-current="page" className="truncate max-w-40 text-xs font-medium text-neutral-200" title={current?.label}>
-            {current?.label}
-          </span>
-        </div>
-      )}
-      {items?.length === 1 && (
-        <div className="md:hidden">
-          <span aria-current="page" className="truncate max-w-[200px] text-xs font-medium text-neutral-200" title={current?.label}>
-            {current?.label}
-          </span>
-        </div>
-      )}
+  if (!includeRoot) return computed;
+  const baseHref = "/" + baseParts.join("/");
+  return [{ href: baseHref, label: labels[baseHref] || rootLabel }, ...computed];
+}
 
-      <ol role="list" className="hidden min-w-0 md:flex items-center">
-        {items?.map((item, idx) => {
-          const isLast = idx === items.length - 1;
-          const isSecondToLast = idx === items.length - 2;
-          return (
-            <li key={item.href} className={cn(
-              "inline-flex items-center gap-1.5",
-              isLast ? "shrink-0" : "min-w-0",
-              isSecondToLast && "shrink-6"
-            )}>
-              {idx > 0 && (
-                <ChevronRight className="h-4 w-4 mt-0.5 shrink-0 text-neutral-300" />
-              )}
-
-              {isLast ? (
-                <span aria-current="page" className="max-w-[180px] truncate font-medium text-neutral-200" title={item.label}>
-                  {item.label}
-                </span>
-              ) : (
-                <Link href={item.href} title={item.label} className="min-w-0 truncate rounded-md px-1.5 py-1 transition-colors hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2">
-                  {item.label}
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
-  );
+/** forms' trail from the address and its label map, drawn by skylcn's Breadcrumbs. */
+export default function Breadcrumbs({ segments, labels = {}, includeRoot = true, rootLabel = "Dashboard", className }) {
+  const pathname = usePathname() || "/";
+  const items = segments ?? trailOf(pathname, labels, includeRoot, rootLabel);
+  return <Trail items={items} className={className} />;
 }
