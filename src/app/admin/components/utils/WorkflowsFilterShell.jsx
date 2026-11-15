@@ -12,7 +12,7 @@ const SORT_OPTIONS = [
 /** The workflows list's filters, drawn in the header's filter popover. */
 export default function WorkflowsFilterShell({ sortValue = "desc", onSortChange, showArchived = false, onShowArchivedChange }) {
   return (
-    <div className="flex flex-col gap-4">
+    <>
       <FilterGroup label="Tarih Sıralaması">
         <SegmentedControl aria-label="Tarih Sıralaması" options={SORT_OPTIONS} value={sortValue} onValueChange={onSortChange} className="w-full" />
       </FilterGroup>
@@ -20,6 +20,6 @@ export default function WorkflowsFilterShell({ sortValue = "desc", onSortChange,
       <FilterGroup label="Arşiv Durumu">
         <ToggleRow title="Arşiv hariç" checkedTitle="Arşiv dahil" checked={showArchived} onCheckedChange={(checked) => onShowArchivedChange?.(checked)} />
       </FilterGroup>
-    </div>
+    </>
   );
 }

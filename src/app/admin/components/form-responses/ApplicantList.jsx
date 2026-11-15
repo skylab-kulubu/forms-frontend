@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Archive, ChevronLeft, ChevronRight } from "lucide-react";
-import { ActiveFilters, FilterButton, FilterPills, IconButton, SearchInput, SegmentedControl, Skeleton, StatusDot } from "@skylab-kulubu/skylcn-ui";
+import {
+  ActiveFilters, Collapse, FilterButton, FilterPills, IconButton, Popover, PopoverContent, PopoverTrigger, SearchInput, SegmentedControl, Skeleton, StatusDot,
+} from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { STATUS_FILTERS } from "@/lib/attempt-status";
 import { currentTime, leftText, shortDuration } from "@/lib/form-timing";
@@ -20,58 +22,35 @@ function Segment({ label, options, value, onChange }) {
   );
 }
 
-function FilterPopover({ filters, setFilters, counts, timed, inline, onClose }) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const down = (event) => {
-      if (!ref.current?.contains(event.target) && !event.target.closest?.("[data-filter-anchor]")) onClose();
-    };
-    const key = (event) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", down);
-    document.addEventListener("keydown", key, true);
-    return () => {
-      document.removeEventListener("mousedown", down);
-      document.removeEventListener("keydown", key, true);
-    };
-  }, [onClose]);
-
+// The panel's groups, handed to the popover or the phone's in-page panel as direct children, so they step in one by one
+function FilterGroups({ filters, setFilters, counts, timed }) {
   const statusOptions = STATUS_FILTERS.filter((item) => (item.timed ? timed : true) && (!item.whenPresent || (item.count(counts) ?? 0) > 0 || filters.status === item.value));
 
   return (
-    <div ref={ref} role="dialog" aria-label="Cevap filtreleri"
-      className={`rounded-xl border border-border-strong bg-popover/95 text-foreground ${inline ? "mt-1" : "absolute left-2 right-2 top-full z-40 mt-1.5 shadow-overlay backdrop-blur"}`}
-    >
-      <div className="flex flex-col gap-4 p-4">
-        <Segment label="Sıralama" options={[["desc", "Yeni önce"], ["asc", "Eski önce"]]} value={filters.sort} onChange={(value) => setFilters({ ...filters, sort: value })} />
-        <div className="space-y-2">
-          <p className="text-2xs font-medium text-neutral-500">Durum</p>
-          <div className="grid grid-cols-2 gap-1.5">
-            {statusOptions.map((item) => (
-              <button key={item.value} type="button" onClick={() => setFilters({ ...filters, status: item.value })} aria-pressed={filters.status === item.value}
-                className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-2xs transition-colors ${
-                  filters.status === item.value ? "border-border-strong bg-accent-strong text-foreground" : "border-border bg-muted text-secondary-foreground hover:text-foreground"
-                }`}
-              >
-                {item.dot ? <span className={`size-1.5 shrink-0 rounded-full ${item.dot}`} /> : null}
-                <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
-                <span className="tabular-nums text-subtle-foreground">{item.count(counts) ?? ""}</span>
-              </button>
-            ))}
-          </div>
+    <>
+      <Segment label="Sıralama" options={[["desc", "Yeni önce"], ["asc", "Eski önce"]]} value={filters.sort} onChange={(value) => setFilters({ ...filters, sort: value })} />
+      <div className="space-y-2">
+        <p className="text-2xs font-medium text-neutral-500">Durum</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {statusOptions.map((item) => (
+            <button key={item.value} type="button" onClick={() => setFilters({ ...filters, status: item.value })} aria-pressed={filters.status === item.value}
+              className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-2xs transition-colors ${
+                filters.status === item.value ? "border-border-strong bg-accent-strong text-foreground" : "border-border bg-muted text-secondary-foreground hover:text-foreground"
+              }`}
+            >
+              {item.dot ? <span className={`size-1.5 shrink-0 rounded-full ${item.dot}`} /> : null}
+              <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+              <span className="tabular-nums text-subtle-foreground">{item.count(counts) ?? ""}</span>
+            </button>
+          ))}
         </div>
-        <Segment label="Yanıtlayan" options={[["all", "Hepsi"], ["registered", "Kayıtlı"], ["anonymous", "Anonim"]]} value={filters.who} onChange={(value) => setFilters({ ...filters, who: value })} />
-        {timed ? (
-          <Segment label="Süre" options={[["all", "Hepsi"], ["extended", "Uzatılanlar"], ["soon", "Bitmek üzere"]]} value={filters.time} onChange={(value) => setFilters({ ...filters, time: value })} />
-        ) : null}
-        <Segment label="Arşiv" options={[["out", "Hariç"], ["in", "Dahil"]]} value={filters.archived ? "in" : "out"} onChange={(value) => setFilters({ ...filters, archived: value === "in" })} />
       </div>
-    </div>
+      <Segment label="Yanıtlayan" options={[["all", "Hepsi"], ["registered", "Kayıtlı"], ["anonymous", "Anonim"]]} value={filters.who} onChange={(value) => setFilters({ ...filters, who: value })} />
+      {timed ? (
+        <Segment label="Süre" options={[["all", "Hepsi"], ["extended", "Uzatılanlar"], ["soon", "Bitmek üzere"]]} value={filters.time} onChange={(value) => setFilters({ ...filters, time: value })} />
+      ) : null}
+      <Segment label="Arşiv" options={[["out", "Hariç"], ["in", "Dahil"]]} value={filters.archived ? "in" : "out"} onChange={(value) => setFilters({ ...filters, archived: value === "in" })} />
+    </>
   );
 }
 
@@ -93,6 +72,7 @@ export default function ApplicantList({
 }) {
   const [open, setOpen] = useState(false);
   const listRef = useRef(null);
+  const toolbarRef = useRef(null);
   const selectedIndex = rows.findIndex((row) => isSelected(row));
 
   useLayoutEffect(() => {
@@ -125,7 +105,7 @@ export default function ApplicantList({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="relative shrink-0 space-y-2 px-3 pb-2 pt-3">
+      <div ref={toolbarRef} className="relative shrink-0 space-y-2 px-3 pb-2 pt-3">
         <SearchInput size="sm" value={search} onValueChange={setSearch} placeholder="Bu sayfada ara" aria-label="Bu sayfadaki başvuranlarda ara" className="max-w-none" />
         <div className="flex items-center gap-1">
           <FilterPills aria-label="Durum" value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })} className="min-w-0"
@@ -134,12 +114,28 @@ export default function ApplicantList({
               { value: "pending", label: <><StatusDot tone="warning" glow={false} />Beklemede</>, count: counts?.pending },
             ]}
           />
-          <FilterButton iconOnly count={active} size={touch ? "icon" : "icon-sm"} data-filter-anchor aria-expanded={open} onClick={() => setOpen((value) => !value)}
-            className="ml-auto"
-          />
+          {touch ? (
+            <FilterButton iconOnly count={active} size="icon" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="ml-auto" />
+          ) : (
+            // Hung from the whole toolbar, as wide as it, as the panel has always opened
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger render={<FilterButton iconOnly count={active} size="icon-sm" className="ml-auto" />} />
+              <PopoverContent stagger anchor={toolbarRef} align="start" alignOffset={8} sideOffset={-2} aria-label="Cevap filtreleri"
+                className="flex w-[calc(var(--anchor-width)-1rem)] flex-col gap-4 p-4"
+              >
+                <FilterGroups filters={filters} setFilters={setFilters} counts={counts} timed={timed} />
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
         <ActiveFilters filters={chips.map(([key, label, onRemove]) => ({ key, label, onRemove }))} />
-        {open ? <FilterPopover filters={filters} setFilters={setFilters} counts={counts} timed={timed} inline={touch} onClose={() => setOpen(false)} /> : null}
+        {touch ? (
+          <Collapse open={open}>
+            <div role="group" aria-label="Cevap filtreleri" className="mt-1 flex stagger-items flex-col gap-4 rounded-xl border border-border-strong bg-popover/95 p-4 text-foreground">
+              <FilterGroups filters={filters} setFilters={setFilters} counts={counts} timed={timed} />
+            </div>
+          </Collapse>
+        ) : null}
       </div>
 
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2 scrollbar">

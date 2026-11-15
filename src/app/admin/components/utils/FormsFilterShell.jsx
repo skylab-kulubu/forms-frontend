@@ -45,7 +45,7 @@ export default function FormsFilterShell({ sortValue = "desc", onSortChange, rol
   requiresManualReview = null, onRequiresManualReviewChange, stateOptions = null, stateCounts = null, stateValue = "all", onStateChange
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <>
       {stateOptions ? (
         <FilterGroup label="Form Durumu">
           <FilterPills aria-label="Form Durumu" value={stateValue} onValueChange={onStateChange} className="w-full justify-between overflow-x-auto scrollbar-hidden"
@@ -69,6 +69,6 @@ export default function FormsFilterShell({ sortValue = "desc", onSortChange, rol
           <TriStateButton value={requiresManualReview} onChange={onRequiresManualReviewChange} icon={ClipboardCheck} label="Manuel onay" />
         </div>
       </FilterGroup>
-    </div>
+    </>
   );
 }

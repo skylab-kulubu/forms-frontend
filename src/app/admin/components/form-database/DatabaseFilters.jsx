@@ -41,7 +41,7 @@ export default function DatabaseFilters({ state, onChange, onClear, summary = nu
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <>
       <FilterGroup label="Durum">
         <FilterPills aria-label="Durum" options={statusOptions} value={state.status} onValueChange={(value) => onChange({ status: value })} className="w-full justify-between" />
       </FilterGroup>
@@ -80,6 +80,6 @@ export default function DatabaseFilters({ state, onChange, onClear, summary = nu
         <span className="text-2xs text-subtle-foreground">{active ? `${active} filtre açık` : "Filtre yok"}</span>
         <Button variant="ghost" size="sm" onClick={onClear} disabled={!active}>Temizle</Button>
       </div>
-    </div>
+    </>
   );
 }

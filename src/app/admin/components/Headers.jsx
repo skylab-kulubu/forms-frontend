@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { LayoutTemplate, Plus, RefreshCw } from "lucide-react";
-import { AppShellActions, FilterButton, IconButton, Popover, PopoverContent, PopoverTrigger, SearchInput } from "@skylab-kulubu/skylcn-ui";
+import { AppShellActions, FilterButton, IconButton, Popover, PopoverContent, PopoverTrigger, SearchInput, cn } from "@skylab-kulubu/skylcn-ui";
 import FormsFilterShell from "./utils/FormsFilterShell";
 import DatabaseFilters from "./form-database/DatabaseFilters";
 import { filterCount } from "./form-database/database-params";
@@ -27,7 +27,8 @@ function FilterMenu({ inHeader, count, label, className, children }) {
   return (
     <Popover>
       <PopoverTrigger render={<FilterButton iconOnly count={count} size={iconSize(inHeader)} />} />
-      <PopoverContent align={inHeader ? "end" : "center"} aria-label={label} className={className}>{children}</PopoverContent>
+      {/* The panels hand their groups over as direct children, so they step in and out one by one */}
+      <PopoverContent stagger align={inHeader ? "end" : "center"} aria-label={label} className={cn("flex flex-col gap-4", className)}>{children}</PopoverContent>
     </Popover>
   );
 }
