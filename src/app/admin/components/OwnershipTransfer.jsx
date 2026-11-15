@@ -27,13 +27,12 @@ function OwnerPicker({ excludeIds, onSelect }) {
 
     const { data, isLoading } = useUserByMailQuery({ email: debouncedSearch, enabled: debouncedSearch.length > 1 });
     const users = (Array.isArray(data) ? data : data?.data || []).filter((user) => user?.id && !excludeIds.includes(user.id));
-    // The server is asked from two letters on, so shorter input lists nothing rather than stale results
-    const searching = search.length >= 2;
-    const items = searching ? users.map((user) => ({ value: user.id, label: personName(user), hint: user.email })) : [];
+    const items = users.map((user) => ({ value: user.id, label: personName(user), hint: user.email }));
 
+    // The server is asked from two letters on, so the list opens from two letters on too
     return (
-        <Combobox items={items} value={null} size="sm" onSearch={setSearch}
-            loading={searching && (isLoading || search !== debouncedSearch)}
+        <Combobox items={items} value={null} size="sm" onSearch={setSearch} minSearch={2}
+            loading={isLoading || search !== debouncedSearch}
             onValueChange={(id) => {
                 const user = users.find((item) => item.id === id);
                 if (user) onSelect(user);
