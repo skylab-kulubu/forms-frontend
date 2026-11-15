@@ -3,15 +3,19 @@
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { BookOpen, ChartColumn, Database, FilePlus, FileText, LayoutDashboard, LayoutTemplate, List, LogOut, PencilLine, Plus, UserX, Workflow } from "lucide-react";
+import { BookOpen, ChartColumn, Database, FilePlus, FileText, LayoutDashboard, LayoutTemplate, List, LogOut, Mail, PencilLine, Plus, ShieldCheck, UserX, Workflow } from "lucide-react";
 import {
   AppShell, AppShellFill, MenuItem, MenuLabel, MenuSeparator, SidebarBrand, SidebarContent, SidebarFooter, SidebarGroup, SidebarItem,
   SidebarSection, SidebarUser, TooltipProvider, useTheme,
 } from "@skylab-kulubu/skylcn-ui";
 import { logout } from "@/lib/authActions";
+import { CLUB_CONSOLES } from "@/lib/club-switcher";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import { useFormContext, useTemplateContext, useWorkflowContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
+
+const CONSOLE_ICONS = { admin: ShieldCheck, forms: FileText, mail: Mail };
+const CONSOLES = CLUB_CONSOLES.map((app) => ({ ...app, icon: CONSOLE_ICONS[app.id] }));
 
 const breadcrumbLabels = {
   "/admin": "Dashboard",
@@ -110,7 +114,7 @@ export function AdminSidebar({ pathname, user, status, realmRoles = [], skyforms
 
   return (
     <>
-      <SidebarBrand name="SKY LAB Forms" href="/admin" />
+      <SidebarBrand eyebrow="SKY LAB" name="Forms" consoles={CONSOLES} current="forms" />
       <SidebarContent>
         <SidebarSection>
           <SidebarItem href="/admin" icon={LayoutDashboard} label="Dashboard" active={pathname === "/admin"} />
