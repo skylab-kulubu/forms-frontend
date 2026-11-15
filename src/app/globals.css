@@ -287,10 +287,10 @@ body {
     place-content: center;
   }
 
-  /* skylab-800: beyaz tik ile ~4.5:1 kontrast; daha açık tonlar tiki siliyor */
+  /* skylcn'in Checkbox'ı gibi birincil renkle dolu, tik onun ön plan renginde: koyu temada dolgu açık lila, beyaz tik orada kaybolur */
   .checkbox:checked {
-    background-color: var(--skylab-800);
-    border-color: var(--skylab-800);
+    background-color: var(--primary);
+    border-color: var(--primary);
   }
 
   .checkbox::before {
@@ -299,7 +299,7 @@ body {
     height: 0.75rem;
     transform: scale(0);
     transition: 120ms transform ease-in-out;
-    box-shadow: inset 1em 1em white; 
+    box-shadow: inset 1em 1em var(--primary-foreground);
     transform-origin: center;
     clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
   }
