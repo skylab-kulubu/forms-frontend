@@ -33,7 +33,7 @@ export function DisplayFormSlider({ question, questionNumber, description, requi
 
   return (
     <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}>
-      <Slider min={min} max={max} step={step} value={shown}
+      <Slider variant="control" min={min} max={max} step={step} value={shown}
         onValueChange={(next) => commit(snap(Array.isArray(next) ? next[0] : next))}
         thumbLabels={[questionLabel(question)]} ends={[String(min), String(max)]}
       />

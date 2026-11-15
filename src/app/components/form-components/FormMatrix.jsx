@@ -148,7 +148,7 @@ export function DisplayFormMatrix({ question, questionNumber, description, requi
         <QuestionField question={question} questionNumber={questionNumber} description={description} required={required} missing={missing}
             requiredText={ALL_ROWS} missingText={ALL_ROWS}
         >
-            <ChoiceMatrix rows={byLabel(rows)} columns={byLabel(columns)} value={currentValue} onValueChange={commit}
+            <ChoiceMatrix variant="control" rows={byLabel(rows)} columns={byLabel(columns)} value={currentValue} onValueChange={commit}
                 required={required} invalid={missing} aria-label={questionLabel(question)}
             />
         </QuestionField>
