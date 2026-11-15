@@ -111,7 +111,7 @@ function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
         const locked = lockedValues.includes(choice);
         return (
           <div key={index} className={`group/opt flex items-center gap-3 rounded-md px-3 py-2 ${CHOICE}`}>
-            <span aria-hidden="true" className={`size-4 shrink-0 border border-border-strong bg-input-background ${field.props?.allowMultiple === false ? "rounded-full" : "rounded-sm"}`} />
+            <span aria-hidden="true" className={`size-4 shrink-0 border border-input-strong bg-input-background ${field.props?.allowMultiple === false ? "rounded-full" : "rounded-sm"}`} />
             <Editable editKey={`o-${field.id}-${index}`} value={choice} placeholder={`Seçenek ${index + 1}`} readOnly={locked || readOnly}
               title={locked ? "Akış koşulu bu seçeneği karşılaştırıyor; adı değiştirilemez." : undefined}
               className={`min-w-0 flex-1 text-sm ${locked ? "text-muted-foreground" : "text-secondary-foreground"}`}
@@ -247,7 +247,7 @@ function MatrixPreview({ field, selected, api }) {
                   </td>
                   {columns.map((_, columnIndex) => (
                     <td key={columnIndex} className="p-2 text-center align-middle">
-                      <span className="inline-block size-4 rounded-full border border-border-strong bg-input-background align-middle" />
+                      <span className="inline-block size-4 rounded-full border border-input-strong bg-input-background align-middle" />
                     </td>
                   ))}
                 </tr>
@@ -266,7 +266,7 @@ function MatrixPreview({ field, selected, api }) {
               <div {...matrixGroupProps(layout)}>
                 {columns.map((column, index) => (
                   <div key={index} className={`group/col relative ${matrixChoiceClass(layout)}`}>
-                    {layout.mode === "list" ? <span aria-hidden="true" className="size-4 shrink-0 rounded-full border border-border-strong bg-input-background" /> : null}
+                    {layout.mode === "list" ? <span aria-hidden="true" className="size-4 shrink-0 rounded-full border border-input-strong bg-input-background" /> : null}
                     {columnLabel(column, index, rowIndex ? `c-${field.id}-${index}@${rowIndex}` : `c-${field.id}-${index}`, matrixLabelClass(layout))}
                     {selected && columns.length > 1 && removeButton("columns", index, "absolute right-0.5 top-0.5 group-hover/col:opacity-100")}
                   </div>
