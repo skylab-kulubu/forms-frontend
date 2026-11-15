@@ -26,8 +26,9 @@ export default function Providers({ children }) {
     // before it expires. Keep this below the Keycloak access-token lifespan (default 5m).
     <SessionProvider refetchInterval={4 * 60} refetchOnWindowFocus={true}>
       <QueryClientProvider client={queryClient}>
-        {/* skylcn's links go through next/link and its motion parts animate only under this provider */}
-        <SkylcnProvider locale="tr" linkComponent={Link}>
+        {/* skylcn's links go through next/link and its motion parts animate only under this provider.
+            People sit beside the forms here, not as the content, so skylcn's per-person tint would pull the eye. */}
+        <SkylcnProvider locale="tr" linkComponent={Link} avatarTone="neutral">
           <SessionExpiredHandler />
           {children}
         </SkylcnProvider>
