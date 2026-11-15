@@ -79,7 +79,7 @@ export function PresenceAvatar({ member, small = false }) {
   const color = colorOf(member.userId);
   return (
     <span title={member.name}
-      className={`grid shrink-0 place-items-center bg-neutral-900 font-semibold tracking-wide text-neutral-200 ${small ? "size-4 rounded-sm border text-[7px]" : "size-6 rounded-md border-[1.5px] text-[9px]"}`}
+      className={`grid shrink-0 place-items-center bg-neutral-900 font-semibold tracking-wide text-neutral-200 ${small ? "size-4 rounded-full border text-[7px]" : "size-6 rounded-full border-[1.5px] text-[9px]"}`}
       style={{ borderColor: color }}
     >
       {initialsOf(member.name)}
@@ -95,7 +95,7 @@ export function PresenceDots({ members, max = 3 }) {
   return (
     <span className="flex shrink-0 items-center -space-x-0.5">
       {people.slice(0, max).map((member) => (
-        <span key={member.userId} className="rounded-sm ring-[1.5px] ring-neutral-900"><PresenceAvatar member={member} small /></span>
+        <span key={member.userId} className="rounded-full ring-[1.5px] ring-neutral-900"><PresenceAvatar member={member} small /></span>
       ))}
       {extra > 0 ? <span className="pl-1.5 text-3xs tabular-nums text-neutral-500">+{extra}</span> : null}
     </span>
@@ -126,7 +126,7 @@ export function PeopleStack({ people, onGo }) {
       {people.slice(0, STACK_MAX).map((person) => (
         <Tooltip key={person.userId} label={<PersonCard person={person} onGo={onGo} />} className="w-56 rounded-[10px] px-2.5 py-2 text-left text-2xs font-normal">
           <button type="button" onClick={() => onGo?.(person)} aria-label={`${person.name}, ${person.where}`}
-            className={`relative block rounded-md ring-2 ring-neutral-900 transition-transform hover:z-20 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-skylab-400/60 ${person.editing ? "z-10" : ""}`}
+            className={`relative block rounded-full ring-2 ring-neutral-900 transition-transform hover:z-20 hover:-translate-y-px focus-visible:outline-none focus-visible:ring-skylab-400/60 ${person.editing ? "z-10" : ""}`}
           >
             <PresenceAvatar member={person} />
             {person.editing ? (
@@ -139,7 +139,7 @@ export function PeopleStack({ people, onGo }) {
       ))}
       {extra > 0 ? (
         <span title={people.slice(STACK_MAX).map((person) => person.name).join(", ")}
-          className="relative grid size-6 place-items-center rounded-md border border-ink/10 bg-neutral-900 text-[9px] font-semibold tabular-nums text-neutral-300 ring-2 ring-neutral-900"
+          className="relative grid size-6 place-items-center rounded-full border border-ink/10 bg-neutral-900 text-[9px] font-semibold tabular-nums text-neutral-300 ring-2 ring-neutral-900"
         >
           +{extra}
         </span>

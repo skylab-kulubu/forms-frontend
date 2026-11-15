@@ -6,8 +6,8 @@
 @media (min-width: 640px) { .hm-me p { display: block; } }
 @media (min-width: 820px) and (max-width: 1023px) { .hm-me p { display: none; } }
 .hm-acc { display: none; }
-.hm-acc-btn { display: grid; place-items: center; border-radius: 8px; cursor: pointer; }
-.hm-acc-btn > [data-slot="avatar"] { width: 32px; height: 32px; border-radius: 8px; border-color: var(--l3); background: rgba(255, 255, 255, .05); font-size: 11.5px; letter-spacing: .02em; color: var(--n200); transition: border-color .15s, background-color .15s, color .15s; }
+.hm-acc-btn { display: grid; place-items: center; border-radius: 999px; cursor: pointer; }
+.hm-acc-btn > [data-slot="avatar"] { width: 32px; height: 32px; border-radius: 999px; border-color: var(--l3); background: rgba(255, 255, 255, .05); font-size: 11.5px; letter-spacing: .02em; color: var(--n200); transition: border-color .15s, background-color .15s, color .15s; }
 .hm-acc-btn > [data-slot="avatar"] svg { width: 16px; height: 16px; color: var(--n300); }
 .hm-acc-btn:hover > [data-slot="avatar"] { border-color: var(--l4); background: rgba(255, 255, 255, .08); }
 .hm-acc-btn[aria-expanded="true"] > [data-slot="avatar"] { border-color: rgba(235, 213, 238, .4); background: rgba(224, 200, 229, .1); color: var(--s300); }
