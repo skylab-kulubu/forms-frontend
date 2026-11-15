@@ -43,6 +43,7 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
   let applied = {};
   let loading = false;
   let lastU = 0;
+  let held = 0;
 
   const all = () => R(0, 0, actor.pw, actor.ph);
   const flat = (extra = {}) => () => shot(actor, all(), { mode: "height", max: 1, min: 0.3, pad: 0, halign: M.hero, ...extra });
@@ -340,7 +341,13 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
   function update(u, dt, now, target = u) {
     const mail = u > T.form - 0.2 ? mailAt(u) : null;
     if (mail && !built.has(mail.entry.key)) built.set(mail.entry.key, mailOf(mail.entry.key, mail.entry.info()));
-    sheet.update(mail ? { key: mail.entry.key, mail: built.get(mail.entry.key), banner: mail.banner, open: mail.open, scroll: mail.scroll } : { key: null });
+    const left = mails.find((entry) => entry.beat.cta && u >= entry.beat.cta && u < entry.beat.cta + 0.4 && built.has(entry.key)) ?? null;
+    const busy = loading || Boolean(pending?.hard) || !actor.ready || actor.fade < 1;
+    held = left && busy ? 1 : Math.max(0, held - dt / 0.3);
+    actor.masked = held > 0.5;
+    if (mail) sheet.update({ key: mail.entry.key, mail: built.get(mail.entry.key), banner: mail.banner, open: Math.max(mail.open, left === mail.entry ? held : 0), scroll: mail.scroll });
+    else if (left && held > 0) sheet.update({ key: left.key, mail: built.get(left.key), banner: 0, open: held, scroll: sheet.ctaScroll() });
+    else sheet.update({ key: null });
     actor.setHand(actor.ready ? handAt(u, HAND) : null);
 
     lastU = target;

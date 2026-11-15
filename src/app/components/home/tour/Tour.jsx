@@ -297,7 +297,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       const total = S.mod.T.total;
       S.raw = (box.scrollTop - S.top) / S.per;
       const lead = film.lead();
-      const ready = lead ? lead.ready : film.ready || film.covered;
+      const ready = lead ? lead.ready && !lead.masked : film.ready || film.covered;
       if (!S.open) {
         if (film.u > 0.0005 || film.target > 0.0005) film.jump(0);
         S.cut = false;
@@ -343,7 +343,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       }
       store.set({
         active, note, live: film.live, framed: S.mod.framed(u) > 0.5, pinned: inTour(), away: S.open && !S.story && u > AWAY, closing: S.open && u >= S.mod.T.end - CLOSE,
-        waiting: !ready,
+        waiting: !ready && !lead?.masked,
         canTry: S.open && (film.live || Boolean(lead?.ready)),
       });
     };

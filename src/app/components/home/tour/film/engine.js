@@ -158,6 +158,7 @@ export class Actor {
     this.ph = h + this.head + this.inset * 2;
     this.ready = false;
     this.live = false;
+    this.masked = false;
     this.fade = 0;
     this.frame = 0;
     this.rects = new Map();
