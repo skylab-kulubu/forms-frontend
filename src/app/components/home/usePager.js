@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { remember } from "./scrollMemo";
 
 export function scrollToSection(pager, el) {
   if (!el) return;
@@ -22,6 +23,9 @@ const PUSH_MIN = 180;
 const NOTCH_GAP = 130;
 const KEY_GAP = 140;
 const LEAD = 2;
+const FREE_TAU = { notch: 0.085, fine: 0.035, key: 0.11 };
+const FREE_REST = 420;
+const FREE_KEY = { tap: 110, hold: 26, page: 0.85, pageMs: 560 };
 
 function bezier(x1, y1, x2, y2) {
   const cx = 3 * x1;
@@ -80,9 +84,13 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
     let lastIdx = 0;
     let glideIdx = -1;
     let glideDir = 0;
+    let glideTo = 0;
     let vel = 0;
     let pushAt = -Infinity;
+    let leaving = false;
+    let leftAt = -Infinity;
     let gesture = { at: -Infinity, mode: "", sum: 0, recent: [] };
+    const free = { raf: 0, target: 0, pos: 0, set: 0, last: 0, tau: FREE_TAU.notch, restAt: -Infinity };
 
     const vh = () => box.clientHeight;
     const on = () => {
@@ -135,6 +143,43 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
       const el = list[i];
       return Boolean(el) && !fits(el) && room(el, dir) > FIT;
     };
+    const isFree = (el) => Boolean(el) && el.hasAttribute("data-free") && !fits(el);
+    const span = (el) => {
+      const r = rect(el);
+      const y = box.scrollTop;
+      return { start: Math.round(y + r.top), end: Math.round(y + r.bottom - vh()) };
+    };
+    const stopFree = () => {
+      if (free.raf) cancelAnimationFrame(free.raf);
+      free.raf = 0;
+    };
+    const follow = (now) => {
+      free.raf = 0;
+      if (Math.abs(box.scrollTop - free.set) > 2) return;
+      const dt = Math.min(0.25, Math.max(0.001, (now - free.last) / 1000));
+      free.last = now;
+      free.pos += (free.target - free.pos) * (1 - Math.exp(-dt / free.tau));
+      if (Math.abs(free.target - free.pos) < 0.5) free.pos = free.target;
+      box.scrollTop = free.pos;
+      free.set = box.scrollTop;
+      remember(box);
+      if (free.pos !== free.target) free.raf = requestAnimationFrame(follow);
+    };
+    const drive = (to, tau) => {
+      if (!free.raf) {
+        free.pos = box.scrollTop;
+        free.set = free.pos;
+        free.last = performance.now();
+        free.raf = requestAnimationFrame(follow);
+      }
+      free.target = to;
+      free.tau = tau;
+    };
+    const reach = (el, dir) => {
+      const { start, end } = span(el);
+      const from = free.raf ? free.target : box.scrollTop;
+      return { start, end, from, left: dir > 0 ? end - from : from - start };
+    };
     const targetY = (list, i, dir) => {
       const h = vh();
       const maxY = box.scrollHeight - h;
@@ -145,22 +190,45 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
       const t = r.height <= h + FIT ? y + r.top + r.height / 2 - h / 2 : r.height <= h + SLACK || dir > 0 ? y + r.top : y + r.bottom - h;
       return Math.max(0, Math.min(maxY, Math.round(t)));
     };
-    const glide = (to, ms, idx = -1, dir = 0, v0 = 0) => {
+    const pinned = (from, to, land) => {
+      const el = secs().find((item) => isFree(item));
+      if (!el) return null;
+      const { start, end } = span(el);
+      if (to > end + 1 && from < end - 1) return { at: Math.max(from, start), to: end };
+      if (to < start - 1 && from > start + 1) return { at: Math.min(from, end), to: start };
+      if (land && to >= start && to <= end) {
+        if (from < start - 1) return { at: start, to };
+        if (from > end + 1) return { at: end, to };
+      }
+      return null;
+    };
+    const glide = (to, ms, idx = -1, dir = 0, v0 = 0, land = false) => {
+      stopFree();
       const from = box.scrollTop;
-      const delta = to - from;
-      if (Math.abs(delta) < 1 && Math.abs(v0) < 0.05) return;
+      const skip = pinned(from, to, land);
+      const lead = skip ? skip.at - from : 0;
+      const delta = to - from - (skip ? skip.to - skip.at : 0);
+      if (Math.abs(delta) < 1 && Math.abs(v0) < 0.05) {
+        if (skip) {
+          box.scrollTop = to;
+          remember(box);
+        }
+        return;
+      }
       const dur = ms ?? Math.min(1000, Math.max(720, 620 + Math.abs(delta) * 0.2));
       const t0 = performance.now();
-      let lastPos = from;
+      let lastOff = 0;
       let lastAt = t0;
       glideIdx = idx;
       glideDir = dir;
+      glideTo = to;
       const step = (now) => {
         const p = Math.max(0, Math.min(1, (now - t0) / dur));
-        const pos = v0 ? hermite(from, delta, v0 * dur, p) : from + delta * ease(p);
-        box.scrollTop = pos;
-        vel = (pos - lastPos) / Math.max(1, now - lastAt);
-        lastPos = pos;
+        const off = v0 ? hermite(0, delta, v0 * dur, p) : delta * ease(p);
+        box.scrollTop = !skip || Math.abs(off) < Math.abs(lead) ? from + off : skip.to + off - lead;
+        remember(box);
+        vel = (off - lastOff) / Math.max(1, now - lastAt);
+        lastOff = off;
         lastAt = now;
         if (p < 1) {
           anim = requestAnimationFrame(step);
@@ -169,6 +237,10 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
         anim = 0;
         vel = 0;
         glideIdx = -1;
+        if (leaving) {
+          leaving = false;
+          leftAt = performance.now();
+        }
       };
       if (anim) cancelAnimationFrame(anim);
       anim = requestAnimationFrame(step);
@@ -195,13 +267,18 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
       const dy = pixels(e, vh());
       if (!dy || Math.abs(dy) < Math.abs(e.deltaX)) return;
       const now = e.timeStamp || performance.now();
+      if (!anim && now <= leftAt) {
+        e.preventDefault();
+        return;
+      }
       const mag = Math.abs(dy);
       const dir = dy > 0 ? 1 : -1;
       const gap = now - gesture.at;
       const recent = gesture.recent;
       const fading = recent.length >= 2 && recent[recent.length - 1] <= recent[recent.length - 2];
       const surge = fading && mag > 8 && mag > 1.6 * Math.max(...recent);
-      const push = notched(e, dy) ? now - pushAt >= NOTCH_GAP : (gap >= PUSH_GAP || surge) && now - pushAt >= PUSH_MIN;
+      const notch = notched(e, dy);
+      const push = notch ? now - pushAt >= NOTCH_GAP : (gap >= PUSH_GAP || surge) && now - pushAt >= PUSH_MIN;
       if (gap > GAP) gesture = { at: now, mode: "", sum: 0, recent: [] };
       gesture.at = now;
       gesture.recent = [...gesture.recent.slice(-2), mag];
@@ -226,8 +303,27 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
       if (list.length < 2) return;
       const cur = current(list);
 
+      if (isFree(list[cur]) && (!gesture.mode || gesture.mode === "free")) {
+        const { start, end, from, left } = reach(list[cur], dir);
+        if (left > FIT) {
+          e.preventDefault();
+          gesture.mode = "free";
+          const to = dir > 0 ? Math.min(end, from + dy) : Math.max(start, from + dy);
+          if (to === (dir > 0 ? end : start)) free.restAt = now;
+          drive(to, notch ? FREE_TAU.notch : FREE_TAU.fine);
+          return;
+        }
+        if (now - free.restAt < FREE_REST) {
+          e.preventDefault();
+          free.restAt = now;
+          gesture.mode = "free";
+          return;
+        }
+        if (gesture.mode === "free") gesture = { at: now, mode: "", sum: 0, recent: [mag] };
+      }
+
       if (!gesture.mode || gesture.mode === "native") {
-        if (inside(list, cur, dir)) {
+        if (!isFree(list[cur]) && inside(list, cur, dir)) {
           gesture.mode = "native";
           const left = room(list[cur], dir);
           if (mag > left + FIT) {
@@ -248,7 +344,10 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
       if (Math.abs(gesture.sum) < TRIGGER) return;
       gesture.mode = "glide";
       pushAt = now;
-      go(list, cur + dir, dir);
+      if (isFree(list[cur])) {
+        glide(targetY(list, Math.max(0, Math.min(list.length - 1, cur + dir)), dir), undefined, -1, dir);
+        leaving = true;
+      } else go(list, cur + dir, dir);
     };
 
     const onKey = (e) => {
@@ -273,7 +372,19 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
         return;
       }
       const cur = current(list);
-      if (inside(list, cur, dir)) {
+      if (isFree(list[cur])) {
+        const { start, end, from, left } = reach(list[cur], dir);
+        if (left > FIT) {
+          if (e.key.startsWith("Arrow")) {
+            const step = e.repeat ? FREE_KEY.hold : FREE_KEY.tap;
+            drive(dir > 0 ? Math.min(end, from + step) : Math.max(start, from - step), FREE_TAU.key);
+          } else {
+            glide(box.scrollTop + dir * Math.min(Math.round(vh() * FREE_KEY.page), left), FREE_KEY.pageMs);
+          }
+          return;
+        }
+        if (e.repeat) return;
+      } else if (inside(list, cur, dir)) {
         const stepPx = e.key.startsWith("Arrow") ? 160 : Math.round(vh() * 0.8);
         glide(box.scrollTop + dir * Math.min(stepPx, room(list[cur], dir)), STEP_MS);
         return;
@@ -303,7 +414,10 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
         const i = Math.min(lastIdx, list.length - 1);
         if (!fits(list[i])) return;
         const to = targetY(list, i, 1);
-        if (Math.abs(to - box.scrollTop) > 1) box.scrollTop = to;
+        if (Math.abs(to - box.scrollTop) > 1) {
+          box.scrollTop = to;
+          remember(box);
+        }
       }, 160);
     };
 
@@ -311,18 +425,29 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
       const list = secs();
       if (!el || !list.length) return;
       const i = list.findIndex((s) => s === el || s.contains(el) || el.contains(s));
-      if (i < 0) {
+      if (i < 0 || rm.matches) {
         el.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
-      go(list, i, i >= current(list) ? 1 : -1);
+      if (on()) {
+        go(list, i, i >= current(list) ? 1 : -1);
+        return;
+      }
+      const margin = parseFloat(getComputedStyle(list[i]).scrollMarginTop) || 0;
+      const y = i === 0 ? 0 : box.scrollTop + rect(list[i]).top - margin;
+      glide(Math.max(0, Math.min(box.scrollHeight - vh(), Math.round(y))));
+    };
+
+    const toY = (y, land = false) => {
+      const to = Math.max(0, Math.min(box.scrollHeight - vh(), Math.round(y)));
+      glide(to, land ? undefined : Math.min(1200, Math.max(620, 520 + Math.abs(to - box.scrollTop) * 0.12)), -1, 0, 0, land);
     };
 
     box.addEventListener("wheel", onWheel, { passive: false });
     box.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("keydown", onKey);
     window.addEventListener("resize", onResize);
-    api.current = { on, toEl };
+    api.current = { on: () => on() || secs().some(isFree), paging: on, toEl, toY, aim: () => (anim ? glideTo : null) };
     return () => {
       box.removeEventListener("wheel", onWheel);
       box.removeEventListener("scroll", onScroll);
@@ -330,6 +455,7 @@ export function usePager(containerRef, { selector = "[data-page]", block = "" } 
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
       clearTimeout(resizeT);
+      stopFree();
       if (anim) cancelAnimationFrame(anim);
       api.current = null;
     };

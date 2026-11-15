@@ -1,5 +1,6 @@
 import HomeShell from "@/app/components/home/HomeShell";
 import CommunitiesHero from "@/app/components/home/communities/CommunitiesHero";
+import CommunitiesTour from "@/app/components/home/tour/communities/CommunitiesTour";
 import Compare from "@/app/components/home/communities/Compare";
 import LazyDemo from "@/app/components/home/LazyDemo";
 import HomeForm from "@/app/components/home/HomeForm";
@@ -34,8 +35,9 @@ export default function CommunitiesPage() {
   return (
     <HomeShell page="topluluklar">
       <CommunitiesHero />
+      <CommunitiesTour />
       <div className="at-wrap">
-        <section className="at-sec" id={ids.review} data-page="">
+        <section className="at-sec tour-alt" id={ids.review} data-page="">
           <Head kick="Değerlendirme" title="Başvuruyu değerlendirin">
             Başvurular ekibin listesine düşer. Ekipten birinin incelemesinin ardından Forms otomatik olarak sıradaki adımı hazırlar ve başvuranı bilgilendirir. Sizin yönetmenize gerek kalmaz.
           </Head>
@@ -44,7 +46,7 @@ export default function CommunitiesPage() {
           </div>
         </section>
 
-        <section className="at-sec" id={ids.flow} data-page="">
+        <section className="at-sec tour-alt" id={ids.flow} data-page="">
           <Head kick="Akışlar" title="Başvuruyu adımlara bölün">
             Her adım ayrı bir form. Onay veya red durumuna göre sıradaki adımı belirlersiniz. Ayrıca akışı cevaba göre de yönetebilirsiniz.
           </Head>
@@ -53,7 +55,7 @@ export default function CommunitiesPage() {
           </div>
         </section>
 
-        <section className="at-sec" id={ids.editor} data-page="">
+        <section className="at-sec tour-alt" id={ids.editor} data-page="">
           <Head kick="Form editörü" title="Formu hazırlayın">
             İhtiyacınıza göre soru türleri ekleyin, bir soruyu önceki bir sorunun cevabına bağlayın, sık kullandığınız soru gruplarını şablon olarak saklayın.
           </Head>

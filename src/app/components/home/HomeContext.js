@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext } from "react";
 import { scrollToSection } from "./usePager";
 
-export const HomeContext = createContext({ pager: null, trial: null });
+export const HomeContext = createContext({ pager: null, trial: null, headerSlot: null });
 
 export function useHome() {
   return useContext(HomeContext);

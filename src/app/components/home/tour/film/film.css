@@ -1,0 +1,53 @@
+:root { --film-ink: #08070b; }
+.film-scene { position: absolute; inset: 0; overflow: hidden; overflow: clip; perspective: 2200px; pointer-events: none; }
+.film-world { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
+
+.film-plane { position: absolute; left: 0; top: 0; transform-origin: 0 0; transform-style: preserve-3d; will-change: transform, opacity; visibility: hidden; }
+.film-plane.is-on { visibility: visible; }
+.film-body { position: absolute; inset: 0; overflow: hidden; border-radius: 16px; transform-origin: 0 0; will-change: transform; }
+.film-inner { position: absolute; inset: 0; background: var(--film-back, #111); transform-origin: 0 0; will-change: transform; }
+.film-plane.is-fill .film-shadow.is-win { box-shadow: 0 22px 44px -18px rgba(0, 0, 0, .5); }
+.film-cover { position: absolute; left: 0; top: 0; pointer-events: none; text-align: left; }
+.film-cover > .studio-card { height: 100%; }
+.film-band { position: absolute; left: 0; right: 0; top: 0; background: linear-gradient(to right, var(--film-side, var(--film-back, #111)) var(--film-seam, 0px), var(--film-back, #111) var(--film-seam, 0px)); pointer-events: none; }
+.film-shadow:not(.is-win)::before { content: ""; position: absolute; inset: -140px; background: linear-gradient(to bottom, var(--film-side, var(--film-back, #111)) 140px, transparent 140px), linear-gradient(to right, var(--film-side, var(--film-back, #111)) calc(140px + var(--film-seam, 0px)), var(--film-back, #111) calc(140px + var(--film-seam, 0px))); opacity: 0; transition: opacity .25s ease; }
+.film-plane.is-bleed .film-shadow:not(.is-win)::before { opacity: 1; }
+.film-shadow:not(.is-win)::after { content: ""; position: absolute; inset: -140px; background: var(--film-ink); opacity: 0; }
+.film-plane.is-bleed .film-shadow:not(.is-win)::after { opacity: var(--film-shade, 0); }
+.film-plane.is-bleed .film-body { border-radius: 0; }
+.film-plane.is-bleed .film-ring { visibility: hidden; }
+.film-phone .film-shadow::before, .film-phone .film-shadow::after { display: none; }
+.film-ring { position: absolute; inset: 0; border-radius: 16px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09); pointer-events: none; will-change: opacity; }
+.film-shadow { position: absolute; inset: 0; border-radius: 16px; box-shadow: 0 36px 70px -28px rgba(0, 0, 0, .8); pointer-events: none; transform-origin: 0 0; will-change: transform, opacity; }
+.film-shadow.is-win { inset: auto; opacity: 0; will-change: opacity; }
+.film-plane iframe { display: block; width: 100%; height: 100%; border: 0; background: #111; pointer-events: none; }
+.film-shade { position: absolute; inset: 0; background: var(--film-ink); opacity: 0; pointer-events: none; will-change: opacity; }
+.film-veil { position: absolute; inset: 0; display: none; background: var(--film-ink); pointer-events: none; will-change: opacity; }
+.film-over { position: absolute; inset: 0; pointer-events: none; transform-style: preserve-3d; }
+.film-plane.is-live iframe { pointer-events: auto; }
+
+.film-phone { background: #121115; border-radius: 58px; }
+.film-phone .film-body { inset: 11px; border-radius: 47px; will-change: auto; }
+.film-phone .film-inner { position: static; background: none; will-change: auto; }
+.film-phone .film-ring, .film-phone .film-shadow.is-win { display: none; }
+.film-phone .film-shadow { border-radius: 58px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 60px 110px -40px rgba(0, 0, 0, .95); }
+.film-phone::before { content: ""; position: absolute; left: 50%; top: 21px; z-index: 3; width: 96px; height: 26px; border-radius: 99px; background: #000; transform: translateX(-50%); }
+.film-phone .film-body { background: #0b0a0e; }
+.film-phone .film-phone-bar { position: absolute; left: 0; right: 0; top: 0; z-index: 3; pointer-events: none; }
+.film-phone-bar { display: flex; height: 40px; align-items: center; justify-content: space-between; padding: 8px 30px 0 34px; font-size: 13px; font-weight: 600; color: var(--n100); }
+.film-phone-bar > span { display: flex; align-items: center; gap: 5px; }
+
+.film-cursor-shadow { position: absolute; left: 0; top: 0; will-change: transform; width: 20px; height: 11px; border-radius: 50%; background: rgba(0, 0, 0, .6); filter: blur(4px); transition: opacity .3s ease; }
+.film-cursor { position: absolute; left: 0; top: 0; will-change: transform; transition: opacity .3s ease; }
+.film-cursor svg { display: block; filter: drop-shadow(0 6px 5px rgba(0, 0, 0, .55)); }
+.film-cursor span { position: absolute; left: 14px; top: 16px; white-space: nowrap; border-radius: 3px; background: rgba(38, 38, 38, .95); padding: 1px 4px; font-size: 10px; line-height: 14px; font-weight: 500; color: rgba(255, 255, 255, .9); box-shadow: 0 6px 10px rgba(0, 0, 0, .35); }
+
+.film-cursor, .film-cursor-shadow { transition: opacity .3s ease, transform 80ms linear; }
+
+.film-hand { position: absolute; left: 0; top: 0; opacity: 0; will-change: transform; transition: opacity .25s ease, transform 70ms linear; }
+.film-hand svg { display: block; margin: -1.5px 0 0 -1.5px; transform-origin: 1.5px 1.5px; transition: transform .1s ease; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .5)); }
+.film-hand.is-down svg { transform: scale(.88); }
+.film-hand.is-touch svg { display: none; }
+.film-hand.is-touch::before { content: ""; position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid rgba(250, 250, 250, .75); background: rgba(250, 250, 250, .22); box-shadow: 0 4px 12px rgba(0, 0, 0, .4); transition: transform .12s ease; }
+.film-hand.is-touch.is-down::before { transform: scale(.78); }
+.film-veil, .film-shade, .film-shadow, .film-ring { transition: opacity 90ms linear; }

@@ -177,7 +177,7 @@ function AccountMenu({ status, user, isAdmin, action }) {
   );
 }
 
-export default function HomeHeader({ page }) {
+export default function HomeHeader({ page, slotRef }) {
   const scrollTo = useScrollTo();
   const openTrial = useOpenTrial();
   const { data: session, status } = useSession();
@@ -245,7 +245,7 @@ export default function HomeHeader({ page }) {
 
   return (
     <header className={"f-hdr" + (from === null ? " is-intro" : "")}>
-      <div className="f-hdr-in">
+      <div className="f-hdr-in" ref={slotRef}>
         <Link className="f-brand hm-brand" href={HOME_PATHS.kisiler} onClick={isT ? undefined : toTop} aria-label="SKY LAB Forms">
           <Image src="/skylab.svg" alt="" width={28} height={28} unoptimized />
           <span className="f-brand-a">SKY LAB</span>

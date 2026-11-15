@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useHome } from "./HomeContext";
 import { scrollToSection } from "./usePager";
+import { sceneName, useTourState, useTourStore } from "./tour/tourStore";
 
 function sectionsOf(box) {
   return [...box.querySelectorAll("[data-page]")].filter((el) => el.getClientRects().length > 0);
@@ -12,9 +13,13 @@ function labelOf(el) {
   return el.getAttribute("aria-label") || el.querySelector("h1, h2")?.textContent?.trim() || "";
 }
 
+const stateOf = (i, active) => (i < active ? "is-done" : i === active ? "is-on" : undefined);
+
 export default function PageRail({ containerRef }) {
   const { pager } = useHome();
-  const [rail, setRail] = useState({ labels: [], active: 0 });
+  const store = useTourStore();
+  const tour = useTourState();
+  const [rail, setRail] = useState({ labels: [], active: 0, tour: -1 });
 
   useEffect(() => {
     const box = containerRef.current;
@@ -38,7 +43,8 @@ export default function PageRail({ containerRef }) {
       });
       if (box.scrollTop >= box.scrollHeight - h - 2) active = list.length - 1;
       const labels = list.map(labelOf);
-      setRail((prev) => (prev.active === active && prev.labels.join("|") === labels.join("|") ? prev : { labels, active }));
+      const tourAt = list.findIndex((el) => el.hasAttribute("data-free"));
+      setRail((prev) => (prev.active === active && prev.tour === tourAt && prev.labels.join("|") === labels.join("|") ? prev : { labels, active, tour: tourAt }));
     };
 
     const schedule = () => {
@@ -48,9 +54,12 @@ export default function PageRail({ containerRef }) {
     schedule();
     box.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
+    const sizes = new ResizeObserver(schedule);
+    sizes.observe(box.querySelector(".hm-body") ?? box);
     return () => {
       box.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
+      sizes.disconnect();
       cancelAnimationFrame(raf);
     };
   }, [containerRef]);
@@ -62,20 +71,59 @@ export default function PageRail({ containerRef }) {
     if (el) scrollToSection(pager, el);
   };
 
+  const goScene = (j) => (e) => {
+    if (e.detail > 0) e.currentTarget.blur();
+    store.actions.go?.(j);
+  };
+
+  const scenes = tour.captions;
   return (
     <nav className="hm-rail" aria-label="Sayfadaki bölümler">
-      {rail.labels.map((label, i) => (
-        <button
-          key={label || i}
-          type="button"
-          className={i < rail.active ? "is-done" : i === rail.active ? "is-on" : undefined}
-          aria-label={label}
-          aria-current={i === rail.active ? "true" : undefined}
-          onClick={go(i)}
-        >
-          <i />
-        </button>
-      ))}
+      {rail.labels.map((label, i) => {
+        const tick = (
+          <button
+            key={label || i}
+            type="button"
+            className={stateOf(i, rail.active)}
+            aria-label={label}
+            aria-current={i === rail.active ? "true" : undefined}
+            onClick={go(i)}
+          >
+            <i />
+          </button>
+        );
+        if (i !== rail.tour || !scenes.length) return tick;
+        const open = i === rail.active && tour.state === "open";
+        return (
+          <div key="tour" className={open ? "tour-rail is-open" : "tour-rail"} style={{ "--n": scenes.length }}>
+            <button
+              type="button"
+              className={stateOf(i, rail.active)}
+              aria-label={label}
+              aria-hidden={open ? "true" : undefined}
+              tabIndex={open ? -1 : undefined}
+              onClick={go(i)}
+            >
+              <i />
+            </button>
+            <div className="tour-rail-scenes" role="group" aria-label="Turun bölümleri" aria-hidden={open ? undefined : "true"}>
+              {scenes.map((scene, j) => (
+                <button
+                  key={scene.at}
+                  type="button"
+                  className={stateOf(j, tour.active)}
+                  aria-label={sceneName(scenes, scene)}
+                  aria-current={open && j === tour.active ? "true" : undefined}
+                  tabIndex={open ? undefined : -1}
+                  onClick={goScene(j)}
+                >
+                  <i />
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </nav>
   );
 }
