@@ -26,7 +26,7 @@ const iconSize = (inHeader) => (inHeader ? "icon" : "icon-lg");
 function FilterMenu({ inHeader, count, label, className, children }) {
   return (
     <Popover>
-      <PopoverTrigger render={<FilterButton count={count} size={inHeader ? "md" : "lg"} />} />
+      <PopoverTrigger render={<FilterButton iconOnly count={count} size={iconSize(inHeader)} />} />
       <PopoverContent align={inHeader ? "end" : "center"} aria-label={label} className={className}>{children}</PopoverContent>
     </Popover>
   );

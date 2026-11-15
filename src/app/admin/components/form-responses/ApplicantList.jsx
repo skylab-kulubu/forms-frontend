@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Archive, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
-import { ActiveFilters, FilterPills, IconButton, SearchInput, SegmentedControl, Skeleton, StatusDot } from "@skylab-kulubu/skylcn-ui";
+import { Archive, ChevronLeft, ChevronRight } from "lucide-react";
+import { ActiveFilters, FilterButton, FilterPills, IconButton, SearchInput, SegmentedControl, Skeleton, StatusDot } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { STATUS_FILTERS } from "@/lib/attempt-status";
 import { currentTime, leftText, shortDuration } from "@/lib/form-timing";
@@ -54,13 +54,13 @@ function FilterPopover({ filters, setFilters, counts, timed, inline, onClose }) 
           <div className="grid grid-cols-2 gap-1.5">
             {statusOptions.map((item) => (
               <button key={item.value} type="button" onClick={() => setFilters({ ...filters, status: item.value })} aria-pressed={filters.status === item.value}
-                className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-2xs font-medium transition-colors ${
-                  filters.status === item.value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300"
+                className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-2xs transition-colors ${
+                  filters.status === item.value ? "border-border-strong bg-accent-strong text-foreground" : "border-border bg-muted text-secondary-foreground hover:text-foreground"
                 }`}
               >
                 {item.dot ? <span className={`size-1.5 shrink-0 rounded-full ${item.dot}`} /> : null}
                 <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
-                <span className="tabular-nums text-neutral-500">{item.count(counts) ?? ""}</span>
+                <span className="tabular-nums text-subtle-foreground">{item.count(counts) ?? ""}</span>
               </button>
             ))}
           </div>
@@ -134,14 +134,9 @@ export default function ApplicantList({
               { value: "pending", label: <><StatusDot tone="warning" glow={false} />Beklemede</>, count: counts?.pending },
             ]}
           />
-          <button type="button" data-filter-anchor onClick={() => setOpen((value) => !value)} title={active ? `Filtreler (${active})` : "Filtreler"} aria-label="Filtreler" aria-expanded={open}
-            className={`relative ml-auto grid shrink-0 place-items-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${touch ? "size-10" : "size-8"} ${
-              open || active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-border bg-input-background text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <SlidersHorizontal size={13} />
-            {active ? <span className="absolute -right-1 -top-1 grid size-3.5 place-items-center rounded-full bg-skylab-400 text-4xs font-semibold text-neutral-900">{active}</span> : null}
-          </button>
+          <FilterButton iconOnly count={active} size={touch ? "icon" : "icon-sm"} data-filter-anchor aria-expanded={open} onClick={() => setOpen((value) => !value)}
+            className="ml-auto"
+          />
         </div>
         <ActiveFilters filters={chips.map(([key, label, onRemove]) => ({ key, label, onRemove }))} />
         {open ? <FilterPopover filters={filters} setFilters={setFilters} counts={counts} timed={timed} inline={touch} onClose={() => setOpen(false)} /> : null}

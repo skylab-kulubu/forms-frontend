@@ -19,10 +19,10 @@ const flagOf = (value) => (value === "on" ? true : value === "off" ? false : nul
 function OwnerRow({ selected, onClick, icon, label, count }) {
   return (
     <button type="button" onClick={onClick} aria-pressed={selected}
-      className={`flex h-9 w-full items-center gap-2.5 rounded-md border px-2 text-left text-2xs outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring ${selected ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-transparent text-secondary-foreground hover:bg-accent hover:text-foreground"}`}
+      className={`flex h-9 w-full items-center gap-2.5 rounded-md border px-2 text-left text-2xs outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring ${selected ? "border-border bg-accent-strong text-foreground" : "border-transparent text-secondary-foreground hover:bg-accent hover:text-foreground"}`}
     >
       {icon}
-      <span className="min-w-0 flex-1 truncate font-medium">{label}</span>
+      <span className="min-w-0 flex-1 truncate">{label}</span>
       {count != null ? <span className="shrink-0 tabular-nums text-subtle-foreground">{count}</span> : null}
     </button>
   );
