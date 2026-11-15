@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Link2, ListChecks, Share2 } from "lucide-react";
-import { CopyButton, ProportionBar, SegmentedControl, Skeleton } from "@skylab-kulubu/skylcn-ui";
+import { Button, CopyButton, ProportionBar, SegmentedControl, Skeleton } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import { PANEL_SECTION, PANEL_STACK, PanelButton, SectionHeader } from "@/app/admin/components/utils/SidePanel";
 import { RoleBadge, formatUpdatedAt } from "@/app/admin/components/ListItem";
@@ -168,14 +168,17 @@ function ShareSection({ formId, metrics, stepForm, canShare, onShare, reviewed =
         description={stepForm ? "Bu form akışın bir adımı; başvuranlar önceki adımı geçince açılır." : "Kısa linki kopyala ya da Paylaş'tan kanal seç; kanaldan gelenler aşağıda ayrı sayılır."}
       />
       <div className="flex items-center gap-2">
-        <div className="flex h-11 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-input bg-background/60 pl-2.5 pr-1 sm:h-8">
+        <div className="flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-input bg-background/60 pl-2.5 pr-1 pointer-coarse:h-10">
           <Link2 size={13} className="shrink-0 text-subtle-foreground" />
           <span className={`min-w-0 flex-1 truncate font-mono text-2xs ${url ? "text-skylab-300" : "text-subtle-foreground"}`}>
             {url ? url.replace(/^https?:\/\//, "") : "Henüz kısa link yok"}
           </span>
           {url ? <CopyButton value={url} label="Kısa linki kopyala" /> : null}
         </div>
-        <PanelButton touch icon={Share2} onClick={onShare} disabled={!canShare}>Paylaş</PanelButton>
+        <Button variant="outline" size="md" onClick={onShare} disabled={!canShare}>
+          <Share2 aria-hidden="true" />
+          Paylaş
+        </Button>
       </div>
       {!stepForm && Array.isArray(metrics?.channels) ? (
         <div>
