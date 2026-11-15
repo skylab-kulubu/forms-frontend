@@ -51,7 +51,7 @@ function RowActions({ row, open, onToggle, onShare }) {
       {/* From @4xl sharing opens out while the row is hovered or focused; touch screens always show it */}
       <div className="hidden @4xl:block">
         <DataListActions>
-          <IconButton icon={Share2} label={`${row.title}: paylaş`} title="Paylaş" variant="ghost" size="icon-sm" onClick={onShare} />
+          <IconButton icon={Share2} label={`${row.title}: paylaş`} title="Paylaş" variant="outline" size="icon-xs" onClick={onShare} />
         </DataListActions>
       </div>
       <IconButton icon={ChevronDown} label={`${row.title}: ${toggleLabel}`} title={toggleLabel} variant="ghost" size="icon-sm" aria-expanded={open} onClick={onToggle}

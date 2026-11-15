@@ -70,7 +70,7 @@ function OrphanRow({ section, item }) {
 
         <div className="flex shrink-0 items-center gap-1.5">
           {section.kind === "workflow" && item.status !== 2 ? (
-            <Button size="sm" variant="destructive" onClick={() => setArchiveOpen(true)} disabled={archiveMutation.isPending}>
+            <Button size="sm" variant="outline" onClick={() => setArchiveOpen(true)} disabled={archiveMutation.isPending}>
               <Archive aria-hidden="true" />
               Arşivle
             </Button>

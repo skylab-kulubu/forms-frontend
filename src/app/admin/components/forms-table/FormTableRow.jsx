@@ -89,9 +89,9 @@ function RowActions({ row, open, onToggle }) {
       {/* From @4xl the quick actions open out while the row is hovered or focused; touch screens always show them */}
       <div className="hidden @4xl:block">
         <DataListActions>
-          {sharable ? <CopyButton value={publicFormUrl(row.form.id)} label="Linki kopyala" variant="ghost" size="icon-sm" /> : null}
-          {row.responsesHref ? <IconButton icon={ChartColumn} label="Cevaplar" variant="ghost" size="icon-sm" render={<Link href={row.responsesHref} />} /> : null}
-          {canEdit ? <IconButton icon={PencilLine} label="Düzenle" variant="primary" size="icon-sm" render={<Link href={row.editHref} />} /> : null}
+          {sharable ? <CopyButton value={publicFormUrl(row.form.id)} label="Linki kopyala" variant="outline" size="icon-xs" /> : null}
+          {row.responsesHref ? <IconButton icon={ChartColumn} label="Cevaplar" variant="outline" size="icon-xs" render={<Link href={row.responsesHref} />} /> : null}
+          {canEdit ? <IconButton icon={PencilLine} label="Düzenle" variant="primary" size="icon-xs" render={<Link href={row.editHref} />} /> : null}
         </DataListActions>
       </div>
       {row.draft ? <span className="hidden size-7 shrink-0 @2xl:block" /> : (
