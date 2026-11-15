@@ -1,10 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
-import { Button, IconButton } from "@skylab-kulubu/skylcn-ui";
-
-const emptySubscribe = () => () => {};
+import { AppShellActions, Button, IconButton } from "@skylab-kulubu/skylcn-ui";
 
 export function HeaderIcon({ icon, label, onClick, disabled = false, pending = false }) {
   return <IconButton icon={icon} label={label} onClick={onClick} disabled={disabled} pending={pending} variant="ghost" size="icon-sm" />;
@@ -24,14 +20,9 @@ export function HeaderTouch({ icon, label, onClick, disabled = false, pending = 
 }
 
 export default function RoomHeader({ desktop = null, mobile = null }) {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const desktopTarget = mounted ? document.getElementById("admin-header-slot") : null;
-  const mobileTarget = mounted ? document.getElementById("admin-header-slot-mobile") : null;
-
   return (
-    <>
-      {desktopTarget && desktop ? createPortal(<div className="flex items-center gap-1 text-neutral-500">{desktop}</div>, desktopTarget, desktopTarget.id) : null}
-      {mobileTarget && mobile ? createPortal(<div className="flex items-center">{mobile}</div>, mobileTarget, mobileTarget.id) : null}
-    </>
+    <AppShellActions phone={mobile ? <div className="flex items-center">{mobile}</div> : null}>
+      {desktop ? <div className="flex items-center gap-1 text-neutral-500">{desktop}</div> : null}
+    </AppShellActions>
   );
 }

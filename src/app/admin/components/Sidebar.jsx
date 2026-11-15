@@ -25,8 +25,6 @@ const breadcrumbLabels = {
   "/admin/ownership": "Sahipsiz içerikler",
 };
 
-const DESKTOP = "(min-width: 48rem)";
-
 function getRoleLabel(roles = []) {
   if (roles.some((r) => (r ?? "").toLowerCase().includes("admin"))) return "AÇMACILAB";
   for (const role of roles) {
@@ -156,24 +154,6 @@ export function AdminSidebar({ pathname, user, status, realmRoles = [], skyforms
   );
 }
 
-// AppShell draws the header twice, in the phone bar and in the desktop row, and hides one with CSS. The Studio
-// and the room portal their actions into these ids by name, so each copy names its slot after the row it is in.
-// Once both use AppShellActions, the slot and this function can go.
-function nameSlot(node) {
-  if (!node) return;
-  const shown = node.offsetParent !== null;
-  node.id = shown === window.matchMedia(DESKTOP).matches ? "admin-header-slot" : "admin-header-slot-mobile";
-}
-
-function ShellHeader({ labels }) {
-  return (
-    <div className="flex min-w-0 items-center gap-2">
-      <Breadcrumbs labels={labels} />
-      <div ref={nameSlot} className="ml-auto flex shrink-0 items-center" />
-    </div>
-  );
-}
-
 export default function Sidebar({ user, children }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
@@ -216,7 +196,7 @@ export default function Sidebar({ user, children }) {
   return (
     <TooltipProvider>
       <AppShell
-        header={<ShellHeader labels={dynamicBreadcrumbLabels} />}
+        header={<Breadcrumbs labels={dynamicBreadcrumbLabels} />}
         sidebar={
           <AdminSidebar pathname={pathname} user={resolvedUser} status={status} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []}
             formId={formId} form={form} formLoading={formLoading} workflowId={workflowId} workflow={workflow} workflowLoading={workflowLoading}

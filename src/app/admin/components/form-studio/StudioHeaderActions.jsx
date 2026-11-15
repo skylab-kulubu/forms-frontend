@@ -1,18 +1,14 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
 import {
   ArrowLeft, CheckCircle2, CircleAlert, ClipboardX, Eye, MoreHorizontal, PencilLine, Redo2, Share2, TriangleAlert, Undo2,
 } from "lucide-react";
 import {
-  Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, IconButton, MenuItem, StatusDot, buttonVariants,
+  AppShellActions, Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, IconButton, MenuItem, StatusDot, buttonVariants,
 } from "@skylab-kulubu/skylcn-ui";
 import Popover from "@/app/components/utils/Popover";
 import Tip from "@/app/admin/components/utils/Tip";
 import { PeopleCount, PeopleStack } from "./StudioPresence";
-
-const emptySubscribe = () => () => {};
 
 // Off tools stay focusable: a tooltip never opens on a disabled button, and the delete's tooltip says why it is
 // off. skylcn dims only :disabled, so this gives them the disabled look.
@@ -116,14 +112,9 @@ function CompactActions({ returnHref, people = [], onShare, draft, onUndo, canUn
 }
 
 export default function StudioHeaderActions({ saveLabel = "Kaydet", noun = "Form", ...props }) {
-  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const desktop = isMounted ? document.getElementById("admin-header-slot") : null;
-  const mobile = isMounted ? document.getElementById("admin-header-slot-mobile") : null;
-
   return (
-    <>
-      {desktop ? createPortal(<FullActions saveLabel={saveLabel} noun={noun} {...props} />, desktop, desktop.id) : null}
-      {mobile ? createPortal(<CompactActions saveLabel={saveLabel} noun={noun} {...props} />, mobile, mobile.id) : null}
-    </>
+    <AppShellActions phone={<CompactActions saveLabel={saveLabel} noun={noun} {...props} />}>
+      <FullActions saveLabel={saveLabel} noun={noun} {...props} />
+    </AppShellActions>
   );
 }
