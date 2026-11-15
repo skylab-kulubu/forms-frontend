@@ -19,13 +19,13 @@ const EASE = [0.22, 1, 0.36, 1];
 const CHIP = "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
 const CHIP_ICON = "inline-grid h-7 w-8.5 shrink-0 place-items-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
 const CHIP_ON = "border-skylab-400/30 bg-skylab-500/10 text-skylab-300";
-const CHIP_OFF = "border-white/10 bg-white/5 text-neutral-300 hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300";
-const ICON_BUTTON = "grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
-const INPUT = "h-8 w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20";
+const CHIP_OFF = "border-ink/10 bg-ink/5 text-neutral-300 hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300";
+const ICON_BUTTON = "grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
+const INPUT = "h-8 w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20";
 const COPY_TONE = {
   ok: "border-skylab-400/30 bg-skylab-400/10 text-skylab-300",
   err: "border-red-500/30 bg-red-500/10 text-red-300",
-  idle: "border-white/10 bg-white/5 text-neutral-200 hover:bg-white/10",
+  idle: "border-ink/10 bg-ink/5 text-neutral-200 hover:bg-ink/10",
 };
 
 async function copyText(value) {
@@ -84,7 +84,7 @@ function SectionLabel({ children, aside }) {
   return (
     <div className="mb-2 flex h-5 items-center gap-2">
       <span className="text-2xs font-medium text-neutral-500">{children}</span>
-      <span className="h-px flex-1 bg-white/5" />
+      <span className="h-px flex-1 bg-ink/5" />
       {aside}
     </div>
   );
@@ -193,7 +193,7 @@ function AliasEditor({ formId, formTitle, link, onDone }) {
         <div className="flex flex-wrap gap-1.5">
           {suggestions.map((item) => (
             <button key={item} type="button" onClick={() => handleDraft(item)}
-              className="inline-flex h-6 items-center rounded-md border border-white/10 bg-white/5 px-2 font-mono text-2xs text-neutral-300 transition-colors hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300"
+              className="inline-flex h-6 items-center rounded-md border border-ink/10 bg-ink/5 px-2 font-mono text-2xs text-neutral-300 transition-colors hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300"
             >
               {item}
             </button>
@@ -211,7 +211,7 @@ function AliasEditor({ formId, formTitle, link, onDone }) {
       )}
       <div className="flex items-center justify-end gap-1.5">
         <button type="button" onClick={() => onDone(false)}
-          className="h-7 rounded-lg px-2.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100"
+          className="h-7 rounded-lg px-2.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100"
         >
           Vazgeç
         </button>
@@ -371,7 +371,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
   }
 
   const linkField = isLoading ? (
-    <div className="flex h-10 items-center gap-2 rounded-lg border border-white/5 bg-black/20 px-3 text-sm text-neutral-500">
+    <div className="flex h-10 items-center gap-2 rounded-lg border border-ink/5 bg-black/20 px-3 text-sm text-neutral-500">
       <Loader2 size={14} className="animate-spin" />
       <span>Kısa link hazırlanıyor…</span>
     </div>
@@ -382,7 +382,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
         <span className="truncate">{error?.message || "Kısa link alınamadı."}</span>
       </div>
       <button type="button" onClick={() => refetch()} disabled={isFetching}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:bg-white/10 disabled:opacity-50"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-ink/10 bg-ink/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:bg-ink/10 disabled:opacity-50"
       >
         {isFetching ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />} Tekrar dene
       </button>
@@ -391,7 +391,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
     <AliasEditor formId={formId} formTitle={formTitle} link={link} onDone={finishEdit} />
   ) : (
     <>
-      <div title={fullUrl} className={`flex h-10 min-w-0 items-center gap-1 rounded-lg border border-white/10 bg-black/20 pl-3 pr-1.5 transition-shadow ${flash ? "ring-2 ring-skylab-400/40" : ""}`}>
+      <div title={fullUrl} className={`flex h-10 min-w-0 items-center gap-1 rounded-lg border border-ink/10 bg-black/20 pl-3 pr-1.5 transition-shadow ${flash ? "ring-2 ring-skylab-400/40" : ""}`}>
         <span className="min-w-0 flex-1 truncate text-sm text-neutral-500">
           skyl.app/<span className="font-medium text-neutral-100">{alias}</span>
           {tag && <span className="text-skylab-300/70">{tag}</span>}
@@ -413,7 +413,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
         <CopyButton state={copied.link} onClick={() => copy("link", fullUrl)} className="h-8 flex-1" />
         {canNativeShare && (
           <button type="button" onClick={shareNative}
-            className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-white/5 text-xs font-medium text-neutral-200 hover:bg-white/10"
+            className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border border-ink/10 bg-ink/5 text-xs font-medium text-neutral-200 hover:bg-ink/10"
           >
             <Share size={13} /> Paylaş…
           </button>
@@ -428,10 +428,10 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
   );
 
   const formatToggle = selected.code && link ? (
-    <div role="group" aria-label="Link biçimi" className="flex items-center gap-0.5 rounded-md border border-white/10 bg-white/5 p-0.5">
+    <div role="group" aria-label="Link biçimi" className="flex items-center gap-0.5 rounded-md border border-ink/10 bg-ink/5 p-0.5">
       {[["suffix", "Kısa", `skyl.app/${alias}/${selected.code}`], ["utm", "UTM", `skyl.app/${alias}?utm_source=${selected.source}`]].map(([value, label, example]) => (
         <button key={value} type="button" title={example} onClick={() => chooseFormat(value)}
-          className={`rounded px-2 py-0.5 text-3xs transition-colors ${format === value ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+          className={`rounded px-2 py-0.5 text-3xs transition-colors ${format === value ? "bg-ink/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
         >
           {label}
         </button>
@@ -441,7 +441,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
 
   return (
     <>
-      <div className="flex items-center gap-3 border-b border-white/5 px-4 py-2 sm:px-5">
+      <div className="flex items-center gap-3 border-b border-ink/5 px-4 py-2 sm:px-5">
         <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-skylab-400/20 bg-skylab-400/10 text-skylab-400">
           <Share2 size={16} />
         </div>
@@ -450,7 +450,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
           {formTitle && <p className="truncate text-2xs text-neutral-500">{formTitle}</p>}
         </div>
         <button type="button" onClick={onClose} aria-label="Kapat"
-          className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+          className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
         >
           <X size={16} />
         </button>
@@ -519,14 +519,14 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
         </div>
 
         <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-3 sm:flex sm:flex-col sm:items-stretch sm:gap-2.5">
-          <div className={`grid aspect-square w-full place-items-center overflow-hidden rounded-lg ${qrSrc ? "bg-white" : qrPreview.isError ? "bg-white/5 text-neutral-500" : "animate-pulse bg-white/5"}`}>
+          <div className={`grid aspect-square w-full place-items-center overflow-hidden rounded-lg ${qrSrc ? "bg-white" : qrPreview.isError ? "bg-ink/5 text-neutral-500" : "animate-pulse bg-ink/5"}`}>
             {qrSrc ? (
               <div role="img" aria-label={`skyl.app/${alias} QR kodu`}
                 className="size-full bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url("${qrSrc}")` }}
               />
             ) : qrPreview.isError ? (
               <button type="button" onClick={() => qrPreview.refetch()} aria-label="QR önizlemesini yeniden dene" title="QR önizlemesi alınamadı, yeniden dene"
-                className="grid size-8 place-items-center rounded-md transition-colors hover:bg-white/10 hover:text-neutral-200"
+                className="grid size-8 place-items-center rounded-md transition-colors hover:bg-ink/10 hover:text-neutral-200"
               >
                 <RotateCcw size={14} />
               </button>
@@ -563,7 +563,7 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
         </div>
       </div>
 
-      <div className="flex min-w-0 items-center gap-2 border-t border-white/5 py-2 pl-4 pr-2.5 sm:pl-5">
+      <div className="flex min-w-0 items-center gap-2 border-t border-ink/5 py-2 pl-4 pr-2.5 sm:pl-5">
         <span className="shrink-0 text-2xs font-medium text-neutral-500">Form adresi</span>
         <span title={longUrl} className="min-w-0 flex-1 truncate font-mono text-2xs text-neutral-400">{longUrl.replace(/^https?:\/\//, "")}</span>
         <button type="button" onClick={() => copy("long", longUrl)} aria-label="Form adresini kopyala" title="Form adresini kopyala"
@@ -590,7 +590,7 @@ export default function FormShareDialog({ open, onClose, formId, formTitle, form
           <motion.div role="dialog" aria-label="Formu paylaş"
             initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.2, ease: EASE }}
-            className="relative flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-white/10 bg-[#121212] shadow-2xl"
+            className="relative flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-ink/10 bg-sheet shadow-2xl"
           >
             <ShareDialogBody formId={formId} formTitle={formTitle} formStatus={formStatus} allowAnonymous={allowAnonymous} canEdit={canEdit} onClose={onClose} />
           </motion.div>

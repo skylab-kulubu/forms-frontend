@@ -21,7 +21,7 @@ function currentState() {
 
 function FooterLink({ onClick, children }) {
   return (
-    <button type="button" onClick={onClick} className="rounded tabular-nums underline decoration-white/15 underline-offset-2 transition-colors hover:text-neutral-200 hover:decoration-white/40">
+    <button type="button" onClick={onClick} className="rounded tabular-nums underline decoration-ink/15 underline-offset-2 transition-colors hover:text-neutral-200 hover:decoration-ink/40">
       {children}
     </button>
   );
@@ -87,9 +87,9 @@ function DatabasePage() {
       {chips.length || state.status === "deleted" ? (
         <div className="flex flex-wrap items-center gap-1.5">
           {chips.map(([key, label, clear]) => (
-            <span key={key} className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 py-0.5 pl-2 pr-1 text-2xs text-neutral-300">
+            <span key={key} className="inline-flex items-center gap-1 rounded-md border border-ink/10 bg-ink/5 py-0.5 pl-2 pr-1 text-2xs text-neutral-300">
               {label}
-              <button type="button" onClick={clear} aria-label={`${label} filtresini kaldır`} className="grid size-5 place-items-center rounded text-neutral-500 hover:bg-white/10 hover:text-neutral-200">
+              <button type="button" onClick={clear} aria-label={`${label} filtresini kaldır`} className="grid size-5 place-items-center rounded text-neutral-500 hover:bg-ink/10 hover:text-neutral-200">
                 <X size={11} />
               </button>
             </span>
@@ -117,7 +117,7 @@ function DatabasePage() {
             >
               {narrowed ? (
                 <button type="button" onClick={clearAll}
-                  className="mx-auto flex h-8 items-center gap-1.5 rounded-md border border-white/10 px-3 text-2xs font-medium text-neutral-200 transition-colors hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300"
+                  className="mx-auto flex h-8 items-center gap-1.5 rounded-md border border-ink/10 px-3 text-2xs font-medium text-neutral-200 transition-colors hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300"
                 >
                   <X size={12} />
                   {filters ? "Filtreleri temizle" : "Aramayı temizle"}
@@ -125,7 +125,7 @@ function DatabasePage() {
               ) : null}
             </StateCard>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-ink/5">
               {forms.map((form) => (
                 <DatabaseRow key={form.id} form={form} open={state.open === form.id}
                   onToggle={() => update({ open: state.open === form.id ? null : form.id }, { resetPage: false })}
@@ -137,7 +137,7 @@ function DatabasePage() {
         </div>
 
         {!isLoading && !error && forms.length > 0 ? (
-          <div className="flex items-center justify-between gap-3 border-t border-white/10">
+          <div className="flex items-center justify-between gap-3 border-t border-ink/10">
             <p className="pt-3 text-2xs text-neutral-500">
               <span className="font-semibold tabular-nums text-neutral-200">{totalCount}</span> {state.status === "deleted" ? "silinmiş form" : "form"}
               {summary?.orphaned > 0 && state.owner !== "orphaned" && state.status !== "deleted" ? <> · <FooterLink onClick={() => update({ owner: "orphaned" })}>{summary.orphaned} sahipsiz</FooterLink></> : null}

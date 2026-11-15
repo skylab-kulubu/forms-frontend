@@ -4,7 +4,7 @@ const MARK_TONE = {
   done: "border-emerald-400/30 bg-emerald-400/10 text-emerald-400",
   review: "border-amber-400/30 bg-amber-400/10 text-amber-400",
   declined: "border-red-400/30 bg-red-400/10 text-red-300",
-  paused: "border-white/15 bg-white/5 text-neutral-400",
+  paused: "border-ink/15 bg-ink/5 text-neutral-400",
   current: "border-skylab-400/40 bg-skylab-500/10 text-skylab-300",
   returned: "border-sky-400/30 bg-sky-400/10 text-sky-300",
   future: "border-dashed border-neutral-700 bg-transparent",
@@ -46,7 +46,7 @@ export default function JourneyTimeline({ items, className = "" }) {
         return (
           <li key={item.key ?? index} className={`relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 ${isLast ? "" : "pb-4.5"}`}>
             {(!isLast || item.note) && (
-              <span aria-hidden className={`absolute left-3 top-7.5 w-px -translate-x-1/2 bg-white/10 ${isLast ? "bottom-0" : "bottom-1.5"}`} />
+              <span aria-hidden className={`absolute left-3 top-7.5 w-px -translate-x-1/2 bg-ink/10 ${isLast ? "bottom-0" : "bottom-1.5"}`} />
             )}
             <Mark tone={item.tone} number={item.number} />
             <div className="min-w-0">

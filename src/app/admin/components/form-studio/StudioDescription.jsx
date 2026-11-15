@@ -9,7 +9,7 @@ import { sanitizeFormHtml } from "@/app/components/rich-text/sanitizeHtml";
 export const DESCRIPTION_CLASS = `text-sm leading-relaxed text-neutral-300
   [&_p]:m-0 [&_p+p]:mt-2 [&_strong]:text-neutral-100 [&_em]:text-neutral-300
   [&_a]:text-skylab-300 [&_a]:underline [&_a]:decoration-skylab-300/30 [&_a]:underline-offset-2 [&_a]:wrap-break-word
-  [&_blockquote]:border-l-2 [&_blockquote]:border-white/10 [&_blockquote]:pl-3 [&_blockquote]:text-neutral-100 [&_blockquote]:italic
+  [&_blockquote]:border-l-2 [&_blockquote]:border-ink/10 [&_blockquote]:pl-3 [&_blockquote]:text-neutral-100 [&_blockquote]:italic
   [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
   [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:text-neutral-100
   [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-neutral-100
@@ -83,13 +83,13 @@ export default function StudioDescription({ value, onChange, placeholder = "AÃ§Ä
   return (
     <div className={`relative -mx-1 rounded-md px-1 transition-colors ${focused ? "bg-skylab-400/6 ring-3 ring-skylab-400/6" : ""}`}>
       {focused && (
-        <div className="absolute right-0 top-full z-20 mt-1.5 flex items-center gap-0.5 rounded-lg border border-white/15 bg-neutral-900 px-1 py-0.5 shadow-lg">
+        <div className="absolute right-0 top-full z-20 mt-1.5 flex items-center gap-0.5 rounded-lg border border-ink/15 bg-neutral-900 px-1 py-0.5 shadow-lg">
           {tools.map((tool, index) => (
             <Fragment key={tool.label}>
-              {index === 3 ? <span className="mx-0.5 h-4 w-px bg-white/10" /> : null}
+              {index === 3 ? <span className="mx-0.5 h-4 w-px bg-ink/10" /> : null}
               <button type="button" title={tool.label} aria-label={tool.label}
                 onMouseDown={(event) => event.preventDefault()} onClick={tool.run}
-                className={`grid size-6 place-items-center rounded-md transition-colors ${tool.active ? "bg-white/15 text-neutral-100" : "text-neutral-400 hover:bg-white/10 hover:text-neutral-200"}`}
+                className={`grid size-6 place-items-center rounded-md transition-colors ${tool.active ? "bg-ink/15 text-neutral-100" : "text-neutral-400 hover:bg-ink/10 hover:text-neutral-200"}`}
               >
                 <tool.icon size={13} />
               </button>

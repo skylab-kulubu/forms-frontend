@@ -76,7 +76,7 @@ export default function WorkflowsPage() {
                 </StateCard>
               )
             ) : (
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-ink/5">
                 {workflows.map((workflow) => (
                   <WorkflowListItem key={workflow.id} workflow={workflow} />
                 ))}
@@ -85,7 +85,7 @@ export default function WorkflowsPage() {
           </div>
 
           {!isLoading && !hasError && workflows.length > 0 && (
-            <div className="flex items-center justify-between gap-3 border-t border-white/10">
+            <div className="flex items-center justify-between gap-3 border-t border-ink/10">
               <p className="pt-3 text-2xs text-neutral-500">
                 <span className="font-semibold tabular-nums text-neutral-200">{totalCount}</span> akış gösteriliyor
               </p>

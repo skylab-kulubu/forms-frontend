@@ -42,7 +42,7 @@ export default function Footer() {
                   className="h-10 w-10 object-contain opacity-90"
                 />
                 <div className="-mt-1 text-left">
-                  <h3 className="text-white font-bold text-lg tracking-wide">SKY LAB</h3>
+                  <h3 className="text-ink font-bold text-lg tracking-wide">SKY LAB</h3>
                   <p className="text-skylab-500 font-mono text-[10px] tracking-wider uppercase mt-0.5">
                     Bilgisayar Bilimleri Kulübü
                   </p>
@@ -70,7 +70,7 @@ export default function Footer() {
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-neutral-400 text-sm hover:text-white transition-colors inline-flex items-center gap-2 group"
+                      className="text-neutral-400 text-sm hover:text-ink transition-colors inline-flex items-center gap-2 group"
                     >
                       <span>{link.name}</span>
                       <ArrowUpRight
@@ -103,7 +103,7 @@ export default function Footer() {
                   <Mail size={16} className="text-neutral-600 shrink-0" />
                   <a
                     href="mailto:info@yildizskylab.com"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-ink transition-colors"
                   >
                     info@yildizskylab.com
                   </a>

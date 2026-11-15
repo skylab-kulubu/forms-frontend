@@ -9,14 +9,14 @@ import { defaultClosesAt, untilText } from "@/lib/form-timing";
 const DEFAULT_MINUTES = 48 * 60;
 const MAX_MINUTES = 720 * 60;
 
-const GHOST = "rounded-md bg-white/5 px-1.5 py-0.5 tabular-nums text-neutral-100 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-skylab-400/50";
-const GHOST_INPUT = `${GHOST} w-9 text-center outline-none focus:bg-white/10 focus:ring-1 focus:ring-skylab-400/50`;
+const GHOST = "rounded-md bg-ink/5 px-1.5 py-0.5 tabular-nums text-neutral-100 transition-colors hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-skylab-400/50";
+const GHOST_INPUT = `${GHOST} w-9 text-center outline-none focus:bg-ink/10 focus:ring-1 focus:ring-skylab-400/50`;
 
 const pad = (value) => String(value).padStart(2, "0");
 
 export function TimingRow({ title, description, checked, onChange, disabled = false, dimmed = false, children }) {
     return (
-        <div className={`rounded-lg border border-white/10 px-3 py-2.5 transition-opacity duration-300 ${dimmed ? "opacity-40" : ""}`}>
+        <div className={`rounded-lg border border-ink/10 px-3 py-2.5 transition-opacity duration-300 ${dimmed ? "opacity-40" : ""}`}>
             <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                     <p className="text-sm font-semibold text-neutral-100">{title}</p>
@@ -25,7 +25,7 @@ export function TimingRow({ title, description, checked, onChange, disabled = fa
                 <Switch checked={checked} onChange={onChange} disabled={disabled} label={title} className={dimmed ? "" : "disabled:opacity-50"} />
             </div>
             {checked && children ? (
-                <div className="mt-2.5 divide-y divide-white/5 border-t border-white/5 text-2xs">{children}</div>
+                <div className="mt-2.5 divide-y divide-ink/5 border-t border-ink/5 text-2xs">{children}</div>
             ) : null}
         </div>
     );
@@ -133,7 +133,7 @@ function TimeField({ value, onChange, label }) {
 
     return (
         <span onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) commit(); }}
-            className="inline-flex items-center rounded-md bg-white/5 px-1 py-0.5 text-neutral-100 transition-colors hover:bg-white/10 focus-within:bg-white/10 focus-within:ring-1 focus-within:ring-skylab-400/50"
+            className="inline-flex items-center rounded-md bg-ink/5 px-1 py-0.5 text-neutral-100 transition-colors hover:bg-ink/10 focus-within:bg-ink/10 focus-within:ring-1 focus-within:ring-skylab-400/50"
         >
             {segment("hour", 23)}
             <span className="text-neutral-500">:</span>
@@ -164,7 +164,7 @@ export function InlineDateTime({ value, onChange, label }) {
             <KeyRow label="Tarih">
                 <span ref={dateRef} className="relative inline-flex">
                     <button type="button" onClick={() => setDateOpen((open) => !open)} aria-label={`${label}, tarih`} aria-expanded={dateOpen}
-                        className={`${GHOST} ${dateOpen ? "bg-white/10" : ""}`}
+                        className={`${GHOST} ${dateOpen ? "bg-ink/10" : ""}`}
                     >
                         {date.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" })}
                     </button>

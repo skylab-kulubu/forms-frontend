@@ -164,7 +164,7 @@ export function LibrarySettingsEditors() {
                 {sortedEditors.map((editor, index) => {
                     const roleValue = Number(editor.role);
                     return (
-                        <div key={editor.user.id || index} className={`${ROW} flex items-center justify-between gap-3 border-white/10 px-3 py-2.5`}>
+                        <div key={editor.user.id || index} className={`${ROW} flex items-center justify-between gap-3 border-ink/10 px-3 py-2.5`}>
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <Avatar name={editor.user?.fullName} email={editor.user?.email} photoUrl={editor.user?.profilePictureUrl} size="md" />
                                 <div className="min-w-0">
@@ -197,7 +197,7 @@ export function LibrarySettingsEditors() {
                             renderItem={(user, { active, onSelect }) => {
                                 const isAdded = editorsList.some(e => e.user.id === user.id);
                                 return (
-                                    <button type="button" onClick={isAdded ? undefined : onSelect} disabled={isAdded} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition ${active ? "bg-white/10 text-neutral-100" : "text-neutral-200"} ${isAdded ? "opacity-50 cursor-default" : "hover:bg-white/5"}`}>
+                                    <button type="button" onClick={isAdded ? undefined : onSelect} disabled={isAdded} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition ${active ? "bg-ink/10 text-neutral-100" : "text-neutral-200"} ${isAdded ? "opacity-50 cursor-default" : "hover:bg-ink/5"}`}>
                                         <Avatar name={user.fullName} email={user.email} photoUrl={user.profilePictureUrl} size="md" />
                                         <div className="flex-1 min-w-0"><p className="font-medium leading-tight truncate">{formatFullName(user.firstName, user.lastName)}</p><p className="text-2xs text-neutral-500 truncate">{user.email}</p></div>
                                         {isAdded && <span className="text-3xs text-skylab-300">Ekli</span>}

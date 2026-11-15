@@ -22,5 +22,6 @@ export const metadata = {
 };
 
 export default function HomeLayout({ children }) {
-  return <div className={`hm ${anton.variable} ${instrumentSerif.variable}`}>{children}</div>;
+  // The landing is drawn for a dark page, so it stays dark whatever the visitor chose elsewhere
+  return <div data-theme="dark" className={`hm ${anton.variable} ${instrumentSerif.variable}`}>{children}</div>;
 }

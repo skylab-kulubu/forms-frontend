@@ -22,7 +22,7 @@ function displayName(user) {
 }
 
 function Account({ status, user, isAdmin }) {
-  if (status === "loading") return <div className="h-8 w-24 animate-pulse rounded-xl bg-white/5" />;
+  if (status === "loading") return <div className="h-8 w-24 animate-pulse rounded-xl bg-ink/5" />;
 
   if (status !== "authenticated") {
     return (

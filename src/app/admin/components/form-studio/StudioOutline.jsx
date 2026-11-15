@@ -20,7 +20,7 @@ import { useComments, useStudioSession } from "./StudioSession";
 export function CommentMark({ count, unread = false }) {
   return (
     <span title={unread ? `${count} açık yorum, yeni mesaj var` : `${count} açık yorum`}
-      className={`inline-flex shrink-0 items-center gap-1 text-3xs tabular-nums ${unread ? "font-semibold text-white" : "text-skylab-300"}`}
+      className={`inline-flex shrink-0 items-center gap-1 text-3xs tabular-nums ${unread ? "font-semibold text-ink" : "text-skylab-300"}`}
     >
       <span className={`h-3 w-0.5 rounded-full ${unread ? "bg-skylab-400" : "bg-skylab-400/60"}`} />
       {count}
@@ -37,23 +37,23 @@ export function OutlineHeader({ title, untitled = false, inFlow, icon = null, sw
   return (
     <div className="relative flex h-10 shrink-0 items-center border-b border-neutral-800 px-1.5">
       <button type="button" data-palette-anchor onClick={onOpenPalette} title={switchTitle}
-        className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/5"
+        className="group flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-ink/5"
       >
         <SwitchIcon size={14} className="shrink-0 text-neutral-500" />
         <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${untitled ? "text-neutral-500" : "text-neutral-200"}`}>{title}</span>
-        <span className="hidden shrink-0 rounded border border-white/10 px-1 font-mono text-4xs text-neutral-500 2xl:inline">Ctrl K</span>
+        <span className="hidden shrink-0 rounded border border-ink/10 px-1 font-mono text-4xs text-neutral-500 2xl:inline">Ctrl K</span>
         <ChevronsUpDown size={13} className="shrink-0 text-neutral-500 transition-colors group-hover:text-neutral-300" />
       </button>
       {inFlow && onOpenFlowPage ? (
         <button type="button" title="Akış sayfası: başvuranlar ve başvuru kabulü" aria-label="Akış sayfası" onClick={onOpenFlowPage}
-          className="ml-0.5 grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200"
+          className="ml-0.5 grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
         >
           <Activity size={14} />
         </button>
       ) : null}
       {onCollapse ? (
         <button type="button" title="Paneli kapat" aria-label="Paneli kapat" onClick={onCollapse}
-          className="ml-0.5 grid size-8 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200"
+          className="ml-0.5 grid size-8 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
         >
           <PanelLeftClose size={15} />
         </button>
@@ -67,10 +67,10 @@ export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCo
     <div className="shrink-0 border-b border-neutral-800/60 px-1.5 pb-2 pt-2.5">
       <div className="mb-1 flex items-center gap-2 px-1.5">
         <span className="text-2xs font-medium text-neutral-500">Adımlar</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         <span title="Önceki ve sonraki adım" className="font-mono text-3xs text-neutral-600">← →</span>
         <button type="button" title="Akış haritası (M)" aria-label="Akış haritası" onClick={onToggleMap}
-          className={`grid size-5 place-items-center rounded transition-colors ${mapActive ? "bg-skylab-500/15 text-skylab-300" : "text-neutral-500 hover:bg-white/5 hover:text-neutral-200"}`}
+          className={`grid size-5 place-items-center rounded transition-colors ${mapActive ? "bg-skylab-500/15 text-skylab-300" : "text-neutral-500 hover:bg-ink/5 hover:text-neutral-200"}`}
         >
           <MapIcon size={12} />
         </button>
@@ -80,9 +80,9 @@ export function OutlineSteps({ nodes, stages, activeFormId, dirtyIds, questionCo
         const active = node.formId === activeFormId;
         return (
           <button key={node.nodeKey} type="button" onClick={() => onActivate(node.formId)}
-            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-white/6" : "hover:bg-white/3"}`}
+            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-ink/6" : "hover:bg-ink/3"}`}
           >
-            <span className={`grid size-5 shrink-0 place-items-center rounded-md border text-3xs font-semibold ${node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"}`}>
+            <span className={`grid size-5 shrink-0 place-items-center rounded-md border text-3xs font-semibold ${node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-400"}`}>
               {stages.depths.get(node.nodeKey) ?? "?"}
             </span>
             <span className={`min-w-0 flex-1 truncate text-xs transition-colors ${active ? "text-neutral-100" : "text-neutral-400 group-hover:text-neutral-200"}`}>{node.formTitle || "Adsız form"}</span>
@@ -102,7 +102,7 @@ function RowBody({ field, fields, numbers, selected }) {
       <>
         <span className="w-4 shrink-0" />
         <span className={`min-w-0 truncate text-2xs font-medium ${selected ? "text-skylab-300" : "text-neutral-500"}`}>{field.props?.title || "Ayıraç"}</span>
-        <span className="mt-2 h-px flex-1 bg-white/5" />
+        <span className="mt-2 h-px flex-1 bg-ink/5" />
       </>
     );
   }
@@ -141,7 +141,7 @@ function OutlineRow({ field, fields, numbers, selected, hidden, disabled, others
       style={{ transform: DndCSS.Translate.toString(transform), transition }}
       className={`group relative select-none rounded-md text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-skylab-400/40 ${
         disabled ? "cursor-default" : "cursor-grab"
-      } ${isDragging ? "" : selected ? "bg-skylab-500/10" : "hover:bg-white/4"}`}
+      } ${isDragging ? "" : selected ? "bg-skylab-500/10" : "hover:bg-ink/4"}`}
     >
       <div className={`flex items-start gap-2 px-2 ${isSeparator ? "pb-1 pt-3" : "py-1.5"} ${isDragging ? "invisible" : hidden ? "opacity-35" : ""}`}>
         <RowBody field={field} fields={fields} numbers={numbers} selected={selected} />
@@ -232,11 +232,11 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
 
       <div ref={headingRef} className="flex shrink-0 items-center gap-2 px-3 pb-1 pt-3">
         <span className="text-2xs font-medium text-neutral-500">Sorular</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         <button type="button" title="Sona soru ekle" aria-label="Sona soru ekle" disabled={ui.fill}
           onClick={() => toggleMenu(headingRef.current, fields.length, { source: "outline-add" })}
-          className={`grid size-5 shrink-0 place-items-center rounded transition-colors hover:bg-white/5 hover:text-neutral-100 disabled:opacity-40 ${
-            ui.menu?.source === "outline-add" ? "bg-white/5 text-neutral-100" : "text-neutral-300"
+          className={`grid size-5 shrink-0 place-items-center rounded transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:opacity-40 ${
+            ui.menu?.source === "outline-add" ? "bg-ink/5 text-neutral-100" : "text-neutral-300"
           }`}
         >
           <Plus size={13} />
@@ -246,7 +246,7 @@ export function OutlineQuestions({ eventLinked = false, onAdd, onShowPage }) {
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2 scrollbar">
         {state.task ? (
           <button type="button" onClick={() => !ui.fill && studio.select({ kind: "task" })}
-            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${ui.selection.kind === "task" ? "bg-skylab-500/10 text-skylab-300" : "text-neutral-400 hover:bg-white/4"}`}
+            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${ui.selection.kind === "task" ? "bg-skylab-500/10 text-skylab-300" : "text-neutral-400 hover:bg-ink/4"}`}
           >
             <span className="w-4" />
             <ClipboardList size={13} className="text-neutral-500" />

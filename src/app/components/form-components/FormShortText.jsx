@@ -36,13 +36,13 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
     <FieldShell number={questionNumber} title="Kısa Yanıt" required={!!prop.required} onRequiredChange={(v) => { if (!locked) toggle("required", v); }} hideRequired={locked} compact={compact} {...rest}>
       <div className="flex flex-col gap-1.5">
         <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
-        <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Sorunuzu buraya yazın." />
+        <AutoResizeTextarea {...bind("question")} className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Sorunuzu buraya yazın." />
       </div>
 
       {!compact && (
         <div className="flex flex-col gap-1.5">
           <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
-          <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Açıklamanızı buraya yazın." />
+          <AutoResizeTextarea {...bind("description")} className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50" placeholder="Açıklamanızı buraya yazın." />
         </div>
       )}
 
@@ -54,7 +54,7 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
             const isActive = currentType === type.id;
             return (
               <button key={type.id} type="button" disabled={locked} onClick={() => { if (!locked) patch({ inputType: type.id, identity: type.id === "email" ? prop.identity : undefined }); }}
-                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${locked ? "opacity-60 cursor-not-allowed" : ""} ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
+                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${locked ? "opacity-60 cursor-not-allowed" : ""} ${isActive ? "border-ink/20 bg-ink/10 text-skylab-300" : "border-ink/8 bg-ink/2 text-neutral-500 hover:text-neutral-300 hover:bg-ink/8"}`}
               >
                 <Icon size={14} />
                 {type.label}
@@ -65,11 +65,11 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
       </div>
 
       {canMarkCopy && currentType === "email" && (
-        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
+        <div className="flex items-center justify-between rounded-lg border border-ink/10 bg-ink/5 px-2 py-1">
           <span className="text-xs text-neutral-300">Cevap kopyası bu adrese gider</span>
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+          <div className="inline-flex rounded-lg border border-ink/15 bg-ink/5 p-0.5">
             <button type="button" aria-pressed={!marksCopy} onClick={() => toggle("identity", undefined)}
-              className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!marksCopy ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+              className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!marksCopy ? "bg-ink/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
             >
               Hayır
             </button>
@@ -83,11 +83,11 @@ export function CreateFormShortText({ questionNumber, props, onPropsChange, read
       )}
 
       {currentType === "link" && (
-        <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
+        <div className="flex items-center justify-between rounded-lg border border-ink/10 bg-ink/5 px-2 py-1">
           <span className="text-xs text-neutral-300">Birden fazla bağlantıya izin ver</span>
-          <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+          <div className="inline-flex rounded-lg border border-ink/15 bg-ink/5 p-0.5">
             <button type="button" aria-pressed={!prop.allowMultiple} onClick={() => toggle("allowMultiple", false)}
-              className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!prop.allowMultiple ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+              className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!prop.allowMultiple ? "bg-ink/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
             >
               Hayır
             </button>
@@ -126,7 +126,7 @@ export function DisplayFormShortText({ question, questionNumber, description, re
     }
   }, [autoFilled, autoDefault]);
 
-  const inputBorderClass = missing ? "border-red-400/60 focus:border-red-400 focus:ring-red-400/20" : "border-white/10 focus:border-skylab-400/50 focus:ring-skylab-400/20";
+  const inputBorderClass = missing ? "border-red-400/60 focus:border-red-400 focus:ring-red-400/20" : "border-ink/10 focus:border-skylab-400/50 focus:ring-skylab-400/20";
 
   const currentTypeObj = INPUT_TYPES.find(t => t.id === inputType) || INPUT_TYPES[0];
   const Icon = currentTypeObj.icon;

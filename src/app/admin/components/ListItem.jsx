@@ -51,7 +51,7 @@ function WorkflowChip({ workflow }) {
 
   return (
     <Link href={`/admin/workflows/${workflow.id}`} title={`Akışa git: ${name}`}
-      className="relative z-10 flex w-full min-w-0 max-w-60 items-center gap-2 rounded-md border border-white/10 bg-white/3 px-2 py-1 transition-colors hover:border-white/20 hover:bg-white/5"
+      className="relative z-10 flex w-full min-w-0 max-w-60 items-center gap-2 rounded-md border border-ink/10 bg-ink/3 px-2 py-1 transition-colors hover:border-ink/20 hover:bg-ink/5"
     >
       <Workflow size={12} className="shrink-0 text-neutral-500" />
       <span className="min-w-0">
@@ -118,7 +118,7 @@ function SkeletonBlock({ className = "" }) {
 export function FormListHeader({ sortField, sortDirection, onSort }) {
   const sortProps = { sortField, sortDirection, onSort };
   return (
-    <div className={`${FORM_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
+    <div className={`${FORM_GRID} sticky top-0 z-20 border-b border-ink/10 bg-neutral-900 px-3 pb-2`}>
       <SortHeader field="status" title="Duruma göre sırala" {...sortProps} />
       <span className={COLUMN_LABEL}>Form Adı</span>
       <SortHeader label="Akış" field="workflow" align="left" title="Akışa göre sırala" {...sortProps} />
@@ -132,7 +132,7 @@ export function FormListHeader({ sortField, sortDirection, onSort }) {
 
 export function ListItemSkeleton({ count = 4, className = "" }) {
   return (
-    <div className={`divide-y divide-white/5 ${className}`}>
+    <div className={`divide-y divide-ink/5 ${className}`}>
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className={`${FORM_GRID} px-3 py-2.5`}>
           <div className="flex justify-center"><SkeletonBlock className="size-1.5 rounded-full" /></div>
@@ -176,7 +176,7 @@ export default function ListItem({ form, viewHref, editHref, className = "" }) {
   const responseCount = form.responseCount ?? 0;
 
   return (
-    <div className={`group/row relative transition-colors hover:bg-white/3 ${className}`}>
+    <div className={`group/row relative transition-colors hover:bg-ink/3 ${className}`}>
       {viewHref && <Link href={viewHref} className="absolute inset-0 z-0" aria-label={form.title ?? "Form"} tabIndex={-1} />}
       <div className={`${FORM_GRID} px-3 py-2.5`}>
 
@@ -185,7 +185,7 @@ export default function ListItem({ form, viewHref, editHref, className = "" }) {
         </div>
 
         <div className="flex min-w-0 items-center gap-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3">
             <FileText className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
           </div>
           <div className="min-w-0">
@@ -221,7 +221,7 @@ export default function ListItem({ form, viewHref, editHref, className = "" }) {
           <div className="flex items-center gap-1 overflow-hidden transition-all duration-200 ease-out lg:max-w-0 lg:opacity-0 lg:group-hover/row:max-w-16 lg:group-hover/row:opacity-100">
             {responsesHref && (
               <Link href={responsesHref} title="Cevaplar" aria-label="Cevaplar"
-                className="relative z-10 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-white/10 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200"
+                className="relative z-10 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-ink/10 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200"
               >
                 <ChartColumn className="h-3 w-3" />
               </Link>
@@ -233,7 +233,7 @@ export default function ListItem({ form, viewHref, editHref, className = "" }) {
                 <PencilLine className="h-3 w-3" />
               </Link>
             ) : (
-              <span title="Düzenleme yetkiniz yok" className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-white/5 text-neutral-700">
+              <span title="Düzenleme yetkiniz yok" className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-ink/5 text-neutral-700">
                 <PencilLine className="h-3 w-3" />
               </span>
             ))}

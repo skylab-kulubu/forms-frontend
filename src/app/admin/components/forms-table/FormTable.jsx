@@ -144,7 +144,7 @@ export default function FormTable() {
               </Link>
             </StateCard>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-ink/5">
               {visible.map((row) => (
                 <TableRow key={row.key} row={row} peak={peak} open={openKeys.has(row.key)} onToggle={() => toggleOpen(row.key)} shown={shown} />
               ))}
@@ -153,7 +153,7 @@ export default function FormTable() {
         </div>
 
         {!isLoading && !error && inTab.length > 0 ? (
-          <div className="flex items-center justify-between gap-3 border-t border-white/10">
+          <div className="flex items-center justify-between gap-3 border-t border-ink/10">
             <p className="pt-3 text-2xs text-neutral-500">
               <span className="font-semibold tabular-nums text-neutral-200">{tab === "all" ? forms.length : inTab.length}</span> form gösteriliyor
               {totals.pending ? <> · <span className="tabular-nums text-neutral-300">{totals.pending}</span> onay bekliyor</> : null}

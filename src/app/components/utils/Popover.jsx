@@ -5,8 +5,8 @@ import { AlertCircle, Info } from "lucide-react";
 
 const variantStyles = {
   error: {
-    container: "border-red-500/20 bg-[#1f1414]",
-    arrow: "bg-[#1f1414] border-red-500/20",
+    container: "border-red-500/20 bg-danger-panel",
+    arrow: "bg-danger-panel border-red-500/20",
     iconClass: "text-red-200/30",
     Icon: AlertCircle,
   },

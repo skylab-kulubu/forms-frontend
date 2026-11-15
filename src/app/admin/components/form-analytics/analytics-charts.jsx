@@ -42,7 +42,7 @@ export function Bars({ buckets, className = "mt-3" }) {
               <span className="min-w-0 truncate text-2xs text-neutral-300" title={label}>{label}</span>
               <span className="shrink-0 text-2xs tabular-nums text-neutral-500"><span className="text-neutral-300">{bucket.count}</span> · {formatPercent(bucket.percentage)}</span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-ink/5">
               <div className={`h-full rounded-full bg-skylab-500 ${GROW}`} style={{ width: `${Math.min(100, Number(bucket.percentage) || 0)}%` }} />
             </div>
           </div>
@@ -138,7 +138,7 @@ export function ChoiceRows({ field, q }) {
         {values.map((value, index) => {
           const bucket = distribution.find((item) => item.value === value) ?? { count: 0, percentage: 0 };
           return (
-            <div key={`${value}-${index}`} className={`relative flex items-center gap-3 overflow-hidden rounded-md border bg-neutral-900/60 p-2 ${top > 0 && bucket.count === top ? "border-skylab-400/25" : "border-white/10"}`}>
+            <div key={`${value}-${index}`} className={`relative flex items-center gap-3 overflow-hidden rounded-md border bg-neutral-900/60 p-2 ${top > 0 && bucket.count === top ? "border-skylab-400/25" : "border-ink/10"}`}>
               <span className={`absolute inset-y-0 left-0 bg-skylab-500/[0.14] ${GROW}`} style={{ width: `${Math.min(100, Number(bucket.percentage) || 0)}%` }} />
               <span className="relative min-w-0 flex-1 truncate text-sm text-neutral-200">{value}</span>
               <span className="relative shrink-0 text-2xs tabular-nums text-neutral-400"><span className="text-neutral-100">{bucket.count}</span> · {formatPercent(bucket.percentage)}</span>
@@ -159,7 +159,7 @@ export function ToggleSplit({ field, q }) {
   if (!q.answeredCount) return <EmptyNote />;
 
   return (
-    <div className="mt-3 rounded-lg border border-white/10 bg-neutral-900/60 px-4 py-3">
+    <div className="mt-3 rounded-lg border border-ink/10 bg-neutral-900/60 px-4 py-3">
       <div className="mb-2 flex items-baseline justify-between gap-3 text-2xs">
         <span className="min-w-0 truncate font-medium text-skylab-300">{on} <span className="font-normal tabular-nums text-neutral-400">{yes.count} · {formatPercent(yes.percentage)}</span></span>
         <span className="min-w-0 truncate text-right font-medium text-neutral-300">{off} <span className="font-normal tabular-nums text-neutral-400">{no.count} · {formatPercent(no.percentage)}</span></span>
@@ -211,7 +211,7 @@ export function SliderHistogram({ field, q }) {
   const highlight = bins.reduce((best, bin, index) => (Math.abs(bin.at - position(average)) < Math.abs(bins[best].at - position(average)) ? index : best), 0);
 
   return (
-    <div className="mt-3 rounded-lg border border-white/10 bg-neutral-900/60 px-4 pb-3 pt-3">
+    <div className="mt-3 rounded-lg border border-ink/10 bg-neutral-900/60 px-4 pb-3 pt-3">
       <div className="flex items-end gap-4">
         <span className="w-6 shrink-0" />
         <div className="relative h-[72px] flex-1">
@@ -233,7 +233,7 @@ export function SliderHistogram({ field, q }) {
           <span className="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-200" style={{ left: `${position(average)}%` }} title="Ortalama" />
         </span>
         <span className="w-6 shrink-0 text-xs font-medium text-neutral-500">{formatNumber(max)}</span>
-        <div className="mx-1 h-5 w-px shrink-0 bg-white/10" />
+        <div className="mx-1 h-5 w-px shrink-0 bg-ink/10" />
         <span className="min-w-10 text-center text-sm tabular-nums text-neutral-200">{formatNumber(average)}</span>
       </div>
       <NumericLine numeric={q.numeric} className="mt-2.5" />
@@ -267,7 +267,7 @@ export function Columns({ items, height = 80, unit = "kişi", highlight = null, 
           </div>
         ))}
       </div>
-      <div className="mt-1.5 flex gap-1 border-t border-white/5 pt-1.5">
+      <div className="mt-1.5 flex gap-1 border-t border-ink/5 pt-1.5">
         {items.map((item, index) => (
           <span key={`${labelOf(item)}-${index}`} className="min-w-0 flex-1 truncate text-center text-4xs tabular-nums text-neutral-500">{labelOf(item)}</span>
         ))}
@@ -331,16 +331,16 @@ export function MatrixHeat({ field, q }) {
   const same = rows.every((row) => row.answeredCount === rows[0].answeredCount);
 
   return (
-    <div className="mt-3 overflow-x-auto rounded-lg border border-white/10 scrollbar">
+    <div className="mt-3 overflow-x-auto rounded-lg border border-ink/10 scrollbar">
       <table className="w-full text-left text-xs">
-        <thead className="bg-white/3 text-neutral-400">
+        <thead className="bg-ink/3 text-neutral-400">
           <tr>
             <th className="px-3 py-2 font-medium" />
             {columns.map((column) => <th key={column} className="px-1 py-2 text-center font-medium">{column}</th>)}
             {same ? null : <th className="px-3 py-2 text-right text-3xs font-medium text-neutral-500">Cevap</th>}
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/5">
+        <tbody className="divide-y divide-ink/5">
           {rows.map((row) => (
             <tr key={row.row}>
               <td className="px-3 py-2 text-neutral-200">{row.row}</td>
@@ -378,7 +378,7 @@ export function FunnelBars({ items, total }) {
                 <span className="text-neutral-300">{count}</span> · {formatPercent(Math.round(share * 10) / 10)}{extra ? ` · ${extra}` : ""}
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-ink/5">
               <div className={`h-full rounded-full bg-skylab-500 ${GROW}`} style={{ width: `${Math.min(share, 100)}%` }} />
             </div>
           </div>

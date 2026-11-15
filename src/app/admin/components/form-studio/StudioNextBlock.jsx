@@ -10,7 +10,7 @@ export function Heading({ children, action = null }) {
   return (
     <div className="mb-1 flex min-h-7 items-center gap-2">
       <span className="text-2xs font-medium text-neutral-500">{children}</span>
-      <span className="h-px flex-1 bg-white/5" />
+      <span className="h-px flex-1 bg-ink/5" />
       {action}
     </div>
   );
@@ -18,7 +18,7 @@ export function Heading({ children, action = null }) {
 
 export function StepNumber({ stage }) {
   if (stage == null) return null;
-  return <span className="grid size-4 shrink-0 place-items-center rounded border border-white/10 bg-white/5 text-4xs font-semibold text-neutral-400">{stage}</span>;
+  return <span className="grid size-4 shrink-0 place-items-center rounded border border-ink/10 bg-ink/5 text-4xs font-semibold text-neutral-400">{stage}</span>;
 }
 
 const routeKey = (route) => route.localId ?? `${route.targetNodeKey}-${route.priority}`;
@@ -92,7 +92,7 @@ export function IncomingNote({ node, incoming, renderStep }) {
   const sources = incoming.filter((transition, index) => incoming.findIndex((item) => item.sourceNodeKey === transition.sourceNodeKey && item.trigger === transition.trigger) === index);
 
   return (
-    <p className="mt-1 border-t border-white/5 pt-2.5 text-2xs leading-relaxed text-neutral-500">
+    <p className="mt-1 border-t border-ink/5 pt-2.5 text-2xs leading-relaxed text-neutral-500">
       {sources.length === 0 ? "Bu adıma başlangıçtan ulaşan bir yol yok." : (
         <>
           Bu adıma{" "}
@@ -110,7 +110,7 @@ export function IncomingNote({ node, incoming, renderStep }) {
   );
 }
 
-const STEP_LINK = "text-neutral-300 underline decoration-white/20 underline-offset-2 transition-colors hover:text-neutral-100";
+const STEP_LINK = "text-neutral-300 underline decoration-ink/20 underline-offset-2 transition-colors hover:text-neutral-100";
 
 export function FlowNextBlock({ node, nodes, transitions, stageOf, conditionOf, onRoute, onRetarget, onActivate, onEditRoutes, onAddStep }) {
   const anchorRefs = useRef({});
@@ -141,7 +141,7 @@ export function FlowNextBlock({ node, nodes, transitions, stageOf, conditionOf, 
         </span>
         {target ? (
           <button type="button" title="Adıma git" aria-label={`${target.formTitle} adımına git`} onClick={() => onActivate(target.formId)}
-            className="grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-100"
+            className="grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-100"
           >
             <ArrowRight size={12} />
           </button>
@@ -154,7 +154,7 @@ export function FlowNextBlock({ node, nodes, transitions, stageOf, conditionOf, 
     <div className="px-4">
       <Heading action={(
         <button type="button" onClick={onEditRoutes}
-          className="-mr-2 rounded-md px-2 py-1 text-2xs text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100"
+          className="-mr-2 rounded-md px-2 py-1 text-2xs text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100"
         >
           Yönlendirmeleri düzenle
         </button>
@@ -163,7 +163,7 @@ export function FlowNextBlock({ node, nodes, transitions, stageOf, conditionOf, 
         Bu adımdan sonra
       </Heading>
 
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         {triggersForNode(node, transitions).map((trigger) => (
           <RouteGroup key={trigger} trigger={trigger} routes={routes(trigger)} conditionOf={conditionOf} renderTarget={renderTarget} />
         ))}

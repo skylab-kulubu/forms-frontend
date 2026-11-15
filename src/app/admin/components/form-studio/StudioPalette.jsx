@@ -117,13 +117,13 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
   return (
     <Floating anchor={anchor} onDismiss={onClose} placement={docked ? "bottom-start" : "bottom"} matchWidth={docked} offset={docked ? 4 : 6}>
       <motion.div role="dialog" aria-label="Akış ya da form aç" {...POPOVER_MOTION}
-        className={`${docked ? "w-full" : "w-[min(24rem,calc(100vw-1rem))]"} rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-2xl shadow-black/50`}
+        className={`${docked ? "w-full" : "w-[min(24rem,calc(100vw-1rem))]"} rounded-[10px] border border-ink/20 bg-panel p-1.5 shadow-2xl shadow-black/50`}
       >
         <div className="relative mb-1">
           <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
           <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); }} onKeyDown={handleKeyDown}
             placeholder="Akış ya da form ara..." aria-label="Akış ya da form ara"
-            className="h-8 w-full rounded-md border border-white/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
+            className="h-8 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
           />
         </div>
         <div className="max-h-72 overflow-y-auto scrollbar">
@@ -134,7 +134,7 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
               <Fragment key={item.key}>
                 {head}
                 <button type="button" onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(item)}
-                  className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${index === activeIndex ? "bg-white/6 text-white" : "text-neutral-300"}`}
+                  className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${index === activeIndex ? "bg-ink/6 text-ink" : "text-neutral-300"}`}
                 >
                   <item.Icon size={14} className="shrink-0 text-neutral-500" />
                   <span className="min-w-0 flex-1 truncate">{item.label}</span>
@@ -144,7 +144,7 @@ export default function StudioPalette({ current, onPickStep, onNavigate, onClose
             );
           })}
         </div>
-        <p className="mt-1 border-t border-white/5 px-2 pt-1.5 text-3xs text-neutral-600 pointer-coarse:hidden">↑↓ seç · Enter aç · Esc kapat</p>
+        <p className="mt-1 border-t border-ink/5 px-2 pt-1.5 text-3xs text-neutral-600 pointer-coarse:hidden">↑↓ seç · Enter aç · Esc kapat</p>
       </motion.div>
     </Floating>
   );

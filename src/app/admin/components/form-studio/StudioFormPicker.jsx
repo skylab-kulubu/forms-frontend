@@ -58,17 +58,17 @@ export function FormPickerList({ forms = [], isLoading = false, excludeIds = [],
         <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
         <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(autoFocus ? 0 : -1); }} onKeyDown={handleKeyDown}
           placeholder="Form ara..." aria-label="Form ara"
-          className="h-8 w-full rounded-md border border-white/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
+          className="h-8 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
         />
       </div>
       <div data-map-scroll onMouseLeave={() => { if (!autoFocus) setActiveIndex(-1); }} className={`overflow-y-auto scrollbar ${className}`}>
         {items.map((item, index) => (
           <div key={item.id}>
-            {index === 1 ? <div className="mx-1 my-1 h-px bg-white/10" /> : null}
+            {index === 1 ? <div className="mx-1 my-1 h-px bg-ink/10" /> : null}
             {index === 1 ? <p className="px-2 pb-1 pt-1 text-3xs text-neutral-500">Var olan formlar</p> : null}
             <button type="button" role="menuitem" disabled={item.disabled} onMouseEnter={() => setActiveIndex(index)} onClick={() => choose(item)}
               className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${
-                item.disabled ? "cursor-not-allowed text-neutral-600" : index === activeIndex ? "bg-white/6 text-white" : "text-neutral-300"
+                item.disabled ? "cursor-not-allowed text-neutral-600" : index === activeIndex ? "bg-ink/6 text-ink" : "text-neutral-300"
               }`}
             >
               {item.isNew ? <FilePlus size={13} className="shrink-0 text-neutral-500" /> : <FileText size={13} className="shrink-0 text-neutral-500" />}
@@ -88,7 +88,7 @@ export default function StudioFormPicker({ anchor, heading, onClose, placement =
   return (
     <Floating anchor={anchor} onDismiss={onClose} placement={placement} offset={8}>
       <motion.div data-studio-menu role="menu" onPointerDown={(event) => event.stopPropagation()} {...POPOVER_MOTION}
-        className="w-72 rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-2xl shadow-black/50"
+        className="w-72 rounded-[10px] border border-ink/20 bg-panel p-1.5 shadow-2xl shadow-black/50"
       >
         {heading ? <p className="px-2 pb-1.5 pt-1 text-3xs text-neutral-500">{heading}</p> : null}
         <FormPickerList {...list} autoFocus />

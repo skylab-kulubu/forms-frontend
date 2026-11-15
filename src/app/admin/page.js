@@ -64,7 +64,7 @@ function PanelHeading({ mobileTitle, desktopTitle, mobileNote, desktopNote, emph
           <span className="lg:hidden">{mobileTitle}</span>
           <span className="hidden lg:inline">{desktopTitle}</span>
         </span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
       </div>
       <p className="mt-0.5 h-4 truncate px-1 text-3xs leading-4 text-neutral-600">
         <span className="lg:hidden">{mobileNote}</span>
@@ -86,7 +86,7 @@ function QuickActions() {
     <div className="flex flex-col gap-0.5">
       {QUICK_ACTIONS.map(({ icon: Icon, label, href, primary }) => (
         <Link key={href} href={href}
-          className="group/action flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-white/5"
+          className="group/action flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-ink/5"
         >
           <Icon size={12} className={`shrink-0 ${primary ? "text-skylab-400" : "text-neutral-600"}`} strokeWidth={1.75} />
           <span className={`min-w-0 flex-1 truncate text-2xs ${primary ? "font-medium text-skylab-300" : "text-neutral-300"}`}>{label}</span>
@@ -120,12 +120,12 @@ function ServiceStats({ values, isLoading, isSuperAdmin }) {
           </>
         );
 
-        const className = "flex items-center gap-2.5 rounded-md border border-white/5 bg-white/3 px-3 py-2.5 transition-colors";
+        const className = "flex items-center gap-2.5 rounded-md border border-ink/5 bg-ink/3 px-3 py-2.5 transition-colors";
         const href = stat.href && (!stat.superAdminOnly || isSuperAdmin) ? stat.href : null;
 
         if (href) {
           return (
-            <Link key={stat.key} href={href} className={`${className} hover:border-white/10 hover:bg-white/5`}>
+            <Link key={stat.key} href={href} className={`${className} hover:border-ink/10 hover:bg-ink/5`}>
               {body}
             </Link>
           );
@@ -189,12 +189,12 @@ function RecentFormItem({ form }) {
   const canEdit = Number(form.userRole) >= 2;
 
   return (
-    <div className="group/row relative transition-colors hover:bg-white/3">
+    <div className="group/row relative transition-colors hover:bg-ink/3">
       <Link href={viewHref} className="absolute inset-0 z-0" aria-label={form.title ?? "Form"} tabIndex={-1} />
       <div className="flex items-center gap-3 px-2 py-2.5">
         <StatusDot status={form.status} />
 
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3">
           <FileText className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
         </div>
 
@@ -212,7 +212,7 @@ function RecentFormItem({ form }) {
 
         <div className="flex shrink-0 items-center gap-1 lg:w-14 lg:justify-end lg:opacity-0 lg:transition-opacity lg:group-hover/row:opacity-100">
           <Link href={`${viewHref}/responses`} title="Cevaplar" aria-label="Cevaplar"
-            className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/10 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 lg:pointer-events-none lg:group-hover/row:pointer-events-auto"
+            className="relative z-10 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-ink/10 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 lg:pointer-events-none lg:group-hover/row:pointer-events-auto"
           >
             <ChartColumn className="h-3 w-3" />
           </Link>
@@ -223,7 +223,7 @@ function RecentFormItem({ form }) {
               <PencilLine className="h-3 w-3" />
             </Link>
           ) : (
-            <span title="Düzenleme yetkiniz yok" className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-white/5 text-neutral-700">
+            <span title="Düzenleme yetkiniz yok" className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-ink/5 text-neutral-700">
               <PencilLine className="h-3 w-3" />
             </span>
           )}
@@ -237,7 +237,7 @@ function RecentFormItem({ form }) {
 
 function RecentFormsSkeleton() {
   return (
-    <div className="divide-y divide-white/5">
+    <div className="divide-y divide-ink/5">
       {Array.from({ length: 5 }, (_, i) => (
         <div key={i} className="flex items-center gap-3 px-2 py-2.5">
           <div className="shimmer size-1.5 shrink-0 rounded-full" />
@@ -276,7 +276,7 @@ function RecentFormsPanel({ greeting, firstName, sessionReady, note, forms, isLo
             </Link>
           </div>
         ) : (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-ink/5">
             {forms.map((form, i) => (
               <motion.div key={form.id} {...fadeIn} transition={{ ...fadeIn.transition, delay: Math.min(i, 6) * 0.03 }}>
                 <RecentFormItem form={form} />
@@ -286,7 +286,7 @@ function RecentFormsPanel({ greeting, firstName, sessionReady, note, forms, isLo
         )}
       </div>
 
-      <div className="mt-3 flex shrink-0 items-center justify-between gap-3 border-t border-white/5 px-1 pt-3">
+      <div className="mt-3 flex shrink-0 items-center justify-between gap-3 border-t border-ink/5 px-1 pt-3">
         <span className="text-2xs text-neutral-600">{isLoading ? "--" : forms.length > 0 ? `Son güncellenen ${forms.length} form` : ""}</span>
         <Link href="/admin/forms" className="inline-flex items-center gap-1 text-2xs font-medium text-neutral-400 transition-colors hover:text-neutral-200">
           Tümünü gör
@@ -308,7 +308,7 @@ function MetricsPanel({ greeting, firstName, sessionReady, note, stats, statsLoa
       />
 
       <div className="pt-3 scrollbar lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
 
           <Section delay={0}>
             <SectionTitle>Genel</SectionTitle>

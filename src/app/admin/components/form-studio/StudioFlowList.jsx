@@ -29,11 +29,11 @@ function StepCard({ node, depth, nodes, transitions, questionCount, active, dirt
   return (
     <li>
       <button type="button" onClick={onOpen} data-flow-step={node.formId} data-active={active || undefined}
-        className={`w-full rounded-xl border p-3 text-left transition-colors ${active ? "border-skylab-400/40 bg-skylab-500/5" : "border-white/10 bg-[#1a1a1a] hover:border-white/20"}`}
+        className={`w-full rounded-xl border p-3 text-left transition-colors ${active ? "border-skylab-400/40 bg-skylab-500/5" : "border-ink/10 bg-popover hover:border-ink/20"}`}
       >
         <span className="flex items-center gap-2.5">
           <span className={`grid size-6 shrink-0 place-items-center rounded-md border text-3xs font-semibold ${
-            node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"
+            node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-400"
           }`}
           >
             {depth ?? "?"}
@@ -45,7 +45,7 @@ function StepCard({ node, depth, nodes, transitions, questionCount, active, dirt
           {dirty ? <span title="Kaydedilmemiş değişiklik var" className="size-1.5 shrink-0 rounded-full bg-skylab-400" /> : null}
           <ChevronRight size={15} className="shrink-0 text-neutral-500" />
         </span>
-        <span className="mt-2.5 block space-y-1 border-t border-white/5 pt-2.5">
+        <span className="mt-2.5 block space-y-1 border-t border-ink/5 pt-2.5">
           {routesOf(node, nodes, transitions).map((route) => (
             <span key={route.trigger} className="flex min-w-0 items-center gap-2 text-2xs">
               <route.style.Icon size={12} className={`shrink-0 ${route.style.icon}`} />
@@ -77,7 +77,7 @@ export default function StudioFlowList({ nodes, transitions, stages, questionCou
       <div className="h-full overflow-y-auto px-3 pb-36 pt-4 scrollbar">
         <div className="mx-auto max-w-md">
           {nodes.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-white/10 px-6 py-10 text-center">
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ink/10 px-6 py-10 text-center">
               <p className="text-sm text-neutral-300">İlk adımı ekleyin</p>
               <p className="text-2xs text-neutral-500">Akışın başlangıç formunu seçin ya da yeni bir form açın.</p>
               <button type="button" onClick={(event) => onAddStep(event.currentTarget)} className={actionClass()}>
@@ -89,15 +89,15 @@ export default function StudioFlowList({ nodes, transitions, stages, questionCou
             <>
               <div className="mb-2 flex items-center gap-2 px-1">
                 <span className="text-2xs font-medium text-neutral-500">Adımlar</span>
-                <span className="h-px flex-1 bg-white/5" />
+                <span className="h-px flex-1 bg-ink/5" />
                 <span className="text-3xs text-neutral-600">Açmak için bir adıma dokun</span>
               </div>
               <ol className="space-y-2">{connected.map(card)}</ol>
               {nextTrigger != null ? (
                 <button type="button" onClick={(event) => onAddStep(event.currentTarget)}
-                  className="mt-2 flex w-full items-center gap-2.5 rounded-xl border border-dashed border-white/15 p-3 text-left transition-colors hover:border-white/25"
+                  className="mt-2 flex w-full items-center gap-2.5 rounded-xl border border-dashed border-ink/15 p-3 text-left transition-colors hover:border-ink/25"
                 >
-                  <span className="grid size-6 shrink-0 place-items-center rounded-md border border-dashed border-white/20 text-neutral-400"><Plus size={13} /></span>
+                  <span className="grid size-6 shrink-0 place-items-center rounded-md border border-dashed border-ink/20 text-neutral-400"><Plus size={13} /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-neutral-200">Sonraki adım</span>
                     <span className="block truncate text-3xs text-neutral-500">{triggerStyle(nextTrigger).label} hangi form açılsın?</span>
@@ -108,7 +108,7 @@ export default function StudioFlowList({ nodes, transitions, stages, questionCou
                 <>
                   <div className="mb-2 mt-5 flex items-center gap-2 px-1">
                     <span className="text-2xs font-medium text-neutral-500">Bağlı olmayan adımlar</span>
-                    <span className="h-px flex-1 bg-white/5" />
+                    <span className="h-px flex-1 bg-ink/5" />
                   </div>
                   <ol className="space-y-2">{detached.map(card)}</ol>
                 </>

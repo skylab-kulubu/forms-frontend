@@ -113,7 +113,7 @@ export function DeliverablesHeader() {
       <div className="flex flex-col p-2 md:p-4">
         <div className="flex items-center gap-3">
           <p className="min-w-0 max-w-[70%] wrap-break-word text-lg font-medium text-neutral-100">Teslim</p>
-          <div className="h-px flex-1 bg-white/10" />
+          <div className="h-px flex-1 bg-ink/10" />
         </div>
         <p className="mt-1 wrap-break-word text-xs text-neutral-400">Görevi bitirdiğinizde aşağıdaki soruları doldurun.</p>
       </div>
@@ -148,7 +148,7 @@ export function TaskGate({ attempt, now, onStart, starting = false, error = null
         </div>
       </div>
 
-      <dl className="mt-5 divide-y divide-white/5 border-y border-white/5 text-xs">
+      <dl className="mt-5 divide-y divide-ink/5 border-y border-ink/5 text-xs">
         <GateRow label="Süre">{durationText(minutes)}</GateRow>
         <GateRow label="Bitiş">
           {formatLongDate(end)}
@@ -170,7 +170,7 @@ export function TaskGate({ attempt, now, onStart, starting = false, error = null
               {starting ? <Loader2 size={14} className="animate-spin" /> : "Başlat"}
             </button>
             <button type="button" onClick={() => setConfirming(false)} disabled={starting}
-              className={`text-xs ${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+              className={`text-xs ${LINK_BUTTON} text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50`}
             >
               Vazgeç
             </button>
@@ -178,7 +178,7 @@ export function TaskGate({ attempt, now, onStart, starting = false, error = null
         ) : (
           <>
             <button type="button" onClick={() => setConfirming(true)}
-              className="relative inline-flex h-8 min-w-24 items-center justify-center gap-1.5 overflow-hidden rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-neutral-100 transition-colors hover:border-pink-100/40 hover:bg-pink-100/30 hover:text-pink-100"
+              className="relative inline-flex h-8 min-w-24 items-center justify-center gap-1.5 overflow-hidden rounded-lg border border-ink/10 bg-ink/5 px-3 py-2 text-xs font-semibold text-neutral-100 transition-colors hover:border-pink-100/40 hover:bg-pink-100/30 hover:text-pink-100"
             >
               Görevi başlat
               <ChevronRight size={14} />

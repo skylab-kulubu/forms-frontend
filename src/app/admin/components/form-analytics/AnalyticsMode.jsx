@@ -194,7 +194,7 @@ export default function AnalyticsMode() {
   ) : null;
 
   const card = analyticsResult.isError ? (
-    <div className="rounded-3xl border border-white/10 bg-[#1c1c1c] p-10">
+    <div className="rounded-3xl border border-ink/10 bg-panel-soft p-10">
       <StateCard title="Analitik yüklenemedi" Icon={ListX} description="Analiz verileri yüklenirken bir hata oluştu." />
     </div>
   ) : form && analytics ? (

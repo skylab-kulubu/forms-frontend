@@ -185,7 +185,7 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
     };
 
     return (
-        <div className="rounded-b-xl border-t border-white/5 bg-neutral-900/40 p-3">
+        <div className="rounded-b-xl border-t border-ink/5 bg-neutral-900/40 p-3">
             <div className="grid grid-cols-12 gap-3 items-end">
 
                 <div className="col-span-12 sm:col-span-4 flex flex-col gap-1.5">
@@ -218,7 +218,7 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
                             ) : isDate ? (
                                 <div className="relative" ref={dateRef}>
                                     <button type="button" onClick={() => setDateOpen((s) => !s)}
-                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
+                                        className="flex w-full items-center gap-2 rounded-lg border border-ink/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-ink/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                                     >
                                         <Calendar size={13} className="text-neutral-400 shrink-0" />
                                         <span className={selectedDate ? "text-neutral-200" : "text-neutral-500"}>{dateDisplay}</span>
@@ -235,7 +235,7 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
                             ) : isTime ? (
                                 <div className="relative" ref={timeRef}>
                                     <button type="button" onClick={toggleTimePicker}
-                                        className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-white/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
+                                        className="flex w-full items-center gap-2 rounded-lg border border-ink/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-left outline-none transition hover:bg-ink/5 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                                     >
                                         <Clock size={13} className="text-neutral-400 shrink-0" />
                                         <span className={parsedTime ? "text-neutral-200" : "text-neutral-500"}>{timeDisplay}</span>
@@ -253,7 +253,7 @@ function ConditionEditor({ condition, onUpdate, availableFields }) {
                                 </div>
                             ) : (
                                 <input type="text" placeholder="Cevap..." value={current.value} onChange={(e) => handleChange("value", e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-neutral-200 placeholder-neutral-600 outline-none focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 transition-all"
+                                    className="w-full rounded-lg border border-ink/10 bg-neutral-800/50 px-3 py-2.5 text-xs text-neutral-200 placeholder-neutral-600 outline-none focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 transition-all"
                                 />
                             )}
                         </>

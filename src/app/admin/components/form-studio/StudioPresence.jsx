@@ -123,7 +123,7 @@ export function PeopleStack({ people, onGo }) {
             ) : null}
           </button>
           {hovered === person.userId ? (
-            <div role="tooltip" className="absolute right-0 top-8 z-50 w-56 rounded-[10px] border border-white/15 bg-[#1e1e1e] px-2.5 py-2 text-left text-2xs shadow-2xl shadow-black/50">
+            <div role="tooltip" className="absolute right-0 top-8 z-50 w-56 rounded-[10px] border border-ink/15 bg-panel px-2.5 py-2 text-left text-2xs shadow-2xl shadow-black/50">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-neutral-100">
                 <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: colorOf(person.userId) }} />
                 <span className="truncate">{person.name}</span>
@@ -136,7 +136,7 @@ export function PeopleStack({ people, onGo }) {
       ))}
       {extra > 0 ? (
         <span title={people.slice(STACK_MAX).map((person) => person.name).join(", ")}
-          className="relative grid size-6 place-items-center rounded-md border border-white/10 bg-neutral-900 text-[9px] font-semibold tabular-nums text-neutral-300 ring-2 ring-neutral-900"
+          className="relative grid size-6 place-items-center rounded-md border border-ink/10 bg-neutral-900 text-[9px] font-semibold tabular-nums text-neutral-300 ring-2 ring-neutral-900"
         >
           +{extra}
         </span>
@@ -148,7 +148,7 @@ export function PeopleStack({ people, onGo }) {
 export function PeopleCount({ people }) {
   if (people.length === 0) return null;
   return (
-    <span title={people.map((person) => person.name).join(", ")} className="mr-1 inline-flex items-center gap-1 rounded-md border border-white/10 px-1.5 py-0.5 text-3xs tabular-nums text-neutral-400">
+    <span title={people.map((person) => person.name).join(", ")} className="mr-1 inline-flex items-center gap-1 rounded-md border border-ink/10 px-1.5 py-0.5 text-3xs tabular-nums text-neutral-400">
       <span className="size-1.5 rounded-full" style={{ backgroundColor: colorOf(people[0].userId) }} />
       {people.length} kişi
     </span>
@@ -160,7 +160,7 @@ function cursorNode(color, name, initials) {
   root.className = "absolute left-0 top-0 transition-opacity duration-300";
   root.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" style="display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,0.6))"><path d="M4 2.5 20 11l-7.2 1.9L9.4 20 4 2.5Z" fill="${color}" stroke="#141414" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
   const label = document.createElement("span");
-  label.className = "absolute left-3.5 top-4 whitespace-nowrap rounded-sm bg-neutral-800/95 px-1 py-px text-3xs font-medium text-white/90 shadow-sm shadow-black/30 transition-opacity duration-300";
+  label.className = "absolute left-3.5 top-4 whitespace-nowrap rounded-sm bg-neutral-800/95 px-1 py-px text-3xs font-medium text-ink/90 shadow-sm shadow-black/30 transition-opacity duration-300";
   label.textContent = name;
   root.append(label);
   return { root, label, name, initials, short: false };

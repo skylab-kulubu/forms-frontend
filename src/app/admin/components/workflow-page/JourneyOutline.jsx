@@ -5,7 +5,7 @@ import { isTimedNode } from "../workflow-editor/workflow-graph";
 import { StepBadge } from "../form-room/RoomCanvas";
 import { OutlineFooter } from "../form-room/RoomOutline";
 
-const row = (active) => `group flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"}`;
+const row = (active) => `group flex min-h-8 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-ink/[0.06]" : "hover:bg-ink/[0.03]"}`;
 const text = (active) => `min-w-0 flex-1 truncate text-xs ${active ? "text-neutral-100" : "text-neutral-400 group-hover:text-neutral-200"}`;
 
 export default function JourneyOutline({ head, flow, counts, removed, selected, finishedCount, pill, overview, onPick, onFinished, onOps }) {
@@ -15,7 +15,7 @@ export default function JourneyOutline({ head, flow, counts, removed, selected, 
       <div className="shrink-0 border-b border-neutral-800/60 px-1.5 pb-2 pt-2.5">
         <div className="mb-1 flex items-center gap-2 px-1.5">
           <span className="text-2xs font-medium text-neutral-500">Adımlar</span>
-          <span className="h-px flex-1 bg-white/5" />
+          <span className="h-px flex-1 bg-ink/5" />
           <span title="Önceki ve sonraki adım" className="font-mono text-3xs text-neutral-600 pointer-coarse:hidden">← →</span>
         </div>
         {flow.stages.ordered.map((node) => {
@@ -32,7 +32,7 @@ export default function JourneyOutline({ head, flow, counts, removed, selected, 
           );
         })}
         <button type="button" onClick={onFinished} className={row(false)}>
-          <span className="grid size-5 shrink-0 place-items-center rounded-md border border-white/10 bg-white/5 text-neutral-400"><CircleCheck size={11} /></span>
+          <span className="grid size-5 shrink-0 place-items-center rounded-md border border-ink/10 bg-ink/5 text-neutral-400"><CircleCheck size={11} /></span>
           <span className={text(false)}>Bitenler</span>
           <span className="w-5 shrink-0 text-right text-3xs tabular-nums text-neutral-500">{finishedCount}</span>
         </button>
@@ -40,7 +40,7 @@ export default function JourneyOutline({ head, flow, counts, removed, selected, 
           const active = selected === step.nodeKey;
           return (
             <button key={step.nodeKey} type="button" onClick={() => onPick(step.nodeKey)} aria-pressed={active} className={row(active)} title="Akıştan çıkarılan adım">
-              <span className="grid size-5 shrink-0 place-items-center rounded-md border border-dashed border-white/15 text-3xs text-neutral-500">–</span>
+              <span className="grid size-5 shrink-0 place-items-center rounded-md border border-dashed border-ink/15 text-3xs text-neutral-500">–</span>
               <span className={text(active)}>{step.formTitle || "Adsız form"}</span>
               {step.awaitingReview ? <span className="shrink-0 text-3xs tabular-nums text-amber-200/80">{step.awaitingReview}</span> : null}
               <span className="w-5 shrink-0 text-right text-3xs tabular-nums text-neutral-500">{step.count}</span>
@@ -51,7 +51,7 @@ export default function JourneyOutline({ head, flow, counts, removed, selected, 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-1.5 pb-2 pt-2.5 scrollbar">
         <div className="mb-1 flex items-center gap-2 px-1.5">
           <span className="text-2xs font-medium text-neutral-500">Akış</span>
-          <span className="h-px flex-1 bg-white/5" />
+          <span className="h-px flex-1 bg-ink/5" />
         </div>
         <button type="button" onClick={onOps} className={row(false)}>
           <span className="grid size-5 shrink-0 place-items-center"><SlidersHorizontal size={12} className="text-neutral-500" /></span>

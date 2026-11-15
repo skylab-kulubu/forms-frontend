@@ -58,7 +58,7 @@ function PrevAnswer({ field, previous, previousAnswer, onOpenPrevious }) {
   const plain = ["file", "matrix", "repeater"].includes(field.type);
   const text = plain ? "Farklı bir cevap vardı." : plainAnswer(field, previousAnswer);
   const long = !plain && text.length > 160;
-  const link = "mt-1 inline-flex min-h-8 items-center gap-1 text-2xs text-neutral-400 underline decoration-white/20 underline-offset-2 transition-colors hover:text-neutral-100 sm:min-h-6";
+  const link = "mt-1 inline-flex min-h-8 items-center gap-1 text-2xs text-neutral-400 underline decoration-ink/20 underline-offset-2 transition-colors hover:text-neutral-100 sm:min-h-6";
 
   return (
     <div className="relative mt-3 pl-3">
@@ -80,7 +80,7 @@ function RevisionRow({ previous, fields, numbers, requested, changedAll, onJump 
   const item = (id, tag) => {
     const field = fields.find((entry) => entry.id === id);
     return (
-      <button key={id} type="button" onClick={() => onJump(id)} className="flex min-h-10 w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/5">
+      <button key={id} type="button" onClick={() => onJump(id)} className="flex min-h-10 w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-ink/5">
         <span className="w-6 shrink-0 text-right text-2xs tabular-nums text-neutral-500">{numbers.get(id)}.</span>
         <span className="min-w-0 flex-1 truncate text-xs text-neutral-300">{field?.props?.question || "Soru"}</span>
         {tag}
@@ -127,7 +127,7 @@ function SeparatorBlock({ field, phone }) {
     <div className={`flex flex-col ${phone ? "p-2" : "p-2 md:p-4"}`}>
       <div className="flex items-center gap-3">
         {props.title ? <RichText as="p" text={props.title} className="min-w-0 max-w-[70%] text-lg font-medium text-neutral-100 wrap-anywhere" /> : null}
-        <div className="h-px flex-1 bg-white/10" />
+        <div className="h-px flex-1 bg-ink/10" />
       </div>
       {props.description ? <RichText as="p" text={props.description} className="mt-1 text-xs text-neutral-400" /> : null}
     </div>
@@ -221,8 +221,8 @@ export default function ResponseCard({
       const source = fieldsById.get(field.condition.fieldId);
       const sourceAnswer = answers.get(field.condition.fieldId);
       return (
-        <div key={field.id} data-q={field.id} className={`flex items-center gap-3 p-2 md:px-4 md:py-3 ${last ? "" : "border-b border-white/5 pb-5"}`}>
-          <span className="grid size-6 shrink-0 place-items-center rounded-md border border-dashed border-white/10 text-xs font-semibold text-neutral-600">{number}</span>
+        <div key={field.id} data-q={field.id} className={`flex items-center gap-3 p-2 md:px-4 md:py-3 ${last ? "" : "border-b border-ink/5 pb-5"}`}>
+          <span className="grid size-6 shrink-0 place-items-center rounded-md border border-dashed border-ink/10 text-xs font-semibold text-neutral-600">{number}</span>
           <p className="min-w-0 flex-1 truncate text-xs text-neutral-500">
             <span className="text-neutral-400">{field.props?.question || "Soru"}</span>
             {" · "}{numbers.get(source?.id) ?? "?"}. soruda {answerKey(sourceAnswer) ? `"${plainAnswer(source, sourceAnswer)}"` : "boş"} {answerKey(sourceAnswer) ? "dediği" : "bıraktığı"} için gösterilmedi
@@ -237,7 +237,7 @@ export default function ResponseCard({
     const aside = flagMode ? (
       <button type="button" onClick={() => onFlag?.(field.id)} aria-pressed={isFlagged}
         className={`flex h-8 shrink-0 items-center gap-1 rounded-md border px-2.5 text-2xs font-medium transition-colors sm:h-6 sm:px-2 sm:text-3xs ${
-          isFlagged ? "border-sky-400/40 bg-sky-400/15 text-sky-200" : "border-white/10 text-neutral-500 hover:border-sky-400/30 hover:text-sky-200"
+          isFlagged ? "border-sky-400/40 bg-sky-400/15 text-sky-200" : "border-ink/10 text-neutral-500 hover:border-sky-400/30 hover:text-sky-200"
         }`}
       >
         <Flag size={11} />
@@ -259,7 +259,7 @@ export default function ResponseCard({
     ) : null;
 
     return (
-      <div key={field.id} className={last ? "" : "border-b border-white/5 pb-6"}>
+      <div key={field.id} className={last ? "" : "border-b border-ink/5 pb-6"}>
         <AnswerBlock field={field} number={number} answer={answer} responseId={detail?.id} phone={phone} accent={isFlagged || (isChanged && !board)} hint={hoverQ === field.id}
           aside={aside}
           below={isChanged && !board ? <PrevAnswer field={field} previous={previous} previousAnswer={previousAnswers?.get(field.id)} onOpenPrevious={onOpenPrevious} /> : null}
@@ -309,7 +309,7 @@ export default function ResponseCard({
 
       {isAttempt ? (
         <div className="flex min-h-56 flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-          <span className="grid size-11 place-items-center rounded-xl border border-white/10 bg-white/3 text-skylab-300"><empty.Icon size={18} /></span>
+          <span className="grid size-11 place-items-center rounded-xl border border-ink/10 bg-ink/3 text-skylab-300"><empty.Icon size={18} /></span>
           <div>
             <p className="text-sm font-semibold text-neutral-100">{empty.title}</p>
             <p className="mt-1 max-w-sm text-xs text-neutral-400">
@@ -318,13 +318,13 @@ export default function ResponseCard({
           </div>
         </div>
       ) : allFields.length === 0 ? (
-        <p className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-neutral-500">Bu cevapta gösterilecek soru yok.</p>
+        <p className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-ink/10 text-sm text-neutral-500">Bu cevapta gösterilecek soru yok.</p>
       ) : (
         <div className="flex flex-1 flex-col">
           {fields.map((field, index) => renderField(field, index, fields))}
           {orphans.length ? (
             <>
-              <div className="border-t border-white/5 pt-2">
+              <div className="border-t border-ink/5 pt-2">
                 <SeparatorBlock field={{ id: "orphans", type: "separator", props: { title: "Formda artık olmayan sorular", description: "Bu sorular cevap verildikten sonra formdan kaldırılmış." } }} phone={phone} />
               </div>
               {orphans.map((field, index) => renderField(field, index, orphans))}
@@ -333,7 +333,7 @@ export default function ResponseCard({
         </div>
       )}
 
-      <div className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
+      <div className="mt-auto border-t border-ink/5 px-2 pt-6 md:px-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex min-w-0 items-center gap-1.5 text-2xs text-neutral-500">
             <UserRound size={12} className="shrink-0" />

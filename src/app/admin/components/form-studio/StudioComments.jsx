@@ -132,7 +132,7 @@ function Composer({ initial = "", placeholder, typingKey, autoFocus = false, onS
           submit();
         }
       }}
-      className="block max-h-32 w-full resize-none overflow-y-auto bg-transparent pb-1.25 pt-0.75 text-xs leading-[17px] text-neutral-100 shadow-[inset_0_-1px_0_rgba(255,255,255,0.1)] outline-none transition-shadow duration-150 placeholder:text-neutral-600 focus:shadow-[inset_0_-1px_0_rgba(235,213,238,0.6)]"
+      className="block max-h-32 w-full resize-none overflow-y-auto bg-transparent pb-1.25 pt-0.75 text-xs leading-[17px] text-neutral-100 shadow-[inset_0_-1px_0_rgb(var(--forms-ink-rgb)/0.1)] outline-none transition-shadow duration-150 placeholder:text-neutral-600 focus:shadow-[inset_0_-1px_0_rgba(235,213,238,0.6)]"
     />
   );
 }
@@ -327,7 +327,7 @@ export function CommentNotice({ board, numbers }) {
       {visible ? (
         <motion.button key={latest.commentId} type="button" onClick={show} onPointerDown={(event) => event.stopPropagation()}
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease: EASE } }} exit={{ opacity: 0, y: 4, transition: { duration: 0.15 } }}
-          className="absolute bottom-17 left-1/2 z-30 flex w-[min(21rem,calc(100%-2rem))] -translate-x-1/2 gap-2.5 rounded-xl border border-white/10 bg-[#1e1e1e] py-2.5 pl-3 pr-3.5 text-left shadow-2xl shadow-black/50 sm:bottom-19"
+          className="absolute bottom-17 left-1/2 z-30 flex w-[min(21rem,calc(100%-2rem))] -translate-x-1/2 gap-2.5 rounded-xl border border-ink/10 bg-panel py-2.5 pl-3 pr-3.5 text-left shadow-2xl shadow-black/50 sm:bottom-19"
         >
           <span className="w-0.5 shrink-0 self-stretch rounded-full bg-skylab-400" />
           <span className="min-w-0 flex-1">
@@ -381,7 +381,7 @@ export function CommentSide({ board, sideRef, columnRef, fields, userId, canWrit
           )) : null}
           {board.onBoard && board.draftFor ? <DraftThread key="draft" fieldId={board.draftFor} index={0} board={board} guard={guard} onResize={layout} /> : null}
           {hint && fields[0] ? (
-            <ThreadShell key="hint" fieldId={fields[0].id} focused={false} index={0} line="bg-white/15" onResize={layout}>
+            <ThreadShell key="hint" fieldId={fields[0].id} focused={false} index={0} line="bg-ink/15" onResize={layout}>
               <p className="text-2xs leading-4 text-neutral-500">Henüz yorum yok. Bir sorunun sağ kenarına gelip artıya tıklayarak başlarsın.</p>
             </ThreadShell>
           ) : null}

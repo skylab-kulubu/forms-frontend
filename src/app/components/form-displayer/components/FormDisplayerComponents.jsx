@@ -10,7 +10,7 @@ import { loginWithKeycloak } from "@/lib/authActions";
 import { formatJourneyDate } from "@/lib/workflow-journey";
 
 const LINK_BUTTON = "underline underline-offset-3 transition-colors";
-const LINK_NEUTRAL = `${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`;
+const LINK_NEUTRAL = `${LINK_BUTTON} text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50`;
 const LINK_DANGER = `${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`;
 const NOTE_EASE = [0.22, 1, 0.36, 1];
 
@@ -76,7 +76,7 @@ export function FormDisplayerHeader({ title, description, children }) {
           className="mt-3 space-y-2 text-sm leading-relaxed text-neutral-300
             [&_p]:m-0 [&_p+p]:mt-2 [&_strong]:text-neutral-100 [&_em]:text-neutral-300
             [&_a]:text-skylab-300 [&_a]:underline [&_a]:decoration-skylab-300/30 [&_a]:underline-offset-2 [&_a]:wrap-break-word [&_a:hover]:decoration-skylab-300/70
-            [&_blockquote]:border-l-2 [&_blockquote]:border-white/10 [&_blockquote]:pl-3 [&_blockquote]:text-neutral-100 [&_blockquote]:italic
+            [&_blockquote]:border-l-2 [&_blockquote]:border-ink/10 [&_blockquote]:pl-3 [&_blockquote]:text-neutral-100 [&_blockquote]:italic
             [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
             [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:text-neutral-100
             [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-neutral-100
@@ -276,7 +276,7 @@ export function GuestNoticeDock({ notice, onClose, onJump, onRetry = null }) {
       {prompt.confirming ? <LoginConfirm prompt={prompt} /> : (
         <>
           {notice.jump && (
-            <button type="button" onClick={() => onJump(notice.jump.id)} className={`${LINK_BUTTON} text-neutral-100 decoration-white/30 hover:decoration-white/70`}>
+            <button type="button" onClick={() => onJump(notice.jump.id)} className={`${LINK_BUTTON} text-neutral-100 decoration-ink/30 hover:decoration-ink/70`}>
               {notice.jump.label}
             </button>
           )}

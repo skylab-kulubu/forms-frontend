@@ -68,7 +68,7 @@ export function TaskRemoveConfirm({ onConfirm, onCancel }) {
             <button type="button" onClick={onConfirm} className={`${LINK_BUTTON} text-red-300 decoration-red-300/35 hover:decoration-red-300/80`}>
                 Kaldır
             </button>
-            <button type="button" onClick={onCancel} className={`${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}>
+            <button type="button" onClick={onCancel} className={`${LINK_BUTTON} text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50`}>
                 Vazgeç
             </button>
         </span>

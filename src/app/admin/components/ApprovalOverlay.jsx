@@ -60,9 +60,9 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
           
           <motion.div key="approval-card" 
             initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }} transition={{ duration: 0.2 }}
-            className="relative w-full max-w-2xl overflow-hidden rounded-xl border border-white/10 bg-[#121212] shadow-2xl"
+            className="relative w-full max-w-2xl overflow-hidden rounded-xl border border-ink/10 bg-sheet shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b border-white/5 px-5 py-2">
+            <div className="flex items-center justify-between border-b border-ink/5 px-5 py-2">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-skylab-400/20 bg-skylab-400/10 text-skylab-400">
                   <Icon size={16} />
@@ -71,7 +71,7 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
               </div>
 
               <button type="button" onClick={() => onReject?.()} aria-label="Kapat"
-                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
               >
                 <X size={16} />
               </button>
@@ -102,15 +102,15 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
                     </div>
                   </div>
                   <input type="text" value={typedValue} onChange={(event) => setTypedValue(event.target.value)} placeholder={requiredPhrase}
-                    className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition-all focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
+                    className="w-full rounded-lg border border-ink/10 bg-black/20 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 outline-none transition-all focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
                   />
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t border-white/5 bg-neutral-950/30 px-5 py-2">
+            <div className="flex items-center justify-end gap-3 border-t border-ink/5 bg-neutral-950/30 px-5 py-2">
               <button type="button" onClick={() => onReject?.()}
-                className="h-9 rounded-lg px-4 text-sm font-medium text-neutral-300 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                className="h-9 rounded-lg px-4 text-sm font-medium text-neutral-300 transition-colors hover:bg-ink/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
               >
                 {rejectLabel}
               </button>
@@ -118,7 +118,7 @@ export default function ApprovalOverlay({ open, preset, context = {}, onApprove,
               <button type="button" disabled={!canApprove} onClick={() => { if (!canApprove) return; onApprove?.();}}
                 className={`h-9 rounded-lg px-4 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${
                   canApprove ? "border border-skylab-400/30 bg-skylab-400/10 text-skylab-300 hover:bg-skylab-400/20" 
-                  : "cursor-not-allowed border border-white/5 bg-neutral-800/50 text-neutral-500"
+                  : "cursor-not-allowed border border-ink/5 bg-neutral-800/50 text-neutral-500"
                 }`}
               >
                 {mode === "delayed" && remaining > 0 ? `${approveLabel} (${remaining}s)` : approveLabel}

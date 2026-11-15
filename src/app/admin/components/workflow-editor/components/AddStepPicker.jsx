@@ -37,7 +37,7 @@ export default function AddStepPicker({ open, forms = [], usedFormIds = [], isLo
                 return (
                   <button type="button" onClick={select} disabled={disabled}
                     className={`flex w-full items-start gap-2 px-3 py-2 text-left transition-colors ${
-                      disabled ? "cursor-not-allowed opacity-50" : "hover:bg-white/10"
+                      disabled ? "cursor-not-allowed opacity-50" : "hover:bg-ink/10"
                     }`}
                   >
                     <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-skylab-400/70" />

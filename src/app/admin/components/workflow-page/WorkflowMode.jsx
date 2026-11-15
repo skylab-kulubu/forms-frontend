@@ -311,7 +311,7 @@ export default function WorkflowMode() {
       onFinished={() => showFinished(false)} onAnalytics={(formId) => toMode("analytics", formId)}
     />
   ) : (
-    <div ref={scrollRef} className="flex h-full flex-col bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px]">
+    <div ref={scrollRef} className="flex h-full flex-col bg-[radial-gradient(rgb(var(--forms-ink-rgb)/0.05)_1px,transparent_1px)] bg-size-[22px_22px]">
       <StateCard title="Bu akışta henüz adım yok" Icon={Workflow} description="Akışın adımlarını düzenleme ekranında kurarsın." />
     </div>
   );
@@ -351,7 +351,7 @@ export default function WorkflowMode() {
       <RoomHeader
         desktop={(
           <>
-            <button type="button" onClick={showOps} title="Ayarlar" className="rounded-md px-1.5 transition-colors hover:bg-white/5">
+            <button type="button" onClick={showOps} title="Ayarlar" className="rounded-md px-1.5 transition-colors hover:bg-ink/5">
               <StatePill tone={pill.tone}>{pill.label}</StatePill>
             </button>
             <HeaderButton icon={PencilLine} label="Düzenle" primary onClick={edit} disabled={!editable} />

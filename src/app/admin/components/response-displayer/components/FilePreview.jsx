@@ -56,7 +56,7 @@ function FileMeta({ fileType, fileSize, children }) {
 
 function StatusRow({ icon, tone = "text-neutral-500", title, detail }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-neutral-900/50 px-4 py-3">
+    <div className="flex items-center gap-3 rounded-lg border border-ink/10 bg-neutral-900/50 px-4 py-3">
       <span className={`shrink-0 ${tone}`}>{icon}</span>
       <div className="flex-1 min-w-0">
         <span className="block truncate text-sm text-neutral-300" title={title}>{title}</span>
@@ -68,7 +68,7 @@ function StatusRow({ icon, tone = "text-neutral-500", title, detail }) {
 
 function LoadingRow() {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-neutral-900/50 px-4 py-3">
+    <div className="flex items-center gap-3 rounded-lg border border-ink/10 bg-neutral-900/50 px-4 py-3">
       <Loader2 size={18} className="animate-spin text-neutral-500" />
       <span className="text-sm text-neutral-500">Dosya bilgileri yükleniyor...</span>
     </div>
@@ -77,7 +77,7 @@ function LoadingRow() {
 
 function UnavailableRow({ mediaId }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-neutral-900/50 px-4 py-3">
+    <div className="flex items-center gap-3 rounded-lg border border-ink/10 bg-neutral-900/50 px-4 py-3">
       <AlertCircle size={18} className="shrink-0 text-neutral-500" />
       <div className="flex-1 min-w-0">
         <span className="text-sm text-neutral-400">Dosya bilgilerine ulaşılamadı</span>
@@ -99,8 +99,8 @@ function PublicFile({ media }) {
   return (
     <div className="flex flex-col gap-0">
       {fileUrl && (
-        <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-neutral-900/50 px-4 py-3">
-          <div className="flex shrink-0 items-center justify-center size-10 rounded-md bg-white/5 text-neutral-400">
+        <div className="flex items-center gap-3 rounded-lg border border-ink/10 bg-neutral-900/50 px-4 py-3">
+          <div className="flex shrink-0 items-center justify-center size-10 rounded-md bg-ink/5 text-neutral-400">
             <FileTypeIcon fileType={fileType} />
           </div>
 
@@ -114,7 +114,7 @@ function PublicFile({ media }) {
           <div className="flex items-center gap-1.5">
             {canPreview && fileUrl && (
               <button type="button" onClick={() => setExpanded((v) => !v)} title={expanded ? "Önizlemeyi kapat" : "Önizle"}
-                className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-white/5 hover:text-neutral-200 transition-colors"
+                className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-ink/5 hover:text-neutral-200 transition-colors"
               >
                 <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="inline-flex">
                   <ChevronDown size={16} />
@@ -136,7 +136,7 @@ function PublicFile({ media }) {
             initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden"
           >
-            <div className="mt-2 overflow-hidden rounded-lg border border-white/10 bg-neutral-950/50">
+            <div className="mt-2 overflow-hidden rounded-lg border border-ink/10 bg-neutral-950/50">
               {isImage && !imageError && (
                 <img src={fileUrl} alt={fileName || "Yüklenen dosya"} className="max-h-72 w-full object-contain" onError={() => setImageError(true)}/>
               )}
@@ -243,8 +243,8 @@ function PrivateFile({ file, mediaId, responseId, token }) {
 
   return (
     <div className="flex flex-col gap-0">
-      <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-neutral-900/50 px-4 py-3">
-        <div className="flex shrink-0 items-center justify-center size-10 rounded-md bg-white/5 text-neutral-400">
+      <div className="flex items-center gap-3 rounded-lg border border-ink/10 bg-neutral-900/50 px-4 py-3">
+        <div className="flex shrink-0 items-center justify-center size-10 rounded-md bg-ink/5 text-neutral-400">
           <FileTypeIcon fileType={fileType} />
         </div>
 
@@ -261,7 +261,7 @@ function PrivateFile({ file, mediaId, responseId, token }) {
         <div className="flex items-center gap-1.5">
           {(isImage || isPdf) && (
             <button type="button" onClick={togglePreview} disabled={Boolean(opening)} title={expanded ? "Önizlemeyi kapat" : "Önizle"}
-              className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-white/5 hover:text-neutral-200 transition-colors disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-md p-2 text-neutral-400 hover:bg-ink/5 hover:text-neutral-200 transition-colors disabled:opacity-50"
             >
               {opening === "preview" ? <Loader2 size={16} className="animate-spin" /> : (
                 <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="inline-flex">
@@ -286,7 +286,7 @@ function PrivateFile({ file, mediaId, responseId, token }) {
             initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden"
           >
-            <div className="mt-2 overflow-hidden rounded-lg border border-white/10 bg-neutral-950/50">
+            <div className="mt-2 overflow-hidden rounded-lg border border-ink/10 bg-neutral-950/50">
               {isPdf ? (
                 <iframe src={previewUrl} title={fileName || "PDF dosyası"} className="h-80 w-full border-0"/>
               ) : (

@@ -51,7 +51,7 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
           Soru Metni
         </label>
         <AutoResizeTextarea id="mc-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+          className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Sorunuzu buraya yazın."
         />
       </div>
@@ -62,7 +62,7 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
             Açıklama
           </label>
           <AutoResizeTextarea id="mc-description" {...bind("description")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+            className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
             placeholder="Açıklamanızı buraya yazın."
           />
         </div>
@@ -70,11 +70,11 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
 
       <div className="flex flex-col gap-1.5">
         <button type="button" onClick={() => setChoicesOpen((s) => !s)}
-          className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 transition hover:bg-white/10"
+          className="flex items-center justify-between rounded-lg border border-ink/10 bg-ink/5 px-2 py-1.5 transition hover:bg-ink/10"
         >
           <span className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
             Seçenekler
-            <span className="ml-1.5 rounded-md bg-white/10 px-1.5 py-0.5 text-3xs font-semibold text-neutral-300">
+            <span className="ml-1.5 rounded-md bg-ink/10 px-1.5 py-0.5 text-3xs font-semibold text-neutral-300">
               {(prop.choices ?? []).length}
             </span>
             {lockedValues.length > 0 && (
@@ -99,14 +99,14 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
                     <div key={idx} className="flex items-center gap-2">
                       <div className="relative w-full">
                         <input type="text" readOnly={locked} title={locked ? LOCKED_OPTION_HINT : undefined}
-                          className={`block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${locked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
+                          className={`block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${locked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
                           placeholder={`Seçenek ${idx + 1}`}
                           value={choice} onChange={(e) => updateChoice(idx, e.target.value)} onPaste={(e) => handlePaste(e, idx)}
                         />
                         {locked && <Lock size={12} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500" />}
                       </div>
                       <button type="button" title={locked ? LOCKED_OPTION_HINT : undefined}
-                        className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-2xs text-neutral-300 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg border border-ink/10 bg-ink/5 px-2 py-2 text-2xs text-neutral-300 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={prop.choices.length <= 1 || locked} onClick={() => removeChoice(idx)}
                       >
                         <X size={18} />
@@ -116,7 +116,7 @@ export function CreateFormMultiChoice({ questionNumber, props, onPropsChange, re
                 })}
                 <div>
                   <button type="button" onClick={addChoice}
-                    className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-neutral-100 hover:bg-white/10"
+                    className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-ink/15 bg-ink/5 px-3 py-1.5 text-xs text-neutral-100 hover:bg-ink/10"
                   >
                     <Plus size={14} /> Seçenek Ekle
                   </button>
@@ -140,7 +140,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
   });
   const [internalValue, setInternalValue] = useState(Array.isArray(value) ? value : []);
   const currentValue = value !== undefined ? (Array.isArray(value) ? value : []) : internalValue;
-  const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
+  const optionBorderClass = missing ? "border-red-400/60" : "border-ink/10";
   const instanceId = useId();
 
   const commit = (next) => {
@@ -165,7 +165,7 @@ export function DisplayFormMultiChoice({ question, questionNumber, description, 
     const checked = currentValue.includes(choice.id);
     return (
       <label key={id} htmlFor={id}
-        className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`}
+        className={`flex cursor-pointer select-none items-center gap-3 rounded-md border ${optionBorderClass} bg-neutral-900/60 p-2 transition hover:bg-ink/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`}
       >
         {allowMultiple ? (
           <input id={id} name="multi_choice" type="checkbox" aria-required={required}

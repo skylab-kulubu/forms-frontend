@@ -39,12 +39,12 @@ function FormList({ phone, onPick }) {
         <div className="relative w-36 shrink-0">
           <Search size={12} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-neutral-500" />
           <input value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={handleKeyDown} placeholder="Form ara..." aria-label="Form ara"
-            className="h-7 w-full rounded-md border border-white/10 bg-neutral-900/60 pl-7 pr-2 text-2xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
+            className="h-7 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-7 pr-2 text-2xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
           />
         </div>
       ) : null}
     >
-      <div className={`divide-y divide-white/5 ${searchable ? "min-h-40" : ""}`}>
+      <div className={`divide-y divide-ink/5 ${searchable ? "min-h-40" : ""}`}>
         {matches.length === 0 ? <p className="py-6 text-center text-2xs text-neutral-500">Eşleşen form yok.</p> : null}
         {matches.slice(0, SHOWN).map((form) => (
           <StartRow key={form.id} Icon={FileText} phone={phone} title={form.title || "Adsız form"} onClick={() => onPick(form)} />
@@ -83,14 +83,14 @@ function QuestionStep({ form, phone, onBack, onImport }) {
     <div>
       <div className={`flex items-center gap-2 ${pad}`}>
         <button type="button" aria-label="Formlara dön" onClick={onBack}
-          className="-ml-1.5 grid size-7 shrink-0 place-items-center rounded-md text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100"
+          className="-ml-1.5 grid size-7 shrink-0 place-items-center rounded-md text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100"
         >
           <ChevronLeft size={15} />
         </button>
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-neutral-100">{form.title || "Adsız form"}</span>
         {schema.length > 0 ? (
           <button type="button" onClick={() => setPicked(allPicked ? [] : schema.map((field) => field.id))}
-            className="shrink-0 text-2xs text-neutral-400 underline decoration-white/20 underline-offset-2 transition-colors hover:text-neutral-100"
+            className="shrink-0 text-2xs text-neutral-400 underline decoration-ink/20 underline-offset-2 transition-colors hover:text-neutral-100"
           >
             {allPicked ? "Seçimi kaldır" : "Hepsini seç"}
           </button>
@@ -104,7 +104,7 @@ function QuestionStep({ form, phone, onBack, onImport }) {
           const type = fieldTypeOf(field);
           const on = picked.includes(field.id);
           return (
-            <label key={field.id} className={`flex cursor-pointer items-start gap-2.5 rounded-lg py-2 text-left transition-colors ${pad} ${on ? "bg-skylab-500/8" : "hover:bg-white/3"}`}>
+            <label key={field.id} className={`flex cursor-pointer items-start gap-2.5 rounded-lg py-2 text-left transition-colors ${pad} ${on ? "bg-skylab-500/8" : "hover:bg-ink/3"}`}>
               <input type="checkbox" checked={on} onChange={() => toggle(field.id)} className="checkbox mt-0.5 shrink-0" />
               <span className="mt-0.5 w-4 shrink-0 text-right text-2xs tabular-nums text-neutral-500">{numbers.get(field.id) ?? ""}</span>
               <type.Icon size={14} className="mt-0.5 shrink-0 text-neutral-500" />

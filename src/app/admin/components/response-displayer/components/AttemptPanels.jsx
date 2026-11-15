@@ -14,7 +14,7 @@ const MARK_TONE = {
   done: "border-emerald-400/30 bg-emerald-400/10 text-emerald-400",
   review: "border-amber-400/30 bg-amber-400/10 text-amber-400",
   declined: "border-red-400/30 bg-red-400/10 text-red-300",
-  paused: "border-white/15 bg-white/5 text-neutral-400",
+  paused: "border-ink/15 bg-ink/5 text-neutral-400",
   current: "border-skylab-400/40 bg-skylab-500/10 text-skylab-300",
 };
 
@@ -51,9 +51,9 @@ export function TaskRow({ task }) {
   return (
     <div className="mx-auto mb-5 w-full max-w-2xl">
       <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open}
-        className={`${ROW} ${ROW_HOVER} flex w-full items-center gap-3 border-white/10 px-3 py-2.5 text-left`}
+        className={`${ROW} ${ROW_HOVER} flex w-full items-center gap-3 border-ink/10 px-3 py-2.5 text-left`}
       >
-        <span className={`${TILE} border-white/10 text-neutral-400`}><ClipboardList size={14} /></span>
+        <span className={`${TILE} border-ink/10 text-neutral-400`}><ClipboardList size={14} /></span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-neutral-100">Görev metni</span>
           <span className="block truncate text-2xs text-neutral-500">{taskFirstLine(content)} · {taskReadMinutes(content)} dk okuma</span>
@@ -65,7 +65,7 @@ export function TaskRow({ task }) {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden"
           >
-            <div className="mt-2 rounded-lg border border-white/5 px-4 py-3">
+            <div className="mt-2 rounded-lg border border-ink/5 px-4 py-3">
               <TaskMarkdown content={content} small />
             </div>
           </motion.div>
@@ -122,7 +122,7 @@ export function FlowButtons({ onCancel, onConfirm, confirmLabel, pending, danger
   return (
     <div className="mt-3 flex items-center gap-2">
       <button type="button" onClick={onCancel} disabled={pending}
-        className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+        className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
       >
         Vazgeç
       </button>
@@ -137,14 +137,14 @@ export function FlowButtons({ onCancel, onConfirm, confirmLabel, pending, danger
 
 export function ConfirmCard({ title, outcome, note, confirmLabel, danger = false, onCancel, onConfirm, pending, decisionNote, onNoteChange }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/3 p-3">
+    <div className="rounded-xl border border-ink/10 bg-ink/3 p-3">
       <p className="text-xs font-medium text-neutral-100">{title}</p>
       {outcome && <p className="mt-1 text-2xs text-neutral-300">{outcome}</p>}
       <p className="mt-1 text-3xs leading-relaxed text-neutral-500">{note}</p>
       <label htmlFor="attempt-decision-note" className="mb-1.5 mt-3 block text-3xs font-medium text-neutral-500">Not (süre geçmişinde görünür)</label>
       <textarea id="attempt-decision-note" rows={2} value={decisionNote} onChange={(event) => onNoteChange(event.target.value)} maxLength={500}
         placeholder="İsteğe bağlı"
-        className="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
+        className="w-full rounded-lg border border-ink/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
       />
       <FlowButtons onCancel={onCancel} onConfirm={onConfirm} confirmLabel={confirmLabel} pending={pending} danger={danger} />
     </div>
@@ -160,12 +160,12 @@ export function ExtendForm({ attempt, pending, onCancel, onConfirm }) {
   const next = new Date(base + hours * 3_600_000);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/3 p-3">
+    <div className="rounded-xl border border-ink/10 bg-ink/3 p-3">
       <p className="text-xs font-medium text-neutral-100">Süre ver</p>
       <div className="mt-2.5 grid grid-cols-4 gap-1.5">
         {EXTEND_PRESETS.map((value) => (
           <button key={value} type="button" onClick={() => setHours(value)} aria-pressed={hours === value}
-            className={`h-7 rounded-md border text-2xs font-medium tabular-nums transition-colors ${hours === value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-300 hover:text-neutral-100"}`}
+            className={`h-7 rounded-md border text-2xs font-medium tabular-nums transition-colors ${hours === value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-300 hover:text-neutral-100"}`}
           >
             +{value} sa
           </button>
@@ -175,7 +175,7 @@ export function ExtendForm({ attempt, pending, onCancel, onConfirm }) {
       <label htmlFor="attempt-extend-note" className="mb-1.5 mt-3 block text-3xs font-medium text-neutral-500">Not (adaya gönderilmez)</label>
       <textarea id="attempt-extend-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={500}
         placeholder="Neden süre verdiğinizi yazın, süre geçmişinde görünür."
-        className="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
+        className="w-full rounded-lg border border-ink/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
       />
       <p className="mt-1.5 text-3xs leading-relaxed text-neutral-500">
         Aday kaldığı yerden devam eder ve e-postayla bilgilendirilir.
@@ -251,7 +251,7 @@ export function DecisionSection({ attempt, mutation, initialFlow = null, onExten
           </button>
           {attempt.canExtend && (
             <button type="button" onClick={() => setFlow("extend")}
-              className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-left transition hover:bg-white/10"
+              className="flex w-full items-center gap-3 rounded-xl border border-ink/10 bg-ink/5 px-3 py-2.5 text-left transition hover:bg-ink/10"
             >
               <ClockPlus size={16} className="shrink-0 text-neutral-300" />
               <span className="min-w-0">
@@ -397,7 +397,7 @@ export function TimeEvents({ attempt }) {
         const last = index === events.length - 1;
         return (
           <li key={event.id ?? index} className={`relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 ${last ? "" : "pb-4"}`}>
-            {!last && <span aria-hidden className="absolute bottom-1.5 left-3 top-7.5 w-px -translate-x-1/2 bg-white/10" />}
+            {!last && <span aria-hidden className="absolute bottom-1.5 left-3 top-7.5 w-px -translate-x-1/2 bg-ink/10" />}
             <span className={`grid size-6 place-items-center rounded-md border text-2xs font-semibold ${MARK_TONE[view.tone]}`}>
               <view.Icon size={12} strokeWidth={2.2} />
             </span>

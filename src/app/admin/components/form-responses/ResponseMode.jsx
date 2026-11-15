@@ -80,7 +80,7 @@ function Spinner(props) {
 
 function StateBox({ title, description, Icon = FileXCorner }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#1c1c1c] p-10">
+    <div className="rounded-3xl border border-ink/10 bg-panel-soft p-10">
       <StateCard title={title} Icon={Icon} description={description} />
     </div>
   );
@@ -98,7 +98,7 @@ function PanelSkeleton() {
 function NavButton({ label, disabled, onClick, children }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled} title={label} aria-label={label}
-      className="grid size-10 place-items-center rounded-md text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 disabled:opacity-30 sm:size-7"
+      className="grid size-10 place-items-center rounded-md text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:opacity-30 sm:size-7"
     >
       {children}
     </button>
@@ -108,7 +108,7 @@ function NavButton({ label, disabled, onClick, children }) {
 function BarButton({ label, onClick, className = "text-neutral-300", children }) {
   return (
     <button type="button" aria-label={label} title={label} onClick={onClick}
-      className={`flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-2xs font-medium transition-colors hover:bg-white/5 hover:text-neutral-100 ${className}`}
+      className={`flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-2xs font-medium transition-colors hover:bg-ink/5 hover:text-neutral-100 ${className}`}
     >
       {children}
     </button>
@@ -506,7 +506,7 @@ export default function ResponseMode() {
     <span className="flex shrink-0 items-center gap-0.5">
       {filterOn ? (
         <button type="button" onClick={() => setFilters({ ...activeFilters, status: "all" })} title="Filtreyi kaldır"
-          className="mr-1 hidden h-6 items-center gap-1 rounded-md border border-white/10 px-1.5 text-3xs text-neutral-400 transition-colors hover:text-neutral-200 sm:flex"
+          className="mr-1 hidden h-6 items-center gap-1 rounded-md border border-ink/10 px-1.5 text-3xs text-neutral-400 transition-colors hover:text-neutral-200 sm:flex"
         >
           <span className={`size-1.5 rounded-full ${filterInfo.dot ?? ""}`} />
           {filterInfo.label}
@@ -550,7 +550,7 @@ export default function ResponseMode() {
         <button type="button" onClick={() => setChangesChoice(!showChanges)} aria-pressed={showChanges}
           title={onBoard ? "Önceki cevapları yanda göster" : `${previousStep?.round ?? 1}. gönderimden farklı cevapları vurgula`}
           className={`flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-3xs font-medium transition-colors sm:h-6 sm:px-2 ${
-            showChanges ? "border-sky-400/40 bg-sky-400/10 text-sky-200" : "border-white/10 text-neutral-400 hover:text-neutral-200"
+            showChanges ? "border-sky-400/40 bg-sky-400/10 text-sky-200" : "border-ink/10 text-neutral-400 hover:text-neutral-200"
           }`}
         >
           <GitCompare size={11} />
@@ -562,14 +562,14 @@ export default function ResponseMode() {
   ) : null;
 
   const banner = own && !isOwnView ? (
-    <div className="flex min-h-11 items-center gap-3 rounded-xl border border-white/10 bg-neutral-900/80 px-3 py-2">
+    <div className="flex min-h-11 items-center gap-3 rounded-xl border border-ink/10 bg-neutral-900/80 px-3 py-2">
       <History size={14} className="shrink-0 text-neutral-500" />
       <p className="min-w-0 flex-1 text-2xs leading-snug text-neutral-400">
         <span className="font-medium text-neutral-200">{sameStage ? `${viewedStep.round ?? 1}. gönderim` : viewedStep.formTitle || "Adsız form"}</span>
         {shown ? <> · {formatDateTime(shown.submittedAt)} · <span className={shownView.text}>{shownView.label}</span></> : null}
       </p>
       <button type="button" onClick={() => pickJourney(ownStep ?? { stage: own.workflow?.stage, round: own.workflow?.round })}
-        className="flex min-h-9 shrink-0 items-center rounded-lg border border-white/10 bg-white/5 px-2.5 text-2xs font-medium text-neutral-200 transition-colors hover:bg-white/10 sm:min-h-7"
+        className="flex min-h-9 shrink-0 items-center rounded-lg border border-ink/10 bg-ink/5 px-2.5 text-2xs font-medium text-neutral-200 transition-colors hover:bg-ink/10 sm:min-h-7"
       >
         {sameStage ? `${own.workflow?.round ?? 1}. gönderime dön` : "Geri dön"}
       </button>
@@ -577,12 +577,12 @@ export default function ResponseMode() {
   ) : null;
 
   const mailNotice = mail.message ? (
-    <div role="status" className="flex items-start gap-3 rounded-xl border border-white/10 bg-neutral-900/80 px-3 py-2.5">
+    <div role="status" className="flex items-start gap-3 rounded-xl border border-ink/10 bg-neutral-900/80 px-3 py-2.5">
       <Mail size={14} className="mt-0.5 shrink-0 text-neutral-500" />
       <p className="min-w-0 flex-1 text-2xs leading-relaxed text-neutral-300">{mail.message}</p>
       {mail.loading ? <Loader2 size={13} className="mt-0.5 shrink-0 animate-spin text-neutral-500" /> : (
         <button type="button" onClick={mail.dismiss} aria-label="Bildirimi kapat"
-          className="-my-1 grid size-8 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200 sm:size-6"
+          className="-my-1 grid size-8 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200 sm:size-6"
         >
           <X size={13} />
         </button>
@@ -644,7 +644,7 @@ export default function ResponseMode() {
   ) : null;
   const inspector = !canView ? null : panel ?? (route.responseId || listResult.isPending ? <PanelSkeleton /> : null);
   const decisionBox = stacked && panel ? (
-    <div data-decision className="scroll-mt-16 overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/90 sm:scroll-mt-4">
+    <div data-decision className="scroll-mt-16 overflow-hidden rounded-2xl border border-ink/10 bg-neutral-900/90 sm:scroll-mt-4">
       <div className={INSPECTOR_HEADER}>{panelHead}</div>
       {panel}
     </div>

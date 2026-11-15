@@ -36,7 +36,7 @@ function takeCanvasAnchor() {
 export function StepBadge({ depth, isStart = false, size = "sm" }) {
   return (
     <span className={`grid shrink-0 place-items-center border font-semibold ${size === "sm" ? "size-4 rounded text-4xs" : "size-5 rounded-md text-3xs"} ${
-      isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"
+      isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-400"
     }`}
     >
       {depth ?? "?"}
@@ -67,7 +67,7 @@ export function FlowChips({ flow, activeFormId, onPick }) {
                 {index ? <span className="shrink-0 text-3xs text-neutral-700">/</span> : null}
                 <button type="button" onClick={() => onPick(node.formId)} aria-current={active ? "step" : undefined}
                   className={`flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-2 text-2xs font-medium transition-colors sm:px-2 sm:py-0.5 ${
-                    active ? "border-white/15 bg-white/5 text-neutral-100" : "border-transparent text-neutral-500 hover:bg-white/3 hover:text-neutral-300"
+                    active ? "border-ink/15 bg-ink/5 text-neutral-100" : "border-transparent text-neutral-500 hover:bg-ink/3 hover:text-neutral-300"
                   }`}
                 >
                   <span className="text-3xs tabular-nums text-neutral-500">{flow.stages.depths.get(node.nodeKey) ?? "?"}</span>
@@ -89,7 +89,7 @@ export function DeviceToggle({ device, onChange }) {
     <span className="hidden items-center gap-0.5 sm:flex">
       {options.map(([value, Icon, label]) => (
         <button key={value} type="button" title={label} aria-label={label} aria-pressed={device === value} onClick={() => onChange(value)}
-          className={`grid size-6 place-items-center rounded transition-colors ${device === value ? "bg-white/10 text-neutral-100" : "text-neutral-500 hover:text-neutral-200"}`}
+          className={`grid size-6 place-items-center rounded transition-colors ${device === value ? "bg-ink/10 text-neutral-100" : "text-neutral-500 hover:text-neutral-200"}`}
         >
           <Icon size={13} />
         </button>
@@ -101,7 +101,7 @@ export function DeviceToggle({ device, onChange }) {
 export function ReadOnlyPill() {
   return (
     <span title="Süper admin olarak görüyorsun. Karar, arşiv ve düzenleme formun ekibine açık."
-      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/10 bg-white/3 px-1.5 py-0.5 text-3xs text-neutral-400"
+      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-ink/10 bg-ink/3 px-1.5 py-0.5 text-3xs text-neutral-400"
     >
       <Eye size={10} />
       Salt okunur
@@ -161,13 +161,13 @@ export default function RoomCanvas({ width, cardWidth, top, above = null, card, 
 
   return (
     <div ref={scrollRef} data-room-canvas data-commenting={onBoard ? "true" : undefined} onPointerDown={handleBackgroundDown}
-      className={`${wide && !onBoard ? "studio-fade" : "studio-fade-edge"} h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar`}
+      className={`${wide && !onBoard ? "studio-fade" : "studio-fade-edge"} h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgb(var(--forms-ink-rgb)/0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar`}
     >
       <div ref={pushRef} className={`flex min-h-full flex-col transition-transform duration-400 motion-reduce:transition-none ${EASE_CLASS}`}>
         <div ref={columnRef} data-room-column className={`relative mx-auto flex w-full flex-1 flex-col px-3 pb-36 pt-4 sm:pb-40 sm:pt-10 ${wide ? "sm:px-14" : "sm:px-6"}`}
           style={{ maxWidth: cardWidth + WIDE_GUTTER }}
         >
-          {sticky ? <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-1 border-b border-white/5 bg-neutral-900/90 px-3 backdrop-blur sm:hidden">{sticky}</div> : null}
+          {sticky ? <div className="sticky top-0 z-20 -mx-3 -mt-4 mb-1 border-b border-ink/5 bg-neutral-900/90 px-3 backdrop-blur sm:hidden">{sticky}</div> : null}
           <div ref={headRef} data-room-head className={`mx-auto w-full transition-[padding] duration-400 motion-reduce:transition-none ${EASE_CLASS}`} style={{ maxWidth: cardWidth }}>
             {top}
             {above ? <div className="mb-4">{above}</div> : null}

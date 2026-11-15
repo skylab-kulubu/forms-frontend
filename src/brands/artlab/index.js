@@ -3,6 +3,7 @@ import { artlabDisplay, artlabSans } from "./fonts";
 import { CardTop } from "./slots";
 
 const artlab = {
+  theme: "dark",
   scopeClass: `${artlabSans.variable} ${artlabDisplay.variable}`,
   fontLoads: [
     `700 26px ${artlabDisplay.style.fontFamily}`,

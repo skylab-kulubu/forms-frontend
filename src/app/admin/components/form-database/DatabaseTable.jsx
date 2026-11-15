@@ -37,7 +37,7 @@ const ownerNameOf = (owner) => formatPersonName(owner?.fullName) || owner?.email
 export function DatabaseListHeader({ sort, dir, onSort }) {
   const props = { sortField: sort, sortDirection: dir, onSort };
   return (
-    <div className={`${DB_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
+    <div className={`${DB_GRID} sticky top-0 z-20 border-b border-ink/10 bg-neutral-900 px-3 pb-2`}>
       <SortHeader field="status" title={SORT_TITLES.status} {...props} />
       <SortHeader label="Form" field="title" align="left" title={SORT_TITLES.title} {...props} />
       <SortHeader label="Sahip" field="owner" align="left" visibility="hidden md:flex" title={SORT_TITLES.owner} {...props} />
@@ -54,7 +54,7 @@ function FlowTag({ workflow }) {
   const name = workflow.name || "Adsız akış";
   return (
     <Link href={`/admin/workflows/${workflow.id}`} title={`Akışa git: ${name}`}
-      className="relative z-10 inline-flex min-w-0 max-w-56 items-center gap-1 rounded border border-white/10 bg-white/3 px-1.5 py-px text-3xs text-neutral-400 transition-colors hover:border-white/20 hover:text-neutral-200"
+      className="relative z-10 inline-flex min-w-0 max-w-56 items-center gap-1 rounded border border-ink/10 bg-ink/3 px-1.5 py-px text-3xs text-neutral-400 transition-colors hover:border-ink/20 hover:text-neutral-200"
     >
       <Workflow size={10} className="shrink-0 text-neutral-500" />
       <span className="truncate">{name}</span>
@@ -98,8 +98,8 @@ export function DatabaseRow({ form, open, onToggle, onRestore, restoring = false
   const responses = form.responseCount ?? 0;
 
   return (
-    <div className={open ? "bg-white/2.5" : ""}>
-      <div className={`group/row relative transition-colors ${open ? "" : "hover:bg-white/3"}`}>
+    <div className={open ? "bg-ink/2.5" : ""}>
+      <div className={`group/row relative transition-colors ${open ? "" : "hover:bg-ink/3"}`}>
         {deleted ? null : (
           <button type="button" onClick={onToggle} aria-expanded={open} aria-label={`${title}: ${open ? "ayrıntıyı kapat" : "ayrıntıyı aç"}`}
             className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-skylab-400/40"
@@ -109,13 +109,13 @@ export function DatabaseRow({ form, open, onToggle, onRestore, restoring = false
           <div className="flex justify-center">{deleted ? <DeletedDot /> : <StatusDot form={form} />}</div>
 
           <div className="flex min-w-0 items-center gap-3">
-            <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3 ${deleted ? "opacity-50" : ""}`}>
+            <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3 ${deleted ? "opacity-50" : ""}`}>
               <FileText className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
             </div>
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-2">
                 <h3 className={`truncate text-sm font-medium transition-colors ${deleted ? "text-neutral-500" : open ? "text-neutral-50" : "text-neutral-200 group-hover/row:text-neutral-50"}`}>{title}</h3>
-                {deleted ? <span className="shrink-0 rounded-md border border-white/10 px-1 py-0.5 text-4xs uppercase tracking-[0.18em] text-neutral-500">Silindi</span> : null}
+                {deleted ? <span className="shrink-0 rounded-md border border-ink/10 px-1 py-0.5 text-4xs uppercase tracking-[0.18em] text-neutral-500">Silindi</span> : null}
               </div>
               <div className="mt-0.5 flex min-h-4 min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:flex-nowrap">
                 <FeatureIcons form={form} />
@@ -149,7 +149,7 @@ export function DatabaseRow({ form, open, onToggle, onRestore, restoring = false
           <div className="flex items-center justify-end gap-1">
             {deleted ? (
               <button type="button" onClick={onRestore} disabled={restoring} title="Formu geri yükle; kapalı olarak döner"
-                className="relative z-10 inline-flex h-8 items-center gap-1.5 rounded-md border border-white/10 px-2 text-2xs font-medium text-neutral-200 transition-colors hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300 disabled:opacity-60"
+                className="relative z-10 inline-flex h-8 items-center gap-1.5 rounded-md border border-ink/10 px-2 text-2xs font-medium text-neutral-200 transition-colors hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300 disabled:opacity-60"
               >
                 {restoring ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
                 <span className="hidden sm:inline">Geri yükle</span>
@@ -158,7 +158,7 @@ export function DatabaseRow({ form, open, onToggle, onRestore, restoring = false
               <>
                 <ChevronDown aria-hidden="true" className={`hidden h-4 w-4 transition-[transform,color] sm:block ${open ? "rotate-180 text-neutral-300" : "text-neutral-600 group-hover/row:text-neutral-400"}`} />
                 <Link href={`/admin/forms/${form.id}`} title="Formu aç" aria-label={`${title} formunu aç`}
-                  className="relative z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-white/5 hover:text-skylab-300"
+                  className="relative z-10 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-ink/5 hover:text-skylab-300"
                 >
                   <ChevronRight className="h-4.5 w-4.5 transition-transform group-hover/row:translate-x-0.5" />
                 </Link>
@@ -180,7 +180,7 @@ function SkeletonBlock({ className = "" }) {
 
 export function DatabaseSkeleton({ count = 6 }) {
   return (
-    <div className="divide-y divide-white/5">
+    <div className="divide-y divide-ink/5">
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className={`${DB_GRID} px-3 py-2.5`}>
           <div className="flex justify-center"><SkeletonBlock className="size-1.5 rounded-full" /></div>

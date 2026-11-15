@@ -133,11 +133,11 @@ function CompactActions({ returnHref, people = [], onShare, draft, onUndo, canUn
       <AnimatePresence>
       {anchor ? (
         <Floating key="more-menu" anchor={anchor} onDismiss={() => setAnchor(null)} placement="bottom-end" offset={6}>
-          <motion.div role="menu" {...POPOVER_MOTION} className="w-60 rounded-[10px] border border-white/15 bg-[#1e1e1e] p-1.5 shadow-2xl shadow-black/50">
+          <motion.div role="menu" {...POPOVER_MOTION} className="w-60 rounded-[10px] border border-ink/15 bg-panel p-1.5 shadow-2xl shadow-black/50">
             {items.map((item) => (
               <button key={item.key} type="button" role="menuitem" disabled={item.disabled}
                 onClick={() => { setAnchor(null); item.onClick(); }}
-                className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-left text-xs transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-45 ${item.tone ?? "text-neutral-200"}`}
+                className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-left text-xs transition-colors hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-45 ${item.tone ?? "text-neutral-200"}`}
               >
                 <item.icon size={14} className="shrink-0 opacity-80" />
                 <span className="min-w-0 flex-1">

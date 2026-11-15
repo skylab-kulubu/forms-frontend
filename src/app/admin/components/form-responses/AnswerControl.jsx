@@ -6,7 +6,7 @@ import { useMatrixLayout } from "@/app/components/form-components/FormMatrix";
 import { FilePreview } from "../response-displayer/components/FilePreview";
 import { answerKey, choiceItems, formatAnswerDate, isEmptyAnswer, matrixOf, recordsOf } from "./response-data";
 
-const BOX = "rounded-lg border border-white/10 bg-neutral-900/60";
+const BOX = "rounded-lg border border-ink/10 bg-neutral-900/60";
 const EMPTY = "Cevap yok";
 
 function linkOf(text) {
@@ -70,7 +70,7 @@ function ChoiceAnswer({ field, answer }) {
   return (
     <div className="mt-3 flex flex-col gap-2">
       {rows.map((row, index) => (
-        <div key={`${row.label}-${index}`} className={`flex items-center gap-3 rounded-md border p-2 ${row.on ? "border-skylab-400/10 bg-skylab-400/20" : "border-white/10 bg-neutral-900/60"}`}>
+        <div key={`${row.label}-${index}`} className={`flex items-center gap-3 rounded-md border p-2 ${row.on ? "border-skylab-400/10 bg-skylab-400/20" : "border-ink/10 bg-neutral-900/60"}`}>
           <input type="checkbox" className="checkbox shrink-0" checked={row.on} readOnly tabIndex={-1} aria-label={row.label} />
           <span className="text-sm text-neutral-200">{row.label}</span>
         </div>
@@ -119,7 +119,7 @@ function SliderAnswer({ field, answer }) {
         ) : null}
       </span>
       <span className="w-6 shrink-0 text-xs font-medium text-neutral-500">{max}</span>
-      <span className="mx-1 h-5 w-px shrink-0 bg-white/10" />
+      <span className="mx-1 h-5 w-px shrink-0 bg-ink/10" />
       <span className={`min-w-10 text-center text-sm ${empty ? "text-neutral-600" : "text-neutral-200"}`}>{empty ? "—" : answerKey(answer)}</span>
     </div>
   );
@@ -137,21 +137,21 @@ function MatrixAnswer({ field, answer }) {
   return (
     <div ref={rootRef} className="mt-3 w-full">
       {layout.mode === "table" ? (
-        <div ref={scrollerRef} className="w-full overflow-x-auto rounded-lg border border-white/10">
+        <div ref={scrollerRef} className="w-full overflow-x-auto rounded-lg border border-ink/10">
           <table className="w-full text-left text-xs">
-            <thead className="bg-white/3 text-neutral-400">
+            <thead className="bg-ink/3 text-neutral-400">
               <tr>
                 <th className="px-3 py-2 font-medium" />
                 {columns.map((column) => <th key={column} className="px-2 py-2 text-center font-medium">{column}</th>)}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-ink/5">
               {rows.map((row) => (
                 <tr key={row}>
                   <td className="px-3 py-2 text-neutral-200">{row}</td>
                   {columns.map((column) => (
                     <td key={column} className="px-2 py-2 text-center">
-                      <span className={`inline-block size-3.5 rounded-full border ${picked[row] === column ? "border-skylab-300 bg-skylab-400 shadow-[inset_0_0_0_3px_#1c1c1c]" : "border-white/20"}`} />
+                      <span className={`inline-block size-3.5 rounded-full border ${picked[row] === column ? "border-skylab-300 bg-skylab-400 shadow-[inset_0_0_0_3px_#1c1c1c]" : "border-ink/20"}`} />
                     </td>
                   ))}
                 </tr>
@@ -160,7 +160,7 @@ function MatrixAnswer({ field, answer }) {
           </table>
         </div>
       ) : (
-        <dl className="divide-y divide-white/5 rounded-lg border border-white/10">
+        <dl className="divide-y divide-ink/5 rounded-lg border border-ink/10">
           {rows.map((row) => (
             <div key={row} className="flex items-baseline justify-between gap-4 px-3 py-2 text-xs">
               <dt className="min-w-0 text-neutral-400">{row}</dt>
@@ -181,9 +181,9 @@ function RecordsAnswer({ answer }) {
   return (
     <div className="mt-3 flex flex-col gap-2">
       {records.map((record, index) => (
-        <div key={index} className="overflow-hidden rounded-lg border border-white/10 bg-white/3">
-          <div className="border-b border-white/5 px-3 py-1.5 text-3xs font-medium text-neutral-500">{index + 1}. kayıt</div>
-          <div className="divide-y divide-white/5">
+        <div key={index} className="overflow-hidden rounded-lg border border-ink/10 bg-ink/3">
+          <div className="border-b border-ink/5 px-3 py-1.5 text-3xs font-medium text-neutral-500">{index + 1}. kayıt</div>
+          <div className="divide-y divide-ink/5">
             {columns.map((column) => {
               const cell = record?.[column];
               const text = cell == null ? "" : String(cell).trim();
@@ -203,7 +203,7 @@ function RecordsAnswer({ answer }) {
 
 function FileAnswer({ answer, responseId }) {
   if (isEmptyAnswer(answer)) {
-    return <div className="mt-3 flex h-16 w-full items-center rounded-lg border border-dashed border-white/10 bg-neutral-900/40 px-4 text-sm text-neutral-600">Dosya yüklenmedi</div>;
+    return <div className="mt-3 flex h-16 w-full items-center rounded-lg border border-dashed border-ink/10 bg-neutral-900/40 px-4 text-sm text-neutral-600">Dosya yüklenmedi</div>;
   }
   return (
     <div className="pointer-events-auto mt-3" onClick={(event) => event.stopPropagation()}>

@@ -50,11 +50,11 @@ export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm
   return (
     <Floating anchor={anchor} onDismiss={onCancel}>
     <motion.div variants={panelVariants} initial="hidden" animate="visible" exit="exit" onMouseDown={(e) => e.stopPropagation()}
-      className={`w-[280px] rounded-xl border border-white/10 bg-neutral-900/40 p-2.5 shadow-lg backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30 ${className}`}
+      className={`w-[280px] rounded-xl border border-ink/10 bg-neutral-900/40 p-2.5 shadow-lg backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30 ${className}`}
     >
       <motion.div variants={staggerContainerVariants} className="flex flex-col">
         
-        <motion.div variants={itemVariants} className="flex items-center justify-between gap-2 p-1 rounded-md bg-white/5">
+        <motion.div variants={itemVariants} className="flex items-center justify-between gap-2 p-1 rounded-md bg-ink/5">
           <div className="text-xs font-medium text-neutral-100">
             {pad2(hour)}:{pad2(minute)}
           </div>
@@ -62,20 +62,20 @@ export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm
 
         <motion.div variants={itemVariants} className="mt-2 grid grid-cols-2 gap-1.5">
           
-          <div className="max-h-40 overflow-auto rounded-md border border-white/10 bg-white/5 p-1 scrollbar" ref={hourContainerRef}>
+          <div className="max-h-40 overflow-auto rounded-md border border-ink/10 bg-ink/5 p-1 scrollbar" ref={hourContainerRef}>
             {hours.map((h) => (
               <button key={h} data-active={h === hour} type="button" onClick={() => onChange(h, minute)}
-                className={`block w-full rounded-md px-1.5 py-1 text-left text-xs transition hover:bg-white/10 ${h === hour ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
+                className={`block w-full rounded-md px-1.5 py-1 text-left text-xs transition hover:bg-ink/10 ${h === hour ? "bg-ink/15 text-neutral-100 ring-1 ring-ink/20" : "text-neutral-200"}`}
               >
                 {pad2(h)}
               </button>
             ))}
           </div>
 
-          <div className="max-h-40 overflow-auto rounded-md border border-white/10 bg-white/5 p-1 scrollbar" ref={minuteContainerRef}>
+          <div className="max-h-40 overflow-auto rounded-md border border-ink/10 bg-ink/5 p-1 scrollbar" ref={minuteContainerRef}>
             {minutes.map((m) => (
               <button key={m} data-active={m === minute} type="button" onClick={() => onChange(hour, m)}
-                className={`block w-full rounded-md px-1.5 py-1 text-left text-xs transition hover:bg-white/10 ${m === minute ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
+                className={`block w-full rounded-md px-1.5 py-1 text-left text-xs transition hover:bg-ink/10 ${m === minute ? "bg-ink/15 text-neutral-100 ring-1 ring-ink/20" : "text-neutral-200"}`}
               >
                 {pad2(m)}
               </button>
@@ -89,10 +89,10 @@ export default function TimePicker({ hour, minute, onChange, onCancel, onConfirm
           </button>
           
           <div className="flex gap-2">
-            <button type="button" onClick={onCancel} className="rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-neutral-200 hover:bg-white/10 transition-colors">
+            <button type="button" onClick={onCancel} className="rounded-md border border-ink/10 bg-ink/5 px-2.5 py-1.5 text-xs text-neutral-200 hover:bg-ink/10 transition-colors">
               İptal
             </button>
-            <button type="button" onClick={onConfirm} className="rounded-md border border-white/10 bg-white/10 px-2.5 py-1.5 text-xs text-neutral-100 hover:bg-white/15 transition-colors">
+            <button type="button" onClick={onConfirm} className="rounded-md border border-ink/10 bg-ink/10 px-2.5 py-1.5 text-xs text-neutral-100 hover:bg-ink/15 transition-colors">
               Seç
             </button>
           </div>

@@ -6,8 +6,8 @@ import { motion } from "framer-motion";
 import { CircleCheck } from "lucide-react";
 import { columnsOf } from "./table-data";
 
-const LINE = "bg-white/15";
-const STEP_CARD = "flex h-12 min-w-0 items-center gap-2 rounded-lg border border-white/8 bg-white/2 px-2.5 outline-none transition-colors hover:border-white/15 hover:bg-white/4 focus-visible:ring-2 focus-visible:ring-skylab-400/40";
+const LINE = "bg-ink/15";
+const STEP_CARD = "flex h-12 min-w-0 items-center gap-2 rounded-lg border border-ink/8 bg-ink/2 px-2.5 outline-none transition-colors hover:border-ink/15 hover:bg-ink/4 focus-visible:ring-2 focus-visible:ring-skylab-400/40";
 
 function Reveal({ index, className = "", children }) {
   return (
@@ -42,8 +42,8 @@ function StepCard({ step }) {
 
 function Column({ steps, index, hasNext }) {
   const forked = steps.length > 1;
-  const tickIn = "@2xl:before:absolute @2xl:before:-left-2.5 @2xl:before:top-1/2 @2xl:before:h-px @2xl:before:w-2.5 @2xl:before:bg-white/15";
-  const tickOut = hasNext ? "@2xl:mr-2.5 @2xl:after:absolute @2xl:after:-right-2.5 @2xl:after:top-1/2 @2xl:after:h-px @2xl:after:w-2.5 @2xl:after:bg-white/15" : "";
+  const tickIn = "@2xl:before:absolute @2xl:before:-left-2.5 @2xl:before:top-1/2 @2xl:before:h-px @2xl:before:w-2.5 @2xl:before:bg-ink/15";
+  const tickOut = hasNext ? "@2xl:mr-2.5 @2xl:after:absolute @2xl:after:-right-2.5 @2xl:after:top-1/2 @2xl:after:h-px @2xl:after:w-2.5 @2xl:after:bg-ink/15" : "";
 
   return (
     <Reveal index={index} className="relative flex min-w-0 flex-col justify-center gap-1.5 @2xl:w-48 @2xl:flex-none">

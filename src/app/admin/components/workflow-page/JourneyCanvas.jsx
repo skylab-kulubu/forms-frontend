@@ -9,7 +9,7 @@ import { triggerStyle } from "../form-studio/studio-flow";
 import { FINISHED_ROWS, GROUPS, NEUTRAL_STROKE, RUN_STATE, STROKE, endTriggerOf, possessive, runSubtitle } from "./journey-data";
 
 const PILL_TONE = {
-  [TRIGGER.SUBMITTED]: "border-white/10 text-neutral-300",
+  [TRIGGER.SUBMITTED]: "border-ink/10 text-neutral-300",
   [TRIGGER.APPROVED]: "border-emerald-400/30 text-emerald-300",
   [TRIGGER.DECLINED]: "border-red-400/30 text-red-300",
   [TRIGGER.TIMED_OUT]: "border-amber-400/30 text-amber-300",
@@ -83,8 +83,8 @@ function Sheet({ sec, pad = "p-6 sm:p-8", flash = null, selected = false, onSele
 
   return (
     <section ref={ref} data-sec={sec} onClick={onSelect ? (event) => { if (!event.target.closest("button, a, input, label")) onSelect(); } : undefined}
-      className={`studio-card relative flex w-full flex-col rounded-3xl border border-white/10 shadow-xl shadow-black/30 transition-shadow duration-200 ${
-        selected ? "ring-[6px] ring-skylab-400/25" : onSelect ? "cursor-pointer hover:ring-1 hover:ring-white/15" : ""
+      className={`studio-card relative flex w-full flex-col rounded-3xl border border-ink/10 shadow-xl shadow-black/30 transition-shadow duration-200 ${
+        selected ? "ring-[6px] ring-skylab-400/25" : onSelect ? "cursor-pointer hover:ring-1 hover:ring-ink/15" : ""
       }`}
     >
       <div className={`flex flex-1 flex-col gap-5 ${pad}`}>{children}</div>
@@ -94,7 +94,7 @@ function Sheet({ sec, pad = "p-6 sm:p-8", flash = null, selected = false, onSele
 
 function EdgePill({ trigger = null, x, y, maxWidth = null, children }) {
   return (
-    <span className={`absolute z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-md border bg-neutral-900 px-1.5 py-0.5 text-2xs font-medium ${PILL_TONE[trigger] ?? "border-white/10 text-neutral-300"}`}
+    <span className={`absolute z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-md border bg-neutral-900 px-1.5 py-0.5 text-2xs font-medium ${PILL_TONE[trigger] ?? "border-ink/10 text-neutral-300"}`}
       style={{ left: x, top: y, maxWidth: maxWidth ?? undefined }}
     >
       {children}
@@ -189,9 +189,9 @@ function Trunk({ edge = null, height = 64 }) {
 function SameStage() {
   return (
     <div className="flex items-center gap-2 px-1 py-4">
-      <span className="h-px flex-1 bg-white/5" />
+      <span className="h-px flex-1 bg-ink/5" />
       <span className="text-2xs text-neutral-500">Aynı aşamada öbür yol</span>
-      <span className="h-px flex-1 bg-white/5" />
+      <span className="h-px flex-1 bg-ink/5" />
     </div>
   );
 }
@@ -204,7 +204,7 @@ export function PersonRow({ run, narrow = false, onOpen }) {
   return (
     <button type="button" onClick={() => onOpen(run)} data-run={run.id}
       title={hasResponse ? (finished ? "Son cevabı aç" : "Cevabı aç: onay, ret, düzeltme") : "Bu başvurunun henüz cevabı yok"}
-      className="group/row -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/3"
+      className="group/row -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ink/3"
     >
       <Avatar name={run.applicant?.fullName || ""} email={run.applicant?.email || ""} photoUrl={run.applicant?.profilePictureUrl} size="sm" />
       <span className="min-w-0 flex-1">
@@ -228,7 +228,7 @@ function PeopleGroup({ state, count, runs, max, narrow, onOpenRun, onMore }) {
         <span className={`size-1.5 shrink-0 rounded-full ${meta.dot}`} />
         <span className={`text-2xs font-medium ${meta.text}`}>{meta.label}</span>
         <span className="text-2xs tabular-nums text-neutral-500">{count}</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
       </div>
       {shown.map((run) => <PersonRow key={run.id} run={run} narrow={narrow} onOpen={onOpenRun} />)}
       {more > 0 ? (
@@ -257,7 +257,7 @@ function FunnelBars({ items, total }) {
                 <span className="text-neutral-300">{count}</span> · %{rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1)}{extra ? ` · ${extra}` : ""}
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-ink/5">
               <div className="h-full rounded-full bg-skylab-500 transition-[width] duration-500" style={{ width: `${Math.min(share, 100)}%` }} />
             </div>
           </div>
@@ -277,11 +277,11 @@ function Participation({ data, onAnalytics }) {
   const stalled = data.stalledQuestion;
 
   return (
-    <div className="border-t border-white/5 pt-4">
+    <div className="border-t border-ink/5 pt-4">
       <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} className="group flex min-h-11 w-full items-center gap-2 text-left sm:min-h-8">
         <Activity size={12} className="shrink-0 text-neutral-500" />
         <span className="text-2xs font-medium text-neutral-400">Katılım ve süre</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         {data.timeLimitMinutes ? <span className="text-2xs text-neutral-500">{durationText(data.timeLimitMinutes)}</span> : null}
         <ChevronDown size={13} className={`shrink-0 text-neutral-500 transition-transform duration-200 group-hover:text-neutral-300 ${open ? "" : "-rotate-90"}`} />
       </button>
@@ -336,13 +336,13 @@ function StepSheet({ step, narrow, selected, cardSelect, flash, onSelect, onOpen
   return (
     <Sheet sec={node.nodeKey} pad={narrow ? "p-5" : "p-6 sm:p-8"} flash={flash} selected={selected} onSelect={cardSelect ? onSelect : null}>
       <div className="relative flex items-start gap-3">
-        <span className={`grid size-6 shrink-0 place-items-center rounded-md border text-xs font-semibold ${node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"}`}>
+        <span className={`grid size-6 shrink-0 place-items-center rounded-md border text-xs font-semibold ${node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-400"}`}>
           {depth ?? "?"}
         </span>
         <div className="min-w-0 flex-1">
           <h2 className={`font-semibold text-neutral-100 ${narrow ? "text-sm" : "text-base"}`}>
             <button type="button" onClick={onSelect} aria-pressed={selected} title="Bu adımın başvuranlarını listede göster"
-              className="text-left transition-colors after:absolute after:-inset-1.5 after:rounded-xl after:content-[''] hover:text-white"
+              className="text-left transition-colors after:absolute after:-inset-1.5 after:rounded-xl after:content-[''] hover:text-ink"
             >
               {node.formTitle || "Adsız form"}
             </button>
@@ -376,7 +376,7 @@ function StepSheet({ step, narrow, selected, cardSelect, flash, onSelect, onOpen
 
       {finishedHere > 0 ? (
         <button type="button" onClick={onFinishedHere} title="Bu adımda biten başvuruları listede göster"
-          className="flex w-fit flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/5 pt-4 text-left text-2xs text-neutral-500 transition-colors hover:text-neutral-200"
+          className="flex w-fit flex-wrap items-center gap-x-3 gap-y-1 border-t border-ink/5 pt-4 text-left text-2xs text-neutral-500 transition-colors hover:text-neutral-200"
         >
           <span>Buradan biten</span>
           {endings.map(([state, count], position) => (
@@ -399,7 +399,7 @@ function FinishedSheet({ finished, total, recent, flash, onOpenRun, onMore }) {
   return (
     <Sheet sec="bitenler" flash={flash}>
       <div className="flex items-start gap-3">
-        <span className="grid size-6 shrink-0 place-items-center rounded-md border border-white/10 bg-white/5 text-neutral-400"><CircleCheck size={12} /></span>
+        <span className="grid size-6 shrink-0 place-items-center rounded-md border border-ink/10 bg-ink/5 text-neutral-400"><CircleCheck size={12} /></span>
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold text-neutral-100">Bitenler</h2>
           <p className="mt-0.5 text-2xs text-neutral-500">Akışın sonuna varan ya da yolda kapanan başvurular</p>
@@ -427,7 +427,7 @@ function FinishedSheet({ finished, total, recent, flash, onOpenRun, onMore }) {
         <div>
           <div className="mb-1 flex items-center gap-2">
             <span className="text-2xs font-medium text-neutral-400">Son bitenler</span>
-            <span className="h-px flex-1 bg-white/5" />
+            <span className="h-px flex-1 bg-ink/5" />
           </div>
           {recent.map((run) => <PersonRow key={run.id} run={run} onOpen={onOpenRun} />)}
           {total > recent.length ? (
@@ -448,13 +448,13 @@ function RemovedSheet({ steps, selected, onSelect }) {
   return (
     <Sheet sec="eski" pad="p-5 sm:p-6">
       <div className="flex items-start gap-3">
-        <span className="grid size-6 shrink-0 place-items-center rounded-md border border-white/10 bg-white/5 text-neutral-400"><History size={12} /></span>
+        <span className="grid size-6 shrink-0 place-items-center rounded-md border border-ink/10 bg-ink/5 text-neutral-400"><History size={12} /></span>
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-neutral-100">Akıştan çıkarılan adımlar</h2>
           <p className="mt-0.5 text-2xs leading-relaxed text-neutral-500">Akıştan çıkarılan adımlarda bekleyen başvurular. Başladıkları haliyle devam ederler.</p>
         </div>
       </div>
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         {steps.map((step) => (
           <button key={step.nodeKey} type="button" onClick={() => onSelect(step.nodeKey)} aria-pressed={selected === step.nodeKey}
             className={`flex w-full items-center gap-2 py-2 text-left text-xs transition-colors ${selected === step.nodeKey ? "text-neutral-100" : "text-neutral-400 hover:text-neutral-200"}`}
@@ -478,7 +478,7 @@ function JourneyHead({ overview, done, pill, versionText, closesText, updatedAt,
     <div data-sec="bas" className="mb-8 px-1">
       <div className="mb-3 flex items-center gap-2">
         <span className="text-2xs font-medium text-neutral-400">Yolculuk</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
       </div>
       {draft ? (
         <p className="text-base leading-relaxed text-neutral-300 sm:text-lg">Akış henüz kaydedilmedi. Kaydedilince başvurular adım adım burada görünür.</p>
@@ -627,7 +627,7 @@ export default function JourneyCanvas({
 
   return (
     <div ref={scrollRef} data-journey
-      className={`${pad === 56 ? "studio-fade" : "studio-fade-edge"} h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar`}
+      className={`${pad === 56 ? "studio-fade" : "studio-fade-edge"} h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgb(var(--forms-ink-rgb)/0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar`}
     >
       <div className="relative mx-auto flex min-h-full w-full flex-col pb-36 pt-4 sm:pb-40 sm:pt-10" style={{ maxWidth: 784, paddingInline: pad }}>
         <JourneyHead overview={overview} done={done} pill={pill} versionText={versionText} closesText={closesText} updatedAt={updatedAt} draft={draft} />

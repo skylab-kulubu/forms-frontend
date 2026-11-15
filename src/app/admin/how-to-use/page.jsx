@@ -98,7 +98,7 @@ function SectionBlock({ id, icon, title, children, demo }) {
         </div>
         {demo && (
           <div className="w-full lg:w-72 shrink-0 flex items-start">
-            <div className="sticky top-6 w-full rounded-xl border border-white/5 bg-white/3 p-4 overflow-hidden">
+            <div className="sticky top-6 w-full rounded-xl border border-ink/5 bg-ink/3 p-4 overflow-hidden">
               {demo}
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function HowToUsePage() {
               ]} />
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 2 - Form Düzenleme */}
             <SectionBlock id="form-duzenleme" icon={GripVertical} title="Form Düzenleme" demo={<DemoDragDrop />}>
@@ -207,7 +207,7 @@ export default function HowToUsePage() {
               <Tip>Sağ üstte bulunan göz butonuna basarak formunuzun önizlemesini görebilirsiniz.</Tip>
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 3 - Bileşen Türleri */}
             <section id="bilesen-turleri" className="scroll-mt-6">
@@ -215,7 +215,7 @@ export default function HowToUsePage() {
               <p className="text-sm text-neutral-400 mb-4">Form düzenleyicisinde kullanabileceğiniz <strong className="text-neutral-200">12 farklı bileşen türü</strong>:</p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {componentTypes.map((comp) => (
-                  <div key={comp.name} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/3 px-3 py-2.5">
+                  <div key={comp.name} className="flex items-center gap-3 rounded-lg border border-ink/5 bg-ink/3 px-3 py-2.5">
                     <comp.icon className="h-4 w-4 text-skylab-400 shrink-0" strokeWidth={1.75} />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-neutral-200">{comp.name}</p>
@@ -237,7 +237,7 @@ export default function HowToUsePage() {
               </div>
             </section>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 4 - Koşullama */}
             <SectionBlock id="kosullama" icon={GitBranch} title="Koşullama (Koşullu Sorular)" demo={<DemoConditional />}>
@@ -264,7 +264,7 @@ export default function HowToUsePage() {
               <Tip>İlk soruya koşul eklenemez çünkü bağımlı olacağı önceki bir soru yoktur. Ayıraç bileşenleri koşul kaynağı olarak seçilemez.</Tip>
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 5 - Form Ayarları */}
             <SectionBlock id="form-ayarlari" icon={Settings} title="Form Ayarları" demo={<DemoSettings />}>
@@ -292,7 +292,7 @@ export default function HowToUsePage() {
               <Warning>Anonim yanıtları açmak birden fazla ayarı etkiler. Bağlı form kaldırılır ve manuel inceleme devre dışı kalır.</Warning>
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 6 - Form Bağlama */}
             <SectionBlock id="form-baglama" icon={ArrowRightLeft} title="Form Bağlama" demo={<DemoFormLink />}>
@@ -315,7 +315,7 @@ export default function HowToUsePage() {
               <Warning>İki formun da sahibi olmanız gerekir. Anonim yanıtlar açıkken form bağlama kullanılamaz.</Warning>
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 7 - Editör ve İşbirliği */}
             <SectionBlock id="editor-isbirligi" icon={UserPlus} title="Editör ve İşbirliği" demo={<DemoCollaboration />}>
@@ -343,7 +343,7 @@ export default function HowToUsePage() {
               ]} />
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 8 - Yanıtları Görüntüleme */}
             <SectionBlock id="yanitlari-goruntuleme" icon={MessageSquare} title="Yanıtları Görüntüleme" demo={<DemoResponses />}>
@@ -356,7 +356,7 @@ export default function HowToUsePage() {
               ]} />
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 9 - Yanıt Onaylama */}
             <SectionBlock id="yanit-onaylama" icon={CheckCircle} title="Yanıt Onaylama / Reddetme" demo={<DemoApproval />}>
@@ -384,7 +384,7 @@ export default function HowToUsePage() {
               <Tip>Bağlı form varsa, onaylanan yanıtın kullanıcısı otomatik olarak bağlı forma yönlendirilir.</Tip>
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 10 - Arşivleme */}
             <SectionBlock id="arsivleme" icon={Archive} title="Arşivleme" demo={<DemoArchive />}>
@@ -397,7 +397,7 @@ export default function HowToUsePage() {
               <Tip>Çoklu yanıt açıksa arşivleme kullanıcının tekrar cevap verebilmesini sağlar.</Tip>
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 11 - Filtreleme */}
             <SectionBlock id="filtreleme" icon={Filter} title="Formları Filtreleme" demo={<DemoFilter />}>
@@ -426,7 +426,7 @@ export default function HowToUsePage() {
               ]} />
             </SectionBlock>
 
-            <div className="h-px bg-white/5" />
+            <div className="h-px bg-ink/5" />
 
             {/* 12 - Taslak ve Otomatik Kayıt */}
             <SectionBlock id="taslaklar" icon={Save} title="Taslak ve Otomatik Kayıt">

@@ -37,7 +37,7 @@ export default function TextAnswers({ formId, questionId, filter = null, onOpen 
       ) : items.length === 0 ? (
         <p className="text-2xs text-neutral-500">{search ? "Aranan ifade bu sorunun cevaplarında yok." : filter?.status || filter?.sinceDays || filter?.answer ? "Süzgece uyan yazılı cevap yok." : "Bu soruya henüz yazılı cevap gelmedi."}</p>
       ) : (
-        <div className={`divide-y divide-white/5 transition-opacity ${result.isPlaceholderData ? "opacity-60" : ""}`}>
+        <div className={`divide-y divide-ink/5 transition-opacity ${result.isPlaceholderData ? "opacity-60" : ""}`}>
           {items.map((item) => {
             const person = personOf(item);
             return (
@@ -60,13 +60,13 @@ export default function TextAnswers({ formId, questionId, filter = null, onOpen 
         {pages > 1 ? (
           <span className="flex items-center gap-0.5">
             <button type="button" onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page <= 1} aria-label="Önceki sayfa"
-              className="grid size-6 place-items-center rounded text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 disabled:text-neutral-700"
+              className="grid size-6 place-items-center rounded text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:text-neutral-700"
             >
               <ChevronLeft size={13} />
             </button>
             <span className="px-1 tabular-nums text-neutral-400">{page} / {pages}</span>
             <button type="button" onClick={() => setPage((value) => Math.min(pages, value + 1))} disabled={page >= pages} aria-label="Sonraki sayfa"
-              className="grid size-6 place-items-center rounded text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 disabled:text-neutral-700"
+              className="grid size-6 place-items-center rounded text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:text-neutral-700"
             >
               <ChevronRight size={13} />
             </button>

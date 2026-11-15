@@ -18,7 +18,7 @@ export function CreateFormLongText({ questionNumber, props, onPropsChange, readO
           Soru Metni
         </label>
         <AutoResizeTextarea id="short-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+          className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Sorunuzu buraya yazın."
         />
       </div>
@@ -29,7 +29,7 @@ export function CreateFormLongText({ questionNumber, props, onPropsChange, readO
             Açıklama
           </label>
           <AutoResizeTextarea id="short-description" {...bind("description")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+            className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
             placeholder="Açıklamanızı buraya yazın."
           />
         </div>
@@ -56,7 +56,7 @@ export function DisplayFormLongText({ question, questionNumber, description, req
       value={currentValue} ref={textareaRef}
       onChange={handleChange} onInput={handleInput}
       placeholder="Cevabınızı buraya yazın."
-      className={`block overflow-hidden w-full resize-y rounded-lg border bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+      className={`block overflow-hidden w-full resize-y rounded-lg border bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
     />
   );
 

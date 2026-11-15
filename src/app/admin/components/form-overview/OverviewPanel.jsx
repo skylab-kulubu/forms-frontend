@@ -23,10 +23,10 @@ function Shimmer({ className = "" }) {
 
 function Segmented({ options, value, onChange }) {
   return (
-    <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-white/10 bg-white/5 p-0.5">
+    <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-ink/10 bg-ink/5 p-0.5">
       {options.map(([key, label]) => (
         <button key={key} type="button" onClick={() => onChange(key)} aria-pressed={value === key}
-          className={`rounded px-2 py-1.5 text-3xs transition sm:py-0.5 ${value === key ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+          className={`rounded px-2 py-1.5 text-3xs transition sm:py-0.5 ${value === key ? "bg-ink/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
         >
           {label}
         </button>
@@ -39,7 +39,7 @@ function Hairline({ children, right = null }) {
   return (
     <div className="flex items-center gap-2">
       <span className="shrink-0 text-2xs font-medium text-neutral-500">{children}</span>
-      <span className="h-px flex-1 bg-white/5" />
+      <span className="h-px flex-1 bg-ink/5" />
       {right}
     </div>
   );
@@ -68,12 +68,12 @@ function ResponseCounts({ metrics, reviewed, inFlow, canReview, onReview }) {
       </div>
       {reviewed ? (
         <div>
-          <div className="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-white/5">
+          <div className="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-ink/5">
             {rows.map(([kind, count]) => (count && total ? (
               <span key={kind} className={`h-full ${ROW_STATUS[kind].dot.split(" ")[0]}`} style={{ width: `${(count / total) * 100}%` }} />
             ) : null))}
           </div>
-          <div className="mt-2 divide-y divide-white/5">
+          <div className="mt-2 divide-y divide-ink/5">
             {rows.map(([kind, count]) => (
               <div key={kind} className="flex items-center gap-2 py-2 text-xs">
                 <span className={`size-1.5 shrink-0 rounded-full ${ROW_STATUS[kind].dot}`} />
@@ -138,14 +138,14 @@ function ReviewSection({ review, team = [], onOpenResponse }) {
   return (
     <section className={PANEL_SECTION}>
       <SectionHeader title="İnceleme" description={review.decidedCount ? `${review.decidedCount} karar üzerinden.` : "Henüz karar verilmedi."} />
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         <KV label="Karara kadar geçen süre" hint="Gönderimden onaya ya da redde, medyan">
           <span className="tabular-nums">{review.medianDecisionSeconds != null ? spanText(review.medianDecisionSeconds * 1000) : "--"}</span>
         </KV>
         <KV label="En eski bekleyen" hint={oldest ? formatShortDate(oldest.submittedAt) : null}>
           {oldest ? (
             <button type="button" onClick={() => onOpenResponse?.(oldest.responseId)}
-              className="tabular-nums text-amber-200/90 underline decoration-white/20 underline-offset-2 transition-colors hover:text-amber-100"
+              className="tabular-nums text-amber-200/90 underline decoration-ink/20 underline-offset-2 transition-colors hover:text-amber-100"
             >
               {spanText(waited)} önce geldi
             </button>
@@ -193,14 +193,14 @@ function ShareSection({ formId, metrics, stepForm, canShare, onShare, reviewed =
         description={stepForm ? "Bu form akışın bir adımı; başvuranlar önceki adımı geçince açılır." : "Kısa linki kopyala ya da Paylaş'tan kanal seç; kanaldan gelenler aşağıda ayrı sayılır."}
       />
       <div className="flex items-center gap-2">
-        <div className="flex h-11 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-white/10 bg-black/20 pl-2.5 pr-1 sm:h-8">
+        <div className="flex h-11 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-ink/10 bg-black/20 pl-2.5 pr-1 sm:h-8">
           <Link2 size={13} className="shrink-0 text-neutral-500" />
           <span className={`min-w-0 flex-1 truncate font-mono text-2xs ${url ? "text-skylab-300" : "text-neutral-500"}`}>
             {url ? url.replace(/^https?:\/\//, "") : "Henüz kısa link yok"}
           </span>
           {url ? (
             <button type="button" onClick={copy} title="Kopyala" aria-label="Kısa linki kopyala"
-              className={`grid size-9 shrink-0 place-items-center rounded-md transition-colors sm:size-6 ${copied ? "text-emerald-300" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-100"}`}
+              className={`grid size-9 shrink-0 place-items-center rounded-md transition-colors sm:size-6 ${copied ? "text-emerald-300" : "text-neutral-400 hover:bg-ink/5 hover:text-neutral-100"}`}
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
             </button>
@@ -239,7 +239,7 @@ function ParticipationSection({ metrics, attempts, timed }) {
   return (
     <section className={PANEL_SECTION}>
       <p className="font-semibold text-neutral-100">Katılım</p>
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         {timed && attempts ? (
           <>
             <KV label="Teslim süresi" hint="Medyan"><span className="tabular-nums">{middle != null ? shortDuration(middle * 60_000) : "--"}</span></KV>
@@ -296,7 +296,7 @@ function InfoSection({ form, flow, onFlow, readOnly = false }) {
   return (
     <section className={PANEL_SECTION}>
       <SectionHeader title="Form bilgileri" />
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         <KV label="Soru"><span className="tabular-nums">{questionCount}</span></KV>
         <KV label="Akış">
           {workflow ? (

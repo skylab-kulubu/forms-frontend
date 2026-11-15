@@ -50,7 +50,7 @@ export function CreateFormTimePicker({ questionNumber, props, onPropsChange, rea
           Soru Metni
         </label>
         <AutoResizeTextarea id="tp-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+          className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Sorunuzu buraya yazın."
         />
       </div>
@@ -61,7 +61,7 @@ export function CreateFormTimePicker({ questionNumber, props, onPropsChange, rea
             Açıklama
           </label>
           <AutoResizeTextarea id="tp-description" {...bind("description")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+            className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
             placeholder="Açıklamanızı buraya yazın."
           />
         </div>
@@ -118,7 +118,7 @@ export function DisplayFormTimePicker({ question, questionNumber, description, r
           <Clock size={16} />
         </span>
         <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen((s) => !s)}
-          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition hover:bg-white/5 focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition hover:bg-ink/5 focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
         >
           <span className={parsed ? "text-neutral-100" : "text-neutral-500"}>{display}</span>
           {parsed && (

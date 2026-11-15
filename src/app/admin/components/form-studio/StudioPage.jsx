@@ -100,14 +100,14 @@ export function pageCardRect(width, { phone = false, scrollTop = 0 } = {}) {
   return { left: (usable - column) / 2 + COLUMN_PAD, top: CARD_TOP - scrollTop, width: Math.min(cardWidth, column - COLUMN_PAD * 2) };
 }
 
-export const TOOLBAR_CLASS ="absolute bottom-3 left-1/2 z-30 flex w-max -translate-x-1/2 items-center gap-0.5 rounded-xl border border-white/10 bg-neutral-900 p-1 shadow-xl shadow-black/40 sm:bottom-4";
-export const TOOL_DIVIDER = "mx-1 hidden h-5 w-px bg-white/10 sm:block";
+export const TOOLBAR_CLASS ="absolute bottom-3 left-1/2 z-30 flex w-max -translate-x-1/2 items-center gap-0.5 rounded-xl border border-ink/10 bg-neutral-900 p-1 shadow-xl shadow-black/40 sm:bottom-4";
+export const TOOL_DIVIDER = "mx-1 hidden h-5 w-px bg-ink/10 sm:block";
 
 export function ToolButton({ label, active = false, onClick, className = "", children }) {
   return (
     <button type="button" aria-label={label} title={label} onClick={onClick}
       className={`flex h-11 min-w-13 shrink-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-lg px-1.5 text-3xs font-medium transition-colors sm:h-8 sm:min-w-0 sm:flex-row sm:gap-1.5 sm:px-2.5 sm:text-2xs ${
-        active ? "bg-skylab-500/15 text-skylab-300" : "text-neutral-300 hover:bg-white/5 hover:text-neutral-100"
+        active ? "bg-skylab-500/15 text-skylab-300" : "text-neutral-300 hover:bg-ink/5 hover:text-neutral-100"
       } ${className}`}
     >
       {children}
@@ -182,9 +182,9 @@ export function StudioToolbar({ inFlow, empty = false, comments = null, settings
       </ToolButton>
       {empty ? null : (
         <>
-          <span className="mx-1 hidden h-5 w-px bg-white/10 md:block" />
+          <span className="mx-1 hidden h-5 w-px bg-ink/10 md:block" />
           <button type="button" aria-label="Koşulları göster (L)" title="Koşulları göster (L)" onClick={studio.toggleLogic}
-            className={`hidden size-8 place-items-center rounded-lg transition-colors md:grid ${ui.showLogic ? "bg-skylab-500/15 text-skylab-300" : "text-neutral-400 hover:bg-white/5 hover:text-neutral-100"}`}
+            className={`hidden size-8 place-items-center rounded-lg transition-colors md:grid ${ui.showLogic ? "bg-skylab-500/15 text-skylab-300" : "text-neutral-400 hover:bg-ink/5 hover:text-neutral-100"}`}
           >
             <GitBranch size={16} />
           </button>
@@ -532,7 +532,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
   return (
     <div className="relative h-full min-h-0">
       <div ref={scrollRef} data-studio-page data-commenting={board.onBoard ? "true" : undefined} onPointerDown={handleBackgroundDown}
-        className={`studio-fade h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar ${inspectorShown ? "" : "mr-[calc(var(--inspector-room)*-1)]"}`}
+        className={`studio-fade h-full overflow-y-auto overflow-x-hidden bg-[radial-gradient(rgb(var(--forms-ink-rgb)/0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar ${inspectorShown ? "" : "mr-[calc(var(--inspector-room)*-1)]"}`}
       >
         <div ref={pushRef} className={`flex min-h-full flex-col transition-transform duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${template ? "w-(--canvas-width)" : ""}`}>
         <div ref={columnRef} data-studio-column className={`relative mx-auto flex w-full flex-1 flex-col px-3 pt-4 sm:px-14 sm:pt-10 ${empty ? "pb-24 sm:pb-20" : "pb-36 sm:pb-40"}`}
@@ -540,7 +540,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
         >
           <div className="mb-2 flex items-center gap-2 px-1">
             {stepInfo ? (
-              <span className={`grid size-4 place-items-center rounded border text-4xs font-semibold ${stepInfo.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"}`}>
+              <span className={`grid size-4 place-items-center rounded border text-4xs font-semibold ${stepInfo.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-400"}`}>
                 {stepInfo.stage ?? "?"}
               </span>
             ) : null}
@@ -557,12 +557,12 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
             ) : null}
             <span className="ml-auto hidden items-center gap-0.5 sm:flex">
               <button type="button" title="Masaüstü genişliği" aria-label="Masaüstü genişliği" onClick={() => studio.setDevice(formKey, "desktop")}
-                className={`grid size-6 place-items-center rounded transition-colors ${!phone ? "bg-white/10 text-neutral-100" : "text-neutral-500 hover:text-neutral-200"}`}
+                className={`grid size-6 place-items-center rounded transition-colors ${!phone ? "bg-ink/10 text-neutral-100" : "text-neutral-500 hover:text-neutral-200"}`}
               >
                 <Monitor size={13} />
               </button>
               <button type="button" title="Telefon genişliği" aria-label="Telefon genişliği" onClick={() => studio.setDevice(formKey, "phone")}
-                className={`grid size-6 place-items-center rounded transition-colors ${phone ? "bg-white/10 text-neutral-100" : "text-neutral-500 hover:text-neutral-200"}`}
+                className={`grid size-6 place-items-center rounded transition-colors ${phone ? "bg-ink/10 text-neutral-100" : "text-neutral-500 hover:text-neutral-200"}`}
               >
                 <Smartphone size={13} />
               </button>
@@ -624,7 +624,7 @@ export default function StudioPage({ eventLinked = false, stepInfo = null, inFlo
                     {isClient ? createPortal(
                       <DragOverlay dropAnimation={DROP_ANIMATION} modifiers={[restrictToVerticalAxis]}>
                         {activeField ? (
-                          <BrandPaper brand={state.brand} className="cursor-grabbing rounded-xl bg-[#1f1f1f] shadow-2xl shadow-black/60 ring-1 ring-skylab-400/40">
+                          <BrandPaper brand={state.brand} className="cursor-grabbing rounded-xl bg-panel shadow-2xl shadow-black/60 ring-1 ring-skylab-400/40">
                             <FieldBlock {...blockProps(activeField, activeIndex)} solo={false} isLast hoverable={false} commentCount={0} commentable={false} />
                             {loss ? <div className={phone ? "px-2 pb-2" : "px-4 pb-3"}><DragLossNote count={loss} /></div> : null}
                           </BrandPaper>

@@ -17,7 +17,7 @@ function RateMini({ value, grey }) {
   return (
     <span className="flex shrink-0 flex-col items-end gap-1 pt-0.5" title="Cevaplanma oranı">
       <span className="text-3xs tabular-nums text-neutral-500">{formatPercent(value)}</span>
-      <span className="h-1 w-9 overflow-hidden rounded-full bg-white/5">
+      <span className="h-1 w-9 overflow-hidden rounded-full bg-ink/5">
         <span className={`block h-full rounded-full ${grey ? "bg-neutral-600" : "bg-skylab-500/80"}`} style={{ width: `${Math.min(value, 100)}%` }} />
       </span>
     </span>
@@ -47,10 +47,10 @@ function SummaryField({ field, number, condText, stats, isLast, phone, touch, on
   const clickable = !touch && !separator && Boolean(onOpen);
 
   return (
-    <div data-q={field.id} className={`relative ${!isLast && !separator ? "border-b border-white/5 pb-6" : ""}`}>
+    <div data-q={field.id} className={`relative ${!isLast && !separator ? "border-b border-ink/5 pb-6" : ""}`}>
       <div onClick={clickable ? () => onOpen(field.id) : undefined}
         className={`group/q relative flex flex-col rounded-xl transition-[box-shadow,background-color] duration-150 ${phone ? "p-2" : "p-4"} ${
-          clickable ? "cursor-pointer hover:ring-1 hover:ring-white/15" : ""
+          clickable ? "cursor-pointer hover:ring-1 hover:ring-ink/15" : ""
         }`}
       >
         {condText ? (
@@ -66,7 +66,7 @@ function SummaryField({ field, number, condText, stats, isLast, phone, touch, on
           <>
             <div className="flex items-center gap-3">
               {props.title ? <RichText as="p" text={props.title} className="min-w-0 max-w-[70%] wrap-break-word text-lg font-medium text-neutral-100" /> : null}
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="h-px flex-1 bg-ink/10" />
             </div>
             {props.description ? <RichText as="p" text={props.description} className="mt-1 text-xs text-neutral-400" /> : null}
           </>
@@ -145,10 +145,10 @@ export default function OverviewCard({ form, analytics, stepInfo = null, phone =
           ))}
         </div>
       ) : (
-        <p className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-neutral-500">Bu formda henüz soru yok.</p>
+        <p className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-ink/10 text-sm text-neutral-500">Bu formda henüz soru yok.</p>
       )}
 
-      <div className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
+      <div className="mt-auto border-t border-ink/5 px-2 pt-6 md:px-4">
         <div className="flex justify-end">
           <span className="inline-flex min-w-30 items-center justify-center rounded-xl border-[1.5px] border-skylab-300/50 bg-skylab-400/40 px-8 py-3 text-sm font-semibold">Gönder</span>
         </div>

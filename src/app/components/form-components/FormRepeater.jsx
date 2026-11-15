@@ -147,13 +147,13 @@ export function DisplayFormRepeater({ question, questionNumber, description, req
                   animate={{ opacity: 1, height: "auto", y: 0 }}
                   exit={{ opacity: 0, height: 0, scale: 0.97 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className="rounded-lg border border-white/10 bg-neutral-900/40"
+                  className="rounded-lg border border-ink/10 bg-neutral-900/40"
                 >
-                  <div className="flex items-center justify-between border-b border-white/5 px-3 py-1.5">
+                  <div className="flex items-center justify-between border-b border-ink/5 px-3 py-1.5">
                     <span className="text-3xs font-medium text-neutral-500">{rowIdx + 1}. kayıt</span>
                     {rows.length > 1 && (
                       <button type="button" onClick={() => removeRow(rowIdx)} aria-label="Kaydı kaldır"
-                        className="inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                        className="inline-flex items-center justify-center rounded-md border border-ink/10 bg-ink/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
                       >
                         <X size={13} />
                       </button>
@@ -177,7 +177,7 @@ export function DisplayFormRepeater({ question, questionNumber, description, req
             </AnimatePresence>
 
             <button type="button" onClick={addRow}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/15 bg-white/3 px-3 py-2 text-xs font-medium text-neutral-400 transition-colors hover:border-skylab-400/40 hover:text-skylab-300"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-ink/15 bg-ink/3 px-3 py-2 text-xs font-medium text-neutral-400 transition-colors hover:border-skylab-400/40 hover:text-skylab-300"
             >
               <Plus size={14} /> Kayıt Ekle
             </button>

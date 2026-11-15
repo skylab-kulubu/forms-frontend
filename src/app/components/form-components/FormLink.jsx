@@ -59,7 +59,7 @@ function SingleLinkInput({ required = false, value, onChange, missing = false })
       <input name="link" type="url" aria-required={required}
         value={currentValue} onChange={handleChange}
         placeholder="https://ornek.com"
-        className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+        className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
       />
     </div>
   );
@@ -127,12 +127,12 @@ function MultiLinkInput({ required = false, value, onChange, missing = false }) 
 
               <input name="link[]" type="url" aria-required={required && index === 0}
                 value={v} onChange={(e) => updateAt(index, e.target.value)} placeholder={placeholder}
-                className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${isMissingField ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+                className={`block w-full rounded-lg border bg-neutral-900/60 pl-9 pr-9 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:ring-2 focus:ring-skylab-400/20 ${isMissingField ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
               />
 
               {!isTrailingEmpty && (
                 <button type="button" onClick={() => removeAt(index)} aria-label="Linki kaldır"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-md border border-ink/10 bg-ink/5 p-1 text-neutral-400 transition-colors hover:bg-red-500/10 hover:text-red-200"
                 >
                   <X size={14} />
                 </button>

@@ -21,7 +21,7 @@ export const PARTICIPATION = "__participation";
 
 const FADE = { initial: { opacity: 0, y: 4 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } };
 const SELECTED = "bg-skylab-500/[0.04] ring-2 ring-skylab-400/50";
-const HOVER = "cursor-pointer hover:ring-1 hover:ring-white/15";
+const HOVER = "cursor-pointer hover:ring-1 hover:ring-ink/15";
 
 export function ResultBody({ field, q, view }) {
   const kind = Number(q.kind);
@@ -60,7 +60,7 @@ function ParticipationBlock({ data, selected, phone, onClick }) {
     <div data-q={PARTICIPATION} onClick={onClick}
       className={`relative rounded-xl transition-[box-shadow,background-color] duration-150 ${phone ? "p-2" : "p-4"} ${selected ? SELECTED : HOVER}`}
     >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-white/5 pb-3 text-2xs text-neutral-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-ink/5 pb-3 text-2xs text-neutral-500">
         <span className="inline-flex items-center gap-1.5 text-amber-200/90"><Timer size={12} />Kişisel süre · {durationText(data.timeLimitMinutes)}</span>
         <span className="inline-flex items-center gap-1.5"><Activity size={12} />{data.opened} kişi formu açtı</span>
       </div>
@@ -77,7 +77,7 @@ function ParticipationBlock({ data, selected, phone, onClick }) {
       </div>
       <div className="mt-6 flex items-center gap-2">
         <span className="text-2xs font-medium text-neutral-400">Teslim süresi</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
       </div>
       {stats ? (
         <>
@@ -118,7 +118,7 @@ function AnalyticsField({ field, q, number, condText, stats, asked, total, open,
         <div className={`relative flex flex-col rounded-xl ${phone ? "p-2" : "p-4"}`}>
           <div className="flex items-center gap-3">
             {props.title ? <RichText as="p" text={props.title} className="min-w-0 max-w-[70%] wrap-break-word text-lg font-medium text-neutral-100" /> : null}
-            <div className="h-px flex-1 bg-white/10" />
+            <div className="h-px flex-1 bg-ink/10" />
           </div>
           {props.description ? <RichText as="p" text={props.description} className="mt-1 text-xs text-neutral-400" /> : null}
         </div>
@@ -131,7 +131,7 @@ function AnalyticsField({ field, q, number, condText, stats, asked, total, open,
     : () => onFocus(field.id);
 
   return (
-    <div data-q={field.id} className={`relative ${isLast ? "" : "border-b border-white/5 pb-6"}`}>
+    <div data-q={field.id} className={`relative ${isLast ? "" : "border-b border-ink/5 pb-6"}`}>
       <div onClick={handleClick}
         className={`group/q relative flex flex-col rounded-xl transition-[box-shadow,background-color] duration-150 ${phone ? "p-2" : "p-4"} ${focused ? SELECTED : handleClick ? HOVER : ""}`}
       >
@@ -159,7 +159,7 @@ function AnalyticsField({ field, q, number, condText, stats, asked, total, open,
                 <span className="text-3xs tabular-nums text-neutral-500">{answered} cevap</span>
                 <button type="button" onClick={(event) => { event.stopPropagation(); onToggle(field.id); }}
                   title={open ? "Kapat" : "Aç"} aria-label={open ? "Sonucu kapat" : "Sonucu aç"} aria-expanded={open}
-                  className={`grid place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200 ${touch ? "-my-2.5 -mr-2 size-10" : "-my-1 size-6"}`}
+                  className={`grid place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200 ${touch ? "-my-2.5 -mr-2 size-10" : "-my-1 size-6"}`}
                 >
                   <ChevronDown size={14} className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
                 </button>
@@ -181,7 +181,7 @@ function AnalyticsField({ field, q, number, condText, stats, asked, total, open,
             <span className="min-w-0 truncate">{plainNote({ field, q, asked, total })}</span>
             {kind === 1 && onRead ? (
               <button type="button" onClick={(event) => { event.stopPropagation(); onRead(field.id); }}
-                className="ml-auto inline-flex min-h-8 shrink-0 items-center gap-1 text-neutral-400 underline decoration-white/20 underline-offset-2 transition-colors hover:text-neutral-100 sm:min-h-0"
+                className="ml-auto inline-flex min-h-8 shrink-0 items-center gap-1 text-neutral-400 underline decoration-ink/20 underline-offset-2 transition-colors hover:text-neutral-100 sm:min-h-0"
               >
                 Cevapları oku
               </button>
@@ -238,10 +238,10 @@ export default function AnalyticsCard({ form, analytics, participation = null, m
           })}
         </div>
       ) : (
-        <p className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-white/10 text-sm text-neutral-500">Bu formda henüz soru yok.</p>
+        <p className="flex min-h-24 items-center justify-center rounded-xl border border-dashed border-ink/10 text-sm text-neutral-500">Bu formda henüz soru yok.</p>
       )}
 
-      <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-white/5 px-2 pt-5 text-2xs text-neutral-500 md:px-4">
+      <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-ink/5 px-2 pt-5 text-2xs text-neutral-500 md:px-4">
         <ChartColumn size={12} className="shrink-0 text-neutral-600" />
         {total} cevap üzerinden{filtered ? " (süzülmüş)" : ""}
         {!timed && !filtered && metrics?.medianCompletionTime != null ? (

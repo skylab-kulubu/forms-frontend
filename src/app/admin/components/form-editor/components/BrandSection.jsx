@@ -15,7 +15,7 @@ export function BrandSection({ value, onChange }) {
     <section className={PANEL_SECTION}>
       <SectionHeader title="Görünüm" description="Form sayfası, gönderildi ve kapandı ekranları seçilen temayla açılır." />
 
-      <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5">
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-ink/10 px-3 py-2.5">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-neutral-100">Tema</p>
           <p className="text-2xs text-neutral-500">{brand ? `${brand.name} sitesinin renkleri ve yazı tipleri` : "SKY LAB Forms'un kendi görünümü"}</p>

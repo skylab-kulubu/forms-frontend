@@ -29,7 +29,7 @@ function SkeletonBlock({ className = "" }) {
 
 export function WorkflowListHeader() {
   return (
-    <div className={`${WORKFLOW_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
+    <div className={`${WORKFLOW_GRID} sticky top-0 z-20 border-b border-ink/10 bg-neutral-900 px-3 pb-2`}>
       <span />
       <span className={COLUMN_LABEL}>Akış</span>
       <span className={`hidden md:block ${COLUMN_LABEL}`}>Adımlarda şu an</span>
@@ -43,7 +43,7 @@ export function WorkflowListHeader() {
 
 export function WorkflowListItemSkeleton({ count = 4, className = "" }) {
   return (
-    <div className={`divide-y divide-white/5 ${className}`}>
+    <div className={`divide-y divide-ink/5 ${className}`}>
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className={`${WORKFLOW_GRID} px-3 py-3`}>
           <div className="flex justify-center"><SkeletonBlock className="size-1.5 rounded-full" /></div>
@@ -95,7 +95,7 @@ export default function WorkflowListItem({ workflow, className = "" }) {
 
   return (
     <div role="link" tabIndex={0} onClick={() => router.push(href)} onKeyDown={(event) => { if (event.key === "Enter") router.push(href); }}
-      className={`group/row relative cursor-pointer transition-colors hover:bg-white/3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-skylab-400/40 ${className}`}
+      className={`group/row relative cursor-pointer transition-colors hover:bg-ink/3 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-skylab-400/40 ${className}`}
     >
       <div className={`${WORKFLOW_GRID} px-3 py-3`}>
         <div className="flex justify-center">
@@ -103,7 +103,7 @@ export default function WorkflowListItem({ workflow, className = "" }) {
         </div>
 
         <div className="flex min-w-0 items-center gap-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3">
             <Workflow className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
           </div>
           <div className="min-w-0">
@@ -124,7 +124,7 @@ export default function WorkflowListItem({ workflow, className = "" }) {
             <Fragment key={step.nodeKey}>
               {index > 0 ? <ChevronRight size={12} className="shrink-0 text-neutral-700" /> : null}
               <span className="inline-flex min-w-0 items-center gap-1.5 text-2xs" title={step.isRemoved ? `${step.formTitle} (akıştan çıkarıldı)` : step.formTitle}>
-                <span className="grid size-4 shrink-0 place-items-center rounded border border-white/10 bg-white/5 text-4xs font-semibold text-neutral-400">{step.isRemoved ? "–" : step.depth || index + 1}</span>
+                <span className="grid size-4 shrink-0 place-items-center rounded border border-ink/10 bg-ink/5 text-4xs font-semibold text-neutral-400">{step.isRemoved ? "–" : step.depth || index + 1}</span>
                 <span className="max-w-24 truncate text-neutral-400">{step.formTitle}</span>
                 <span className={`font-medium tabular-nums ${draft ? "text-neutral-600" : "text-neutral-100"}`}>{draft ? "—" : step.count}</span>
                 {!draft && step.awaitingReview > 0 ? <span title={`${step.awaitingReview} onay bekliyor`} className="size-1.5 shrink-0 rounded-full bg-amber-400" /> : null}
@@ -139,7 +139,7 @@ export default function WorkflowListItem({ workflow, className = "" }) {
 
         <div className="flex items-center justify-end gap-0.5">
           <Link href={editHref} title="Düzenle" aria-label="Düzenle" onClick={(event) => event.stopPropagation()}
-            className="grid size-7 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-100"
+            className="grid size-7 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-100"
           >
             <PencilLine size={14} />
           </Link>

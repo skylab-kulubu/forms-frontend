@@ -13,7 +13,7 @@ function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   };
 
   return (
-    <div className="relative grid w-full rounded-lg border border-white/10 bg-neutral-900/60 p-1 text-2xs"
+    <div className="relative grid w-full rounded-lg border border-ink/10 bg-neutral-900/60 p-1 text-2xs"
       style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
     >
       <span className="absolute inset-y-1 left-1 rounded-md border border-skylab-400/40 bg-skylab-500/15 shadow-sm transition-transform duration-200"
@@ -39,7 +39,7 @@ function TriStateIconButton({ value, onChange, icon: Icon, label }) {
   const nextValue = value === null ? true : value === true ? false : null;
   const stateClass = value === true ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300"
     : value === false ? "border-red-400/40 bg-red-500/15 text-red-100"
-    : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300";
+    : "border-ink/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300";
 
   return (
     <button type="button" onClick={() => onChange?.(nextValue)} aria-label={label} title={label}
@@ -52,7 +52,7 @@ function TriStateIconButton({ value, onChange, icon: Icon, label }) {
 
 function StateOptions({ options, counts, value, onChange }) {
   return (
-    <div className="grid w-full gap-0.5 rounded-lg border border-white/10 bg-neutral-900/60 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+    <div className="grid w-full gap-0.5 rounded-lg border border-ink/10 bg-neutral-900/60 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       {options.map((option) => {
         const active = option.id === value;
         const count = counts?.[option.id] ?? 0;
@@ -130,7 +130,7 @@ export default function FormsFilterShell({ open, anchorRef, onClose, sortValue =
         <motion.div ref={panelRef} role="dialog" aria-label="Forms filters" layout
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
           transition={{ layout: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2 max-md:fixed max-md:inset-x-2 max-md:top-29 max-md:w-auto max-md:max-w-none max-md:translate-x-0"} rounded-xl border border-white/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-1rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2 max-md:fixed max-md:inset-x-2 max-md:top-29 max-md:w-auto max-md:max-w-none max-md:translate-x-0"} rounded-xl border border-ink/15 bg-neutral-950/50 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
           <motion.div variants={contentVariants} className="flex flex-col p-4 text-center">
             {stateOptions ? (

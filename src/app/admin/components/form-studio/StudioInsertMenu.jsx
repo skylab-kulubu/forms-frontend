@@ -100,7 +100,7 @@ export default function StudioInsertMenu({ anchor, initialView = "root", placeme
   return (
     <Floating anchor={anchor} onDismiss={onClose} placement={placement} matchWidth={matchWidth} offset={matchWidth ? 4 : 8}>
       <motion.div data-studio-menu role="menu" onPointerDown={(event) => event.stopPropagation()} {...POPOVER_MOTION}
-        className={`${matchWidth ? "w-full" : "w-64"} rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-2xl shadow-black/50`}
+        className={`${matchWidth ? "w-full" : "w-64"} rounded-[10px] border border-ink/20 bg-panel p-1.5 shadow-2xl shadow-black/50`}
       >
         <div className="relative mb-1">
           {view !== "root" ? (
@@ -114,7 +114,7 @@ export default function StudioInsertMenu({ anchor, initialView = "root", placeme
           )}
           <input ref={inputRef} value={search} onChange={(event) => { setSearch(event.target.value); setActiveIndex(0); onHover?.(null); }} onKeyDown={handleKeyDown}
             placeholder={view === "templates" ? "Şablon ara..." : "Bileşen ara..."} aria-label="Bileşen ara"
-            className="h-8 w-full rounded-md border border-white/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
+            className="h-8 w-full rounded-md border border-ink/10 bg-neutral-900/60 pl-8 pr-2 text-xs text-neutral-200 outline-none placeholder:text-neutral-600 focus:border-skylab-400/50"
           />
         </div>
 
@@ -131,7 +131,7 @@ export default function StudioInsertMenu({ anchor, initialView = "root", placeme
                 {head}
                 <button type="button" role="menuitem" disabled={item.disabled} onMouseEnter={() => activate(index)} onClick={() => choose(item)}
                   className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${
-                    item.disabled ? "cursor-not-allowed text-neutral-600" : index === activeIndex ? "bg-white/[0.06] text-white" : "text-neutral-300"
+                    item.disabled ? "cursor-not-allowed text-neutral-600" : index === activeIndex ? "bg-ink/[0.06] text-ink" : "text-neutral-300"
                   }`}
                 >
                   <item.Icon size={14} className={item.disabled ? "text-neutral-700" : "text-neutral-500"} />

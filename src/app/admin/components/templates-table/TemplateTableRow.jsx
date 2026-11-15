@@ -17,7 +17,7 @@ function TitleCell({ row, query, open }) {
   const updated = formatUpdatedAt(row.updatedAt);
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3">
         <LayoutTemplate className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
       </div>
       <div className="min-w-0">
@@ -51,12 +51,12 @@ function RowActions({ row, open, onToggle, onShare }) {
   return (
     <div className="flex items-center justify-end gap-0.5">
       <div className="hidden items-center gap-1 overflow-hidden transition-all duration-200 ease-out @4xl:flex @4xl:max-w-0 @4xl:opacity-0 @4xl:group-hover/row:max-w-8 @4xl:group-hover/row:opacity-100">
-        <button type="button" onClick={onShare} title="Paylaş" aria-label={`${row.title}: paylaş`} className={`${ROW_ICON} border-white/10 text-neutral-400 hover:bg-white/5 hover:text-neutral-200`}>
+        <button type="button" onClick={onShare} title="Paylaş" aria-label={`${row.title}: paylaş`} className={`${ROW_ICON} border-ink/10 text-neutral-400 hover:bg-ink/5 hover:text-neutral-200`}>
           <Share2 className="h-3 w-3" />
         </button>
       </div>
       <button type="button" onClick={onToggle} aria-expanded={open} aria-label={`${row.title}: ${toggleLabel}`} title={toggleLabel}
-        className="relative z-10 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200"
+        className="relative z-10 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
       >
         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180 text-neutral-300" : ""}`} />
       </button>
@@ -75,7 +75,7 @@ function Row({ row, open, onToggle, onShare, query, matched, fresh }) {
   }, [fresh]);
 
   return (
-    <div ref={ref} data-table-row={row.key} className={`group/row relative transition-colors duration-700 ${fresh ? "bg-skylab-500/10" : open ? "bg-white/2.5" : "hover:bg-white/3"}`}>
+    <div ref={ref} data-table-row={row.key} className={`group/row relative transition-colors duration-700 ${fresh ? "bg-skylab-500/10" : open ? "bg-ink/2.5" : "hover:bg-ink/3"}`}>
       <Link href={row.href} className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-skylab-400/40" aria-label={row.title} />
       <div className={`${TABLE_GRID} px-3 py-2.5`}>
         <TitleCell row={row} query={query} open={open} />
@@ -102,7 +102,7 @@ export function TableRow({ row, open, onToggle, query, matched, fresh, onShare, 
 export function TableHead({ sortField, sortDirection, onSort }) {
   const props = { sortField, sortDirection, onSort };
   return (
-    <div className={`${TABLE_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
+    <div className={`${TABLE_GRID} sticky top-0 z-20 border-b border-ink/10 bg-neutral-900 px-3 pb-2`}>
       <SortHeader label="Şablon" field="title" align="left" title="Ada göre sırala" {...props} />
       <span className={`hidden ${COLUMN_LABEL} @2xl:block`}>Sorular</span>
       <SortHeader label="Soru" field="count" align="right" visibility="hidden @2xl:flex" title="Soru sayısına göre sırala" {...props} />
@@ -114,7 +114,7 @@ export function TableHead({ sortField, sortDirection, onSort }) {
 
 export function TableSkeleton({ count = 6 }) {
   return (
-    <div className="divide-y divide-white/5">
+    <div className="divide-y divide-ink/5">
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="flex items-center gap-3 px-3 py-2.5">
           <span className="shimmer h-9 w-9 shrink-0 rounded-lg" />

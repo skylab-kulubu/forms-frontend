@@ -66,7 +66,7 @@ export default function StepIntro({ workflow, stage, formTitle, arrivedTitle = n
           <JourneyTimeline items={items} className="mt-7" />
           <div className="mt-7.5 flex flex-col items-center gap-3.5">
             {autoAdvance && (
-              <span className="h-0.5 w-40 overflow-hidden rounded-full bg-white/8">
+              <span className="h-0.5 w-40 overflow-hidden rounded-full bg-ink/8">
                 <motion.span className="block h-full w-full origin-left rounded-full bg-skylab-500"
                   initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: INTRO_MS / 1000, ease: "linear" }}
                 />

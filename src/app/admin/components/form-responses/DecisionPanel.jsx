@@ -26,7 +26,7 @@ const DECISION = {
 const VERDICT_TONE = { 2: "emerald", 3: "red", [RETURNED]: "neutral", [FLAGGED]: "amber" };
 
 function Kbd({ children }) {
-  return <span className="ml-0.5 hidden h-4 min-w-4 place-items-center rounded border border-white/15 px-1 font-mono text-4xs font-medium leading-none opacity-70 lg:grid">{children}</span>;
+  return <span className="ml-0.5 hidden h-4 min-w-4 place-items-center rounded border border-ink/15 px-1 font-mono text-4xs font-medium leading-none opacity-70 lg:grid">{children}</span>;
 }
 
 function RouteHint({ label, dot, text }) {
@@ -84,7 +84,7 @@ function NoteField({ state, setState, pendingReturn }) {
       <textarea id="room-review-note" data-note rows={3} value={note} maxLength={REVIEW_NOTE_MAX_LENGTH}
         onChange={(event) => setState({ note: event.target.value })}
         placeholder={pendingReturn ? "Neyi düzeltmesi gerektiğini yazın" : "Açıklama ekle"}
-        className={`w-full resize-none rounded-lg border bg-transparent px-3 py-2 text-sm text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 sm:text-xs ${missing ? "border-sky-400/40" : "border-white/10"}`}
+        className={`w-full resize-none rounded-lg border bg-transparent px-3 py-2 text-sm text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 sm:text-xs ${missing ? "border-sky-400/40" : "border-ink/10"}`}
       />
       <div className="mt-1 flex items-start justify-between gap-3">
         <p className={`text-3xs leading-relaxed ${missing ? "text-sky-200" : "text-neutral-600"}`}>
@@ -113,11 +113,11 @@ function EvaluationSection({ detail, numbers, state, setState, access, onStart, 
     <section className={PANEL_SECTION}>
       <SectionHeader title="Değerlendirme" />
       {state.phase === "loading" || state.phase === "success" ? (
-        <div className={`flex w-full items-center justify-center rounded-xl border px-3 py-2.5 ${state.phase === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5 text-neutral-200"}`}>
+        <div className={`flex w-full items-center justify-center rounded-xl border px-3 py-2.5 ${state.phase === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-ink/10 bg-ink/5 text-neutral-200"}`}>
           {state.phase === "loading" ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
         </div>
       ) : pending ? (
-        <div className="space-y-3 rounded-xl border border-white/10 bg-white/3 p-3">
+        <div className="space-y-3 rounded-xl border border-ink/10 bg-ink/3 p-3">
           <div>
             <p className="text-xs font-medium text-neutral-100">{DECISION[pending].title}</p>
             {outcome ? <p className="mt-1 text-2xs text-neutral-300">{outcome}</p> : null}
@@ -136,7 +136,7 @@ function EvaluationSection({ detail, numbers, state, setState, access, onStart, 
                     <span key={id} className="inline-flex items-center gap-0.5 rounded-md border border-sky-400/30 bg-sky-400/10 py-0.5 pl-2 pr-0.5 text-2xs text-sky-100">
                       {numbers.get(id) ?? "?"}. soru
                       <button type="button" aria-label={`${numbers.get(id) ?? ""}. sorunun işaretini kaldır`} onClick={() => setState({ flags: flags.filter((item) => item !== id) })}
-                        className="grid size-7 place-items-center rounded text-sky-200/70 transition-colors hover:bg-white/10 hover:text-sky-100 sm:size-5"
+                        className="grid size-7 place-items-center rounded text-sky-200/70 transition-colors hover:bg-ink/10 hover:text-sky-100 sm:size-5"
                       >
                         <X size={11} />
                       </button>
@@ -148,7 +148,7 @@ function EvaluationSection({ detail, numbers, state, setState, access, onStart, 
           ) : null}
           <div className="flex items-center gap-2">
             <button type="button" onClick={onCancel}
-              className="flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-white/10 px-2 py-3 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 sm:py-1.5"
+              className="flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-ink/10 px-2 py-3 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 sm:py-1.5"
             >
               Vazgeç<Kbd>Esc</Kbd>
             </button>
@@ -201,7 +201,7 @@ function EvaluationSection({ detail, numbers, state, setState, access, onStart, 
           <NoteField state={state} setState={setState} pendingReturn={false} />
           {detail.reviewedAt ? (
             <button type="button" onClick={() => setState({ editing: false, note: noteOf(detail) })}
-              className="text-left text-2xs text-neutral-500 underline decoration-white/20 underline-offset-2 transition-colors hover:text-neutral-200"
+              className="text-left text-2xs text-neutral-500 underline decoration-ink/20 underline-offset-2 transition-colors hover:text-neutral-200"
             >
               Değişiklikten vazgeç
             </button>
@@ -257,7 +257,7 @@ function VerdictSection({ detail, access, state, setState, nextPending, onOpenNe
       ) : null}
       {nextPending && state.decidedHere ? (
         <button type="button" onClick={onOpenNext}
-          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-left text-xs text-neutral-400 transition-colors hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300"
+          className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-ink/10 bg-ink/5 px-4 py-2.5 text-left text-xs text-neutral-400 transition-colors hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300"
         >
           <span className="min-w-0 truncate">Sıradaki: <span className="font-medium text-neutral-100">{nextPending.name}</span></span>
           <ArrowRight size={14} className="shrink-0" />
@@ -303,7 +303,7 @@ function ProvisionalSection({ attempt, onExtended }) {
             </span>
           </button>
           {attempt.canExtend ? (
-            <button type="button" onClick={() => setFlow("extend")} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-left transition hover:bg-white/10">
+            <button type="button" onClick={() => setFlow("extend")} className="flex w-full items-center gap-3 rounded-xl border border-ink/10 bg-ink/5 px-3 py-2.5 text-left transition hover:bg-ink/10">
               <ClockPlus size={16} className="shrink-0 text-neutral-300" />
               <span className="min-w-0">
                 <span className="block text-xs font-semibold text-neutral-100">Süre ver</span>
@@ -396,7 +396,7 @@ function RunPanel({ run, instanceId }) {
       {blockCopy ? <p className="text-3xs leading-relaxed text-neutral-500">{blockCopy}</p> : null}
       {run.canVoid ? (
         confirming ? (
-          <div className="rounded-xl border border-white/10 bg-white/3 p-3">
+          <div className="rounded-xl border border-ink/10 bg-ink/3 p-3">
             <p className="text-xs font-medium text-neutral-100">{copy.action}</p>
             <ul className="mt-1.5 space-y-1">
               {copy.lines.map((line) => (
@@ -406,12 +406,12 @@ function RunPanel({ run, instanceId }) {
             <label htmlFor="room-run-void-note" className="mb-1.5 mt-3 block text-3xs font-medium text-neutral-500">Adaya gidecek not · isteğe bağlı</label>
             <textarea id="room-run-void-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={NOTE_MAX_LENGTH}
               placeholder="Neden yeniden başvurabileceğini yazın"
-              className="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
+              className="w-full rounded-lg border border-ink/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
             />
             <p className="mt-1.5 text-3xs leading-relaxed text-neutral-500">Aday e-postayla bilgilendirilir.</p>
             <div className="mt-3 flex items-center gap-2">
               <button type="button" onClick={() => setConfirming(false)} disabled={mutation.isPending}
-                className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200"
+                className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200"
               >
                 Vazgeç
               </button>
@@ -425,7 +425,7 @@ function RunPanel({ run, instanceId }) {
           </div>
         ) : (
           <button type="button" onClick={() => { mutation.reset(); setConfirming(true); }}
-            className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${copy.danger ? "border-white/10 hover:border-red-500/30 hover:bg-red-500/5" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+            className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${copy.danger ? "border-ink/10 hover:border-red-500/30 hover:bg-red-500/5" : "border-ink/10 bg-ink/5 hover:bg-ink/10"}`}
           >
             <copy.Icon size={16} className={`shrink-0 ${copy.danger ? "text-red-300/70" : "text-neutral-300"}`} />
             <span className="min-w-0">
@@ -471,7 +471,7 @@ export default function DecisionPanel({
             {person.id ? <p className="truncate text-3xs text-neutral-500/70">ID: {person.id}</p> : null}
           </div>
         </div>
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           <KV label="Durum"><span className={`size-1.5 rounded-full ${view.dot}`} /><span className={view.text}>{view.label}</span></KV>
           {isAttempt ? (
             <>
@@ -488,7 +488,7 @@ export default function DecisionPanel({
             <KV label="Kaynak">
               <span className="text-neutral-400"><ChannelIcon source={attribution.source} size={12} /></span>
               <span>{sourceLabel(attribution.source)}</span>
-              {scannedFromQr ? <span className="rounded-full border border-white/10 px-1.5 text-3xs leading-4 text-neutral-400">QR</span> : null}
+              {scannedFromQr ? <span className="rounded-full border border-ink/10 px-1.5 text-3xs leading-4 text-neutral-400">QR</span> : null}
               {attribution.campaign ? <span className="max-w-24 truncate font-mono text-3xs text-neutral-600">{attribution.campaign}</span> : null}
             </KV>
           ) : null}

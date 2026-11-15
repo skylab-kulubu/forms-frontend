@@ -106,15 +106,15 @@ function layoutOf(nodes, transitions, heights, frameWidth) {
   return { positions, depths };
 }
 
-const OUT_PANEL = "rounded-r-lg border border-l-0 border-white/10 bg-neutral-900 shadow-lg shadow-black/30";
+const OUT_PANEL = "rounded-r-lg border border-l-0 border-ink/10 bg-neutral-900 shadow-lg shadow-black/30";
 
 function PortRow({ trigger, index, routed, interactive = false, onSelect, onPortDown }) {
   const style = triggerStyle(trigger);
 
   return (
     <div onClick={onSelect}
-      className={`relative flex h-7.5 items-center gap-1.5 pl-3 pr-2.5 text-2xs ${interactive ? "cursor-pointer transition-colors hover:bg-white/3" : ""} ${style.text ?? "text-neutral-400"} ${
-        index > 0 ? "border-t border-dashed border-white/5" : ""
+      className={`relative flex h-7.5 items-center gap-1.5 pl-3 pr-2.5 text-2xs ${interactive ? "cursor-pointer transition-colors hover:bg-ink/3" : ""} ${style.text ?? "text-neutral-400"} ${
+        index > 0 ? "border-t border-dashed border-ink/5" : ""
       }`}
     >
       <style.Icon size={11} className={`shrink-0 ${style.icon}`} />
@@ -136,7 +136,7 @@ export function FlowCardDecor({ node, transitions }) {
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden select-none md:block">
       {incoming ? (
         <>
-          <span className="absolute right-full h-[1.5px] w-screen -translate-y-1/2 bg-[#595959]" style={{ top: IN_Y }} />
+          <span className="absolute right-full h-[1.5px] w-screen -translate-y-1/2 bg-neutral-600" style={{ top: IN_Y }} />
           <span className="absolute left-0 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-neutral-500 bg-neutral-900" style={{ top: IN_Y }} />
         </>
       ) : null}
@@ -200,11 +200,11 @@ function NextStepGhost({ x, y, z, frameWidth, height, step }) {
       <div data-map-ui className="absolute flex items-center gap-2 whitespace-nowrap"
         style={{ left: x, top: y - 10, transform: `translateY(-100%) scale(${inverse})`, transformOrigin: "0 100%" }}
       >
-        <span className="grid size-5 shrink-0 place-items-center rounded border border-dashed border-white/20 text-3xs font-semibold text-neutral-500">2</span>
+        <span className="grid size-5 shrink-0 place-items-center rounded border border-dashed border-ink/20 text-3xs font-semibold text-neutral-500">2</span>
         <span className="text-xs font-medium text-neutral-500">Sonraki adım</span>
       </div>
 
-      <div data-map-ui className="absolute flex flex-col border border-dashed border-white/15 bg-neutral-900/70 p-3"
+      <div data-map-ui className="absolute flex flex-col border border-dashed border-ink/15 bg-neutral-900/70 p-3"
         style={{
           left: x, top: y, width: Math.max(frameWidth * z, GHOST_MIN_WIDTH), height: Math.max(height * z, GHOST_MIN_HEIGHT),
           borderRadius: Math.max(24 * z, 14), transform: `scale(${inverse})`, transformOrigin: "0 0",
@@ -579,7 +579,7 @@ export default function StudioMap({
       <div ref={canvasRef} data-map-surface onPointerDown={handleBackgroundDown}
         className="studio-fade relative h-full overflow-hidden"
         style={{
-          backgroundImage: "radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(rgb(var(--forms-ink-rgb)/0.05) 1px, transparent 1px)",
           backgroundSize: `${22 * z}px ${22 * z}px`,
           backgroundPosition: `${view.x}px ${view.y}px`,
         }}
@@ -615,7 +615,7 @@ export default function StudioMap({
 
           {labels.map((label) => (
             <button key={`label-${label.id}`} type="button" data-map-ui onClick={() => wf.dispatch({ type: "FOCUS_ROUTE", localId: label.id })}
-              className={`absolute truncate rounded-[5px] border bg-neutral-900 px-1.5 py-px text-3xs transition-colors hover:border-white/25 hover:text-neutral-100 ${label.tone} ${label.italic ? "italic" : ""}`}
+              className={`absolute truncate rounded-[5px] border bg-neutral-900 px-1.5 py-px text-3xs transition-colors hover:border-ink/25 hover:text-neutral-100 ${label.tone} ${label.italic ? "italic" : ""}`}
               style={{ left: label.x, top: label.y, maxWidth: 200, transform: `translate(-50%, -50%) scale(${inverse})`, transformOrigin: "50% 50%" }}
             >
               {label.text}
@@ -660,7 +660,7 @@ export default function StudioMap({
                 <div data-map-ui className="absolute flex items-center gap-2 whitespace-nowrap"
                   style={{ left: position.x, top: position.y - 10, maxWidth: Math.max(96, (frameWidth + OUT_WIDTH / 2) * z), transform: `translateY(-100%) scale(${inverse})`, transformOrigin: "0 100%" }}
                 >
-                  <span className={`grid size-5 shrink-0 place-items-center rounded border text-3xs font-semibold ${node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400"}`}>
+                  <span className={`grid size-5 shrink-0 place-items-center rounded border text-3xs font-semibold ${node.isStart ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-400"}`}>
                     {depths.get(node.nodeKey) ?? "?"}
                   </span>
                   <button type="button" onClick={() => onSelectNode(node.nodeKey)}
@@ -684,10 +684,10 @@ export default function StudioMap({
                           echo={node.formId === entry?.formId ? entry.echo ?? null : null}
                         />
                       ) : (
-                        <div className="h-96 rounded-3xl border border-white/10 bg-[#1c1c1c]"><div className="shimmer m-10 h-8 w-64 rounded-lg" /></div>
+                        <div className="h-96 rounded-3xl border border-ink/10 bg-panel-soft"><div className="shimmer m-10 h-8 w-64 rounded-lg" /></div>
                       )}
                       <button type="button" aria-label={`${node.formTitle || "Form"} formunu düzenle`} onClick={() => onOpenForm(node.formId)}
-                        className="absolute inset-0 z-10 cursor-pointer rounded-3xl transition-[background-color,box-shadow] hover:bg-white/2 hover:ring-[6px] hover:ring-skylab-400/30"
+                        className="absolute inset-0 z-10 cursor-pointer rounded-3xl transition-[background-color,box-shadow] hover:bg-ink/2 hover:ring-[6px] hover:ring-skylab-400/30"
                       />
                     </div>
                   </FrameMeasure>
@@ -695,7 +695,7 @@ export default function StudioMap({
 
                 {sources.length > 0 ? (
                   <button type="button" data-map-ui title={`Önceki adıma git: ${sources[0].formTitle}`} onClick={() => onOpenForm(sources[0].formId)}
-                    className="absolute grid size-5 place-items-center rounded-full transition-colors hover:bg-white/10"
+                    className="absolute grid size-5 place-items-center rounded-full transition-colors hover:bg-ink/10"
                     style={{ left: position.x - 10, top: position.y + IN_Y - 10, transform: `scale(${inverse})` }}
                   >
                     <span className="size-2.5 rounded-full border-[1.5px] border-neutral-500 bg-neutral-900" />
@@ -718,9 +718,9 @@ export default function StudioMap({
         {nodes.length === 0 ? (
           <div className="absolute inset-0 grid place-items-center">
             <button type="button" data-map-ui onClick={(event) => onAddStep(event.currentTarget)}
-              className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-white/10 bg-neutral-900/60 px-8 py-7 text-center transition-colors hover:border-skylab-400/40 hover:bg-white/3"
+              className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-ink/10 bg-neutral-900/60 px-8 py-7 text-center transition-colors hover:border-skylab-400/40 hover:bg-ink/3"
             >
-              <span className="grid size-10 place-items-center rounded-xl border border-white/10 bg-white/3 text-neutral-500"><Plus size={18} /></span>
+              <span className="grid size-10 place-items-center rounded-xl border border-ink/10 bg-ink/3 text-neutral-500"><Plus size={18} /></span>
               <span className="space-y-1">
                 <span className="block text-sm font-medium text-neutral-200">İlk adımı ekleyin</span>
                 <span className="block text-2xs text-neutral-500">Akışın başlangıç formunu seçin ya da yeni bir form açın.</span>
@@ -751,12 +751,12 @@ export default function StudioMap({
       </div>
 
       <div data-map-ui onPointerDown={(event) => event.stopPropagation()}
-        className="absolute bottom-17 right-3 z-30 flex items-center rounded-lg border border-white/10 bg-neutral-900 text-2xs text-neutral-400 shadow-lg @3xl:bottom-4 @3xl:right-4"
+        className="absolute bottom-17 right-3 z-30 flex items-center rounded-lg border border-ink/10 bg-neutral-900 text-2xs text-neutral-400 shadow-lg @3xl:bottom-4 @3xl:right-4"
       >
         <button type="button" title="Uzaklaş" aria-label="Uzaklaş" onClick={() => zoomBy(1 / 1.2)} className="grid size-7 place-items-center transition-colors hover:text-neutral-100"><Minus size={13} /></button>
         <span className="h-7 min-w-11 px-1 text-center leading-7 tabular-nums">{Math.round(z * 100)}%</span>
         <button type="button" title="Yakınlaş" aria-label="Yakınlaş" onClick={() => zoomBy(1.2)} className="grid size-7 place-items-center transition-colors hover:text-neutral-100"><Plus size={13} /></button>
-        <span className="h-4 w-px bg-white/10" />
+        <span className="h-4 w-px bg-ink/10" />
         <button type="button" title="Hepsini sığdır (Shift+1)" aria-label="Hepsini sığdır"
           onClick={() => { stopTween(); const next = fitView(); if (next) setView(next); }}
           className="grid size-7 place-items-center transition-colors hover:text-neutral-100"

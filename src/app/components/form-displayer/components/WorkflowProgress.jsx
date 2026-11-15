@@ -29,10 +29,10 @@ function Segment({ kind, fill }) {
   }
 
   if (kind === "maybe") {
-    return <span className="h-1 flex-1 rounded-full bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.16)_0_6px,transparent_6px_11px)]" />;
+    return <span className="h-1 flex-1 rounded-full bg-[repeating-linear-gradient(90deg,rgb(var(--forms-ink-rgb)/0.16)_0_6px,transparent_6px_11px)]" />;
   }
 
-  return <span className="h-1 flex-1 rounded-full bg-white/8" />;
+  return <span className="h-1 flex-1 rounded-full bg-ink/8" />;
 }
 
 function useStuck() {
@@ -61,7 +61,7 @@ function StickyShell({ zIndex, label, stuck, sentinelRef, children }) {
       <div className="sticky top-2.5 -mx-3.5 -my-2.5" style={{ zIndex }}>
         <div role="group" aria-label={label}
           className={`rounded-2xl border px-3.5 py-2.5 transition-[background-color,border-color,box-shadow] duration-200
-            ${stuck ? "border-white/10 bg-neutral-900/95 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl" : "border-transparent"}`}
+            ${stuck ? "border-ink/10 bg-neutral-900/95 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl" : "border-transparent"}`}
         >
           {children}
         </div>

@@ -36,7 +36,7 @@ function RunRow({ run, depthOf, showStep, onOpen }) {
   return (
     <button type="button" onClick={() => onOpen(run)} data-run={run.id}
       title={run.latestResponse ? (finished ? "Son cevabı aç" : "Cevabı aç: onay, ret, düzeltme") : "Bu başvurunun henüz cevabı yok"}
-      className="group/row flex w-full items-center gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-white/3"
+      className="group/row flex w-full items-center gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-ink/3"
     >
       <Avatar name={run.applicant?.fullName || ""} email={run.applicant?.email || ""} photoUrl={run.applicant?.profilePictureUrl} size="sm" />
       <span className="min-w-0 flex-1">
@@ -65,12 +65,12 @@ export function RunsList({
         <div key={stepKey} className="space-y-3 border-b border-neutral-800/60 px-4 py-3">
           <div className="flex items-center gap-2">
             {stepNote
-              ? <span className="grid size-5 shrink-0 place-items-center rounded-md border border-dashed border-white/15 text-3xs text-neutral-500">–</span>
+              ? <span className="grid size-5 shrink-0 place-items-center rounded-md border border-dashed border-ink/15 text-3xs text-neutral-500">–</span>
               : <StepBadge depth={stepDepth} isStart={stepIsStart} size="md" />}
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-100">{stepTitle || "Adsız form"}</span>
             {stepNote ? <span className="shrink-0 rounded border border-dashed border-neutral-700 px-1.5 py-0.5 text-3xs text-neutral-500">{stepNote}</span> : null}
             <button type="button" onClick={onClear} title="Adım seçimini kaldır" aria-label="Adım seçimini kaldır"
-              className="grid size-10 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200 sm:size-6"
+              className="grid size-10 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200 sm:size-6"
             >
               <X size={13} />
             </button>
@@ -101,7 +101,7 @@ export function RunsList({
 
       {only != null ? (
         <div className="flex shrink-0 px-4 pt-1.5">
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 py-0.5 pl-2 pr-0.5 text-2xs text-neutral-300">
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-ink/10 py-0.5 pl-2 pr-0.5 text-2xs text-neutral-300">
             <span className={`size-1.5 rounded-full ${RUN_STATE[only].dot}`} />
             {RUN_STATE[only].label}
             <button type="button" onClick={onClearOnly} title="Süzgeci kaldır" aria-label="Süzgeci kaldır"
@@ -121,7 +121,7 @@ export function RunsList({
         ) : runs.length === 0 ? (
           <p className="px-3 py-10 text-center text-2xs text-neutral-500">{live ? "Bu süzgeçte başvuran yok." : "Akış kaydedilince başvuranlar burada görünür."}</p>
         ) : (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-ink/5">
             {runs.map((run) => <RunRow key={run.id} run={run} depthOf={depthOf} showStep={!stepKey} onOpen={onOpenRun} />)}
           </div>
         )}
@@ -204,7 +204,7 @@ export function OperationsPanel({ workflow, overview, steps, onMode, onEdit, can
 
       <section className={PANEL_SECTION}>
         <SectionHeader title="Adımların formları" description="Her adımın formu aynı odada açılır: Özet, Analitik ya da Cevaplar." />
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           {steps.map((step) => (
             <div key={step.nodeKey} className="flex items-center gap-2.5 py-1.5">
               <StepBadge depth={step.depth} isStart={step.isStart} size="md" />

@@ -10,10 +10,10 @@ export function RoomSteps({ flow, activeFormId, countOf = () => null, keysHint =
     <div className="shrink-0 border-b border-neutral-800/60 px-1.5 pb-2 pt-2.5">
       <div className="mb-1 flex items-center gap-2 px-1.5">
         <span className="text-2xs font-medium text-neutral-500">Adımlar</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         {keysHint ? <span title="Önceki ve sonraki adım" className="font-mono text-3xs text-neutral-600 pointer-coarse:hidden">← →</span> : null}
         <button type="button" title="Akışta gör (M)" onClick={onFlow}
-          className="flex h-6 items-center gap-1 rounded px-1.5 text-3xs text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200"
+          className="flex h-6 items-center gap-1 rounded px-1.5 text-3xs text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
         >
           <Workflow size={12} />
           Akış
@@ -24,7 +24,7 @@ export function RoomSteps({ flow, activeFormId, countOf = () => null, keysHint =
         const count = countOf(node);
         return (
           <button key={node.nodeKey} type="button" onClick={() => onPick(node.formId)} aria-current={active ? "step" : undefined}
-            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"}`}
+            className={`group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors ${active ? "bg-ink/[0.06]" : "hover:bg-ink/[0.03]"}`}
           >
             <StepBadge depth={flow.stages.depths.get(node.nodeKey)} isStart={node.isStart} size="md" />
             <span className={`min-w-0 flex-1 truncate text-xs transition-colors ${active ? "text-neutral-100" : "text-neutral-400 group-hover:text-neutral-200"}`}>

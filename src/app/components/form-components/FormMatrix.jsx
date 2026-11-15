@@ -117,11 +117,11 @@ export function matrixGroupProps(layout) {
 }
 
 export function matrixChoiceClass(layout, missing = false) {
-    const border = missing ? "border-red-400/60" : "border-white/10";
+    const border = missing ? "border-red-400/60" : "border-ink/10";
     if (layout.mode === "list") {
-        return `flex items-center gap-3 rounded-md border ${border} bg-neutral-900/60 p-2 transition hover:bg-white/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`;
+        return `flex items-center gap-3 rounded-md border ${border} bg-neutral-900/60 p-2 transition hover:bg-ink/10 has-checked:border-skylab-400/10 has-checked:bg-skylab-400/20`;
     }
-    const chip = `flex items-center justify-center rounded-md border ${border} bg-neutral-900/60 px-2 text-xs font-medium text-neutral-300 transition hover:bg-white/10 has-checked:border-skylab-600/50 has-checked:bg-skylab-800/50 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-skylab-400/40`;
+    const chip = `flex items-center justify-center rounded-md border ${border} bg-neutral-900/60 px-2 text-xs font-medium text-neutral-300 transition hover:bg-ink/10 has-checked:border-skylab-600/50 has-checked:bg-skylab-800/50 has-checked:text-ink has-focus-visible:ring-2 has-focus-visible:ring-skylab-400/40`;
     return layout.mode === "inline" ? `${chip} h-10 min-w-8 flex-auto` : `${chip} min-h-10 py-1.5 text-center`;
 }
 
@@ -168,7 +168,7 @@ function MatrixRows({ name, rows, columns, value, missing, layout, onPick }) {
 export function DisplayFormMatrix({ question, questionNumber, description, required = false, rows = [], columns = [], value, onChange, missing = false }) {
     const [internalValue, setInternalValue] = useState(value || {});
     const currentValue = value !== undefined ? (value || {}) : internalValue;
-    const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
+    const optionBorderClass = missing ? "border-red-400/60" : "border-ink/10";
     const { rootRef, scrollerRef, layout } = useMatrixLayout(rows, columns);
     const name = useId();
 
@@ -213,7 +213,7 @@ export function DisplayFormMatrix({ question, questionNumber, description, requi
                     {layout.mode === "table" ? (
                         <div ref={scrollerRef} className={`overflow-x-auto rounded-lg border ${optionBorderClass} bg-neutral-900/60`}>
                             <table className="w-full text-left min-w-[500px]">
-                                <thead className="border-b border-white/10 bg-white/5">
+                                <thead className="border-b border-ink/10 bg-ink/5">
                                     <tr>
                                         <th className="p-3 font-medium w-1/3"></th>
                                         {columns.map((col, cIdx) => (
@@ -224,14 +224,14 @@ export function DisplayFormMatrix({ question, questionNumber, description, requi
                                         <th className="p-3 w-10"></th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-white/5">
+                                <tbody className="divide-y divide-ink/5">
                                     {rows.map((row, rIdx) => {
                                         const rowLabel = rows[rIdx];
                                         const isRowMissing = missing && currentValue[rowLabel] === undefined;
                                         const hasSelection = currentValue[rowLabel] !== undefined;
 
                                         return (
-                                            <tr key={`row-${rIdx}`} className={`group transition-colors hover:bg-white/3 ${isRowMissing ? 'bg-red-500/5' : ''}`}>
+                                            <tr key={`row-${rIdx}`} className={`group transition-colors hover:bg-ink/3 ${isRowMissing ? 'bg-red-500/5' : ''}`}>
                                                 <td className="p-3 text-sm font-medium text-neutral-200">
                                                     {row}
                                                 </td>
@@ -243,7 +243,7 @@ export function DisplayFormMatrix({ question, questionNumber, description, requi
                                                         <td key={id} className="p-2 text-center align-middle">
                                                             <label htmlFor={id} className="flex justify-center items-center w-full h-full cursor-pointer opacity-80 transition-opacity hover:opacity-100">
                                                                 <input type="radio" id={id} name={`matrix_${questionNumber}_row_${rIdx}`} checked={isChecked} onChange={() => toggle(rIdx, cIdx)}
-                                                                    className="w-[18px] h-[18px] cursor-pointer appearance-none rounded-full border border-white/20 bg-neutral-900/80 transition-all checked:border-[5px] checked:border-pink-300/80 hover:border-white/40 focus:outline-none focus:ring-2 focus:ring-skylab-400/20 focus:ring-offset-1 focus:ring-offset-neutral-900"
+                                                                    className="w-[18px] h-[18px] cursor-pointer appearance-none rounded-full border border-ink/20 bg-neutral-900/80 transition-all checked:border-[5px] checked:border-pink-300/80 hover:border-ink/40 focus:outline-none focus:ring-2 focus:ring-skylab-400/20 focus:ring-offset-1 focus:ring-offset-neutral-900"
                                                                 />
                                                             </label>
                                                         </td>

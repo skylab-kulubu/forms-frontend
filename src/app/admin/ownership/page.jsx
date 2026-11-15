@@ -85,7 +85,7 @@ function OrphanRow({ section, item }) {
           </button>
           {section.href ? (
             <Link href={section.href(item)} aria-label="Aç"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-ink/10 text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
             >
               <ArrowUpRight size={13} />
             </Link>
@@ -133,7 +133,7 @@ function OrphanSection({ section }) {
         <span className="text-2xs tabular-nums text-neutral-500">{isLoading ? "--" : totalCount}</span>
       </div>
 
-      <div className="rounded-xl border border-white/10">
+      <div className="rounded-xl border border-ink/10">
         {isLoading ? (
           <ListItemSkeleton count={2} />
         ) : error ? (
@@ -143,7 +143,7 @@ function OrphanSection({ section }) {
         ) : (
           items.map((item, index) => (
             <div key={item.id}>
-              {index > 0 && <div className="mx-4 h-px bg-white/10" />}
+              {index > 0 && <div className="mx-4 h-px bg-ink/10" />}
               <OrphanRow section={section} item={item} />
             </div>
           ))

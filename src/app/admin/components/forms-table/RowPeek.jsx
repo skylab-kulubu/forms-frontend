@@ -18,7 +18,7 @@ import { agoText, closingText } from "./table-data";
 import { elapsed, finishedTotal, possessive } from "../workflow-page/journey-data";
 
 const FRESH = 30_000;
-const ACTION = "inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100";
+const ACTION = "inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100";
 
 const solid = (kind) => ROW_STATUS[kind].dot.split(" ")[0];
 
@@ -118,7 +118,7 @@ function PersonLine({ formId, row }) {
   const view = statusView(kind);
 
   return (
-    <Link href={`/admin/forms/${formId}/responses/${row.id}`} className="-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-0.5 text-2xs transition-colors hover:bg-white/5">
+    <Link href={`/admin/forms/${formId}/responses/${row.id}`} className="-mx-1.5 flex items-center gap-2 rounded-md px-1.5 py-0.5 text-2xs transition-colors hover:bg-ink/5">
       <span title={view.label} className={`size-1.5 shrink-0 rounded-full opacity-70 ${view.dot.split(" ")[0]}`} />
       <span className="min-w-0 flex-1 truncate text-neutral-300">{person.name}</span>
       <span className="shrink-0 tabular-nums text-neutral-600">{elapsed(row.submittedAt)} önce</span>
@@ -133,7 +133,7 @@ function People({ row, result, className = "" }) {
     <section className={`hidden min-w-0 @2xl:block ${className}`}>
       <div className="mb-1.5 flex h-4 items-center gap-2">
         <span className="shrink-0 text-2xs font-medium text-neutral-500">Son cevaplar</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         <Link href={`/admin/forms/${row.details.id}/responses`} className="inline-flex shrink-0 items-center gap-0.5 text-3xs font-medium text-neutral-500 transition-colors hover:text-skylab-300">
           Tümü
           <ArrowRight size={10} />
@@ -160,7 +160,7 @@ export default function RowPeek({ row }) {
   const sentence = flow ? <FlowSentence runs={row.flow?.runs} /> : <FormSentence metrics={metrics} parts={parts} />;
 
   return (
-    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden bg-white/2.5">
+    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden bg-ink/2.5">
       <div className="flex flex-col gap-4 px-3 pb-3.5 pt-1 @2xl:flex-row @2xl:flex-wrap @2xl:items-start @2xl:gap-x-8 @2xl:pl-24">
         {row.steps ? <div className="min-w-0 max-w-full"><FlowStrip row={row} /></div> : null}
         <div className="flex min-w-0 flex-col gap-x-8 gap-y-4 @2xl:grow @2xl:basis-88 @2xl:flex-row @2xl:flex-wrap @2xl:items-start @[90rem]:justify-end">

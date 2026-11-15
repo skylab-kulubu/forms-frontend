@@ -44,7 +44,7 @@ const INTAKE_STATE = {
   [WORKFLOW_INTAKE.CLOSED]: { pill: "Kapalı", tone: "red" },
 };
 
-const INLINE_INPUT = "w-24 min-w-0 border-b border-dotted border-white/25 bg-transparent px-0.5 py-0.5 text-2xs text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-skylab-400/60";
+const INLINE_INPUT = "w-24 min-w-0 border-b border-dotted border-ink/25 bg-transparent px-0.5 py-0.5 text-2xs text-neutral-100 outline-none transition-colors placeholder:text-neutral-600 focus:border-skylab-400/60";
 
 function linkClass(active = false) {
   return `rounded text-3xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:cursor-not-allowed disabled:opacity-35 ${
@@ -193,7 +193,7 @@ function RuleLine({ rule, index, ruleCount, operatorWord, sourceNode, nodes, tra
             return (
               <button key={option} type="button" onClick={() => toggleValue(option)}
                 className={`max-w-full truncate rounded-full border px-2 py-px text-3xs leading-4 transition-colors ${
-                  active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 text-neutral-500 hover:text-neutral-200"
+                  active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 text-neutral-500 hover:text-neutral-200"
                 }`}
               >
                 {option}
@@ -214,7 +214,7 @@ function RuleLine({ rule, index, ruleCount, operatorWord, sourceNode, nodes, tra
 
       {ruleCount > 1 && (
         <button type="button" onClick={onRemove} title="Kuralı kaldır" aria-label="Kuralı kaldır"
-          className="ml-auto rounded p-0.5 text-neutral-600 transition-colors hover:bg-white/5 hover:text-neutral-300"
+          className="ml-auto rounded p-0.5 text-neutral-600 transition-colors hover:bg-ink/5 hover:text-neutral-300"
         >
           <X size={11} />
         </button>
@@ -356,7 +356,7 @@ function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode
 
   return (
     <div ref={rowRef} data-route-row={transition.localId}
-      className={`${ROW} ${isOpen ? "border-skylab-400/30" : `border-white/10 ${ROW_HOVER}`} ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}
+      className={`${ROW} ${isOpen ? "border-skylab-400/30" : `border-ink/10 ${ROW_HOVER}`} ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}
     >
       <div role="button" tabIndex={0} aria-expanded={isOpen} onClick={onToggle}
         onKeyDown={(event) => {
@@ -365,7 +365,7 @@ function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode
         }}
         className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 ${FOCUS_RING}`}
       >
-        <span className={`${TILE} border-white/10 ${kind === "cond" ? "text-neutral-300" : "text-neutral-500"}`}>
+        <span className={`${TILE} border-ink/10 ${kind === "cond" ? "text-neutral-300" : "text-neutral-500"}`}>
           {kind === "cond" ? order : kind === "fallback" ? <CornerDownRight size={14} /> : <ArrowRight size={14} />}
         </span>
 
@@ -389,7 +389,7 @@ function RouteRow({ transition, kind, order, conditionalCount, group, sourceNode
             initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="mx-3 border-t border-white/5 pb-3 pt-2.5">
+            <div className="mx-3 border-t border-ink/5 pb-3 pt-2.5">
               <RouteEditor transition={transition} kind={kind} order={order} conditionalCount={conditionalCount} group={group}
                 sourceNode={sourceNode} nodes={nodes} transitions={transitions} schemasByFormId={schemasByFormId} dispatch={dispatch}
                 onClose={onToggle}
@@ -406,9 +406,9 @@ function ImplicitRow({ trigger, sourceNode, nodes, transitions, dispatch, isFlas
   const rowRef = useScrollIntoView(isFlashing);
 
   return (
-    <div ref={rowRef} data-route-row={`implicit-${trigger}`} className={`${ROW} border-white/10 ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}>
+    <div ref={rowRef} data-route-row={`implicit-${trigger}`} className={`${ROW} border-ink/10 ${isFlashing ? "ring-3 ring-skylab-500/25" : ""}`}>
       <div className="flex items-center gap-3 px-3 py-2.5">
-        <span className={`${TILE} border-white/10 text-neutral-500`}><ArrowRight size={14} /></span>
+        <span className={`${TILE} border-ink/10 text-neutral-500`}><ArrowRight size={14} /></span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium italic text-neutral-300">Her zaman</p>
           <p className="truncate text-2xs text-neutral-500">Yönlendirme yok; akış burada biter</p>
@@ -489,11 +489,11 @@ export function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issu
             <PanelNotice key={`${issue.code}-${index}`} tone="red">
               {validationMessage(issue)}
               {validationAction(issue) === "openForm" && (onOpenForm ? (
-                <button type="button" onClick={() => onOpenForm(selectedNode.formId)} className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-white">
+                <button type="button" onClick={() => onOpenForm(selectedNode.formId)} className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-ink">
                   Formu düzenle
                 </button>
               ) : (
-                <Link href={formHref} target="_blank" className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-white">
+                <Link href={formHref} target="_blank" className="ml-1.5 underline decoration-red-200/40 underline-offset-2 transition-colors hover:text-ink">
                   Formu düzenle
                 </Link>
               ))}
@@ -510,13 +510,13 @@ export function StepPanel({ selectedNode, state, dispatch, schemasByFormId, issu
               />
 
               {onOpenForm ? (
-                <div className={`${ROW} flex items-center justify-between gap-3 border-white/10 px-3 py-2.5`}>
+                <div className={`${ROW} flex items-center justify-between gap-3 border-ink/10 px-3 py-2.5`}>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-neutral-100">Kişisel süre</p>
                     <p className="text-2xs text-neutral-500">{isTimedNode(selectedNode) ? `Form yönetiyor · başlatınca ${durationText(selectedNode.timeLimitMinutes)}` : "Form yönetiyor · kapalı"}</p>
                   </div>
                   <button type="button" onClick={() => onOpenForm(selectedNode.formId, { panel: "timing" })}
-                    className={`inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-2xs text-neutral-300 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-neutral-50 ${FOCUS_RING}`}
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-lg border border-ink/10 bg-ink/5 px-2.5 py-1 text-2xs text-neutral-300 transition-colors hover:border-ink/20 hover:bg-ink/10 hover:text-neutral-50 ${FOCUS_RING}`}
                   >
                     Formda
                     <ChevronRight size={12} className="opacity-70" />
@@ -592,9 +592,9 @@ export function FlowPanel({ state, dispatch, schemasByFormId, picker, onRelayout
 
               return (
                 <button key={node.nodeKey} type="button" onClick={() => (onOpenStep ? onOpenStep(node) : dispatch({ type: "SELECT", nodeKey: node.nodeKey }))}
-                  className={`${ROW} ${ROW_HOVER} ${FOCUS_RING} flex w-full items-center gap-3 border-white/10 px-3 py-2.5 text-left`}
+                  className={`${ROW} ${ROW_HOVER} ${FOCUS_RING} flex w-full items-center gap-3 border-ink/10 px-3 py-2.5 text-left`}
                 >
-                  <span className={`${TILE} ${node.isStart ? "border-skylab-400/40 text-skylab-300" : "border-white/10 text-neutral-300"}`}>
+                  <span className={`${TILE} ${node.isStart ? "border-skylab-400/40 text-skylab-300" : "border-ink/10 text-neutral-300"}`}>
                     {node.isStart ? 1 : depth ?? "?"}
                   </span>
                   <span className="min-w-0 flex-1">

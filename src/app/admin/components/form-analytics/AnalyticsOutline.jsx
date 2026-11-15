@@ -23,14 +23,14 @@ export default function AnalyticsOutline({ form, analytics, participation = null
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center gap-2 px-3 pb-1 pt-3">
         <span className="text-2xs font-medium text-neutral-500">Cevaplanma oranı</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         {analytics ? <span className="text-3xs tabular-nums text-neutral-600">{total} cevap</span> : null}
       </div>
       <p className="shrink-0 px-3 pb-1.5 text-3xs text-neutral-600">{touch ? "Soruya gitmek için dokunun" : "Açıp kapatmak için sorulara tıklayın"}</p>
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2 scrollbar">
         {participation ? (
           <button type="button" onClick={() => onRow(PARTICIPATION)} aria-pressed={focus === PARTICIPATION}
-            className={`mb-1 w-full rounded-lg px-2.5 py-2 text-left transition-colors ${focus === PARTICIPATION ? "bg-skylab-500/10" : "hover:bg-white/5"}`}
+            className={`mb-1 w-full rounded-lg px-2.5 py-2 text-left transition-colors ${focus === PARTICIPATION ? "bg-skylab-500/10" : "hover:bg-ink/5"}`}
           >
             <div className="flex items-center justify-between gap-2">
               <span className="flex min-w-0 items-center gap-1.5">
@@ -39,7 +39,7 @@ export default function AnalyticsOutline({ form, analytics, participation = null
               </span>
               <span className="shrink-0 text-3xs tabular-nums text-neutral-500">{formatPercent(Math.round(delivered))} teslim</span>
             </div>
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink/5">
               <div className="h-full rounded-full bg-skylab-500 transition-[width] duration-500" style={{ width: `${Math.min(100, delivered)}%` }} />
             </div>
           </button>
@@ -61,7 +61,7 @@ export default function AnalyticsOutline({ form, analytics, participation = null
               <div key={field.id} className="flex items-start gap-2 px-2 pb-1 pt-3">
                 <span className="w-4 shrink-0" />
                 <span className="min-w-0 truncate text-2xs font-medium text-neutral-500">{fieldLabel(field)}</span>
-                <span className="mt-2 h-px flex-1 bg-white/5" />
+                <span className="mt-2 h-px flex-1 bg-ink/5" />
               </div>
             );
           }
@@ -81,7 +81,7 @@ export default function AnalyticsOutline({ form, analytics, participation = null
                 </span>
                 <span className="shrink-0 text-3xs tabular-nums text-neutral-500">{formatPercent(rate)}</span>
               </div>
-              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink/5">
                 <div className={`h-full rounded-full transition-[width] duration-500 ${!aggregatable ? "bg-neutral-600" : open ? "bg-skylab-400" : "bg-skylab-500"}`} style={{ width: `${Math.min(100, rate)}%` }} />
               </div>
             </>
@@ -89,7 +89,7 @@ export default function AnalyticsOutline({ form, analytics, participation = null
 
           return aggregatable ? (
             <button key={field.id} type="button" onClick={() => onRow(field.id)} aria-pressed={open}
-              className={`w-full rounded-lg px-2.5 py-2 text-left transition-colors ${open ? "bg-skylab-500/10" : "hover:bg-white/5"} ${focus === field.id ? "ring-1 ring-skylab-400/30" : ""}`}
+              className={`w-full rounded-lg px-2.5 py-2 text-left transition-colors ${open ? "bg-skylab-500/10" : "hover:bg-ink/5"} ${focus === field.id ? "ring-1 ring-skylab-400/30" : ""}`}
             >
               {body}
             </button>

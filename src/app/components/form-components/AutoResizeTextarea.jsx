@@ -122,7 +122,7 @@ export function AutoResizeTextarea({ className = "", onKeyDown, onKeyUp, onChang
             {token && (
                 <Floating anchor={caretAnchor} offset={6}>
                     <div onMouseDown={(e) => e.preventDefault()}
-                        className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-neutral-900 px-2 py-1 shadow-xl shadow-black/40"
+                        className="flex items-center gap-1.5 rounded-lg border border-ink/10 bg-neutral-900 px-2 py-1 shadow-xl shadow-black/40"
                     >
                         <Link2 size={12} className="shrink-0 text-skylab-300" />
                         <button type="button" onClick={applySuggestion}
@@ -130,7 +130,7 @@ export function AutoResizeTextarea({ className = "", onKeyDown, onKeyUp, onChang
                         >
                             Bağlantıyı adlandır
                         </button>
-                        <kbd className="rounded border border-white/10 bg-white/5 px-1 text-3xs text-neutral-500">Enter</kbd>
+                        <kbd className="rounded border border-ink/10 bg-ink/5 px-1 text-3xs text-neutral-500">Enter</kbd>
                     </div>
                 </Floating>
             )}

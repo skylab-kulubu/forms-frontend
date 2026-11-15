@@ -89,7 +89,7 @@ export function EmptyStart({ phone = false }) {
       <div className="relative grid size-16 place-items-center text-skylab-300">
         <svg viewBox="0 0 64 64" aria-hidden="true" className="absolute inset-0 size-full">
           <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="17.25" strokeWidth="1.5" strokeDasharray="3.936 3.936" strokeLinecap="round"
-            className={`transition-colors ${preview ? "fill-skylab-500/6 stroke-skylab-400/50" : "fill-white/2 stroke-white/20"}`}
+            className={`transition-colors ${preview ? "fill-skylab-500/6 stroke-skylab-400/50" : "fill-ink/2 stroke-ink/20"}`}
           />
         </svg>
         {preview ? <preview.Icon size={26} strokeWidth={1.5} className="relative" /> : <PackagePlus size={26} strokeWidth={1.5} className="relative" />}
@@ -107,10 +107,10 @@ export function StartList({ heading, action = null, phone = false, children }) {
     <div>
       <div className={`flex items-center gap-2 ${phone ? "px-1" : "px-2 md:px-4"}`}>
         <span className="shrink-0 text-2xs font-medium text-neutral-500">{heading}</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         {action}
       </div>
-      <div className="mt-1 divide-y divide-white/5">{children}</div>
+      <div className="mt-1 divide-y divide-ink/5">{children}</div>
     </div>
   );
 }
@@ -118,9 +118,9 @@ export function StartList({ heading, action = null, phone = false, children }) {
 export function StartRow({ Icon, title, detail = null, meta = null, phone = false, onClick }) {
   return (
     <button type="button" onClick={onClick}
-      className={`group flex w-full items-center gap-3 py-2.5 text-left transition-colors hover:bg-white/3 focus-visible:bg-white/3 focus-visible:outline-none ${phone ? "px-1" : "px-2 md:px-4"}`}
+      className={`group flex w-full items-center gap-3 py-2.5 text-left transition-colors hover:bg-ink/3 focus-visible:bg-ink/3 focus-visible:outline-none ${phone ? "px-1" : "px-2 md:px-4"}`}
     >
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3 text-neutral-400 transition-colors group-hover:text-neutral-200">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3 text-neutral-400 transition-colors group-hover:text-neutral-200">
         <Icon size={13} />
       </span>
       <span className="min-w-0 flex-1">

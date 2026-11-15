@@ -5,7 +5,7 @@ import { groupTransitions, triggersForNode } from "../workflow-editor/workflow-g
 import { Heading, IncomingNote, RouteGroup, StepNumber } from "../form-studio/StudioNextBlock";
 import { stagesOf, transitionCondition } from "../form-studio/studio-flow";
 
-const STEP_LINK = "text-neutral-300 underline decoration-white/20 underline-offset-2 transition-colors hover:text-neutral-100";
+const STEP_LINK = "text-neutral-300 underline decoration-ink/20 underline-offset-2 transition-colors hover:text-neutral-100";
 
 export default function OverviewNext({ flow, schemaOf, onPickStep }) {
   const { node, nodes, transitions } = flow;
@@ -22,7 +22,7 @@ export default function OverviewNext({ flow, schemaOf, onPickStep }) {
 
     return (
       <button type="button" onClick={() => onPickStep(target.formId)}
-        className="-ml-1 flex min-h-7 min-w-0 items-center gap-1.5 rounded-md px-1 text-left text-xs text-neutral-200 transition-colors hover:bg-white/5 hover:text-neutral-50"
+        className="-ml-1 flex min-h-7 min-w-0 items-center gap-1.5 rounded-md px-1 text-left text-xs text-neutral-200 transition-colors hover:bg-ink/5 hover:text-neutral-50"
       >
         <StepNumber stage={stages.depths.get(target.nodeKey) ?? null} />
         <span className="min-w-0">{target.formTitle || "Adsız form"}</span>
@@ -34,7 +34,7 @@ export default function OverviewNext({ flow, schemaOf, onPickStep }) {
     <div className="px-4">
       <Heading>Bu adımdan sonra</Heading>
 
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         {triggersForNode(node, transitions).map((trigger) => (
           <RouteGroup key={trigger} trigger={trigger} routes={groupTransitions(transitions, node.nodeKey, trigger)} conditionOf={conditionOf} renderTarget={renderTarget} />
         ))}

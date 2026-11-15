@@ -40,7 +40,7 @@ export default function JourneyChips({ steps, viewKey, ownKey, onPick }) {
       {groupStages(steps).map((group, groupIndex) => {
         const active = group.rounds.some((step) => stepKeyOf(step) === viewKey);
         const chip = (canPick) => `flex max-w-48 shrink-0 items-center gap-2 rounded-md border px-2.5 py-2 transition-colors sm:max-w-64 sm:px-2 sm:py-0.5 ${
-          active ? "border-white/15 bg-white/5" : canPick ? "border-transparent hover:bg-white/3" : "cursor-not-allowed border-transparent opacity-50"
+          active ? "border-ink/15 bg-ink/5" : canPick ? "border-transparent hover:bg-ink/3" : "cursor-not-allowed border-transparent opacity-50"
         }`;
         const title = <span className={`truncate text-2xs font-medium ${active ? "text-neutral-100" : "text-neutral-400"}`}>{group.formTitle || "Adsız form"}</span>;
         const single = group.rounds.length === 1 ? group.rounds[0] : null;
@@ -61,7 +61,7 @@ export default function JourneyChips({ steps, viewKey, ownKey, onPick }) {
               <div className={chip(true)}>
                 <span className="text-3xs tabular-nums text-neutral-500">{group.stage}</span>
                 {title}
-                <span className="flex items-center gap-0.5 border-l border-white/10 pl-1.5">
+                <span className="flex items-center gap-0.5 border-l border-ink/10 pl-1.5">
                   {group.rounds.map((step, roundIndex) => {
                     const status = statusOf(step, group.rounds[roundIndex - 1]);
                     const current = stepKeyOf(step) === viewKey;
@@ -70,7 +70,7 @@ export default function JourneyChips({ steps, viewKey, ownKey, onPick }) {
                       <button key={stepKeyOf(step)} type="button" data-cur={current} disabled={!canPick} onClick={() => onPick(step)} aria-current={current ? "step" : undefined}
                         title={`${step.round ?? 1}. gönderim · ${status?.label ?? "Henüz cevaplanmadı"}`}
                         className={`flex h-6 items-center gap-1 rounded px-2 text-3xs tabular-nums transition-colors sm:h-5 sm:px-1.5 ${
-                          current ? "bg-white/10 text-neutral-100" : canPick ? "text-neutral-400 hover:bg-white/5 hover:text-neutral-200" : "cursor-not-allowed text-neutral-600"
+                          current ? "bg-ink/10 text-neutral-100" : canPick ? "text-neutral-400 hover:bg-ink/5 hover:text-neutral-200" : "cursor-not-allowed text-neutral-600"
                         }`}
                       >
                         {step.round ?? 1}

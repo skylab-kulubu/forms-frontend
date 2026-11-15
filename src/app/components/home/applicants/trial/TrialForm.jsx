@@ -100,7 +100,7 @@ function TrialFields({ trial }) {
               onAnimationStart={() => document.getElementById(field.id)?.style.setProperty("overflow", "hidden")}
               onAnimationComplete={() => document.getElementById(field.id)?.style.setProperty("overflow", "visible")}
               style={{ zIndex: visibleFields.length - index }}
-              className={`relative ${isLast || isSeparator ? "" : "border-b border-white/5 pb-6"}`}
+              className={`relative ${isLast || isSeparator ? "" : "border-b border-ink/5 pb-6"}`}
             >
               <div data-cascade="">
                 <Display {...field.props} questionNumber={isSeparator ? null : numbers.get(field.id)} value={values[field.id]}

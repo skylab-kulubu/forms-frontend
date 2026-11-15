@@ -41,13 +41,13 @@ export default function RoomSheet({ open, onClose, label, side = "bottom", fill 
           <motion.div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={label} data-room-sheet {...drag}
             initial={away} animate={home} exit={away} transition={bottom ? BOTTOM_MOTION : SIDE_MOTION}
             className={bottom
-              ? `relative mx-auto flex ${fill ? "h-[86%]" : "max-h-[86%]"} w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-b-0 border-white/10 bg-neutral-900 shadow-2xl shadow-black/60 outline-none`
-              : `absolute inset-y-2 flex w-[min(22rem,calc(100%-3rem))] flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-900 shadow-2xl shadow-black/60 outline-none ${placement === "left" ? "left-2" : "right-2"}`}
+              ? `relative mx-auto flex ${fill ? "h-[86%]" : "max-h-[86%]"} w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-b-0 border-ink/10 bg-neutral-900 shadow-2xl shadow-black/60 outline-none`
+              : `absolute inset-y-2 flex w-[min(22rem,calc(100%-3rem))] flex-col overflow-hidden rounded-xl border border-ink/10 bg-neutral-900 shadow-2xl shadow-black/60 outline-none ${placement === "left" ? "left-2" : "right-2"}`}
           >
             {bottom ? (
               <div onPointerDown={(event) => controls.start(event)} className="shrink-0 cursor-grab touch-none active:cursor-grabbing">
                 <button type="button" onClick={onClose} aria-label="Kapat" className="flex h-7 w-full items-center justify-center">
-                  <span className="h-1 w-10 rounded-full bg-white/20" />
+                  <span className="h-1 w-10 rounded-full bg-ink/20" />
                 </button>
                 {header}
               </div>

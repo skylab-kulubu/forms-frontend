@@ -23,7 +23,7 @@ export default function OverviewQuestions({ form, analytics, onPick }) {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center gap-2 px-3 pb-1 pt-3">
         <span className="text-2xs font-medium text-neutral-500">Sorular</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         {analytics ? <span className="text-3xs tabular-nums text-neutral-600">{total} cevap</span> : null}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2 scrollbar">
@@ -34,7 +34,7 @@ export default function OverviewQuestions({ form, analytics, onPick }) {
               <button key={field.id} type="button" onClick={() => onPick(field.id)} className="flex w-full items-start gap-2 px-2 pb-1 pt-3 text-left">
                 <span className="w-4 shrink-0" />
                 <span className="min-w-0 truncate text-2xs font-medium text-neutral-500">{fieldLabel(field)}</span>
-                <span className="mt-2 h-px flex-1 bg-white/5" />
+                <span className="mt-2 h-px flex-1 bg-ink/5" />
               </button>
             );
           }
@@ -44,7 +44,7 @@ export default function OverviewQuestions({ form, analytics, onPick }) {
           const rate = rateOf(field);
           return (
             <button key={field.id} type="button" onClick={() => onPick(field.id)}
-              className="group flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/4"
+              className="group flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-ink/4"
             >
               <span className="mt-px w-4 shrink-0 text-right text-3xs tabular-nums text-neutral-600">{numbers.get(field.id)}</span>
               <type.Icon size={13} className="mt-0.5 shrink-0 text-neutral-500" />

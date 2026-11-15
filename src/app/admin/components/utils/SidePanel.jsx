@@ -9,10 +9,10 @@ export const FOCUS_RING = "focus-visible:outline-none focus-visible:ring-2 focus
 export const PANEL_STACK = "flex flex-col divide-y divide-neutral-800/60 p-4 text-sm text-neutral-200";
 export const PANEL_SECTION = "space-y-4 py-6 first:pt-0";
 export const ROW = "rounded-lg border transition-[border-color,background-color,box-shadow] duration-200";
-export const ROW_HOVER = "hover:border-white/20 hover:bg-white/3";
+export const ROW_HOVER = "hover:border-ink/20 hover:bg-ink/3";
 export const TILE = "grid size-9 shrink-0 place-items-center rounded-lg border bg-neutral-900/60 text-xs font-semibold";
 export const ACTION_ICON = "shrink-0 opacity-70 transition-opacity group-hover:opacity-100";
-export const PANEL_BOX = "rounded-lg border border-white/10 bg-neutral-900/60 transition-[border-color,box-shadow] focus-within:border-skylab-400/50 focus-within:ring-2 focus-within:ring-skylab-400/20";
+export const PANEL_BOX = "rounded-lg border border-ink/10 bg-neutral-900/60 transition-[border-color,box-shadow] focus-within:border-skylab-400/50 focus-within:ring-2 focus-within:ring-skylab-400/20";
 
 export const PILL_TONE = {
   emerald: "bg-emerald-400 shadow-[0_0_6px] shadow-emerald-400/50",
@@ -25,7 +25,7 @@ export const PILL_TONE = {
 const NOTICE_TONE = {
   amber: "border-amber-400/40 bg-amber-500/10 text-amber-100",
   red: "border-red-400/40 bg-red-500/10 text-red-100",
-  neutral: "border-white/10 bg-white/5 text-neutral-300",
+  neutral: "border-ink/10 bg-ink/5 text-neutral-300",
 };
 
 const HEADER_ROW = "flex h-10 min-w-0 shrink-0 items-center border-b border-neutral-800 px-4 text-sm font-semibold tracking-wide";
@@ -44,7 +44,7 @@ export function actionClass({ danger = false, active = false, compact = false, t
   const hover = danger
     ? "hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
     : "hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300";
-  return `${base} border-white/10 bg-white/5 text-neutral-300 ${hover}`;
+  return `${base} border-ink/10 bg-ink/5 text-neutral-300 ${hover}`;
 }
 
 export function PanelTabs({ tabs, active, onChange }) {
@@ -110,16 +110,16 @@ export function SectionHeader({ title, description, pill, pillTone = "skylab", d
 export function Switch({ checked, onChange, label, disabled = false, small = false, className = "" }) {
   return (
     <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={onChange} disabled={disabled}
-      className={`relative inline-flex shrink-0 items-center rounded-full border transition disabled:cursor-not-allowed ${small ? "h-5 w-9 px-0.5" : "h-7 w-12 px-1"} ${checked ? "border-skylab-400/50 bg-skylab-400/20" : "border-white/10 bg-white/5"} ${className}`}
+      className={`relative inline-flex shrink-0 items-center rounded-full border transition disabled:cursor-not-allowed ${small ? "h-5 w-9 px-0.5" : "h-7 w-12 px-1"} ${checked ? "border-skylab-400/50 bg-skylab-400/20" : "border-ink/10 bg-ink/5"} ${className}`}
     >
-      <span className={`rounded-full bg-white/90 shadow transition-transform duration-200 ${small ? "size-3.5" : "size-5"} ${checked ? (small ? "translate-x-4" : "translate-x-5") : "translate-x-0"}`} />
+      <span className={`rounded-full bg-ink/90 shadow transition-transform duration-200 ${small ? "size-3.5" : "size-5"} ${checked ? (small ? "translate-x-4" : "translate-x-5") : "translate-x-0"}`} />
     </button>
   );
 }
 
 export function ToggleRow({ title, description, checked, onChange, disabled = false, dimmed = false, adornment = null }) {
   return (
-    <div className={`flex items-center justify-between gap-3 rounded-lg border border-white/10 px-3 py-2.5 transition-opacity duration-300 ${dimmed ? "opacity-40" : ""}`}>
+    <div className={`flex items-center justify-between gap-3 rounded-lg border border-ink/10 px-3 py-2.5 transition-opacity duration-300 ${dimmed ? "opacity-40" : ""}`}>
       <div className="min-w-0">
         <p className="text-sm font-semibold text-neutral-100">{title}</p>
         <p className="text-2xs text-neutral-500">{description}</p>
@@ -147,7 +147,7 @@ export function PanelInput({ icon: Icon = Search, className = "", ...props }) {
     <div className={`relative ${className}`}>
       <Icon size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
       <input type="text" {...props}
-        className="h-8 w-full rounded-lg border border-white/10 bg-neutral-900/60 pl-8 pr-3 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+        className="h-8 w-full rounded-lg border border-ink/10 bg-neutral-900/60 pl-8 pr-3 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
       />
     </div>
   );
@@ -172,7 +172,7 @@ export function PanelNotice({ tone = "amber", className = "", children }) {
 }
 
 export function PillBadge({ children }) {
-  return <span className={`${PILL_BASE} max-w-36 justify-center border-white/10 bg-white/5 text-neutral-300`}>{children}</span>;
+  return <span className={`${PILL_BASE} max-w-36 justify-center border-ink/10 bg-ink/5 text-neutral-300`}>{children}</span>;
 }
 
 export function MenuPill({ value, options, onSelect, placeholder = "", italic = false, wide = false, quiet = false, dim = false, leading = null, onDelete, deleteLabel = "Kaldır", deleteHint, open: controlledOpen, onOpenChange }) {
@@ -194,9 +194,9 @@ export function MenuPill({ value, options, onSelect, placeholder = "", italic = 
     <>
       <button ref={anchorRef} type="button" aria-haspopup="menu" aria-expanded={open}
         onClick={(event) => { event.stopPropagation(); setOpen(!open); }} onKeyDown={stop}
-        className={quiet ? `${QUIET_PILL_BASE} transition-colors ${FOCUS_RING} ${open ? "border-white/20 bg-[#1e1e1e] text-neutral-50" : `border-transparent ${dim ? "text-neutral-400" : "text-neutral-200"} hover:bg-white/5 hover:text-neutral-50`}` : `${PILL_BASE} ${wide ? "max-w-52" : "max-w-36"} justify-between transition-colors ${FOCUS_RING} ${italic ? "italic" : ""} ${
-          open ? "border-white/20 bg-[#1e1e1e] text-neutral-50"
-            : `border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:text-neutral-50 ${italic ? "text-neutral-400" : "text-neutral-300"}`
+        className={quiet ? `${QUIET_PILL_BASE} transition-colors ${FOCUS_RING} ${open ? "border-ink/20 bg-panel text-neutral-50" : `border-transparent ${dim ? "text-neutral-400" : "text-neutral-200"} hover:bg-ink/5 hover:text-neutral-50`}` : `${PILL_BASE} ${wide ? "max-w-52" : "max-w-36"} justify-between transition-colors ${FOCUS_RING} ${italic ? "italic" : ""} ${
+          open ? "border-ink/20 bg-panel text-neutral-50"
+            : `border-ink/10 bg-ink/5 hover:border-ink/20 hover:bg-ink/10 hover:text-neutral-50 ${italic ? "text-neutral-400" : "text-neutral-300"}`
         }`}
       >
         {leading}
@@ -210,7 +210,7 @@ export function MenuPill({ value, options, onSelect, placeholder = "", italic = 
             <motion.div role="menu" onClick={stop} onKeyDown={stop}
               initial={{ opacity: 0, y: 4, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }}
               transition={{ duration: 0.1 }}
-              className={`max-h-72 min-w-44 overflow-y-auto rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-xl scrollbar ${quiet ? "max-w-[min(26rem,calc(100vw-2rem))]" : "max-w-64"}`}
+              className={`max-h-72 min-w-44 overflow-y-auto rounded-[10px] border border-ink/20 bg-panel p-1.5 shadow-xl scrollbar ${quiet ? "max-w-[min(26rem,calc(100vw-2rem))]" : "max-w-64"}`}
             >
               {options.map((option) => {
                 const isSelected = option.value === value;
@@ -219,7 +219,7 @@ export function MenuPill({ value, options, onSelect, placeholder = "", italic = 
                     className={`flex w-full items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs transition-colors ${
                       option.disabled ? "cursor-not-allowed text-neutral-600"
                         : isSelected ? "bg-skylab-500/10 text-skylab-300"
-                        : "text-neutral-300 hover:bg-white/5 hover:text-white"
+                        : "text-neutral-300 hover:bg-ink/5 hover:text-ink"
                     }`}
                   >
                     <span className={quiet ? "min-w-0" : "truncate"}>{option.label}</span>
@@ -230,7 +230,7 @@ export function MenuPill({ value, options, onSelect, placeholder = "", italic = 
 
               {onDelete !== undefined && (
                 <>
-                  {options.length > 0 ? <div className="mx-1 my-1 h-px bg-white/10" /> : null}
+                  {options.length > 0 ? <div className="mx-1 my-1 h-px bg-ink/10" /> : null}
                   <button type="button" role="menuitem" disabled={!onDelete} onClick={() => { setOpen(false); onDelete?.(); }}
                     className="flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left text-2xs text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:text-neutral-600 disabled:hover:bg-transparent"
                   >

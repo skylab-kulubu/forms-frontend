@@ -229,7 +229,7 @@ export default function StatusScreen({ onRerun = null, ...props }) {
             <div className="mt-7 flex flex-wrap items-center justify-center gap-x-4.5 gap-y-2.5">
               {screen.action && <LoginButton onClick={screen.action.onClick} label={screen.action.label} hoverIcon={screen.action.hoverIcon ?? "arrow"} />}
               {screen.link && (
-                <a href={screen.link.href} className="text-xs text-neutral-300 underline decoration-white/20 underline-offset-3 transition-colors hover:text-neutral-100 hover:decoration-white/50">
+                <a href={screen.link.href} className="text-xs text-neutral-300 underline decoration-ink/20 underline-offset-3 transition-colors hover:text-neutral-100 hover:decoration-ink/50">
                   {screen.link.label}
                 </a>
               )}

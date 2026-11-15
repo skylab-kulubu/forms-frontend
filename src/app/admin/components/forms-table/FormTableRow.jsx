@@ -21,7 +21,7 @@ function WeekBars({ values, peak }) {
   return (
     <span role="img" aria-label={`Son 7 gün: ${values.join(", ")}`} title={`Son 7 gün: ${values.join(", ")}`} className="flex h-5 items-end gap-0.5 @6xl:gap-1">
       {values.map((value, index) => (
-        <span key={index} className={`w-1.5 rounded-[1px] @6xl:w-2 ${value ? (index === today ? "bg-skylab-400" : "bg-skylab-500/50") : "bg-white/10"}`}
+        <span key={index} className={`w-1.5 rounded-[1px] @6xl:w-2 ${value ? (index === today ? "bg-skylab-400" : "bg-skylab-500/50") : "bg-ink/10"}`}
           style={{ height: value ? `${Math.max(12, Math.sqrt(value / peak) * 100)}%` : 1 }}
         />
       ))}
@@ -60,13 +60,13 @@ function TitleCell({ row, ownerShown }) {
 
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/10 bg-white/3">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-ink/10 bg-ink/3">
         <Icon className="h-4 w-4 text-neutral-400" strokeWidth={1.75} />
       </div>
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-1.5">
           <h3 className="truncate text-sm font-medium text-neutral-200 transition-colors group-hover/row:text-neutral-50">{row.title}</h3>
-          {row.draft ? <span className="hidden shrink-0 rounded-md border border-white/10 px-1 py-0.5 text-4xs uppercase tracking-[0.18em] text-neutral-500 @2xl:inline">Taslak</span> : null}
+          {row.draft ? <span className="hidden shrink-0 rounded-md border border-ink/10 px-1 py-0.5 text-4xs uppercase tracking-[0.18em] text-neutral-500 @2xl:inline">Taslak</span> : null}
           {event?.href ? <EventChip event={event} /> : null}
         </div>
         <div className="mt-0.5 flex min-h-3.5 min-w-0 items-center gap-2">
@@ -92,7 +92,7 @@ function CopyLink({ formId }) {
   };
 
   return (
-    <button type="button" onClick={copy} title={copied ? "Kopyalandı" : "Linki kopyala"} aria-label="Linki kopyala" className={`${ROW_ICON} border-white/10 text-neutral-400 hover:bg-white/5 hover:text-neutral-200`}>
+    <button type="button" onClick={copy} title={copied ? "Kopyalandı" : "Linki kopyala"} aria-label="Linki kopyala" className={`${ROW_ICON} border-ink/10 text-neutral-400 hover:bg-ink/5 hover:text-neutral-200`}>
       {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Link2 className="h-3 w-3" />}
     </button>
   );
@@ -109,7 +109,7 @@ function RowActions({ row, open, onToggle }) {
       <div className="hidden items-center gap-1 overflow-hidden transition-all duration-200 ease-out @4xl:flex @4xl:max-w-0 @4xl:opacity-0 @4xl:group-hover/row:max-w-18 @4xl:group-hover/row:opacity-100">
         {sharable ? <CopyLink formId={row.form.id} /> : null}
         {row.responsesHref ? (
-          <Link href={row.responsesHref} title="Cevaplar" aria-label="Cevaplar" className={`${ROW_ICON} border-white/10 text-neutral-400 hover:bg-white/5 hover:text-neutral-200`}>
+          <Link href={row.responsesHref} title="Cevaplar" aria-label="Cevaplar" className={`${ROW_ICON} border-ink/10 text-neutral-400 hover:bg-ink/5 hover:text-neutral-200`}>
             <ChartColumn className="h-3 w-3" />
           </Link>
         ) : null}
@@ -121,7 +121,7 @@ function RowActions({ row, open, onToggle }) {
       </div>
       {row.draft ? <span className="hidden h-7 w-7 shrink-0 @2xl:block" /> : (
         <button type="button" onClick={onToggle} aria-expanded={open} aria-label={`${row.title}: ${toggleLabel}`} title={toggleLabel}
-          className="relative z-10 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-200"
+          className="relative z-10 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-200"
         >
           <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180 text-neutral-300" : ""}`} />
         </button>
@@ -135,7 +135,7 @@ function RowActions({ row, open, onToggle }) {
 
 function Row({ row, peak, open, onToggle, shown }) {
   return (
-    <div data-table-row={row.key} className={`group/row relative transition-colors ${open ? "bg-white/2.5" : "hover:bg-white/3"}`}>
+    <div data-table-row={row.key} className={`group/row relative transition-colors ${open ? "bg-ink/2.5" : "hover:bg-ink/3"}`}>
       <Link href={row.href} className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-skylab-400/40" aria-label={row.title} />
       <div className={`${TABLE_GRID} px-3 py-2.5`}>
         <div className="flex justify-center">{row.draft ? <DraftDot /> : <StatusDot form={row.form} />}</div>
@@ -167,7 +167,7 @@ export function TableRow({ row, peak, open, onToggle, shown }) {
 export function TableHead({ sortField, sortDirection, onSort, shown, hidden, onToggleColumn, onResetColumns }) {
   const props = { sortField, sortDirection, onSort };
   return (
-    <div className={`${TABLE_GRID} sticky top-0 z-20 border-b border-white/10 bg-neutral-900 px-3 pb-2`}>
+    <div className={`${TABLE_GRID} sticky top-0 z-20 border-b border-ink/10 bg-neutral-900 px-3 pb-2`}>
       <SortHeader field="status" title="Duruma göre sırala" {...props} />
       <span className={COLUMN_LABEL}>Form Adı</span>
       {shown.has("owner") ? <SortHeader label="Sahip" field="owner" align="left" visibility="hidden @5xl:flex" title="Sahibe göre sırala" {...props} /> : null}
@@ -189,7 +189,7 @@ export function TableHead({ sortField, sortDirection, onSort, shown, hidden, onT
 
 export function TableSkeleton({ count = 6 }) {
   return (
-    <div className="divide-y divide-white/5">
+    <div className="divide-y divide-ink/5">
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="flex items-center gap-3 px-3 py-2.5 pl-12">
           <span className="shimmer h-9 w-9 shrink-0 rounded-lg" />

@@ -410,7 +410,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
           >
             {!embedded && <div className="h-12 w-full shrink-0" />}
 
-            <div data-slot="form-card" className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-white/10 bg-white/3 shadow-2xl">
+            <div data-slot="form-card" className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-ink/10 bg-ink/3 shadow-2xl">
               <BrandSlot name="CardTop" />
               <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
 
@@ -504,7 +504,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                               if (el) el.style.overflow = "visible";
                             }}
                             style={{ zIndex: visibleFields.length - index }}
-                            className={`relative ${isLast || isSeparator ? "" : "border-b border-white/5 pb-6"} ${requestedAccent}`}
+                            className={`relative ${isLast || isSeparator ? "" : "border-b border-ink/5 pb-6"} ${requestedAccent}`}
                           >
                             {isRequested && <RevisionFlag />}
                             <DisplayComponent {...field.props} questionNumber={isSeparator ? null : questionNumbers.get(field.id)} value={formValues[field.id]}
@@ -519,7 +519,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
                     </AnimatePresence>
                     </div>
 
-                    <motion.div variants={itemVariants} className="mt-auto border-t border-white/5 px-2 pt-6 md:px-4">
+                    <motion.div variants={itemVariants} className="mt-auto border-t border-ink/5 px-2 pt-6 md:px-4">
                       <div className={`flex flex-col items-stretch gap-4 sm:flex-row sm:justify-between sm:gap-6 ${nextCopy ? "sm:items-end" : "sm:items-center"}`}>
                         {nextCopy ? <NextStepNote text={nextCopy} /> : (
                           <div className="order-2 min-w-0 sm:order-1">

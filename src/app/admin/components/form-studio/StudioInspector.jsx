@@ -28,7 +28,7 @@ import {
   FIELD_TYPES, NO_VALUE_OPERATORS, REPEATER_CHILD_TYPES, RETYPE_OPTIONS, conditionPhrase, defaultCondition, fieldLabel, fieldTypeOf, operatorsFor, questionNumbers, visibleFieldsOf,
 } from "./studio-schema";
 
-const SMALL_INPUT = "h-8 rounded-lg border border-white/10 bg-neutral-900/60 px-2.5 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20 [color-scheme:dark]";
+const SMALL_INPUT = "h-8 rounded-lg border border-ink/10 bg-neutral-900/60 px-2.5 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20 [color-scheme:dark]";
 
 const REVEAL = {
   className: "-mx-1 overflow-hidden px-1",
@@ -89,7 +89,7 @@ function ShortTextSection({ field, actions, locked, child = false }) {
           <button key={type.id} type="button" disabled={locked}
             onClick={() => actions.updateProps(field.id, { inputType: type.id, identity: type.id === "email" ? props.identity : undefined })}
             className={`flex h-8 items-center gap-2 rounded-lg border px-2.5 text-2xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              current === type.id ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:bg-white/8 hover:text-neutral-300"
+              current === type.id ? "border-ink/20 bg-ink/10 text-skylab-300" : "border-ink/8 bg-ink/2 text-neutral-500 hover:bg-ink/8 hover:text-neutral-300"
             }`}
           >
             <type.icon size={13} />
@@ -98,7 +98,7 @@ function ShortTextSection({ field, actions, locked, child = false }) {
         ))}
       </div>
       {current === "email" && canMarkCopy ? (
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           <KV label="Cevap kopyası bu adrese gider" hint="Giriş yapmadan gönderenler cevabın kopyasını bu adrese alır.">
             <Switch checked={props.identity === "email"} label="Cevap kopyası"
               onChange={() => actions.updateProps(field.id, { identity: props.identity === "email" ? undefined : "email" })}
@@ -107,7 +107,7 @@ function ShortTextSection({ field, actions, locked, child = false }) {
         </div>
       ) : null}
       {current === "link" ? (
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           <KV label="Birden fazla bağlantı">
             <Switch checked={Boolean(props.allowMultiple)} label="Birden fazla bağlantı" onChange={() => actions.updateProps(field.id, { allowMultiple: !props.allowMultiple })} />
           </KV>
@@ -136,7 +136,7 @@ function ComboboxSection({ field, actions, lockedValues }) {
       <SectionHeader title="Seçenekler"
         description={preset ? `Hazır liste: ${preset.label}, ${choices.length} seçenek.` : `${choices.length} seçenek. Tuvalde sorunun altında düzenlenir; birden çok satır yapıştırınca her satır bir seçenek olur.`}
       />
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         <KV label="Hazır liste">
           <MenuPill value={preset?.id ?? "none"} options={options}
             onSelect={(value) => {
@@ -164,7 +164,7 @@ function ToggleSection({ field, actions, lockedValues }) {
   return (
     <section className={PANEL_SECTION}>
       <SectionHeader title="Etiketler" description="Başvuran anahtarı açıp kapatınca bu metinleri görür." />
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         <KV label="Açıkken" hint={trueLocked ? LOCKED_OPTION_HINT : null}>
           <input value={props.trueLabel ?? ""} readOnly={trueLocked} onChange={(event) => actions.updateProps(field.id, { trueLabel: event.target.value })} placeholder="Evet" className={`${SMALL_INPUT} w-28`} />
         </KV>
@@ -181,7 +181,7 @@ function SliderSection({ field, actions }) {
   return (
     <section className={PANEL_SECTION}>
       <SectionHeader title="Aralık" />
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         {[["En az", "min"], ["En çok", "max"], ["Artış", "step"]].map(([label, key]) => (
           <KV key={key} label={label}>
             <input type="number" value={props[key] ?? ""} onChange={(event) => actions.updateProps(field.id, { [key]: event.target.value === "" ? "" : Number(event.target.value) })}
@@ -199,7 +199,7 @@ function FileSection({ field, actions, anonymous }) {
   return (
     <section className={PANEL_SECTION}>
       <SectionHeader title="Dosya" description="Boş bırakılırsa PDF, JPG, PNG ve DOCX kabul edilir." />
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         <KV label="Türler">
           <input value={props.acceptedFiles ?? ""} onChange={(event) => actions.updateProps(field.id, { acceptedFiles: event.target.value })} placeholder=".pdf,.jpg" className={`${SMALL_INPUT} w-32`} />
         </KV>
@@ -262,8 +262,8 @@ function VisibilitySection({ field, fields, actions, disabledReason }) {
           <AnimatePresence initial={false}>
             {condition ? (
               <motion.div key="condition" {...REVEAL}>
-                <div className="border-t border-white/5">
-                  <div className="divide-y divide-white/5">
+                <div className="border-t border-ink/5">
+                  <div className="divide-y divide-ink/5">
                     <KV label="Soru">
                       <MenuPill wide value={condition.fieldId} options={previous.map((item) => ({ value: item.id, label: `${numbers.get(item.id)} · ${fieldLabel(item)}` }))}
                         onSelect={(id) => actions.setCondition(field.id, defaultCondition(fields.find((item) => item.id === id)))}
@@ -278,7 +278,7 @@ function VisibilitySection({ field, fields, actions, disabledReason }) {
                   <AnimatePresence initial={false}>
                     {needsValue ? (
                       <motion.div key="value" {...REVEAL}>
-                        <div className="border-t border-white/5"><KV label="Değer">{valueControl}</KV></div>
+                        <div className="border-t border-ink/5"><KV label="Değer">{valueControl}</KV></div>
                       </motion.div>
                     ) : null}
                   </AnimatePresence>
@@ -299,7 +299,7 @@ function MultiChoiceSection({ field, actions, lockedValues = [] }) {
       <SectionHeader title="Seçenekler"
         description={`${(field.props?.choices ?? []).length} seçenek. Tuvalde düzenlenir: Enter yeni seçenek açar, boş seçenekte Backspace siler, birden çok satır yapıştırınca her satır bir seçenek olur.`}
       />
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-ink/5">
         <KV label="Birden fazla seçim" hint={multiple ? "Başvuran istediği kadar seçenek işaretler." : "Başvuran yalnız bir seçenek işaretler."}>
           <Switch checked={multiple} label="Birden fazla seçim" onChange={() => actions.updateProps(field.id, { allowMultiple: !multiple })} />
         </KV>
@@ -353,9 +353,9 @@ function RepeaterSection({ field, actions, onOpenChild }) {
               const { Icon } = fieldTypeOf(child);
               const name = child.props?.question?.trim();
               return (
-                <div key={child.id} className="group/row relative flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-white/4">
+                <div key={child.id} className="group/row relative flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-ink/4">
                   <button type="button" onClick={() => onOpenChild(child.id)} aria-label={`${name || "Adsız alan"} ayarları`} className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40" />
-                  <span className="pointer-events-none grid size-8 shrink-0 place-items-center rounded-lg border border-white/10 bg-neutral-900/60 text-neutral-400"><Icon size={14} /></span>
+                  <span className="pointer-events-none grid size-8 shrink-0 place-items-center rounded-lg border border-ink/10 bg-neutral-900/60 text-neutral-400"><Icon size={14} /></span>
                   <span className="pointer-events-none min-w-0 flex-1">
                     <span className="block truncate text-xs text-neutral-200">
                       {name || <span className="text-neutral-600">Adsız alan</span>}
@@ -365,12 +365,12 @@ function RepeaterSection({ field, actions, onOpenChild }) {
                   </span>
                   <span className="relative flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/row:opacity-100">
                     <button type="button" title="Yukarı taşı" aria-label="Yukarı taşı" disabled={index === 0} onClick={() => actions.moveChild(field.id, child.id, -1)}
-                      className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
+                      className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/10 hover:text-neutral-200 disabled:opacity-30"
                     >
                       <ArrowUp size={12} />
                     </button>
                     <button type="button" title="Aşağı taşı" aria-label="Aşağı taşı" disabled={index === children.length - 1} onClick={() => actions.moveChild(field.id, child.id, 1)}
-                      className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200 disabled:opacity-30"
+                      className="grid size-6 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/10 hover:text-neutral-200 disabled:opacity-30"
                     >
                       <ArrowDown size={12} />
                     </button>
@@ -431,7 +431,7 @@ function ChildInspector({ field, child, actions, onBack, onOpenChild }) {
     <div className={PANEL_STACK}>
       <section className={PANEL_SECTION}>
         <SectionHeader title="Alan ayarları" description="Adı tuvalde de yazabilirsin." />
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           <KV label="Ad">
             <input value={child.props?.question ?? ""} placeholder="Alanın adı" onChange={(event) => actions.updateChild(field.id, child.id, { question: event.target.value })}
               className={`${SMALL_INPUT} w-44`}
@@ -489,7 +489,7 @@ function QuestionInspector({ field, fields, actions, anonymous, onDuplicate, onR
         <SectionHeader title={isSeparator ? "Ayıraç" : "Soru ayarları"}
           description={isSeparator ? "Başlığı ve açıklamayı tuvalde yazarsın. Ayıraç numara almaz, cevap toplamaz." : protectedReason}
         />
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           <KV label="Tip">
             {locked || identity ? (
               <span className="inline-flex items-center gap-1 text-2xs text-neutral-400"><Lock size={11} />{fieldTypeOf(field).label}</span>
@@ -575,7 +575,7 @@ function MultiInspector({ ids, fields, actions, onDuplicate, onRemove }) {
           })}
         </div>
         {questions.length > 0 ? (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-ink/5">
             <KV label="Hepsi zorunlu" hint={someRequired && !allRequired ? "Şu an karışık" : null}>
               <Switch checked={allRequired} label="Hepsi zorunlu" onChange={() => actions.setRequired(ids, !allRequired)} />
             </KV>
@@ -621,7 +621,7 @@ function TaskInspector({ task, timeLimitMinutes, closesAt, actions, onOpenTiming
             ? "Görev metni tuvalde Markdown ile yazılır. Kişisel süre açık: aday görevi başlatınca metin ve sorular açılır."
             : "Görev metni tuvalde Markdown ile yazılır ve formun başında görünür."}
         />
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           <KV label="Uzun metni katla">
             <Switch checked={task.collapsible !== false} label="Uzun metni katla" onChange={() => actions.setTask({ ...task, collapsible: task.collapsible === false })} />
           </KV>
@@ -635,7 +635,7 @@ function TaskInspector({ task, timeLimitMinutes, closesAt, actions, onOpenTiming
               ? `Kişisel süre: başlatınca ${durationText(timeLimitMinutes)}${closesAt ? ` · son başlama ${formatLongDate(closesAt)}` : ""}`
               : closesAt ? `Kapanış: ${formatLongDate(closesAt)}` : "Süre yok; form sen kapatana kadar açık kalır."}
           </span>
-          <button type="button" onClick={onOpenTiming} className="shrink-0 text-neutral-300 underline decoration-white/20 underline-offset-3 transition-colors hover:text-neutral-100">
+          <button type="button" onClick={onOpenTiming} className="shrink-0 text-neutral-300 underline decoration-ink/20 underline-offset-3 transition-colors hover:text-neutral-100">
             Zamanlama
           </button>
         </div>
@@ -666,7 +666,7 @@ function FillInspector({ fields, values }) {
     <div className={PANEL_STACK}>
       <section className={PANEL_SECTION}>
         <SectionHeader title="Doldurma" description={`${ui.template ? "Sorular" : "Form"} başvuran gibi doldurulur. Cevaplar hiçbir yere kaydedilmez, dosya yüklenmez.`} />
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           <KV label="Görünen soru"><span className="text-xs tabular-nums text-neutral-300">{visibleQuestions}</span></KV>
           <KV label="Koşul yüzünden gizli"><span className="text-xs tabular-nums text-neutral-300">{hidden.length}</span></KV>
         </div>
@@ -780,7 +780,7 @@ function PeersNote({ others, fieldId }) {
   const doing = typing ? "bu soruyu şu an yazıyor." : `${suffixDa(people[people.length - 1].name)} bu soruda.`;
 
   return (
-    <div className="mx-4 mt-4 flex items-start gap-2 rounded-lg border border-white/10 bg-white/3 px-2.5 py-2 text-2xs leading-4 text-neutral-300">
+    <div className="mx-4 mt-4 flex items-start gap-2 rounded-lg border border-ink/10 bg-ink/3 px-2.5 py-2 text-2xs leading-4 text-neutral-300">
       <span className="mt-1 size-2 shrink-0 rounded-full" style={{ backgroundColor: colorOf((typing ?? people[0]).userId) }} />
       <span><span className="font-semibold text-neutral-100">{names}</span> {doing} Aynı metni aynı anda yazarsanız son yazılan kalır.</span>
     </div>

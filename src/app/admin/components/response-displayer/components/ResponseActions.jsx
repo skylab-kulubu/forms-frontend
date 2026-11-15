@@ -25,11 +25,11 @@ const fadeIn = {
 const STATUS_META = {
   2: { label: "Onaylandı", style: "border-emerald-500/40 bg-emerald-500/10 text-emerald-200", Icon: ShieldCheck, color: "text-emerald-400" },
   3: { label: "Reddedildi", style: "border-red-500/40 bg-red-500/10 text-red-200", Icon: ShieldX, color: "text-red-400" },
-  closed: { label: "Teslim yok", style: "border-white/10 bg-white/5 text-neutral-300", Icon: FileX, color: "text-red-300" },
+  closed: { label: "Teslim yok", style: "border-ink/10 bg-ink/5 text-neutral-300", Icon: FileX, color: "text-red-300" },
   4: { label: "Geçici", style: "border-amber-500/40 bg-amber-500/10 text-amber-200", Icon: FileClock, color: "text-amber-300" },
   5: { label: "Doğrulanmadı", style: "border-orange-500/40 bg-orange-500/10 text-orange-200", Icon: ShieldAlert, color: "text-orange-300" },
   6: { label: "Düzeltme istendi", style: "border-sky-500/40 bg-sky-500/10 text-sky-200", Icon: FilePenLine, color: "text-sky-300" },
-  default: { label: "Beklemede", style: "border-white/10 bg-white/5 text-neutral-300", Icon: ShieldQuestion, color: "text-neutral-400" },
+  default: { label: "Beklemede", style: "border-ink/10 bg-ink/5 text-neutral-300", Icon: ShieldQuestion, color: "text-neutral-400" },
 };
 
 // Backend inceleme notunu varchar(500) kolonda tutar; daha uzun not isteği düşürür.
@@ -134,7 +134,7 @@ function RevisionRequest({ request }) {
         <span className="text-neutral-200">{reviewerName}</span> {request.workflow?.round ?? 1}. gönderimde düzeltme istedi.
       </p>
       {request.reviewerNote && (
-        <div className="mt-3 rounded-lg border border-white/10 bg-white/3 p-3">
+        <div className="mt-3 rounded-lg border border-ink/10 bg-ink/3 p-3">
           <p className="mb-1 text-3xs font-medium text-neutral-500">Not</p>
           <p className="whitespace-pre-wrap text-2xs leading-relaxed text-neutral-200">{request.reviewerNote}</p>
         </div>
@@ -345,7 +345,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
       : declineOutcome && `${declineOutcome}.`;
 
   const showReviewDetails = canReview && Boolean(reviewedAt) && (!isEditing || readOnly) && actionState === "idle";
-  const actionTone = actionState === "error" ? "border-red-500/30 bg-red-500/10 text-red-200" : actionState === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-white/10 bg-white/5 text-neutral-200";
+  const actionTone = actionState === "error" ? "border-red-500/30 bg-red-500/10 text-red-200" : actionState === "success" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-ink/10 bg-ink/5 text-neutral-200";
   const StatusIcon = statusInfo.Icon;
 
   const sharedBy = response.sharedBy ?? null;
@@ -358,11 +358,11 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
     <div className="flex h-full flex-col text-neutral-200">
       <div className="flex items-center gap-2 px-1 lg:h-7">
         <span className="text-2xs font-medium text-neutral-500">{readOnly ? "Paylaşılan Cevap" : "İşlemler"}</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
         {!readOnly && (
           <div className="flex items-center gap-1 text-neutral-500">
             <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" disabled={!responseId} onClick={() => setShareOverlayOpen(true)}
-              className={`rounded-lg p-1.5 transition-colors ${!responseId ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-white/5"}`}
+              className={`rounded-lg p-1.5 transition-colors ${!responseId ? "opacity-50 cursor-not-allowed" : "hover:text-neutral-100 hover:bg-ink/5"}`}
             >
               <Share2 size={15} />
             </button>
@@ -370,7 +370,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
               <button type="button" aria-label="Cevabı arşivle" aria-expanded={archiveOpen}
                 title={isProvisional ? "Geçici cevap arşivlenemez. Önce karar verin." : isReturned ? "Düzeltme istenen cevap başvurunun geçmişinde kalır; arşivlenmez." : isArchiveBlocked ? "Bekleyen başvuru adımı arşivlenemez. Önce karar verin." : "Cevabı arşivle"}
                 disabled={isArchivePending || isError || isSuccess || isArchived || isArchiveBlocked} onClick={() => setArchiveOpen((open) => !open)}
-                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : archiveOpen ? "bg-white/5 text-neutral-100" : "hover:text-neutral-100 hover:bg-white/5"}`}
+                className={`rounded-lg p-1.5 transition-colors ${isArchivePending || isArchived || isArchiveBlocked ? "opacity-50 cursor-not-allowed" : isError ? "text-red-400" : isSuccess ? "text-skylab-400" : archiveOpen ? "bg-ink/5 text-neutral-100" : "hover:text-neutral-100 hover:bg-ink/5"}`}
               >
                 <Archive size={15} />
               </button>
@@ -380,9 +380,9 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                     initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -2, scale: 0.96 }}
                     transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
                     onClick={isError ? closeArchive : undefined}
-                    className={`absolute right-0 top-full z-50 mt-2.5 rounded-[10px] border shadow-xl ${isError ? "w-max max-w-[220px] cursor-pointer border-red-500/20 bg-[#1f1414] px-2.5 py-1.5" : "w-64 border-white/20 bg-[#1e1e1e] p-3"}`}
+                    className={`absolute right-0 top-full z-50 mt-2.5 rounded-[10px] border shadow-xl ${isError ? "w-max max-w-[220px] cursor-pointer border-red-500/20 bg-danger-panel px-2.5 py-1.5" : "w-64 border-ink/20 bg-panel p-3"}`}
                   >
-                    <div className={`absolute -top-[5.5px] right-2 h-2.5 w-2.5 rotate-45 rounded-[2.5px] border-l border-t ${isError ? "border-red-500/20 bg-[#1f1414]" : "border-white/20 bg-[#1e1e1e]"}`} style={{ zIndex: -1 }} />
+                    <div className={`absolute -top-[5.5px] right-2 h-2.5 w-2.5 rotate-45 rounded-[2.5px] border-l border-t ${isError ? "border-red-500/20 bg-danger-panel" : "border-ink/20 bg-panel"}`} style={{ zIndex: -1 }} />
                     {isError ? (
                       <div className="flex items-center gap-1.5">
                         <AlertCircle size={13} strokeWidth={2.5} className="shrink-0 text-red-200/30" />
@@ -403,7 +403,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                         </p>
                         <div className="mt-3 flex items-center gap-2">
                           <button type="button" autoFocus onClick={closeArchive}
-                            className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                            className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
                           >
                             Vazgeç
                           </button>
@@ -425,7 +425,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
       </div>
 
       <div className="mt-4 min-h-0 flex-1 overflow-y-auto scrollbar">
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
 
             {readOnly && sharedBy && (
               <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.02 }} className="px-1 py-4 first:pt-0">
@@ -454,7 +454,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                   <ChannelIcon source={response?.attribution?.source} size={14} className="text-neutral-300 opacity-60" />
                   <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-neutral-300">
                     {sourceLabel(response?.attribution?.source)}
-                    {scannedFromQr && <span className="rounded-full border border-white/10 px-1.5 text-3xs font-medium leading-4 text-neutral-400">QR</span>}
+                    {scannedFromQr && <span className="rounded-full border border-ink/10 px-1.5 text-3xs font-medium leading-4 text-neutral-400">QR</span>}
                   </p>
                   <p className="text-3xs text-neutral-500">Kaynak</p>
                 </div>
@@ -504,7 +504,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                     <UserCard name={reviewerName} email={reviewerEmail} userId={reviewerId} photoUrl={reviewerPhotoUrl} hasUser={Boolean(response.reviewer?.fullName)} size="small"/>
 
                     {reviewDescription && (
-                      <div className="mt-3 rounded-lg border border-white/10 bg-white/3 p-3">
+                      <div className="mt-3 rounded-lg border border-ink/10 bg-ink/3 p-3">
                         <p className="text-3xs font-medium text-neutral-500 mb-1">Not</p>
                         <p className="text-2xs text-neutral-200 whitespace-pre-wrap leading-relaxed">{reviewDescription}</p>
                       </div>
@@ -527,7 +527,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                     )}
 
                     {isArchived && (
-                      <div className="mt-3 rounded-lg border border-white/10 bg-white/3 p-3">
+                      <div className="mt-3 rounded-lg border border-ink/10 bg-ink/3 p-3">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-3xs font-medium text-neutral-500">Arşivleyen</p>
                           <div className="flex items-center gap-1 text-3xs text-neutral-400">
@@ -543,7 +543,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
 
                     {canEditReview && (
                       <button type="button" onClick={() => setIsEditing(true)} aria-label="Durumu değiştir" title="Durumu değiştir"
-                        className="mt-3 w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-2xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
+                        className="mt-3 w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-2xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
                       >
                         <PencilLine size={15} className="mx-auto" />
                       </button>
@@ -556,13 +556,13 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                     <AnimatePresence mode="wait" initial={false}>
                       {actionState === "idle" && pendingDecision ? (
                         <motion.div layout key="confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="rounded-xl border border-white/10 bg-white/3 p-3"
+                          exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="rounded-xl border border-ink/10 bg-ink/3 p-3"
                         >
                           <p className="text-xs font-medium text-neutral-100">{decisionCopy.title}</p>
                           {decisionOutcome && <p className="mt-1 text-2xs text-neutral-300">{decisionOutcome}</p>}
                           <p className="mt-1 text-3xs leading-relaxed text-neutral-500">{decisionCopy.note}</p>
                           {pendingDecision === RETURNED && (
-                            <div className="mt-2.5 space-y-1.5 border-t border-white/5 pt-2.5">
+                            <div className="mt-2.5 space-y-1.5 border-t border-ink/5 pt-2.5">
                               <p className={`flex gap-1.5 text-3xs leading-relaxed ${noteMissing ? "text-sky-200" : "text-neutral-500"}`}>
                                 <PencilLine size={11} className="mt-0.5 shrink-0" />
                                 {noteMissing ? "Adayın neyi düzelteceğini Açıklama alanına yazın; not ona e-postayla gider." : "Açıklama adaya not olarak gider."}
@@ -575,7 +575,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                           )}
                           <div className="mt-3 flex items-center gap-2">
                             <button type="button" onClick={cancelDecision}
-                              className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                              className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
                             >
                               Vazgeç
                             </button>
@@ -647,7 +647,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                       </label>
                       <textarea id="review-note" ref={noteRef} rows={3} value={note} onChange={(event) => setNote(event.target.value)} maxLength={REVIEW_NOTE_MAX_LENGTH}
                         placeholder={pendingDecision === RETURNED ? "Neyi düzeltmesi gerektiğini yazın..." : "Açıklama ekle..."}
-                        className={`w-full rounded-lg border bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 ${noteMissing ? "border-sky-400/40" : "border-white/10"}`}
+                        className={`w-full rounded-lg border bg-transparent px-3 py-2 text-xs text-neutral-100 placeholder:text-neutral-600 outline-none transition focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40 ${noteMissing ? "border-sky-400/40" : "border-ink/10"}`}
                       />
                       <p className="mt-1 text-right text-3xs tabular-nums text-neutral-600">{note?.length ?? 0}/{REVIEW_NOTE_MAX_LENGTH}</p>
                       {actionError && (
@@ -655,7 +655,7 @@ export function ResponseActions({ response, readOnly = false, returnFlags = null
                       )}
                       {reviewedAt && (
                         <button type="button" onClick={() => { setIsEditing(false); setNote(reviewDescription); }} aria-label="Değişiklikten vazgeç" title="Değişiklikten vazgeç"
-                          className="mt-2 inline-flex items-center justify-center rounded-lg border border-white/10 bg-neutral-900/60 px-2 py-1 text-3xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
+                          className="mt-2 inline-flex items-center justify-center rounded-lg border border-ink/10 bg-neutral-900/60 px-2 py-1 text-3xs font-medium text-neutral-400 transition hover:bg-neutral-900/80 hover:text-neutral-200"
                         >
                           <Undo2 size={14} />
                         </button>
@@ -717,11 +717,11 @@ export function AttemptActions({ view }) {
     <div className="flex h-full flex-col text-neutral-200">
       <div className="flex items-center gap-2 px-1 lg:h-7">
         <span className="text-2xs font-medium text-neutral-500">İşlemler</span>
-        <span className="h-px flex-1 bg-white/5" />
+        <span className="h-px flex-1 bg-ink/5" />
       </div>
 
       <div className="mt-4 min-h-0 flex-1 overflow-y-auto scrollbar">
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
 
             <motion.div {...fadeIn} transition={{ ...fadeIn.transition, delay: 0.03 }} className="px-1 py-4 first:pt-0">
               <SectionTitle>Özet</SectionTitle>

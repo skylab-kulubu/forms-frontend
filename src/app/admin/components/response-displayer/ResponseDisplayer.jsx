@@ -33,7 +33,7 @@ const ActionTrigger = forwardRef((props, ref) => {
         <div ref={ref} className="flex h-full items-center justify-end z-10">
             <DrawerTrigger asChild>
                 <motion.button type="button" initial={{ x: 0 }} title="Paneli aç"
-                    className="relative flex h-full w-5 items-center justify-center rounded-l-full border border-r-0 border-white/10 bg-neutral-900/80 shadow-xl text-neutral-500 hover:text-neutral-200 transition-colors"
+                    className="relative flex h-full w-5 items-center justify-center rounded-l-full border border-r-0 border-ink/10 bg-neutral-900/80 shadow-xl text-neutral-500 hover:text-neutral-200 transition-colors"
                 >
                     <ChevronsLeft size={16} className="opacity-60" />
                 </motion.button>
@@ -100,7 +100,7 @@ function WorkflowSteps({ steps, viewKey, ownKey, onSelect }) {
         {groupStages(steps).map((group, index) => {
           const isActive = group.rounds.some((step) => stepKey(step) === viewKey);
           const isSelectable = (step) => Boolean(step.responseId) || stepKey(step) === ownKey;
-          const chipClass = (selectable) => `flex max-w-64 items-center gap-2 rounded-md border px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isActive ? "border-white/15 bg-white/5" : selectable ? "border-transparent hover:bg-white/3" : "cursor-not-allowed border-transparent opacity-50"}`;
+          const chipClass = (selectable) => `flex max-w-64 items-center gap-2 rounded-md border px-2 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isActive ? "border-ink/15 bg-ink/5" : selectable ? "border-transparent hover:bg-ink/3" : "cursor-not-allowed border-transparent opacity-50"}`;
           const formTitle = group.formTitle || "Adsız form";
           const titleNode = <span className={`truncate text-2xs font-medium ${isActive ? "text-neutral-100" : "text-neutral-400"}`}>{formTitle}</span>;
           const single = group.rounds.length === 1 ? group.rounds[0] : null;
@@ -123,7 +123,7 @@ function WorkflowSteps({ steps, viewKey, ownKey, onSelect }) {
                 <div className={chipClass(true)}>
                   <span className="text-3xs tabular-nums text-neutral-500">{group.stage}</span>
                   {titleNode}
-                  <span className="flex items-center gap-0.5 border-l border-white/10 pl-1.5">
+                  <span className="flex items-center gap-0.5 border-l border-ink/10 pl-1.5">
                     {group.rounds.map((step, roundIndex) => {
                       const status = roundStatus(step, group.rounds[roundIndex - 1]);
                       const selectable = isSelectable(step);
@@ -131,7 +131,7 @@ function WorkflowSteps({ steps, viewKey, ownKey, onSelect }) {
                       return (
                         <button key={stepKey(step)} type="button" disabled={!selectable} onClick={() => onSelect(stepKey(step))} aria-current={isCurrent ? "step" : undefined}
                           title={`${step.round}. gönderim · ${status?.label ?? "Henüz cevaplanmadı"}`}
-                          className={`flex h-5 items-center gap-1 rounded px-1.5 text-3xs tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isCurrent ? "bg-white/10 text-neutral-100" : selectable ? "text-neutral-400 hover:bg-white/5 hover:text-neutral-200" : "cursor-not-allowed text-neutral-600"}`}
+                          className={`flex h-5 items-center gap-1 rounded px-1.5 text-3xs tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${isCurrent ? "bg-ink/10 text-neutral-100" : selectable ? "text-neutral-400 hover:bg-ink/5 hover:text-neutral-200" : "cursor-not-allowed text-neutral-600"}`}
                         >
                           {step.round}
                           <span className={`size-1.5 shrink-0 rounded-full ${status?.dot ?? "border border-neutral-600"}`} />
@@ -243,7 +243,7 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
     return (
       <>
         {intro}
-        <ul className="mx-auto w-full max-w-2xl divide-y divide-white/5">
+        <ul className="mx-auto w-full max-w-2xl divide-y divide-ink/5">
           {items.map((item, index) => (
             <ResponseListItem key={item?.id ?? `${index}`} questionNumber={index + 1} question={item?.question} answer={item?.answer} type={item?.type}
               responseId={owner?.id ?? null} token={token}
@@ -314,7 +314,7 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
       <div className="flex h-full flex-col">
         <div className="flex items-center gap-2 px-1 lg:h-7">
           <span className="text-2xs font-medium text-neutral-500 lg:text-base">Cevaplar</span>
-          <span className="h-px flex-1 bg-white/5" />
+          <span className="h-px flex-1 bg-ink/5" />
           <span className="shrink-0 text-3xs tabular-nums text-neutral-500">Cevaplanan {answeredCount}</span>
         </div>
 
@@ -330,7 +330,7 @@ export default function ResponseDisplayer({ response = null, attemptView = null,
             {previousSchema && !isOtherUnavailable && (
               <button type="button" onClick={() => setShowChanges((value) => !value)} aria-pressed={showChanges}
                 title={`${previousStep?.round ?? 1}. gönderimden farklı cevapları vurgula`}
-                className={`flex h-6 items-center gap-1.5 rounded-md border px-2 text-3xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${showChanges ? "border-sky-400/40 bg-sky-400/10 text-sky-200" : "border-white/10 text-neutral-400 hover:text-neutral-200"}`}
+                className={`flex h-6 items-center gap-1.5 rounded-md border px-2 text-3xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${showChanges ? "border-sky-400/40 bg-sky-400/10 text-sky-200" : "border-ink/10 text-neutral-400 hover:text-neutral-200"}`}
               >
                 <GitCompare size={11} />
                 Değişenler

@@ -122,13 +122,13 @@ export function DrawerContent({ children, className = "", overlayClassName = "",
           >
             
             <button type="button" onClick={() => setOpen(false)}
-              className="group pointer-events-auto relative flex w-5 -mr-0.5 h-full flex-col items-center justify-center rounded-l-full border-y border-l border-neutral-800 bg-[#121212] text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"
+              className="group pointer-events-auto relative flex w-5 -mr-0.5 h-full flex-col items-center justify-center rounded-l-full border-y border-l border-neutral-800 bg-sheet text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"
               title="Paneli kapat"
             >
               <ChevronsRight size={14} strokeWidth={2.5} className="opacity-60 transition-transform duration-200 group-hover:scale-110 group-hover:opacity-100" />
             </button>
 
-            <div className={`pointer-events-auto h-full w-[min(92vw,420px)] overflow-hidden border-y border-r border-l-0 border-neutral-800 bg-[#121212] shadow-2xl ${className}`}>
+            <div className={`pointer-events-auto h-full w-[min(92vw,420px)] overflow-hidden border-y border-r border-l-0 border-neutral-800 bg-sheet shadow-2xl ${className}`}>
               {children}
             </div>
 

@@ -59,7 +59,7 @@ export default function SharedTemplate({ group, token }) {
     <div className="relative flex h-[calc(100dvh-3.5rem)] min-h-0 flex-col overflow-y-auto scrollbar lg:flex-row lg:overflow-hidden">
       <main className="relative order-2 min-w-0 flex-1 lg:order-1 lg:flex-[1_1_784px] lg:py-2">
         <div className="relative h-full overflow-hidden rounded-xl">
-          <div className="studio-fade h-full overflow-x-hidden bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar lg:overflow-y-auto">
+          <div className="studio-fade h-full overflow-x-hidden bg-[radial-gradient(rgb(var(--forms-ink-rgb)/0.05)_1px,transparent_1px)] bg-size-[22px_22px] bg-local [scrollbar-gutter:stable] scrollbar lg:overflow-y-auto">
             <div className="relative mx-auto flex w-full flex-col px-3 pb-12 pt-4 sm:px-14 sm:pt-10" style={{ maxWidth: CARD_WIDTH.desktop + 112 }}>
               <div className="mb-2 flex items-center gap-1.5 px-1 text-2xs font-medium text-neutral-400">
                 <LayoutTemplate size={12} className="shrink-0 text-neutral-500" />

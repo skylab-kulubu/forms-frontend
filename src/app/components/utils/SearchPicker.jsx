@@ -81,7 +81,7 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
   }, [listItems, safePage, itemsPerPage]);
 
   return (
-    <motion.div className={`absolute z-20 mt-2 w-full rounded-xl border border-white/10 bg-neutral-900/80 p-3 text-neutral-100 shadow-xl backdrop-blur supports-backdrop-filter:bg-neutral-900/60 ${className}`}
+    <motion.div className={`absolute z-20 mt-2 w-full rounded-xl border border-ink/10 bg-neutral-900/80 p-3 text-neutral-100 shadow-xl backdrop-blur supports-backdrop-filter:bg-neutral-900/60 ${className}`}
       variants={panelVariants} initial="hidden" animate="visible" exit="exit"
     >
       <motion.div variants={contentVariants}>
@@ -92,13 +92,13 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
             </span>
             <input autoFocus={autoFocus} type="text" value={searchValue} onChange={(event) => onSearchChange?.(event.target.value)}
               placeholder={createMode ? createLabel : "Ara..."} readOnly={!onSearchChange}
-              className="w-full rounded-md border border-white/10 bg-white/5 pl-7 pr-2 py-1.5 text-sm text-neutral-100 outline-none placeholder-neutral-500 focus:border-skylab-400/50"
+              className="w-full rounded-md border border-ink/10 bg-ink/5 pl-7 pr-2 py-1.5 text-sm text-neutral-100 outline-none placeholder-neutral-500 focus:border-skylab-400/50"
             />
           </motion.div>
         ) : null}
 
         <motion.div variants={itemVariants} ref={listRef}
-          className={`${showSearch ? "mt-2 " : ""}scrollbar overflow-y-auto rounded-lg border border-white/10 bg-white/5 transition-[height] duration-200 ease-out`}
+          className={`${showSearch ? "mt-2 " : ""}scrollbar overflow-y-auto rounded-lg border border-ink/10 bg-ink/5 transition-[height] duration-200 ease-out`}
         >
           <div ref={listContentRef} className={`transition-opacity duration-150 ${loading ? "opacity-60" : "opacity-100"}`}>
             {pageItems.length === 0 ? (
@@ -125,7 +125,7 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
             className="mt-2 flex items-center justify-between gap-2 px-2 py-1 text-2xs text-neutral-400"
           >
             <button type="button" aria-label="Previous page" title="Previous" onClick={() => setPage(Math.max(1, safePage - 1))} disabled={safePage <= 1}
-              className={`flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-neutral-900/40 text-neutral-200 transition-colors ${(safePage <= 1) ? "cursor-not-allowed opacity-50" : "hover:border-white/20 hover:bg-white/10 hover:text-neutral-100"}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-md border border-ink/10 bg-neutral-900/40 text-neutral-200 transition-colors ${(safePage <= 1) ? "cursor-not-allowed opacity-50" : "hover:border-ink/20 hover:bg-ink/10 hover:text-neutral-100"}`}
             >
               <ChevronLeft size={14} />
             </button>
@@ -133,7 +133,7 @@ export default function SearchPicker({ items = [], itemsPerPage = 6, activeItemI
               {safePage} / {totalPages}
             </span>
             <button type="button" aria-label="Next page" title="Next" onClick={() => setPage(Math.min(totalPages, safePage + 1))} disabled={safePage >= totalPages}
-              className={`flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-neutral-900/40 text-neutral-200 transition-colors ${(safePage >= totalPages) ? "cursor-not-allowed opacity-50" : "hover:border-white/20 hover:bg-white/10 hover:text-neutral-100"}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-md border border-ink/10 bg-neutral-900/40 text-neutral-200 transition-colors ${(safePage >= totalPages) ? "cursor-not-allowed opacity-50" : "hover:border-ink/20 hover:bg-ink/10 hover:text-neutral-100"}`}
             >
               <ChevronRight size={14} />
             </button>

@@ -11,7 +11,7 @@ import { useGuestUploadCapabilityQuery } from "@/lib/hooks/useGuestUploadCapabil
 import { POLL_LIMIT, pollDelay } from "@/app/components/form-displayer/hooks/useGuestUploads";
 import { QuestionNumber, QuestionHint } from "./QuestionParts";
 
-const LINK_BUTTON = "underline underline-offset-3 transition-colors text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50";
+const LINK_BUTTON = "underline underline-offset-3 transition-colors text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50";
 
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes)) return "-";
@@ -281,13 +281,13 @@ function AccountFileUpload({ question, questionNumber, description, required = f
           className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border px-4 py-3 transition-all duration-300 ${issue && !dragging ? "min-h-16" : "h-16"} ${dragging ? "border-skylab-400/50 bg-skylab-500/10"
               : issue ? "border-solid border-red-400/30 bg-red-900/15 cursor-pointer hover:bg-red-900/25"
               : missing && !currentFile && !error ? "border-dashed border-red-400/60 bg-red-900/20"
-                : currentFile || isUploading ? "border-solid border-white/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
-                  : "border-dashed border-white/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
+                : currentFile || isUploading ? "border-solid border-ink/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
+                  : "border-dashed border-ink/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
             }`}
         >
           {!currentFile && !isUploading && !issue && (
             <div className="flex items-center gap-4 w-full animate-in fade-in duration-300">
-              <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-skylab-500/20 text-skylab-400" : error ? "bg-red-500/20 text-red-400" : "bg-white/5 text-neutral-400"} transition-colors`}>
+              <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-skylab-500/20 text-skylab-400" : error ? "bg-red-500/20 text-red-400" : "bg-ink/5 text-neutral-400"} transition-colors`}>
                 <Upload size={18} />
               </div>
               <div className="flex flex-col text-left">
@@ -307,7 +307,7 @@ function AccountFileUpload({ question, questionNumber, description, required = f
             <div className="flex items-center justify-between w-full animate-in fade-in duration-300">
 
               <div className="flex items-center gap-4 overflow-hidden">
-                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${isUploading || scanning ? 'bg-skylab-500/10 text-skylab-400' : 'bg-white/10 text-neutral-300'}`}>
+                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${isUploading || scanning ? 'bg-skylab-500/10 text-skylab-400' : 'bg-ink/10 text-neutral-300'}`}>
                   {isUploading || scanning ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
                 </div>
 
@@ -429,8 +429,8 @@ function LockedBox({ lock }) {
   const Icon = lock.icon ?? CircleAlert;
 
   return (
-    <div className="relative mt-3 flex w-full min-h-16 items-center gap-4 overflow-hidden rounded-lg border border-dashed border-white/10 bg-neutral-900/40 px-4 py-3 opacity-60 cursor-not-allowed select-none">
-      <div className="flex shrink-0 items-center justify-center size-10 rounded-sm bg-white/5 text-neutral-500">
+    <div className="relative mt-3 flex w-full min-h-16 items-center gap-4 overflow-hidden rounded-lg border border-dashed border-ink/10 bg-neutral-900/40 px-4 py-3 opacity-60 cursor-not-allowed select-none">
+      <div className="flex shrink-0 items-center justify-center size-10 rounded-sm bg-ink/5 text-neutral-500">
         <Icon size={18} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col text-left">
@@ -464,8 +464,8 @@ function GuestLoginRequired({ question, questionNumber, description, required, m
       <div className="flex flex-col p-2 md:p-4">
         <FileQuestionHeader question={question} questionNumber={questionNumber} description={description} required={required} missing={missing} />
 
-        <div className={`relative mt-3 flex w-full items-center gap-4 overflow-hidden rounded-lg border border-dashed h-16 px-4 py-3 ${missing ? "border-red-400/60 bg-red-900/20" : "border-white/10 bg-neutral-900/40"}`}>
-          <div className="flex shrink-0 items-center justify-center size-10 rounded-sm bg-white/5 text-neutral-500">
+        <div className={`relative mt-3 flex w-full items-center gap-4 overflow-hidden rounded-lg border border-dashed h-16 px-4 py-3 ${missing ? "border-red-400/60 bg-red-900/20" : "border-ink/10 bg-neutral-900/40"}`}>
+          <div className="flex shrink-0 items-center justify-center size-10 rounded-sm bg-ink/5 text-neutral-500">
             <LockKeyhole size={18} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col text-left">
@@ -501,7 +501,7 @@ function IssueContent({ issue, onRetry, onClear }) {
       </div>
       {onRetry && (
         <button type="button" onClick={(event) => { event.stopPropagation(); onRetry(); }}
-          className="shrink-0 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-2xs font-semibold text-neutral-100 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+          className="shrink-0 rounded-md border border-ink/10 bg-ink/5 px-2.5 py-1.5 text-2xs font-semibold text-neutral-100 transition-colors hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
         >
           Tekrar dene
         </button>
@@ -664,8 +664,8 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
             className={`relative mt-3 flex w-full items-center overflow-hidden rounded-lg border px-4 py-3 transition-all duration-300 ${issue && !dragging ? "min-h-16" : "h-16"} ${dragging ? "border-skylab-400/50 bg-skylab-500/10"
                 : issue ? "border-solid border-red-400/30 bg-red-900/15 cursor-pointer hover:bg-red-900/25"
                   : missing && !shown ? "border-dashed border-red-400/60 bg-red-900/20"
-                    : shown ? "border-solid border-white/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
-                      : "border-dashed border-white/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
+                    : shown ? "border-solid border-ink/10 bg-neutral-900/60 shadow-sm cursor-pointer hover:bg-neutral-900/80"
+                      : "border-dashed border-ink/10 bg-neutral-900/40 hover:bg-neutral-900/60 cursor-pointer"
               }`}
           >
             {issue && !dragging && (
@@ -676,7 +676,7 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
 
             {(!issue || dragging) && !shown && (
               <div className="flex items-center gap-4 w-full animate-in fade-in duration-300">
-                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-skylab-500/20 text-skylab-400" : "bg-white/5 text-neutral-400"} transition-colors`}>
+                <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${dragging ? "bg-skylab-500/20 text-skylab-400" : "bg-ink/5 text-neutral-400"} transition-colors`}>
                   <Upload size={18} />
                 </div>
                 <div className="flex flex-col text-left">
@@ -691,7 +691,7 @@ function GuestFileUpload({ fieldId, question, questionNumber, description, requi
             {!issue && shown && (
               <div className="flex items-center justify-between w-full animate-in fade-in duration-300">
                 <div className="flex items-center gap-4 overflow-hidden">
-                  <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${busy || scanning ? "bg-skylab-500/10 text-skylab-400" : "bg-white/10 text-neutral-300"}`}>
+                  <div className={`flex shrink-0 items-center justify-center size-10 rounded-sm ${busy || scanning ? "bg-skylab-500/10 text-skylab-400" : "bg-ink/10 text-neutral-300"}`}>
                     {busy || scanning ? <Loader2 size={18} className="animate-spin" /> : <FileIcon size={18} />}
                   </div>
 

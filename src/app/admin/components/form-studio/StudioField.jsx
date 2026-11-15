@@ -99,7 +99,7 @@ function fileRulesLabel(acceptedFiles, maxSize) {
   return `${label} • MAKS ${Math.round(rules.maxBytes / 1024 / 1024)}MB`;
 }
 
-const BOX = "rounded-lg border border-white/10 bg-neutral-900/60";
+const BOX = "rounded-lg border border-ink/10 bg-neutral-900/60";
 
 function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
   const choices = field.props?.choices ?? [];
@@ -109,7 +109,7 @@ function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
       {choices.map((choice, index) => {
         const locked = lockedValues.includes(choice);
         return (
-          <div key={index} className={`group/opt flex items-center gap-3 rounded-md border border-white/10 bg-neutral-900/60 p-2`}>
+          <div key={index} className={`group/opt flex items-center gap-3 rounded-md border border-ink/10 bg-neutral-900/60 p-2`}>
             <input type={field.props?.allowMultiple === false ? "radio" : "checkbox"} disabled tabIndex={-1} className="checkbox shrink-0" />
             <Editable editKey={`o-${field.id}-${index}`} value={choice} placeholder={`Seçenek ${index + 1}`} readOnly={locked || readOnly}
               title={locked ? "Akış koşulu bu seçeneği karşılaştırıyor; adı değiştirilemez." : undefined}
@@ -132,7 +132,7 @@ function OptionRows({ field, selected, lockedValues, readOnly = false, api }) {
       })}
       {selected && (
         <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={() => api.addChoice(field.id, choices.length)}
-          className="flex items-center gap-3 rounded-md border border-dashed border-white/10 p-2 text-left text-sm text-neutral-500 transition-colors hover:border-white/20 hover:text-neutral-300"
+          className="flex items-center gap-3 rounded-md border border-dashed border-ink/10 p-2 text-left text-sm text-neutral-500 transition-colors hover:border-ink/20 hover:text-neutral-300"
         >
           <Plus size={14} className="mx-px" />
           Seçenek ekle
@@ -155,7 +155,7 @@ function ComboOptions({ field, lockedValues, api }) {
   }
 
   return (
-    <div className="mt-2.5 border-l border-dashed border-white/15 pl-3">
+    <div className="mt-2.5 border-l border-dashed border-ink/15 pl-3">
       <p className="mb-1.5 text-3xs text-neutral-500">Seçenekler · başvuran açılır listede görür</p>
       <div className="flex flex-col gap-1">
         {choices.map((choice, index) => {
@@ -226,7 +226,7 @@ function MatrixPreview({ field, selected, api }) {
       {layout.mode === "table" ? (
         <div ref={scrollerRef} className={`overflow-x-auto ${BOX}`}>
           <table className="w-full min-w-125 text-left">
-            <thead className="border-b border-white/10 bg-white/5">
+            <thead className="border-b border-ink/10 bg-ink/5">
               <tr>
                 <th className="w-1/3 p-3" />
                 {columns.map((column, index) => (
@@ -238,7 +238,7 @@ function MatrixPreview({ field, selected, api }) {
                 <th className="w-10 p-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-ink/5">
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex} className="group/row">
                   <td className="relative p-3 text-sm font-medium text-neutral-200">
@@ -247,7 +247,7 @@ function MatrixPreview({ field, selected, api }) {
                   </td>
                   {columns.map((_, columnIndex) => (
                     <td key={columnIndex} className="p-2 text-center align-middle">
-                      <span className="inline-block size-4.5 rounded-full border border-white/20 bg-neutral-900/80" />
+                      <span className="inline-block size-4.5 rounded-full border border-ink/20 bg-neutral-900/80" />
                     </td>
                   ))}
                   <td className="w-10 p-2 pr-4" />
@@ -303,14 +303,14 @@ export function ChildTypeMenu({ anchor, onPick, onDismiss }) {
       {anchor ? (
         <Floating key="child-types" anchor={anchor} onDismiss={onDismiss} placement="bottom" offset={6}>
           <motion.div data-studio-menu role="menu" onPointerDown={(event) => event.stopPropagation()} {...POPOVER_MOTION}
-            className="w-48 rounded-[10px] border border-white/20 bg-[#1e1e1e] p-1.5 shadow-2xl shadow-black/50"
+            className="w-48 rounded-[10px] border border-ink/20 bg-panel p-1.5 shadow-2xl shadow-black/50"
           >
             <p className="px-2 pb-1 pt-1 text-3xs text-neutral-500">Gruba alan ekle</p>
             {REPEATER_CHILD_TYPES.map((type) => {
               const { label, Icon } = FIELD_TYPES[type];
               return (
                 <button key={type} type="button" role="menuitem" onClick={() => { onDismiss(); onPick(type); }}
-                  className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs text-neutral-300 transition-colors hover:bg-white/6 hover:text-white"
+                  className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-2xs text-neutral-300 transition-colors hover:bg-ink/6 hover:text-ink"
                 >
                   <Icon size={14} className="text-neutral-500" />
                   {label}
@@ -331,7 +331,7 @@ function AddChildButton({ onPick }) {
     <>
       <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => setAnchor(anchor ? null : event.currentTarget)}
         className={`inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 py-2 text-xs font-medium transition-colors ${
-          anchor ? "border-white/25 bg-white/5 text-neutral-200" : "border-white/15 bg-white/3 text-neutral-400 hover:border-white/25 hover:text-neutral-200"
+          anchor ? "border-ink/25 bg-ink/5 text-neutral-200" : "border-ink/15 bg-ink/3 text-neutral-400 hover:border-ink/25 hover:text-neutral-200"
         }`}
       >
         <Plus size={14} />
@@ -373,7 +373,7 @@ function RepeaterChild({ field, child, groupSelected, active, api }) {
   return (
     <div onClick={(event) => api.selectChild(event, field.id, child.id)}
       className={`group/child -mx-2 flex min-w-0 cursor-pointer flex-col rounded-lg px-2 py-1.5 transition-[background-color,box-shadow] duration-150 [&>*:last-child]:mt-1.5 ${
-        active ? "bg-skylab-400/5 ring-1 ring-skylab-400/30" : "hover:bg-white/3"
+        active ? "bg-skylab-400/5 ring-1 ring-skylab-400/30" : "hover:bg-ink/3"
       }`}
     >
       <div className="flex min-w-0 items-center gap-1.5 px-0.5">
@@ -407,8 +407,8 @@ function RepeaterPreview({ field, selected, childId = null, readOnly = false, ap
 
   return (
     <div className="mt-3 flex flex-col gap-3">
-      <div className="rounded-lg border border-white/10 bg-neutral-900/40">
-        <div className="border-b border-white/5 px-3 py-1.5 text-3xs font-medium text-neutral-500">1. kayıt</div>
+      <div className="rounded-lg border border-ink/10 bg-neutral-900/40">
+        <div className="border-b border-ink/5 px-3 py-1.5 text-3xs font-medium text-neutral-500">1. kayıt</div>
         <div className="flex flex-col gap-2 p-3">
           {children.length === 0 ? <p className="px-0.5 text-xs text-neutral-500">Bu grupta henüz alan yok.</p> : null}
           {children.map((child) => (
@@ -477,16 +477,16 @@ export function ControlPreview({ field, selected, childId = null, lockedValues, 
             <span className="absolute left-1/2 top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-300/40" />
           </div>
           <span className="w-6 shrink-0 text-left text-xs font-medium text-neutral-500">{max}</span>
-          <div className="mx-1 h-5 w-px shrink-0 bg-white/10" />
+          <div className="mx-1 h-5 w-px shrink-0 bg-ink/10" />
           <span className="min-w-10 shrink-0 text-center text-sm text-neutral-200">{middle}</span>
         </div>
       );
     }
     case "file":
       return (
-        <div className="relative mt-3 flex h-16 w-full items-center overflow-hidden rounded-lg border border-dashed border-white/10 bg-neutral-900/40 px-4 py-3">
+        <div className="relative mt-3 flex h-16 w-full items-center overflow-hidden rounded-lg border border-dashed border-ink/10 bg-neutral-900/40 px-4 py-3">
           <div className="flex w-full items-center gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-white/5 text-neutral-400"><Upload size={18} /></div>
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-ink/5 text-neutral-400"><Upload size={18} /></div>
             <div className="flex flex-col text-left">
               <span className="text-sm font-medium text-neutral-200">Dosya yükle veya sürükle</span>
               <span className="mt-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-500">{fileRulesLabel(props.acceptedFiles, props.maxSize)}</span>
@@ -525,7 +525,7 @@ function StripButton({ label, onClick, disabled, danger, children }) {
   return (
     <button type="button" aria-label={label} title={label} onClick={onClick} disabled={disabled}
       className={`grid size-6 place-items-center rounded-md text-neutral-400 transition-colors ${
-        disabled ? "cursor-not-allowed opacity-30" : danger ? "hover:bg-red-500/10 hover:text-red-300" : "hover:bg-white/10 hover:text-neutral-200"
+        disabled ? "cursor-not-allowed opacity-30" : danger ? "hover:bg-red-500/10 hover:text-red-300" : "hover:bg-ink/10 hover:text-neutral-200"
       }`}
     >
       {children}
@@ -536,18 +536,18 @@ function StripButton({ label, onClick, disabled, danger, children }) {
 function ActionStrip({ field, canUp, canDown, protectedReason, phone, api }) {
   return (
     <div onPointerDown={(event) => event.stopPropagation()}
-      className={`absolute left-3 z-20 flex items-center gap-0.5 rounded-lg border border-white/15 bg-neutral-900 px-1 py-0.5 shadow-lg ${phone ? "-top-8" : "-top-3"}`}
+      className={`absolute left-3 z-20 flex items-center gap-0.5 rounded-lg border border-ink/15 bg-neutral-900 px-1 py-0.5 shadow-lg ${phone ? "-top-8" : "-top-3"}`}
     >
       <span title="Sürükleyerek taşı" aria-hidden="true"
-        className="grid size-6 cursor-grab place-items-center rounded-md text-neutral-400 transition-colors hover:bg-white/10 hover:text-neutral-200 active:cursor-grabbing"
+        className="grid size-6 cursor-grab place-items-center rounded-md text-neutral-400 transition-colors hover:bg-ink/10 hover:text-neutral-200 active:cursor-grabbing"
       >
         <GripVertical size={13} />
       </span>
-      <span className="mx-0.5 h-4 w-px bg-white/10" />
+      <span className="mx-0.5 h-4 w-px bg-ink/10" />
       <StripButton label="Yukarı taşı (Alt+↑)" onClick={() => api.move([field.id], -1)} disabled={!canUp}><ArrowUp size={13} /></StripButton>
       <StripButton label="Aşağı taşı (Alt+↓)" onClick={() => api.move([field.id], 1)} disabled={!canDown}><ArrowDown size={13} /></StripButton>
       <StripButton label="Çoğalt (Ctrl+D)" onClick={() => api.duplicate([field.id])}><Copy size={13} /></StripButton>
-      <span className="mx-0.5 h-4 w-px bg-white/10" />
+      <span className="mx-0.5 h-4 w-px bg-ink/10" />
       <StripButton label={protectedReason ?? "Sil (Delete)"} danger onClick={() => api.remove([field.id])} disabled={Boolean(protectedReason)}>
         <Trash2 size={13} />
       </StripButton>
@@ -563,7 +563,7 @@ export function InsertLine({ index, api, disabled = false }) {
       <div className="pointer-events-none absolute inset-0 z-20 flex items-center gap-2 opacity-0 transition-opacity duration-150 group-hover/ins:opacity-100 group-focus-within/ins:opacity-100">
         <span className="h-px flex-1 bg-skylab-400/25" />
         <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => api.openMenu(event.currentTarget, index)}
-          className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/15 bg-neutral-900 px-2 py-0.5 text-3xs font-medium text-neutral-400 shadow transition-colors hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+          className="pointer-events-auto flex items-center gap-1 rounded-full border border-ink/15 bg-neutral-900 px-2 py-0.5 text-3xs font-medium text-neutral-400 shadow transition-colors hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
         >
           <Plus size={11} />
           Ekle
@@ -589,10 +589,10 @@ export const FieldBlock = memo(function FieldBlock({
     : undefined;
 
   return (
-    <div data-fid={field.id} className={`relative ${!isLast && !isSeparator ? "border-b border-white/5 pb-6" : ""}`}>
+    <div data-fid={field.id} className={`relative ${!isLast && !isSeparator ? "border-b border-ink/5 pb-6" : ""}`}>
       <div onPointerDown={api.pressField} onClick={(event) => api.selectField(event, field.id)} style={peerShadow ? { boxShadow: peerShadow } : undefined}
         className={`group/q relative flex flex-col rounded-xl transition-[box-shadow,background-color] duration-150 ${phone ? "p-2" : "p-4"} ${
-          selected ? "bg-skylab-500/4 ring-2 ring-skylab-400/50" : hoverable ? "hover:ring-1 hover:ring-white/15" : ""
+          selected ? "bg-skylab-500/4 ring-2 ring-skylab-400/50" : hoverable ? "hover:ring-1 hover:ring-ink/15" : ""
         }`}
       >
         {solo ? <ActionStrip field={field} canUp={canUp} canDown={canDown} protectedReason={protectedReason} phone={phone} api={api} /> : null}
@@ -609,14 +609,14 @@ export const FieldBlock = memo(function FieldBlock({
             <span className={`absolute inset-y-0 rounded-full transition-all duration-150 ${
               commentActive || commentUnread ? "left-[4.5px] w-0.75 bg-skylab-400"
                 : commentCount > 0 ? "left-1.25 w-0.5 bg-skylab-400/50 group-hover/line:left-[4.5px] group-hover/line:w-0.75 group-hover/line:bg-skylab-400"
-                  : "left-1.25 w-0.5 bg-white/15 group-hover/line:bg-skylab-400/50"
+                  : "left-1.25 w-0.5 bg-ink/15 group-hover/line:bg-skylab-400/50"
             }`} />
             {commentCount > 0 && commentUnread ? (
               <span className="absolute -top-4.5 left-1/2 grid h-4 min-w-4 -translate-x-1/2 place-items-center rounded-full bg-skylab-400 px-1 text-3xs font-semibold tabular-nums text-neutral-950">{commentCount}</span>
             ) : commentCount > 0 ? (
               <span className="absolute -top-3.75 left-1/2 -translate-x-1/2 text-3xs tabular-nums text-skylab-300">{commentCount}</span>
             ) : (
-              <span className="absolute -top-4.5 left-1/2 grid size-4 -translate-x-1/2 place-items-center rounded-full border border-white/10 bg-neutral-800 text-neutral-300"><Plus size={10} /></span>
+              <span className="absolute -top-4.5 left-1/2 grid size-4 -translate-x-1/2 place-items-center rounded-full border border-ink/10 bg-neutral-800 text-neutral-300"><Plus size={10} /></span>
             )}
           </button>
         ) : null}
@@ -643,7 +643,7 @@ export const FieldBlock = memo(function FieldBlock({
               </span>
             ) : null}
             {lockBadge ? (
-              <span title={lockBadge.title} className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-3xs text-neutral-400">
+              <span title={lockBadge.title} className="inline-flex items-center gap-1 rounded-md border border-ink/10 bg-ink/5 px-1.5 py-0.5 text-3xs text-neutral-400">
                 <Lock size={10} />
                 {lockBadge.label}
               </span>
@@ -657,7 +657,7 @@ export const FieldBlock = memo(function FieldBlock({
               <Editable editKey={`q-${field.id}`} value={props.title} placeholder="Bölüm başlığı" className="min-w-0 max-w-[70%] text-lg font-medium text-neutral-100"
                 onChange={(value) => api.updateProps(field.id, { title: value })}
               />
-              <div className="h-px flex-1 bg-white/10" />
+              <div className="h-px flex-1 bg-ink/10" />
             </div>
             {props.description || selected ? (
               <p className="mt-1 text-xs text-neutral-400">

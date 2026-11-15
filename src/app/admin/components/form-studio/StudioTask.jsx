@@ -44,17 +44,17 @@ export function TaskEditor({ task, onChange, onNotice }) {
   const hasFiles = (event) => Array.from(event.dataTransfer?.types ?? []).includes("Files");
 
   return (
-    <div className="relative mt-3 overflow-hidden rounded-lg border border-white/10 bg-neutral-900/60"
+    <div className="relative mt-3 overflow-hidden rounded-lg border border-ink/10 bg-neutral-900/60"
       onDragOver={(event) => { if (!hasFiles(event)) return; event.preventDefault(); setDragging(true); }}
       onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false); }}
       onDrop={(event) => { if (!hasFiles(event)) return; event.preventDefault(); setDragging(false); importFile(event.dataTransfer.files?.[0]); }}
     >
-      <div className="flex items-center gap-0.5 overflow-x-auto border-b border-white/10 px-1.5 py-1 text-neutral-500 scrollbar-hidden">
+      <div className="flex items-center gap-0.5 overflow-x-auto border-b border-ink/10 px-1.5 py-1 text-neutral-500 scrollbar-hidden">
         {TOOLS.map((tool, index) => tool ? (
           <button key={tool.kind} type="button" title={tool.label} aria-label={tool.label}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => textareaRef.current && insertAtCursor(textareaRef.current, tool.kind)}
-            className="grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-white/5 hover:text-neutral-300"
+            className="grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-ink/5 hover:text-neutral-300"
           >
             <tool.Icon size={13} />
           </button>
@@ -63,7 +63,7 @@ export function TaskEditor({ task, onChange, onNotice }) {
         ))}
         <span className="flex-1" />
         <button type="button" onClick={() => fileRef.current?.click()}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-2xs transition-colors hover:bg-white/5 hover:text-neutral-200"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-2xs transition-colors hover:bg-ink/5 hover:text-neutral-200"
         >
           <Upload size={12} />
           .md içe aktar
@@ -98,17 +98,17 @@ export default function StudioTask({ task, timeLimitMinutes, selected, editable 
   return (
     <div data-task onPointerDown={editable ? onPointerDown : undefined}
       className={`relative rounded-xl transition-[box-shadow] duration-150 ${phone ? "-mx-1 p-1" : "-mx-2 p-2"} ${
-        !editable ? "" : selected ? "ring-2 ring-skylab-400/50" : "hover:ring-1 hover:ring-white/15"
+        !editable ? "" : selected ? "ring-2 ring-skylab-400/50" : "hover:ring-1 hover:ring-ink/15"
       }`}
     >
       <div className="px-2 md:px-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-white/5 pb-3 text-2xs text-neutral-500">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-ink/5 pb-3 text-2xs text-neutral-500">
           {timeLimitMinutes ? (
             <span className="inline-flex items-center gap-1.5"><Timer size={12} />{durationText(timeLimitMinutes)} süre</span>
           ) : null}
           <span className="inline-flex items-center gap-1.5"><FileText size={12} />{taskReadMinutes(content)} dk okuma</span>
           {task?.downloadable !== false ? (
-            <span className="ml-auto inline-flex items-center gap-1.5 text-neutral-300 underline decoration-white/20 underline-offset-3"><Download size={12} />İndir</span>
+            <span className="ml-auto inline-flex items-center gap-1.5 text-neutral-300 underline decoration-ink/20 underline-offset-3"><Download size={12} />İndir</span>
           ) : null}
         </div>
         {editable && selected ? (

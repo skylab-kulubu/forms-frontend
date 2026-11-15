@@ -84,7 +84,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
           Soru Metni
         </label>
         <AutoResizeTextarea id="cb-question" {...bind("question")}
-          className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+          className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
           placeholder="Sorunuzu buraya yazın."
         />
       </div>
@@ -95,7 +95,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
             Açıklama
           </label>
           <AutoResizeTextarea id="cb-description" {...bind("description")}
-            className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
+            className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20"
             placeholder="Açıklamanızı buraya yazın."
           />
         </div>
@@ -112,7 +112,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
               <button key={preset.id} type="button" disabled={!keepsLockedChoices}
                 title={keepsLockedChoices ? undefined : "Bu liste akış koşulunun karşılaştırdığı seçenekleri içermiyor."}
                 onClick={() => patch({ choices: preset.data, preset: preset.id })}
-                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${isActive ? "border-white/20 bg-white/10 text-skylab-300" : "border-white/8 bg-white/2 text-neutral-500 hover:text-neutral-300 hover:bg-white/8"}`}
+                className={`flex items-center justify-center gap-2 py-2 px-1 rounded-lg border text-xs font-medium transition-all disabled:cursor-not-allowed disabled:opacity-40 ${isActive ? "border-ink/20 bg-ink/10 text-skylab-300" : "border-ink/8 bg-ink/2 text-neutral-500 hover:text-neutral-300 hover:bg-ink/8"}`}
               >
                 <Icon size={14} />
                 {preset.label}
@@ -122,11 +122,11 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
         </div>
       </div>
 
-      <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1">
+      <div className="flex items-center justify-between rounded-lg border border-ink/10 bg-ink/5 px-2 py-1">
         <span className="text-xs text-neutral-300">Serbest girişe izin ver</span>
-        <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-0.5">
+        <div className="inline-flex rounded-lg border border-ink/15 bg-ink/5 p-0.5">
           <button type="button" aria-pressed={!prop.allowCustom} onClick={() => toggle("allowCustom", false)}
-            className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!prop.allowCustom ? "bg-white/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
+            className={`px-2 py-1 text-2xs rounded-lg transition focus:outline-none ${!prop.allowCustom ? "bg-ink/10 text-neutral-100" : "text-neutral-300 hover:text-neutral-200"}`}
           >
             Hayır
           </button>
@@ -140,11 +140,11 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
 
       <div className="flex flex-col gap-1.5">
         <button type="button" onClick={() => setChoicesOpen((s) => !s)}
-          className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 transition hover:bg-white/10"
+          className="flex items-center justify-between rounded-lg border border-ink/10 bg-ink/5 px-2 py-1.5 transition hover:bg-ink/10"
         >
           <span className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">
             Seçenekler
-            <span className="ml-1.5 rounded-md bg-white/10 px-1.5 py-0.5 text-3xs font-semibold text-neutral-300">
+            <span className="ml-1.5 rounded-md bg-ink/10 px-1.5 py-0.5 text-3xs font-semibold text-neutral-300">
               {(prop.choices ?? []).length}
             </span>
             {lockedValues.length > 0 && (
@@ -169,13 +169,13 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
                     <div key={idx} className="flex items-center gap-2">
                       <div className="relative w-full">
                         <input type="text" readOnly={locked} title={locked ? LOCKED_OPTION_HINT : undefined}
-                          className={`block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${locked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
+                          className={`block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${locked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
                           placeholder={`Seçenek ${idx + 1}`} value={choice} onChange={(e) => updateChoice(idx, e.target.value)} onPaste={(e) => handlePaste(e, idx)}
                         />
                         {locked && <Lock size={12} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500" />}
                       </div>
                       <button type="button" onClick={() => removeChoice(idx)} title={locked ? LOCKED_OPTION_HINT : undefined}
-                        className="rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-2xs text-neutral-300 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg border border-ink/10 bg-ink/5 px-2 py-2 text-2xs text-neutral-300 hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={prop.choices.length <= 1 || locked}
                       >
                         <X size={18} />
@@ -185,7 +185,7 @@ export function CreateFormCombobox({ questionNumber, props, onPropsChange, readO
                 })}
                 <div>
                   <button type="button" onClick={addChoice}
-                    className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-neutral-100 hover:bg-white/10"
+                    className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-ink/15 bg-ink/5 px-3 py-1.5 text-xs text-neutral-100 hover:bg-ink/10"
                   >
                     <Plus size={14} /> Seçenek Ekle
                   </button>
@@ -295,7 +295,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
           <ChevronsUpDown size={16} />
         </span>
         <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => { if (isAutoFilled) return; if (open) closePicker(); else setOpen(true); }}
-          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition ${isAutoFilled ? "cursor-default opacity-70" : "hover:bg-white/5 focus:ring-2 focus:ring-skylab-400/20"} ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-white/10 focus:border-skylab-400/50"}`}
+          className={`flex w-full items-center justify-between rounded-lg border bg-neutral-900/60 pl-9 pr-3 py-2 text-left text-sm text-neutral-100 outline-none transition ${isAutoFilled ? "cursor-default opacity-70" : "hover:bg-ink/5 focus:ring-2 focus:ring-skylab-400/20"} ${missing ? "border-red-400/60 focus:border-red-400/80" : "border-ink/10 focus:border-skylab-400/50"}`}
         >
           <span className={currentValue ? "text-neutral-100" : "text-neutral-500"}>{displayText}</span>
           {currentValue && !isAutoFilled && (
@@ -315,7 +315,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
                 if (item.isCustomAction) {
                   return (
                     <button type="button" onClick={onSelect}
-                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-skylab-300/80"}`}
+                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition hover:bg-ink/10 ${active ? "bg-ink/15 text-neutral-100 ring-1 ring-ink/20" : "text-skylab-300/80"}`}
                     >
                       <Plus size={14} className="opacity-70" />
                       <span>
@@ -326,7 +326,7 @@ export function DisplayFormCombobox({ question, questionNumber, description, req
                 }
                 return (
                   <button type="button" onClick={onSelect}
-                    className={`block w-full text-left px-3 py-2 text-sm transition hover:bg-white/10 ${active ? "bg-white/15 text-neutral-100 ring-1 ring-white/20" : "text-neutral-200"}`}
+                    className={`block w-full text-left px-3 py-2 text-sm transition hover:bg-ink/10 ${active ? "bg-ink/15 text-neutral-100 ring-1 ring-ink/20" : "text-neutral-200"}`}
                   >
                     {item.label}
                   </button>

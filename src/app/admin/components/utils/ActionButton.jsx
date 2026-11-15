@@ -9,7 +9,7 @@ export default function ActionButton({ href, onClick, icon: Icon, label, variant
   } else if (tone === "header") {
     variantClass = "border-neutral-900/80 text-neutral-200 hover:border-neutral-800 hover:bg-neutral-900/60";
   } else {
-    variantClass = "border-white/10 bg-transparent text-neutral-200 hover:border-white/20 hover:bg-white/5";
+    variantClass = "border-ink/10 bg-transparent text-neutral-200 hover:border-ink/20 hover:bg-ink/5";
   }
   const base = "inline-flex items-center justify-center border text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
   const buttonClass = `${base} ${sizeClass} ${ringClass} ${variantClass} ${className}`;
@@ -25,7 +25,7 @@ export default function ActionButton({ href, onClick, icon: Icon, label, variant
   }
 
   const isDisabled = Boolean(disabled ?? !onClick);
-  const disabledClass = isDisabled ? "cursor-not-allowed opacity-60 hover:bg-white/5" : "";
+  const disabledClass = isDisabled ? "cursor-not-allowed opacity-60 hover:bg-ink/5" : "";
 
   return (
     <button onClick={onClick} disabled={isDisabled} className={`${buttonClass} ${disabledClass}`}

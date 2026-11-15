@@ -87,7 +87,7 @@ export function VoidedBlock({ run }) {
   const voiderLabel = [voiderName, voiderSecondary].filter(Boolean).join(" • ");
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/3 p-3">
+    <div className="rounded-lg border border-ink/10 bg-ink/3 p-3">
       <div className="mb-1 flex items-center justify-between gap-3">
         <p className="text-3xs font-medium text-neutral-500">{restarted ? "Başvuru baştan başlatıldı" : "Yeniden başvuru hakkı verildi"}</p>
         <span className="flex shrink-0 items-center gap-1 text-3xs text-neutral-400">
@@ -137,7 +137,7 @@ export default function RunSection({ run, instanceId, readOnly = false }) {
         <AnimatePresence mode="wait" initial={false}>
           {confirming ? (
             <motion.div key="confirm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-              className="rounded-xl border border-white/10 bg-white/3 p-3"
+              className="rounded-xl border border-ink/10 bg-ink/3 p-3"
             >
               <p className="text-xs font-medium text-neutral-100">{copy.action}</p>
               <ul className="mt-1.5 space-y-1">
@@ -151,12 +151,12 @@ export default function RunSection({ run, instanceId, readOnly = false }) {
               <label htmlFor="run-void-note" className="mb-1.5 mt-3 block text-3xs font-medium text-neutral-500">Adaya gidecek not · isteğe bağlı</label>
               <textarea id="run-void-note" rows={2} value={note} onChange={(event) => setNote(event.target.value)} maxLength={NOTE_MAX_LENGTH}
                 placeholder="Neden yeniden başvurabileceğini yazın"
-                className="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
+                className="w-full rounded-lg border border-ink/10 bg-transparent px-3 py-2 text-xs text-neutral-100 outline-none transition placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-1 focus:ring-skylab-400/40"
               />
               <p className="mt-1.5 text-3xs leading-relaxed text-neutral-500">Aday e-postayla bilgilendirilir.</p>
               <div className="mt-3 flex items-center gap-2">
                 <button type="button" onClick={() => setConfirming(false)} disabled={mutation.isPending}
-                  className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                  className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
                 >
                   Vazgeç
                 </button>
@@ -170,7 +170,7 @@ export default function RunSection({ run, instanceId, readOnly = false }) {
           ) : (
             <motion.button key="row" type="button" onClick={() => { mutation.reset(); setConfirming(true); }}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-              className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${copy.danger ? "border-red-500/30 bg-red-500/5 hover:bg-red-500/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+              className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${copy.danger ? "border-red-500/30 bg-red-500/5 hover:bg-red-500/10" : "border-ink/10 bg-ink/5 hover:bg-ink/10"}`}
             >
               <copy.Icon size={16} className={`shrink-0 ${copy.danger ? "text-red-300" : "text-neutral-300"}`} />
               <span className="min-w-0">

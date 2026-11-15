@@ -31,7 +31,7 @@ function PanelTitle({ title, children = null }) {
   return (
     <div className="mb-2.5 flex h-4 items-center gap-2">
       <span className="shrink-0 text-2xs font-medium text-neutral-500">{title}</span>
-      <span className="h-px flex-1 bg-white/5" />
+      <span className="h-px flex-1 bg-ink/5" />
       {children}
     </div>
   );
@@ -118,7 +118,7 @@ function Recent({ formId, rows }) {
         const view = statusView(kind);
         return (
           <Link key={row.id} href={`/admin/forms/${formId}/responses/${row.id}`}
-            className="flex items-center gap-2.5 rounded-md px-1.5 py-1 transition-colors hover:bg-white/5"
+            className="flex items-center gap-2.5 rounded-md px-1.5 py-1 transition-colors hover:bg-ink/5"
           >
             <Avatar name={person.known ? person.name : ""} photoUrl={person.photoUrl} size="sm" />
             <span className="min-w-0 flex-1">

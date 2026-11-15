@@ -4,7 +4,7 @@ function Bar({ className = "" }) {
 
 export function CardSkeleton() {
   return (
-    <div className="space-y-6 rounded-3xl border border-white/10 bg-[#1c1c1c] p-6 sm:p-10" aria-hidden="true">
+    <div className="space-y-6 rounded-3xl border border-ink/10 bg-panel-soft p-6 sm:p-10" aria-hidden="true">
       <Bar className="h-8 w-2/3" />
       <Bar className="h-4 w-1/2" />
       {Array.from({ length: 4 }, (_, index) => <Bar key={index} className="h-20 rounded-xl" />)}
@@ -22,7 +22,7 @@ export default function RoomSkeleton() {
         </div>
       </aside>
       <main className="min-w-0 flex-[1_1_784px] py-2">
-        <div className="h-full rounded-xl bg-[radial-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-size-[22px_22px]">
+        <div className="h-full rounded-xl bg-[radial-gradient(rgb(var(--forms-ink-rgb)/0.05)_1px,transparent_1px)] bg-size-[22px_22px]">
           <div className="mx-auto w-full max-w-[672px] px-3 pt-4 sm:px-0 sm:pt-10">
             <div className="mb-3 flex flex-col gap-1 px-1">
               <Bar className="h-4 w-48" />

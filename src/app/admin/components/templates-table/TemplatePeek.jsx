@@ -7,7 +7,7 @@ import { possessive } from "../workflow-page/journey-data";
 import Highlight from "./Highlight";
 import { labelOf, typeOf } from "./template-data";
 
-const ACTION = "inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 disabled:pointer-events-none disabled:opacity-50";
+const ACTION = "inline-flex h-6 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:pointer-events-none disabled:opacity-50";
 
 function Count({ value }) {
   return <span className="font-medium tabular-nums text-neutral-100">{value}</span>;
@@ -27,7 +27,7 @@ function QuestionList({ row, matched, query }) {
           return (
             <li key={field.id} className="flex h-6 break-inside-avoid items-center gap-2 pl-6">
               <span className="truncate text-2xs font-medium text-neutral-400">{field.props?.title?.trim() || "Bölüm"}</span>
-              <span className="h-px flex-1 bg-white/5" />
+              <span className="h-px flex-1 bg-ink/5" />
             </li>
           );
         }
@@ -56,7 +56,7 @@ function Sentence({ row }) {
 
 export default function TemplatePeek({ row, matched, query, onShare, onCopy, onDelete, copying }) {
   return (
-    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden bg-white/2.5">
+    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden bg-ink/2.5">
       <div className="flex flex-col gap-4 px-3 pb-3.5 pt-1 @2xl:flex-row @2xl:flex-wrap @2xl:items-start @2xl:gap-x-8 @2xl:pl-15">
         <QuestionList row={row} matched={matched} query={query} />
         <div className="flex min-w-0 flex-col gap-x-8 gap-y-4 @2xl:grow @2xl:basis-88 @2xl:flex-row @2xl:flex-wrap @2xl:items-start @[90rem]:justify-end">

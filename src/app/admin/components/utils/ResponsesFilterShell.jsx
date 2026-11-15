@@ -13,7 +13,7 @@ export function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
   };
 
   return (
-    <div className="relative grid w-full rounded-lg border border-white/10 bg-neutral-900/60 p-1 text-2xs"
+    <div className="relative grid w-full rounded-lg border border-ink/10 bg-neutral-900/60 p-1 text-2xs"
       style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
     >
       <span className="absolute inset-y-1 left-1 rounded-md border border-skylab-400/40 bg-skylab-500/15 shadow-sm transition-transform duration-200"
@@ -38,7 +38,7 @@ export function SegmentedControl({ options = [], value, onChange, ariaLabel }) {
 export function TwoStateIconButton({ value = false, onChange, icon: Icon, label }) {
   const nextValue = !value;
 
-  const stateClass = value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300";
+  const stateClass = value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300";
 
   return (
     <button type="button" onClick={() => onChange?.(nextValue)} aria-label={label} title={label} aria-pressed={value}
@@ -129,7 +129,7 @@ export default function ResponsesFilterShell({ open, anchorRef, onClose, sortVal
       {open ? (
         <motion.div ref={panelRef} role="dialog" aria-label="Cevap filtreleri"
           initial="hidden" animate="visible" exit="exit" variants={panelVariants}
-          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-white/15 bg-neutral-950/90 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
+          className={`absolute top-full z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] ${align === "right" ? "right-0" : "left-1/2 -translate-x-1/2"} rounded-xl border border-ink/15 bg-neutral-950/90 text-neutral-100 shadow-2xl backdrop-blur ${className}`}
         >
           <motion.div variants={contentVariants} className="flex flex-col gap-4 p-4">
             <FilterSection label="Sıralama">
@@ -144,7 +144,7 @@ export default function ResponsesFilterShell({ open, anchorRef, onClose, sortVal
                   return (
                     <button key={option.value} type="button" onClick={() => onStatusChange?.(option.value)} aria-pressed={selected}
                       className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40
-                        ${selected ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300"}`}
+                        ${selected ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300"}`}
                     >
                       {option.dot && <span className={`size-1.5 shrink-0 rounded-full ${option.dot}`} />}
                       <span className="min-w-0 flex-1 truncate text-left">{option.label}</span>

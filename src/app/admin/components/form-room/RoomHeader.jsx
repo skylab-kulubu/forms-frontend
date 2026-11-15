@@ -22,7 +22,7 @@ export function HeaderButton({ icon: Icon, label, onClick, disabled = false, pri
   return (
     <button type="button" onClick={onClick} disabled={disabled} title={label} aria-label={label}
       className={`ml-1 flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 disabled:pointer-events-none disabled:opacity-50 lg:px-2.5 ${
-        primary ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300 hover:bg-skylab-500/25" : "border-white/15 bg-white/5 text-neutral-200 hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300"
+        primary ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300 hover:bg-skylab-500/25" : "border-ink/15 bg-ink/5 text-neutral-200 hover:border-skylab-400/40 hover:bg-skylab-500/10 hover:text-skylab-300"
       }`}
     >
       <Icon size={14} />
@@ -34,7 +34,7 @@ export function HeaderButton({ icon: Icon, label, onClick, disabled = false, pri
 export function HeaderTouch({ icon: Icon, label, onClick, disabled = false }) {
   return (
     <button type="button" aria-label={label} title={label} onClick={onClick} disabled={disabled}
-      className="grid size-11 place-items-center rounded-lg text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 disabled:opacity-40"
+      className="grid size-11 place-items-center rounded-lg text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 disabled:opacity-40"
     >
       <Icon size={17} />
     </button>

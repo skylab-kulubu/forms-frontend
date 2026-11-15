@@ -20,7 +20,7 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
             <div className="flex flex-col gap-1.5">
                 <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Soru Metni</label>
                 <AutoResizeTextarea {...bind("question")}
-                    className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
+                    className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                     placeholder="Sorunuzu buraya yazın."
                 />
             </div>
@@ -29,7 +29,7 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
                 <div className="flex flex-col gap-1.5">
                     <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açıklama</label>
                     <AutoResizeTextarea {...bind("description")}
-                        className="block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
+                        className="block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-500 outline-none transition focus:border-skylab-400/50"
                         placeholder="Açıklamanızı buraya yazın."
                     />
                 </div>
@@ -40,7 +40,7 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
                     <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Açık Metni</label>
                     <div className="relative">
                         <input type="text" {...bind("trueLabel")} placeholder="Evet" readOnly={trueLocked} title={trueLocked ? LOCKED_OPTION_HINT : undefined}
-                            className={`block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${trueLocked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
+                            className={`block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${trueLocked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
                         />
                         {trueLocked && <Lock size={12} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500" />}
                     </div>
@@ -49,7 +49,7 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
                     <label className="px-0.5 text-2xs font-medium uppercase tracking-wide text-neutral-400">Kapalı Metni</label>
                     <div className="relative">
                         <input type="text" {...bind("falseLabel")} placeholder="Hayır" readOnly={falseLocked} title={falseLocked ? LOCKED_OPTION_HINT : undefined}
-                            className={`block w-full rounded-lg border border-white/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${falseLocked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
+                            className={`block w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 py-2 text-sm placeholder-neutral-500 outline-none transition focus:border-skylab-400/50 ${falseLocked ? "cursor-not-allowed pr-8 text-neutral-400" : "text-neutral-100"}`}
                         />
                         {falseLocked && <Lock size={12} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500" />}
                     </div>
@@ -62,7 +62,7 @@ export function CreateFormToggle({ questionNumber, props, onPropsChange, readOnl
 export function DisplayFormToggle({ question, questionNumber, description, required = false, trueLabel = "Evet", falseLabel = "Hayır", compact = false, value, onChange, missing = false }) {
     const [internalValue, setInternalValue] = useState(value === true);
     const currentValue = value !== undefined ? (value === true) : internalValue;
-    const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
+    const optionBorderClass = missing ? "border-red-400/60" : "border-ink/10";
 
     useEffect(() => {
         if (value === undefined && onChange) {
@@ -81,7 +81,7 @@ export function DisplayFormToggle({ question, questionNumber, description, requi
 
     const control = (
         <div onClick={handleToggle}
-            className={`flex items-center justify-between gap-4 w-full rounded-lg border ${optionBorderClass} bg-neutral-900/60 px-4 py-1.5 cursor-pointer transition-colors hover:bg-white/4`}
+            className={`flex items-center justify-between gap-4 w-full rounded-lg border ${optionBorderClass} bg-neutral-900/60 px-4 py-1.5 cursor-pointer transition-colors hover:bg-ink/4`}
         >
             <span className={`text-sm font-medium select-none transition-colors ${currentValue ? "text-skylab-300" : "text-neutral-400"}`}>
                 {currentValue ? trueLabel : falseLabel}

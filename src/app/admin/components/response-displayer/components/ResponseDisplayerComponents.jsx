@@ -23,7 +23,7 @@ function RevisionMarker({ requested, flag }) {
   if (flag) {
     return (
       <button type="button" onClick={flag.onToggle} aria-pressed={flag.selected} title={flag.selected ? "İşareti kaldır" : "Düzeltilecek olarak işaretle"}
-        className={`flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 text-3xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${flag.selected ? "border-sky-400/40 bg-sky-400/15 text-sky-200" : "border-white/10 text-neutral-500 hover:border-sky-400/30 hover:text-sky-200"}`}
+        className={`flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 text-3xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${flag.selected ? "border-sky-400/40 bg-sky-400/15 text-sky-200" : "border-ink/10 text-neutral-500 hover:border-sky-400/30 hover:text-sky-200"}`}
       >
         <Flag size={11} />
         {flag.selected ? "İşaretli" : "İşaretle"}
@@ -108,11 +108,11 @@ export function ResponseListItem({ questionNumber, question, answer, type, respo
         ) : type === "repeater" && groupColumns.length > 0 ? (
           <div className="flex flex-col gap-2">
             {groupRows.map((row, ri) => (
-              <div key={ri} className="overflow-hidden rounded-lg border border-white/10 bg-white/3">
-                <div className="border-b border-white/5 px-3 py-1.5">
+              <div key={ri} className="overflow-hidden rounded-lg border border-ink/10 bg-ink/3">
+                <div className="border-b border-ink/5 px-3 py-1.5">
                   <span className="text-3xs font-medium text-neutral-500">{ri + 1}. kayıt</span>
                 </div>
-                <div className="divide-y divide-white/5">
+                <div className="divide-y divide-ink/5">
                   {groupColumns.map((col, ci) => {
                     const cell = row?.[col];
                     const text = cell == null ? "" : String(cell).trim();
@@ -130,12 +130,12 @@ export function ResponseListItem({ questionNumber, question, answer, type, respo
             ))}
           </div>
         ) : parsedMatrix && typeof parsedMatrix === "object" ? (
-          <div className="overflow-hidden rounded-lg border border-white/10 bg-white/3">
+          <div className="overflow-hidden rounded-lg border border-ink/10 bg-ink/3">
             <table className="w-full text-left text-sm">
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-ink/5">
                 {Object.entries(parsedMatrix).map(([rowLabel, colLabel], idx) => (
                   <tr key={idx}>
-                    <td className="w-1/2 border-r border-white/5 px-3 py-2 font-medium text-neutral-300">
+                    <td className="w-1/2 border-r border-ink/5 px-3 py-2 font-medium text-neutral-300">
                       {rowLabel}
                     </td>
                     <td className="px-3 py-2 font-medium text-skylab-300">
@@ -169,7 +169,7 @@ export function ResponseHeaderSkeleton() {
   return (
     <div className="flex items-center gap-2 px-1 lg:h-7">
       <div className="shimmer h-3.5 w-24 rounded-md" />
-      <span className="h-px flex-1 bg-white/5" />
+      <span className="h-px flex-1 bg-ink/5" />
       <div className="shimmer h-3 w-16 rounded-md" />
     </div>
   );
@@ -177,7 +177,7 @@ export function ResponseHeaderSkeleton() {
 
 export function ResponseListSkeleton({ rows = 4 }) {
   return (
-    <ul className="mx-auto w-full max-w-2xl divide-y divide-white/5">
+    <ul className="mx-auto w-full max-w-2xl divide-y divide-ink/5">
       {Array.from({ length: rows }).map((_, index) => (
         <li key={index} className="py-5 first:pt-0 last:pb-0">
           <div className="flex gap-3">

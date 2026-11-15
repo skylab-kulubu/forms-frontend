@@ -26,10 +26,10 @@ const personName = (name) =>
 
 export function ViewToggle({ value, onChange }) {
   return (
-    <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-white/10 bg-white/5 p-0.5">
+    <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-ink/10 bg-ink/5 p-0.5">
       {[["bar", "Bar"], ["pie", "Pasta"]].map(([key, label]) => (
         <button key={key} type="button" onClick={() => onChange(key)} aria-pressed={value === key}
-          className={`rounded px-2.5 py-2 text-3xs transition sm:py-1 ${value === key ? "bg-white/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+          className={`rounded px-2.5 py-2 text-3xs transition sm:py-1 ${value === key ? "bg-ink/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
         >
           {label}
         </button>
@@ -46,7 +46,7 @@ function ParticipationPanel({ data }) {
     <motion.div key="participation" {...FADE} className={PANEL_STACK}>
       <section className={PANEL_SECTION}>
         <SectionHeader title="Katılım ve süre" description={`Kişisel süre ${durationText(data.timeLimitMinutes)}. Süre, kişi görevi başlatınca işlemeye başlar.`} />
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           {[["Formu açtı", data.opened], ["Görevi başlattı", data.started], ["Teslim etti", data.submitted], ["Geçici cevap", data.provisional], ["Devam ediyor", data.running], ["Teslim yok", data.noSubmission]]
             .map(([label, value]) => <KV key={label} label={label}><span className="tabular-nums">{value ?? 0}</span></KV>)}
         </div>
@@ -56,7 +56,7 @@ function ParticipationPanel({ data }) {
           description={data.extendedPeople > 0 ? `${data.extendedPeople} kişiye toplam ${durationText(data.extendedMinutes)} verildi.` : "Henüz kimseye ek süre verilmedi."}
         />
         {extendedBy.length > 0 ? (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-ink/5">
             {extendedBy.map((item, index) => {
               const name = personName(item.actor?.fullName) || "Ekipten biri";
               return (
@@ -95,7 +95,7 @@ function AnswerRow({ grid, label, bucket, rate, showRate, selected, onPick, onOp
   );
 
   return (
-    <div className={`group relative -mx-1.5 rounded-md transition-colors ${selected ? "bg-skylab-500/10" : onPick ? "hover:bg-white/4" : ""}`}>
+    <div className={`group relative -mx-1.5 rounded-md transition-colors ${selected ? "bg-skylab-500/10" : onPick ? "hover:bg-ink/4" : ""}`}>
       {onPick ? (
         <button type="button" onClick={onPick} aria-pressed={selected} title={selected ? "Süzgeci kaldır" : `Soruları bu cevabı veren ${bucket.count} kişiye göre göster`}
           className={`${grid} w-full rounded-md px-1.5 py-1.5 text-left text-2xs`}
@@ -197,14 +197,14 @@ export default function AnalyticsPanel({ form, analytics, wideAnalytics = null, 
 
         {q.aggregatable && kind !== 7 && rows.length > 0 ? (
           <div>
-            <div className={`${grid} border-b border-white/5 pb-1.5 text-3xs text-neutral-600`}>
+            <div className={`${grid} border-b border-ink/5 pb-1.5 text-3xs text-neutral-600`}>
               <span>{firstColumn}</span>
               <span className="text-right">Kişi</span>
               <span className="text-right">Oran</span>
               {showRate ? <span className="text-right">Onay</span> : null}
               {pickable ? <span /> : null}
             </div>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-ink/5">
               {rows.map((bucket, index) => (pickable ? (
                 <AnswerRow key={`${bucket.value}-${index}`} grid={grid} label={bucketLabel(kind, bucket.value)} bucket={bucket} showRate={showRate}
                   rate={approvalRate(bucket.approvedCount, bucket.declinedCount)} selected={answer?.q === field.id && answer.v === String(bucket.value)}
@@ -242,7 +242,7 @@ export default function AnalyticsPanel({ form, analytics, wideAnalytics = null, 
         ) : null}
 
         {q.numeric ? (
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-ink/5">
             <KV label="Ortalama"><span className="font-semibold tabular-nums">{formatNumber(q.numeric.average)}</span></KV>
             <KV label="Medyan"><span className="tabular-nums">{formatNumber(q.numeric.median)}</span></KV>
             <KV label="En düşük · en yüksek"><span className="tabular-nums">{formatNumber(q.numeric.min)} · {formatNumber(q.numeric.max)}</span></KV>
@@ -279,7 +279,7 @@ export default function AnalyticsPanel({ form, analytics, wideAnalytics = null, 
 
       <section className={PANEL_SECTION}>
         <SectionHeader title="Bu form" />
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-ink/5">
           <KV label="Cevap"><span className="tabular-nums">{total}</span></KV>
           <KV label="Analiz edilen soru"><span className="tabular-nums">{questions.filter((item) => item.aggregatable).length} / {questions.length}</span></KV>
         </div>

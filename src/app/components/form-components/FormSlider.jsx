@@ -20,7 +20,7 @@ export function DisplayFormSlider({ question, questionNumber, description, requi
   const { min, max, step, snap, middle } = sliderRange({ min: rawMin, max: rawMax, step: rawStep });
   const [internalValue, setInternalValue] = useState(value !== undefined ? value : middle);
   const currentValue = snap(value !== undefined && value !== null && value !== "" ? value : internalValue);
-  const optionBorderClass = missing ? "border-red-400/60" : "border-white/10";
+  const optionBorderClass = missing ? "border-red-400/60" : "border-ink/10";
 
   const commit = (next) => {
     if (onChange) {
@@ -54,7 +54,7 @@ export function DisplayFormSlider({ question, questionNumber, description, requi
             
             <span className="text-xs font-medium text-neutral-500 w-6 text-left shrink-0">{max}</span>
             
-            <div className="w-px h-5 bg-white/10 mx-1 shrink-0"></div>
+            <div className="w-px h-5 bg-ink/10 mx-1 shrink-0"></div>
             
             <div className="flex items-center justify-center min-w-10 shrink-0">
               <span className="text-sm text-neutral-200">{currentValue}</span>

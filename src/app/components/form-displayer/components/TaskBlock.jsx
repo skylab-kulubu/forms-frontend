@@ -51,7 +51,7 @@ export default function TaskBlock({ task, title, meta = null, className = "" }) 
 
   return (
     <div className={`px-2 md:px-4 ${className}`}>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-white/5 pb-3 text-2xs text-neutral-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-ink/5 pb-3 text-2xs text-neutral-500">
         {meta}
         <span className="inline-flex items-center gap-1.5">
           <FileText size={12} />
@@ -59,7 +59,7 @@ export default function TaskBlock({ task, title, meta = null, className = "" }) 
         </span>
         {task?.downloadable !== false && (
           <button type="button" onClick={download}
-            className={`ml-auto inline-flex items-center gap-1.5 ${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+            className={`ml-auto inline-flex items-center gap-1.5 ${LINK_BUTTON} text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50`}
           >
             <Download size={12} />
             İndir
@@ -75,7 +75,7 @@ export default function TaskBlock({ task, title, meta = null, className = "" }) 
 
       {collapsible && (
         <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={!collapsed}
-          className={`mt-2 inline-flex items-center gap-1.5 text-xs ${LINK_BUTTON} text-neutral-300 decoration-white/20 hover:text-neutral-100 hover:decoration-white/50`}
+          className={`mt-2 inline-flex items-center gap-1.5 text-xs ${LINK_BUTTON} text-neutral-300 decoration-ink/20 hover:text-neutral-100 hover:decoration-ink/50`}
         >
           {collapsed ? "Devamını göster" : "Daralt"}
           <ChevronDown size={14} className={`transition-transform duration-200 ${collapsed ? "" : "rotate-180"}`} />

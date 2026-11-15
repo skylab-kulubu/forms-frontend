@@ -62,7 +62,7 @@ function decorate(html) {
     box.className = "md-code";
 
     const head = document.createElement("div");
-    head.className = "flex items-center justify-between gap-2 border-b border-white/5 py-1 pl-3 pr-1.5 font-mono text-2xs text-neutral-500";
+    head.className = "flex items-center justify-between gap-2 border-b border-ink/5 py-1 pl-3 pr-1.5 font-mono text-2xs text-neutral-500";
 
     const label = document.createElement("span");
     label.textContent = language || "kod";
@@ -70,7 +70,7 @@ function decorate(html) {
     const button = document.createElement("button");
     button.type = "button";
     button.setAttribute("data-copy-code", "");
-    button.className = "inline-flex h-6 items-center gap-1.5 rounded-md px-2 font-sans text-2xs text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100";
+    button.className = "inline-flex h-6 items-center gap-1.5 rounded-md px-2 font-sans text-2xs text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100";
     button.innerHTML = `${COPY_ICON}<span>Kopyala</span>`;
 
     head.append(label, button);

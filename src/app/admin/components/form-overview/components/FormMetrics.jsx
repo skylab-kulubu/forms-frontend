@@ -59,7 +59,7 @@ export function TrendBadge({ value }) {
 export function TrendTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-white/10 bg-neutral-900/90 px-2.5 py-1.5 shadow-xl">
+    <div className="rounded-md border border-ink/10 bg-neutral-900/90 px-2.5 py-1.5 shadow-xl">
       <span className="text-2xs font-medium text-skylab-300">{payload[0].value}</span>
     </div>
   );
@@ -97,7 +97,7 @@ const MIN_SCALE = 4;
 function BarTip({ item, at }) {
   const align = at < TIP_EDGE ? "" : at > 1 - TIP_EDGE ? "-translate-x-full" : "-translate-x-1/2";
   return (
-    <div className={`pointer-events-none absolute bottom-full z-20 mb-1 whitespace-nowrap rounded-md border border-white/10 bg-neutral-900/95 px-2.5 py-1.5 shadow-xl ${align}`} style={{ left: `${at * 100}%` }}>
+    <div className={`pointer-events-none absolute bottom-full z-20 mb-1 whitespace-nowrap rounded-md border border-ink/10 bg-neutral-900/95 px-2.5 py-1.5 shadow-xl ${align}`} style={{ left: `${at * 100}%` }}>
       <p className="text-3xs text-neutral-400">{item.title}</p>
       <p className="text-2xs font-medium tabular-nums text-neutral-100">{item.line}</p>
     </div>
@@ -115,13 +115,13 @@ function TrendBars({ items, height = 76, labeled = false }) {
       <div className="grid h-full items-end gap-0.5" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((item, index) => (
           <div key={item.key} onPointerEnter={() => setHovered(index)} className="relative flex h-full flex-col items-center justify-end">
-            {item.closing ? <span className="absolute inset-y-0 -right-px border-r border-dashed border-white/30" /> : null}
+            {item.closing ? <span className="absolute inset-y-0 -right-px border-r border-dashed border-ink/30" /> : null}
             {labeled ? <span className={`pb-0.5 text-3xs leading-3 tabular-nums ${item.count ? "text-neutral-300" : "text-neutral-600"}`}>{item.count}</span> : null}
             {item.count ? (
               <span className={`w-full max-w-6 rounded-t-[3px] transition-colors ${item.now ? "bg-skylab-300" : hovered === index ? "bg-skylab-500" : "bg-skylab-500/40"}`}
                 style={{ height: `calc((${room}) * ${Math.max(0.06, item.count / peak)})` }}
               />
-            ) : <span className={`h-0.5 w-full max-w-6 rounded-full ${item.count === 0 ? "bg-white/10" : "bg-white/5"}`} />}
+            ) : <span className={`h-0.5 w-full max-w-6 rounded-full ${item.count === 0 ? "bg-ink/10" : "bg-ink/5"}`} />}
           </div>
         ))}
       </div>
@@ -141,7 +141,7 @@ function TrendRows({ items }) {
           <span className="flex h-3.5 items-center">
             {item.count ? (
               <span className={`h-full min-w-[3px] rounded-r-[3px] ${item.now ? "bg-skylab-300" : "bg-skylab-500/40"}`} style={{ width: `${(item.count / peak) * 100}%` }} />
-            ) : <span className="h-0.5 w-full rounded-full bg-white/10" />}
+            ) : <span className="h-0.5 w-full rounded-full bg-ink/10" />}
           </span>
           <span className="text-right font-medium text-neutral-200">{item.count}</span>
         </div>
@@ -290,7 +290,7 @@ export function ChannelsTable({ channels, view = "clicks" }) {
             {...(campaigns ? { role: "button", tabIndex: 0, "aria-expanded": Boolean(open), onClick: toggle, onKeyDown: (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggle(); } } } : {})}
           >
             <span className="flex min-w-0 items-center gap-2 text-2xs text-neutral-300 transition-colors group-hover/channel:text-neutral-100">
-              <span className="grid size-5 shrink-0 place-items-center rounded-md border border-white/10 bg-white/3 text-neutral-400">
+              <span className="grid size-5 shrink-0 place-items-center rounded-md border border-ink/10 bg-ink/3 text-neutral-400">
                 <ChannelIcon source={channel.source} size={11} />
               </span>
               <span className="truncate">{label}</span>
@@ -324,11 +324,11 @@ export function ChannelsTable({ channels, view = "clicks" }) {
             </span>
           </div>
           {open ? (
-            <div className="mb-1.5 ml-2.5 space-y-1 border-l border-white/10 pl-4">
+            <div className="mb-1.5 ml-2.5 space-y-1 border-l border-ink/10 pl-4">
               {campaigns.map((item) => (
                 <div key={item.campaign ?? "none"} className="flex items-center gap-2 text-3xs">
                   <span className={`min-w-0 flex-1 truncate ${item.campaign ? "font-mono text-neutral-400" : "text-neutral-600"}`}>{item.campaign ?? "Kampanyasız"}</span>
-                  <span className="h-1 w-16 shrink-0 overflow-hidden rounded-full bg-white/5">
+                  <span className="h-1 w-16 shrink-0 overflow-hidden rounded-full bg-ink/5">
                     <span className="block h-full rounded-full bg-skylab-500/70" style={{ width: `${(item.responses / Math.max(1, channel.responses)) * 100}%` }} />
                   </span>
                   <span className="w-12 shrink-0 text-right tabular-nums text-neutral-300">{decisions ? `${item.approved ?? 0} onay` : `${item.responses} yanıt`}</span>

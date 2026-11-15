@@ -68,10 +68,10 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
       <AnimatePresence>
         {open ? (
           <motion.div variants={panelVariants} initial="hidden" animate="visible" exit="exit"
-            className="absolute left-1/2 top-full z-30 mt-2 w-80 -translate-x-1/2 rounded-xl border border-white/10 bg-neutral-800/40 p-3 text-neutral-100 shadow-2xl backdrop-blur-md"
+            className="absolute left-1/2 top-full z-30 mt-2 w-80 -translate-x-1/2 rounded-xl border border-ink/10 bg-neutral-800/40 p-3 text-neutral-100 shadow-2xl backdrop-blur-md"
           >
             <motion.div variants={contentVariants}>
-              <motion.div variants={itemVariants} className="flex items-center gap-3 rounded-lg border border-white/8 bg-white/3 p-2">
+              <motion.div variants={itemVariants} className="flex items-center gap-3 rounded-lg border border-ink/8 bg-ink/3 p-2">
                 <Avatar name={displayName} email={email} photoUrl={avatarUrl} size="lg" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-neutral-100">{displayName}</div>
@@ -96,7 +96,7 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
 
               <motion.div variants={itemVariants} className="mt-2">
                 {roles.length ? (
-                  <div className="mt-1 w-full rounded-md text-center border border-white/8 bg-white/3 px-2 py-1 text-2xs text-neutral-200">
+                  <div className="mt-1 w-full rounded-md text-center border border-ink/8 bg-ink/3 px-2 py-1 text-2xs text-neutral-200">
                     {roles[0]}
                   </div>
                 ) : (

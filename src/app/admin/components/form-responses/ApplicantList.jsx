@@ -12,7 +12,7 @@ const TIME_LABEL = { extended: "Uzatılanlar", soon: "Bitmek üzere" };
 
 function Segment({ options, value, onChange }) {
   return (
-    <div className="grid w-full rounded-lg border border-white/10 bg-neutral-900/60 p-1 text-2xs" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+    <div className="grid w-full rounded-lg border border-ink/10 bg-neutral-900/60 p-1 text-2xs" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       {options.map(([key, label]) => (
         <button key={key} type="button" onClick={() => onChange(key)} aria-pressed={value === key}
           className={`flex h-7 items-center justify-center rounded-md px-2 font-medium transition-colors ${value === key ? "border border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "text-neutral-300 hover:text-skylab-300"}`}
@@ -49,7 +49,7 @@ function FilterPopover({ filters, setFilters, counts, timed, inline, onClose }) 
 
   return (
     <div ref={ref} role="dialog" aria-label="Cevap filtreleri"
-      className={`rounded-xl border border-white/15 bg-neutral-950/95 text-neutral-100 ${inline ? "mt-1" : "absolute left-2 right-2 top-full z-40 mt-1.5 shadow-2xl backdrop-blur"}`}
+      className={`rounded-xl border border-ink/15 bg-neutral-950/95 text-neutral-100 ${inline ? "mt-1" : "absolute left-2 right-2 top-full z-40 mt-1.5 shadow-2xl backdrop-blur"}`}
     >
       <div className="flex flex-col gap-4 p-4">
         <div className="space-y-2">
@@ -62,7 +62,7 @@ function FilterPopover({ filters, setFilters, counts, timed, inline, onClose }) 
             {statusOptions.map((item) => (
               <button key={item.value} type="button" onClick={() => setFilters({ ...filters, status: item.value })} aria-pressed={filters.status === item.value}
                 className={`flex h-7 items-center gap-1.5 rounded-md border px-2 text-2xs font-medium transition-colors ${
-                  filters.status === item.value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300"
+                  filters.status === item.value ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 bg-neutral-900/60 text-neutral-300 hover:text-skylab-300"
                 }`}
               >
                 {item.dot ? <span className={`size-1.5 shrink-0 rounded-full ${item.dot}`} /> : null}
@@ -145,7 +145,7 @@ export default function ApplicantList({
         <div className="relative">
           <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500" />
           <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Bu sayfada ara" aria-label="Bu sayfadaki başvuranlarda ara"
-            className={`w-full rounded-lg border border-white/10 bg-neutral-900/60 pl-8 pr-3 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20 ${touch ? "h-10" : "h-8"}`}
+            className={`w-full rounded-lg border border-ink/10 bg-neutral-900/60 pl-8 pr-3 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20 ${touch ? "h-10" : "h-8"}`}
           />
         </div>
         <div className="flex items-center gap-1">
@@ -165,7 +165,7 @@ export default function ApplicantList({
           </div>
           <button type="button" data-filter-anchor onClick={() => setOpen((value) => !value)} title={active ? `Filtreler (${active})` : "Filtreler"} aria-label="Filtreler" aria-expanded={open}
             className={`relative grid place-items-center rounded-lg border transition-colors ${touch ? "size-10" : "size-7"} ${
-              open || active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-white/10 bg-white/5 text-neutral-400 hover:text-neutral-100"
+              open || active ? "border-skylab-400/40 bg-skylab-500/15 text-skylab-300" : "border-ink/10 bg-ink/5 text-neutral-400 hover:text-neutral-100"
             }`}
           >
             <SlidersHorizontal size={13} />
@@ -175,9 +175,9 @@ export default function ApplicantList({
         {chips.length ? (
           <div className="flex flex-wrap items-center gap-1.5">
             {chips.map(([key, label, clear]) => (
-              <span key={key} className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 py-0.5 pl-2 pr-1 text-2xs text-neutral-300">
+              <span key={key} className="inline-flex items-center gap-1 rounded-md border border-ink/10 bg-ink/5 py-0.5 pl-2 pr-1 text-2xs text-neutral-300">
                 {label}
-                <button type="button" onClick={clear} aria-label={`${label} filtresini kaldır`} className="grid size-4 place-items-center rounded text-neutral-500 hover:bg-white/10 hover:text-neutral-200"><X size={11} /></button>
+                <button type="button" onClick={clear} aria-label={`${label} filtresini kaldır`} className="grid size-4 place-items-center rounded text-neutral-500 hover:bg-ink/10 hover:text-neutral-200"><X size={11} /></button>
               </span>
             ))}
           </div>
@@ -202,7 +202,7 @@ export default function ApplicantList({
               const when = row.submittedAt ?? (isAttemptRow(row) ? attempt.openedAt : null);
               return (
                 <button key={isAttemptRow(row) ? `a-${attempt.id}` : row.id} type="button" data-selected={selected} onClick={() => onSelect(row)}
-                  className={`group flex w-full items-center gap-2.5 rounded-md px-2 text-left transition-colors ${touch ? "py-2.5" : "py-1.5"} ${selected ? "bg-skylab-500/10" : "hover:bg-white/4"}`}
+                  className={`group flex w-full items-center gap-2.5 rounded-md px-2 text-left transition-colors ${touch ? "py-2.5" : "py-1.5"} ${selected ? "bg-skylab-500/10" : "hover:bg-ink/4"}`}
                 >
                   <span className={`size-1.5 shrink-0 rounded-full ${status.dot}`} title={status.label} />
                   <Avatar name={person.known ? person.name : ""} photoUrl={person.photoUrl} size="sm" />
@@ -228,13 +228,13 @@ export default function ApplicantList({
         <span className="tabular-nums">{rows.length ? `${from}-${from + rows.length - 1} / ${total}` : `0 / ${total}`}</span>
         <span className="flex items-center gap-0.5">
           <button type="button" onClick={() => onPage(page - 1)} disabled={page <= 1} aria-label="Önceki sayfa"
-            className={`grid place-items-center rounded transition-colors ${touch ? "size-10" : "size-6"} ${page > 1 ? "text-neutral-400 hover:bg-white/5 hover:text-neutral-100" : "text-neutral-700"}`}
+            className={`grid place-items-center rounded transition-colors ${touch ? "size-10" : "size-6"} ${page > 1 ? "text-neutral-400 hover:bg-ink/5 hover:text-neutral-100" : "text-neutral-700"}`}
           >
             <ChevronLeft size={13} />
           </button>
           <span className="px-1 tabular-nums text-neutral-400">{page} / {totalPages}</span>
           <button type="button" onClick={() => onPage(page + 1)} disabled={page >= totalPages} aria-label="Sonraki sayfa"
-            className={`grid place-items-center rounded transition-colors ${touch ? "size-10" : "size-6"} ${page < totalPages ? "text-neutral-400 hover:bg-white/5 hover:text-neutral-100" : "text-neutral-700"}`}
+            className={`grid place-items-center rounded transition-colors ${touch ? "size-10" : "size-6"} ${page < totalPages ? "text-neutral-400 hover:bg-ink/5 hover:text-neutral-100" : "text-neutral-700"}`}
           >
             <ChevronRight size={13} />
           </button>

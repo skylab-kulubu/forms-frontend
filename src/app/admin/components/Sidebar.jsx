@@ -8,6 +8,7 @@ import { logout } from "@/lib/authActions";
 import { useFormContext, useTemplateContext, useWorkflowContext } from "../providers";
 import Breadcrumbs from "./Breadcrumbs";
 import Avatar from "@/app/components/utils/Avatar";
+import ThemeToggle from "@/app/components/ThemeToggle";
 import { LayoutDashboard, Menu, ChevronDown, ChevronRight, ChevronsLeft, LogOut, FilePlus, FileText, List, PencilLine, BookOpen, LayoutTemplate, Plus, Database, ChartColumn, Workflow, UserX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TooltipProvider } from "@skylab-kulubu/skylcn-ui";
@@ -198,7 +199,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
         )}
       </div>
 
-      <div className="w-full rounded-md text-center border border-white/10 bg-white/3 px-2 py-1 text-2xs text-neutral-200">
+      <div className="w-full rounded-md text-center border border-ink/10 bg-ink/3 px-2 py-1 text-2xs text-neutral-200">
         <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, delay: 1.2 }}>{getRoleLabel(roles)}</motion.span>
       </div>
 
@@ -250,6 +251,7 @@ function SidebarContent({ user, realmRoles = [], skyformsRoles = [], pathname, o
 
       <div className="mt-auto">
         <NavItem href="/admin/how-to-use" icon={BookOpen} label="Nasıl Kullanılır" active={pathname === "/admin/how-to-use"} onClick={onItemClick} />
+        <ThemeToggle className="mt-3 w-full" />
       </div>
     </div>
   );
@@ -305,7 +307,7 @@ export default function Sidebar({ user, children }) {
       <div className="md:hidden sticky top-0 z-40 border-b border-neutral-950/70 bg-neutral-950/40 backdrop-blur">
         <div className="flex h-14 items-center px-3">
           <button onClick={() => setOpen(true)}
-            className="inline-flex items-center justify-center rounded-md p-2 text-neutral-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+            className="inline-flex items-center justify-center rounded-md p-2 text-neutral-200 hover:bg-ink/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -328,11 +330,11 @@ export default function Sidebar({ user, children }) {
               initial={{ x: "-100%" }} animate={{ x: "0%" }} exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
             >
-              <div ref={panelRef} className="pointer-events-auto h-full w-72 border-r border-neutral-800 bg-[#070707] shadow-xl">
+              <div ref={panelRef} className="pointer-events-auto h-full w-72 border-r border-neutral-800 bg-sidebar shadow-xl">
                 <SidebarContent user={resolvedUser} realmRoles={session?.realmRoles ?? []} skyformsRoles={session?.skyformsRoles ?? []} pathname={pathname} status={status} formId={formId} form={form} formLoading={formLoading} workflowId={workflowId} workflow={workflow} workflowLoading={workflowLoading} onItemClick={() => setOpen(false)} />
               </div>
               <button type="button" onClick={() => setOpen(false)}
-                className="group pointer-events-auto relative flex w-5 -ml-0.5 h-full flex-col items-center justify-center rounded-r-full border-y border-r border-neutral-800 bg-[#070707] text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"
+                className="group pointer-events-auto relative flex w-5 -ml-0.5 h-full flex-col items-center justify-center rounded-r-full border-y border-r border-neutral-800 bg-sidebar text-neutral-500 transition-colors hover:text-neutral-300 focus:outline-none"
                 title="Paneli kapat"
               >
                 <ChevronsLeft size={14} strokeWidth={2.5} className="opacity-60 transition-transform duration-200 group-hover:scale-110 group-hover:opacity-100" />
@@ -342,8 +344,8 @@ export default function Sidebar({ user, children }) {
         )}
       </AnimatePresence>
 
-      <div className="md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden md:rounded-xl md:border md:border-white/5 md:bg-neutral-900">
-        <div className="hidden md:flex h-10 shrink-0 items-center border-b border-white/5 px-6">
+      <div className="md:flex md:h-full md:min-h-0 md:flex-col md:overflow-hidden md:rounded-xl md:border md:border-ink/5 md:bg-neutral-900">
+        <div className="hidden md:flex h-10 shrink-0 items-center border-b border-ink/5 px-6">
           <Breadcrumbs labels={dynamicBreadcrumbLabels} />
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <div id="admin-header-slot" className="flex shrink-0 items-center" />

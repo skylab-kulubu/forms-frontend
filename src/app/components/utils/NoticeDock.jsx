@@ -48,7 +48,7 @@ export default function NoticeDock({ icon: Icon, tone = "text-skylab-300", actio
           setDragging(false);
           if (info.offset.y > 40 || info.velocity.y > 500) onClose();
         }}
-        className={`notice pointer-events-auto relative flex max-w-xl flex-col rounded-xl border border-white/10 bg-neutral-900/90 py-2.5 pl-4 shadow-lg backdrop-blur ${onClose ? "pr-3 pointer-coarse:pr-4" : "pr-4"} ${swipe ? "touch-none" : ""}`}
+        className={`notice pointer-events-auto relative flex max-w-xl flex-col rounded-xl border border-ink/10 bg-neutral-900/90 py-2.5 pl-4 shadow-lg backdrop-blur ${onClose ? "pr-3 pointer-coarse:pr-4" : "pr-4"} ${swipe ? "touch-none" : ""}`}
       >
         <div className="flex items-start gap-2 sm:items-center sm:gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">

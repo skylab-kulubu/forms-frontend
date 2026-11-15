@@ -16,7 +16,7 @@ function Toast() {
         <motion.div key={ui.toast.id} role="status"
           initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}
           className={`pointer-events-none absolute left-1/2 top-3 z-40 max-w-[90%] -translate-x-1/2 truncate rounded-lg border px-3 py-1.5 text-2xs shadow-xl ${
-            ui.toast.tone === "red" ? "border-red-400/30 bg-[#1f1414] text-red-200" : "border-white/10 bg-neutral-800 text-neutral-200"
+            ui.toast.tone === "red" ? "border-red-400/30 bg-danger-panel text-red-200" : "border-ink/10 bg-neutral-800 text-neutral-200"
           }`}
         >
           {ui.toast.text}

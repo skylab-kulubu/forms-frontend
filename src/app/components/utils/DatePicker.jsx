@@ -112,24 +112,24 @@ export default function DatePicker({ value = null, onChange, onClose, anchor, cl
   return (
     <Floating anchor={anchor} onDismiss={onClose}>
     <motion.div variants={panelVariants} initial="hidden" animate="visible" exit="exit" onMouseDown={(e) => e.stopPropagation()}
-      className={`w-[280px] rounded-xl border border-white/10 bg-neutral-900/30 p-3 text-neutral-100 shadow-2xl backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30 ${className}`}
+      className={`w-[280px] rounded-xl border border-ink/10 bg-neutral-900/30 p-3 text-neutral-100 shadow-2xl backdrop-blur-md supports-backdrop-filter:bg-neutral-900/30 ${className}`}
     >
       <motion.div variants={staggerContainerVariants} className="flex flex-col gap-2">
         
-        <motion.div variants={staggerItemVariants} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 p-1">
+        <motion.div variants={staggerItemVariants} className="flex items-center justify-between rounded-lg border border-ink/5 bg-ink/5 p-1">
           <button type="button" onClick={() => isSelecting ? setViewYear(viewYear - 1) : changeMonth(-1)} 
-            className="grid size-7 place-items-center rounded-md text-neutral-400 transition hover:bg-white/10 hover:text-neutral-200"
+            className="grid size-7 place-items-center rounded-md text-neutral-400 transition hover:bg-ink/10 hover:text-neutral-200"
           >
             {isSelecting ? <ChevronsLeft className="size-4" /> : <ChevronLeft className="size-4" />}
           </button>
 
-          <button type="button" onClick={() => setIsSelecting(!isSelecting)} className="flex items-center gap-1 rounded px-2 py-1 text-sm font-semibold text-neutral-100 transition hover:bg-white/10">
+          <button type="button" onClick={() => setIsSelecting(!isSelecting)} className="flex items-center gap-1 rounded px-2 py-1 text-sm font-semibold text-neutral-100 transition hover:bg-ink/10">
             {isSelecting ? viewYear : headerLabel}
           </button>
 
           <button type="button" 
             onClick={() => isSelecting ? setViewYear(viewYear + 1) : changeMonth(1)} 
-            className="grid size-7 place-items-center rounded-md text-neutral-400 transition hover:bg-white/10 hover:text-neutral-200"
+            className="grid size-7 place-items-center rounded-md text-neutral-400 transition hover:bg-ink/10 hover:text-neutral-200"
           >
             {isSelecting ? <ChevronsRight className="size-4" /> : <ChevronRight className="size-4" />}
           </button>
@@ -160,9 +160,9 @@ export default function DatePicker({ value = null, onChange, onClose, anchor, cl
                           <button key={idx} type="button" onClick={() => { onChange?.(date); onClose?.(); }}
                             className={`relative flex size-full items-center justify-center rounded-md text-xs transition select-none border
                               ${!inMonth ? "border-transparent text-neutral-600" : "text-neutral-300"}
-                              ${inMonth && !isSelected ? "hover:bg-white/10 hover:text-neutral-100" : ""}
+                              ${inMonth && !isSelected ? "hover:bg-ink/10 hover:text-neutral-100" : ""}
                               ${isSelected ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300 shadow-sm font-medium" : "border-transparent"}
-                              ${isToday && !isSelected ? "ring-1 ring-white/10 bg-white/5 text-neutral-200" : ""}
+                              ${isToday && !isSelected ? "ring-1 ring-ink/10 bg-ink/5 text-neutral-200" : ""}
                             `}
                           >
                             {date.getDate()}
@@ -181,7 +181,7 @@ export default function DatePicker({ value = null, onChange, onClose, anchor, cl
                   {months.map((month, idx) => (
                     <button key={month} type="button" onClick={() => { setDirection(idx > viewMonth ? 1 : -1); setViewMonth(idx); setIsSelecting(false); }}
                       className={`rounded-md border py-2 text-xs font-medium transition
-                        ${idx === viewMonth ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300 hover:border-skylab-300/60 hover:bg-skylab-400/20" : "border-white/5 bg-white/5 text-neutral-200 hover:border-white/10 hover:bg-white/10"}`}
+                        ${idx === viewMonth ? "border-skylab-400/40 bg-skylab-500/10 text-skylab-300 hover:border-skylab-300/60 hover:bg-skylab-400/20" : "border-ink/5 bg-ink/5 text-neutral-200 hover:border-ink/10 hover:bg-ink/10"}`}
                     >
                       {month}
                     </button>
@@ -192,11 +192,11 @@ export default function DatePicker({ value = null, onChange, onClose, anchor, cl
           </AnimatePresence>
         </motion.div>
 
-        <motion.div variants={staggerItemVariants} className="flex items-center justify-between border-t border-white/5 pt-2">
-          <button type="button" onClick={handleToday} className="rounded-md px-2 py-1 text-2xs font-medium text-neutral-400 transition hover:bg-white/5 hover:text-neutral-200">
+        <motion.div variants={staggerItemVariants} className="flex items-center justify-between border-t border-ink/5 pt-2">
+          <button type="button" onClick={handleToday} className="rounded-md px-2 py-1 text-2xs font-medium text-neutral-400 transition hover:bg-ink/5 hover:text-neutral-200">
             Bugün
           </button>
-          <button type="button" onClick={handleClear} className="rounded-md px-2 py-1 text-2xs font-medium text-neutral-400 transition hover:bg-white/5 hover:text-neutral-200">
+          <button type="button" onClick={handleClear} className="rounded-md px-2 py-1 text-2xs font-medium text-neutral-400 transition hover:bg-ink/5 hover:text-neutral-200">
             Temizle
           </button>
         </motion.div>

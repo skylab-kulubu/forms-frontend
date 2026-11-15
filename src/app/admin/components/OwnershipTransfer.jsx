@@ -54,7 +54,7 @@ function OwnerPicker({ excludeIds, onSelect }) {
                 {open && search.length >= 2 && (
                     <SearchPicker searchValue={search} onSearchChange={setSearch} items={users} itemsPerPage={4} activeItemId={null} getItemId={(user) => user.id} onSelect={handleSelect} searchable={false} loading={isLoading} footerText={isLoading ? "Aranıyor..." : "Listeden yeni sahibi seçiniz."} showClear={false} className="absolute top-full left-0 mt-1 w-full"
                         renderItem={(user, { active, onSelect: select }) => (
-                            <button type="button" onClick={select} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition hover:bg-white/5 ${active ? "bg-white/10 text-neutral-100" : "text-neutral-200"}`}>
+                            <button type="button" onClick={select} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition hover:bg-ink/5 ${active ? "bg-ink/10 text-neutral-100" : "text-neutral-200"}`}>
                                 <Avatar name={personName(user)} email={user.email} photoUrl={user.profilePictureUrl} size="md" />
                                 <div className="flex-1 min-w-0"><p className="font-medium leading-tight truncate">{personName(user)}</p><p className="text-2xs text-neutral-500 truncate">{user.email}</p></div>
                             </button>
@@ -87,7 +87,7 @@ export function OwnershipTransferControls({ kind, itemId, excludeIds = [], prese
         <div className="space-y-3">
             {target ? (
                 <>
-                    <div className={`${ROW} flex items-center justify-between gap-3 border-white/10 px-3 py-2.5`}>
+                    <div className={`${ROW} flex items-center justify-between gap-3 border-ink/10 px-3 py-2.5`}>
                         <div className="flex min-w-0 flex-1 items-center gap-3">
                             <Avatar name={personName(target)} email={target.email} photoUrl={target.profilePictureUrl} size="md" />
                             <div className="min-w-0">

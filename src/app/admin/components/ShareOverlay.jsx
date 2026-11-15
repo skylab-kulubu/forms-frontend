@@ -44,7 +44,7 @@ const getRemainingLabel = (expiresAt) => {
 
 function CopyField({ value, copyState, onCopy, label = "Bağlantıyı kopyala" }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 pl-3 pr-1.5 py-1.5">
+    <div className="flex items-center gap-2 rounded-lg border border-ink/10 bg-black/20 pl-3 pr-1.5 py-1.5">
       <input readOnly value={value} onFocus={(e) => e.target.select()}
         className="flex-1 min-w-0 bg-transparent text-sm text-neutral-100 outline-none truncate"
       />
@@ -52,7 +52,7 @@ function CopyField({ value, copyState, onCopy, label = "Bağlantıyı kopyala" }
         className={`shrink-0 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
           copyState === "success" ? "border border-skylab-400/30 bg-skylab-400/10 text-skylab-300"
           : copyState === "error" ? "border border-red-500/30 bg-red-500/10 text-red-300"
-          : "border border-white/10 bg-white/5 text-neutral-200 hover:bg-white/10"
+          : "border border-ink/10 bg-ink/5 text-neutral-200 hover:bg-ink/10"
         }`}
       >
         {copyState === "success" ? <Check size={13} /> : copyState === "error" ? <CircleAlert size={13} /> : <Copy size={13} />}
@@ -173,9 +173,9 @@ export default function ShareOverlay({
         >
           <motion.div key="share-card"
             initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }} transition={{ duration: 0.2 }}
-            className="relative w-full max-w-xl overflow-hidden rounded-xl border border-white/10 bg-[#121212] shadow-2xl"
+            className="relative w-full max-w-xl overflow-hidden rounded-xl border border-ink/10 bg-sheet shadow-2xl"
           >
-            <div className="flex items-center justify-between border-b border-white/5 px-5 py-2">
+            <div className="flex items-center justify-between border-b border-ink/5 px-5 py-2">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-skylab-400/20 bg-skylab-400/10 text-skylab-400">
                   <Share2 size={16} />
@@ -184,7 +184,7 @@ export default function ShareOverlay({
               </div>
 
               <button type="button" onClick={() => onClose?.()} aria-label="Kapat"
-                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
               >
                 <X size={16} />
               </button>
@@ -203,7 +203,7 @@ export default function ShareOverlay({
                   </motion.div>
                 ) : isPending ? (
                   <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-4 text-sm text-neutral-400"
+                    className="flex items-center justify-center gap-2 rounded-lg border border-ink/10 bg-black/20 px-3 py-4 text-sm text-neutral-400"
                   >
                     <Loader2 size={14} className="animate-spin" />
                     <span>Bağlantı oluşturuluyor...</span>
@@ -217,7 +217,7 @@ export default function ShareOverlay({
                       <span className="truncate">{errorMessage}</span>
                     </div>
                     <button type="button" onClick={handleRetry}
-                      className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:bg-white/10"
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-ink/10 bg-ink/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:bg-ink/10"
                     >
                       <RotateCcw size={12} /> Tekrar Dene
                     </button>

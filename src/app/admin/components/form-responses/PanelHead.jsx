@@ -51,7 +51,7 @@ function ArchiveButton({ detail }) {
   return (
     <div ref={ref} className="relative inline-flex">
       <button type="button" aria-label={label} title={label} aria-expanded={open} disabled={disabled} onClick={() => setOpen((value) => !value)}
-        className={`${ICON} ${disabled ? "cursor-not-allowed text-neutral-600" : isError ? "text-red-400" : open ? "bg-white/5 text-neutral-100" : "text-neutral-500 hover:bg-white/5 hover:text-neutral-100"}`}
+        className={`${ICON} ${disabled ? "cursor-not-allowed text-neutral-600" : isError ? "text-red-400" : open ? "bg-ink/5 text-neutral-100" : "text-neutral-500 hover:bg-ink/5 hover:text-neutral-100"}`}
       >
         <Archive size={15} />
       </button>
@@ -60,7 +60,7 @@ function ArchiveButton({ detail }) {
           <motion.div key={isError ? "error" : "confirm"} role={isError ? "alert" : "dialog"} aria-label="Cevabı arşivle"
             initial={{ opacity: 0, y: -4, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -2, scale: 0.96 }}
             transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className={`absolute right-0 top-full z-50 mt-2 rounded-[10px] border text-left font-normal shadow-xl ${isError ? "w-max max-w-56 border-red-500/20 bg-[#1f1414] px-2.5 py-1.5" : "w-64 border-white/20 bg-[#1e1e1e] p-3"}`}
+            className={`absolute right-0 top-full z-50 mt-2 rounded-[10px] border text-left font-normal shadow-xl ${isError ? "w-max max-w-56 border-red-500/20 bg-danger-panel px-2.5 py-1.5" : "w-64 border-ink/20 bg-panel p-3"}`}
           >
             {isError ? (
               <div className="flex items-center gap-1.5">
@@ -78,7 +78,7 @@ function ArchiveButton({ detail }) {
                 <p className="mt-1 text-3xs leading-relaxed text-neutral-500">{isWorkflowStep ? "Arşivden geri çıkarılamaz." : "Kişi formu yeniden doldurabilir. Arşivden geri çıkarılamaz."}</p>
                 <div className="mt-3 flex items-center gap-2">
                   <button type="button" autoFocus onClick={() => setOpen(false)}
-                    className="flex-1 rounded-lg border border-white/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-white/5 hover:text-neutral-200"
+                    className="flex-1 rounded-lg border border-ink/10 px-3 py-1.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-200"
                   >
                     Vazgeç
                   </button>
@@ -116,7 +116,7 @@ export default function PanelHead({ detail, isAttempt = false, readOnly = false 
       <span className="min-w-0 truncate text-neutral-200">{detail ? person.name : "..."}</span>
       {detail && !isAttempt && !readOnly ? (
         <span className="ml-auto flex shrink-0 items-center gap-0.5 pl-2">
-          <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" onClick={() => setShareOpen(true)} className={`${ICON} text-neutral-500 hover:bg-white/5 hover:text-neutral-100`}>
+          <button type="button" aria-label="Cevabı paylaş" title="Cevabı paylaş" onClick={() => setShareOpen(true)} className={`${ICON} text-neutral-500 hover:bg-ink/5 hover:text-neutral-100`}>
             <Share2 size={15} />
           </button>
           <ArchiveButton key={detail.id} detail={detail} />
