@@ -11,8 +11,8 @@ import Tip from "@/app/admin/components/utils/Tip";
 import { PeopleCount, PeopleStack } from "./StudioPresence";
 
 // Off tools stay focusable: a tooltip never opens on a disabled button, and the delete's tooltip says why it is
-// off. skylcn dims only :disabled, so this gives them the disabled look.
-const OFF = "data-disabled:cursor-not-allowed data-disabled:opacity-60 data-disabled:hover:bg-transparent data-disabled:hover:text-muted-foreground";
+// off. skylcn dims them; this keeps a hover from lighting one up.
+const OFF = "data-disabled:hover:bg-transparent data-disabled:hover:text-muted-foreground";
 
 function SaveButton({ onSave, isSaving, isError, error, saveLabel, saveExtra, draftNotice, onDraftNoticeClose, noun }) {
   return (
