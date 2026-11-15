@@ -101,13 +101,13 @@ function Actions({ row, form, onShare }) {
   const live = effectiveFormSettings(form).isOpen;
 
   return (
-    <div className="-ml-2.5 flex flex-wrap items-center gap-0.5">
-      {row.pending > 0 && row.reviewHref ? <Button variant="ghost" size="sm" render={<Link href={row.reviewHref} />}><ListChecks aria-hidden="true" />Bekleyenleri incele</Button> : null}
-      {row.kind === "flow" ? <Button variant="ghost" size="sm" render={<Link href={row.href} />}><Workflow aria-hidden="true" />Akışı aç</Button> : null}
-      {row.responsesHref ? <Button variant="ghost" size="sm" render={<Link href={row.responsesHref} />}><List aria-hidden="true" />Cevaplar</Button> : null}
-      {row.kind === "form" ? <Button variant="ghost" size="sm" render={<Link href={`${row.href}/analytics`} />}><ChartColumn aria-hidden="true" />Analitik</Button> : null}
-      {row.role >= 2 ? <Button variant="ghost" size="sm" render={<Link href={row.editHref} />}><PencilLine aria-hidden="true" />Düzenle</Button> : null}
-      {live ? <Button variant="ghost" size="sm" onClick={onShare}><Share2 aria-hidden="true" />Paylaş</Button> : null}
+    <div className="-ml-1.5 flex flex-wrap items-center gap-0.5">
+      {row.pending > 0 && row.reviewHref ? <Button variant="ghost" size="xs" render={<Link href={row.reviewHref} />}><ListChecks aria-hidden="true" />Bekleyenleri incele</Button> : null}
+      {row.kind === "flow" ? <Button variant="ghost" size="xs" render={<Link href={row.href} />}><Workflow aria-hidden="true" />Akışı aç</Button> : null}
+      {row.responsesHref ? <Button variant="ghost" size="xs" render={<Link href={row.responsesHref} />}><List aria-hidden="true" />Cevaplar</Button> : null}
+      {row.kind === "form" ? <Button variant="ghost" size="xs" render={<Link href={`${row.href}/analytics`} />}><ChartColumn aria-hidden="true" />Analitik</Button> : null}
+      {row.role >= 2 ? <Button variant="ghost" size="xs" render={<Link href={row.editHref} />}><PencilLine aria-hidden="true" />Düzenle</Button> : null}
+      {live ? <Button variant="ghost" size="xs" onClick={onShare}><Share2 aria-hidden="true" />Paylaş</Button> : null}
     </div>
   );
 }
