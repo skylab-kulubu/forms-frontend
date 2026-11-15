@@ -1,50 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRef, useState } from "react";
+import { PreviewCard, PreviewCardContent, PreviewCardTrigger } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "./Avatar";
 
-const panelVariants = {
-  hidden: { opacity: 0, y: -6, scale: 0.98 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1], when: "beforeChildren" } },
-  exit: { opacity: 0, y: -4, scale: 0.98, transition: { duration: 0.16, ease: [0.4, 0, 0.2, 1], when: "afterChildren" } },
-};
-
-const contentVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.06, delayChildren: 0.02 } },
-  exit: { transition: { staggerChildren: 0.05, staggerDirection: -1 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: -6 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.16, ease: [0.22, 1, 0.36, 1] } },
-  exit: { opacity: 0, y: -4, transition: { duration: 0.12, ease: [0.4, 0, 0.2, 1] } },
-};
-
 export default function HoverCard({ user, children, openDelay = 1100, className = "" }) {
-  const [open, setOpen] = useState(false);
-  const timerRef = useRef(null);
+  const triggerRef = useRef(null);
+  const [theme, setTheme] = useState(undefined);
 
-  const clearTimer = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  const handleEnter = () => {
-    if (!user) return;
-    clearTimer();
-    timerRef.current = setTimeout(() => setOpen(true), openDelay);
-  };
-
-  const handleLeave = () => {
-    clearTimer();
-    setOpen(false);
-  };
-
-  useEffect(() => () => clearTimer(), []);
+  if (!user) return <div className={`relative inline-flex ${className}`}>{children}</div>;
 
   const email = user?.email?.trim() || "";
   const id = user?.id?.trim() || "";
@@ -63,50 +27,49 @@ export default function HoverCard({ user, children, openDelay = 1100, className 
   ];
 
   return (
-    <div className={`relative inline-flex ${className}`} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-      {children}
-      <AnimatePresence>
-        {open ? (
-          <motion.div variants={panelVariants} initial="hidden" animate="visible" exit="exit"
-            className="absolute left-1/2 top-full z-30 mt-2 w-80 -translate-x-1/2 rounded-xl border border-ink/10 bg-neutral-800/40 p-3 text-neutral-100 shadow-2xl backdrop-blur-md"
-          >
-            <motion.div variants={contentVariants}>
-              <motion.div variants={itemVariants} className="flex items-center gap-3 rounded-lg border border-ink/8 bg-ink/3 p-2">
-                <Avatar name={displayName} email={email} photoUrl={avatarUrl} size="lg" />
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-neutral-100">{displayName}</div>
-                  <div className="truncate text-xs text-neutral-400">{email || "--"}</div>
-                </div>
-              </motion.div>
+    <PreviewCard
+      onOpenChange={(open) => {
+        // The card is portaled to body, so it takes the theme of the part it opened from: the landing stays dark in a light page
+        if (open) setTheme(triggerRef.current?.closest("[data-theme]")?.getAttribute("data-theme") ?? undefined);
+      }}
+    >
+      <PreviewCardTrigger delay={openDelay} render={<div ref={triggerRef} className={`relative inline-flex ${className}`} />}>
+        {children}
+      </PreviewCardTrigger>
+      <PreviewCardContent side="bottom" align="center" sideOffset={8} data-theme={theme} className="w-80">
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-2">
+          <Avatar name={displayName} email={email} photoUrl={avatarUrl} size="lg" />
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-foreground">{displayName}</div>
+            <div className="truncate text-xs text-muted-foreground">{email || "--"}</div>
+          </div>
+        </div>
 
-              <motion.div variants={itemVariants} className="mt-1 flex items-center justify-start">
-                <span className="p-0.5 text-3xs uppercase tracking-wide text-neutral-500">
-                  ID: {id || "--"}
-                </span>
-              </motion.div>
+        <div className="mt-1 flex items-center justify-start">
+          <span className="p-0.5 text-3xs uppercase tracking-wide text-subtle-foreground">
+            ID: {id || "--"}
+          </span>
+        </div>
 
-              <motion.div variants={itemVariants} className="mt-1 grid gap-2">
-                {rows.map((row) => (
-                  <div key={row.label} className="flex items-start justify-between gap-3">
-                    <span className="text-2xs uppercase tracking-wide text-neutral-500">{row.label}</span>
-                    <span className="text-right text-xs text-neutral-200 break-all">{row.value}</span>
-                  </div>
-                ))}
-              </motion.div>
+        <div className="mt-1 grid gap-2">
+          {rows.map((row) => (
+            <div key={row.label} className="flex items-start justify-between gap-3">
+              <span className="text-2xs uppercase tracking-wide text-subtle-foreground">{row.label}</span>
+              <span className="text-right text-xs text-secondary-foreground break-all">{row.value}</span>
+            </div>
+          ))}
+        </div>
 
-              <motion.div variants={itemVariants} className="mt-2">
-                {roles.length ? (
-                  <div className="mt-1 w-full rounded-md text-center border border-ink/8 bg-ink/3 px-2 py-1 text-2xs text-neutral-200">
-                    {roles[0]}
-                  </div>
-                ) : (
-                  <div className="mt-1 text-xs text-neutral-400">--</div>
-                )}
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </div>
+        <div className="mt-2">
+          {roles.length ? (
+            <div className="mt-1 w-full rounded-md border border-border bg-muted/40 px-2 py-1 text-center text-2xs text-secondary-foreground">
+              {roles[0]}
+            </div>
+          ) : (
+            <div className="mt-1 text-xs text-muted-foreground">--</div>
+          )}
+        </div>
+      </PreviewCardContent>
+    </PreviewCard>
   );
 }

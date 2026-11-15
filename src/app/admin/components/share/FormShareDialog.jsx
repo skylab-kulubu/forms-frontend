@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, ArrowUpRight, Check, ChevronDown, CircleAlert, Copy, CornerDownRight, Download, Loader2, Lock, PencilLine, RotateCcw, Share, Share2, Users, WandSparkles, X } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown, CircleAlert, Copy, CornerDownRight, Download, Lock, PencilLine, RotateCcw, Share, Share2, Users, WandSparkles, X } from "lucide-react";
+import {
+  Button, Dialog, DialogClose, DialogContent, DialogTitle, Field, IconButton, IconSwap, Input, Notice, SegmentedControl, Skeleton, SkylabLoader,
+} from "@skylab-kulubu/skylcn-ui";
 import { publicFormUrl } from "@/lib/return-to";
 import {
   MAX_ALIAS_LENGTH, RESERVED_ALIASES, SHARE_CHANNELS, SHARE_FORMAT_KEY,
@@ -15,18 +17,16 @@ import {
 import { StatePill } from "../utils/SidePanel";
 import ChannelIcon from "./ChannelIcon";
 
-const EASE = [0.22, 1, 0.36, 1];
-const CHIP = "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-2xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
-const CHIP_ICON = "inline-grid h-7 w-8.5 shrink-0 place-items-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
-const CHIP_ON = "border-skylab-400/30 bg-skylab-500/10 text-skylab-300";
-const CHIP_OFF = "border-ink/10 bg-ink/5 text-neutral-300 hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300";
-const ICON_BUTTON = "grid size-7 shrink-0 place-items-center rounded-md text-neutral-500 transition-colors hover:bg-ink/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40";
-const INPUT = "h-8 w-full rounded-lg border border-ink/10 bg-neutral-900/60 px-3 text-xs text-neutral-200 outline-none transition-[border-color,box-shadow] placeholder:text-neutral-600 focus:border-skylab-400/50 focus:ring-2 focus:ring-skylab-400/20";
-const COPY_TONE = {
-  ok: "border-skylab-400/30 bg-skylab-400/10 text-skylab-300",
-  err: "border-red-500/30 bg-red-500/10 text-red-300",
-  idle: "border-ink/10 bg-ink/5 text-neutral-200 hover:bg-ink/10",
-};
+const COPY_TONE = { ok: "primary", err: "destructive", idle: "outline" };
+const COPY_ICON = { ok: Check, err: CircleAlert, idle: Copy };
+
+const CHANNEL_OPTIONS = SHARE_CHANNELS.map((item) => ({
+  value: item.key,
+  label: item.label,
+  icon: function ChannelGlyph({ className }) {
+    return <ChannelIcon source={item.key} className={className} />;
+  },
+}));
 
 async function copyText(value) {
   try {
@@ -83,22 +83,21 @@ function formatDay(value) {
 function SectionLabel({ children, aside }) {
   return (
     <div className="mb-2 flex h-5 items-center gap-2">
-      <span className="text-2xs font-medium text-neutral-500">{children}</span>
-      <span className="h-px flex-1 bg-ink/5" />
+      <span className="text-2xs font-medium text-subtle-foreground">{children}</span>
+      <span className="h-px flex-1 bg-border-subtle" />
       {aside}
     </div>
   );
 }
 
-function CopyButton({ state, onClick, label = "Kopyala", className = "" }) {
-  const tone = COPY_TONE[state] ?? COPY_TONE.idle;
+// Labelled, with forms' execCommand fallback and an error state; skylcn's CopyButton is icon only and has neither
+function CopyButton({ state, onClick, label = "Kopyala", size = "sm", className = "" }) {
+  const Icon = COPY_ICON[state] ?? COPY_ICON.idle;
   return (
-    <button type="button" onClick={onClick}
-      className={`inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40 ${tone} ${className}`}
-    >
-      {state === "ok" ? <Check size={13} /> : state === "err" ? <CircleAlert size={13} /> : <Copy size={13} />}
+    <Button type="button" variant={COPY_TONE[state] ?? COPY_TONE.idle} size={size} onClick={onClick} className={className}>
+      <Icon className="size-3.5" />
       <span>{state === "ok" ? "Kopyalandı" : state === "err" ? "Hata" : label}</span>
-    </button>
+    </Button>
   );
 }
 
@@ -153,16 +152,16 @@ function AliasEditor({ formId, formTitle, link, onDone }) {
   };
 
   const status = {
-    checking: { tone: "text-neutral-500", icon: <Loader2 size={12} className="animate-spin" />, text: "Bakılıyor" },
-    ok: { tone: "text-emerald-300", icon: <Check size={12} />, text: "Uygun" },
-    taken: { tone: "text-red-300", icon: <X size={12} />, text: "Dolu" },
-    reserved: { tone: "text-red-300", icon: <X size={12} />, text: "Ayrılmış" },
-    invalid: { tone: "text-red-300", icon: <X size={12} />, text: "Geçersiz" },
-    long: { tone: "text-red-300", icon: <X size={12} />, text: "Çok uzun" },
+    checking: { tone: "text-subtle-foreground", icon: <SkylabLoader size={12} />, text: "Bakılıyor" },
+    ok: { tone: "text-success", icon: <Check size={12} />, text: "Uygun" },
+    taken: { tone: "text-destructive", icon: <X size={12} />, text: "Dolu" },
+    reserved: { tone: "text-destructive", icon: <X size={12} />, text: "Ayrılmış" },
+    invalid: { tone: "text-destructive", icon: <X size={12} />, text: "Geçersiz" },
+    long: { tone: "text-destructive", icon: <X size={12} />, text: "Çok uzun" },
   }[state];
 
   let hint = null;
-  if (saveError) hint = <span className="text-red-300">{saveError}</span>;
+  if (saveError) hint = <span className="text-destructive">{saveError}</span>;
   else if (state === "empty") hint = "Boş bırakırsan ad form başlığından üretilir; doluysa sonuna sayı eklenir.";
   else if (state === "same") hint = "Şu anki ad.";
   else if (state === "taken") hint = "Bu ad başka bir linkte kullanılıyor. Şunları deneyebilirsin:";
@@ -170,30 +169,31 @@ function AliasEditor({ formId, formTitle, link, onDone }) {
   else if (state === "long") hint = `Kısa ad en fazla ${MAX_ALIAS_LENGTH} karakter olabilir.`;
   else if (state === "invalid") hint = "Kısa ad harf ya da rakamla başlamalı.";
   else if (state === "unknown") hint = "Uygunluğa bakılamadı; kaydederken yeniden denenir.";
-  else if (slug !== draft.trim()) hint = <><code className="font-mono text-3xs text-neutral-300">skyl.app/{slug}</code> olarak kaydedilir; Türkçe harfler ve boşluklar dönüştürüldü.</>;
+  else if (slug !== draft.trim()) hint = <><code className="font-mono text-3xs text-secondary-foreground">skyl.app/{slug}</code> olarak kaydedilir; Türkçe harfler ve boşluklar dönüştürüldü.</>;
 
   const suggestions = state === "taken" ? suggestAliases(slug, current) : [];
 
   return (
     <div className="flex flex-col gap-2">
-      <div className={`flex h-10 items-center gap-2 rounded-lg border bg-neutral-900/60 pl-3 pr-2.5 ring-2 transition-[border-color,box-shadow] ${bad ? "border-red-400/50 ring-red-400/15" : "border-skylab-400/50 ring-skylab-400/20"}`}>
-        <span className="text-sm text-neutral-500">skyl.app/</span>
+      <div className={`flex h-10 items-center gap-2 rounded-lg border bg-background/60 pl-3 pr-2.5 ring-2 transition-[border-color,box-shadow] ${bad ? "border-destructive/50 ring-destructive/20" : "border-skylab-600/60 ring-skylab-600/25"}`}>
+        <span className="text-sm text-subtle-foreground">skyl.app/</span>
         <input type="text" value={draft} autoFocus spellCheck={false} autoComplete="off" aria-label="Kısa ad" placeholder={fromTitle}
           onChange={(e) => handleDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") { e.preventDefault(); save(); }
-            if (e.key === "Escape") { e.preventDefault(); onDone(false); }
+            // Stopped here so Esc leaves the editor without closing the dialog around it
+            if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); onDone(false); }
           }}
-          className="h-full min-w-0 flex-1 bg-transparent text-sm font-medium text-neutral-100 outline-none placeholder:font-normal placeholder:text-neutral-600"
+          className="h-full min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground outline-none placeholder:font-normal placeholder:text-faint-foreground"
         />
         {status && <span className={`inline-flex shrink-0 items-center gap-1 text-2xs ${status.tone}`}>{status.icon}{status.text}</span>}
       </div>
-      {hint && <p className="text-2xs leading-relaxed text-neutral-500">{hint}</p>}
+      {hint && <p className="text-2xs leading-relaxed text-subtle-foreground">{hint}</p>}
       {suggestions.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {suggestions.map((item) => (
             <button key={item} type="button" onClick={() => handleDraft(item)}
-              className="inline-flex h-6 items-center rounded-md border border-ink/10 bg-ink/5 px-2 font-mono text-2xs text-neutral-300 transition-colors hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300"
+              className="inline-flex h-6 items-center rounded-md border border-border bg-muted px-2 font-mono text-2xs text-secondary-foreground outline-hidden transition-colors hover:border-skylab-400/30 hover:bg-skylab-500/10 hover:text-skylab-300 focus-visible:ring-2 focus-visible:ring-ring"
             >
               {item}
             </button>
@@ -201,32 +201,26 @@ function AliasEditor({ formId, formTitle, link, onDone }) {
         </div>
       )}
       {keepsOld && (
-        <p className="flex gap-1.5 text-2xs leading-relaxed text-neutral-500">
-          <CornerDownRight size={12} className="mt-0.5 shrink-0 text-neutral-600" />
+        <p className="flex gap-1.5 text-2xs leading-relaxed text-subtle-foreground">
+          <CornerDownRight size={12} className="mt-0.5 shrink-0 text-faint-foreground" />
           <span>
-            Eski adres <code className="font-mono text-3xs text-neutral-300">skyl.app/{current}</code> bu forma yönlenmeye devam eder;
+            Eski adres <code className="font-mono text-3xs text-secondary-foreground">skyl.app/{current}</code> bu forma yönlenmeye devam eder;
             basılı QR&apos;lar ve paylaşılmış linkler bozulmaz.
           </span>
         </p>
       )}
       <div className="flex items-center justify-end gap-1.5">
-        <button type="button" onClick={() => onDone(false)}
-          className="h-7 rounded-lg px-2.5 text-2xs font-medium text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100"
-        >
-          Vazgeç
-        </button>
-        <button type="button" onClick={save} disabled={!canSave}
-          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-skylab-400/40 bg-skylab-500/15 px-3 text-2xs font-semibold text-skylab-300 transition-colors hover:bg-skylab-500/25 disabled:pointer-events-none disabled:opacity-40"
-        >
-          {rename.isPending ? <Loader2 size={12} className="animate-spin" /> : state === "empty" ? <WandSparkles size={12} /> : null}
+        <Button type="button" variant="ghost" size="sm" onClick={() => onDone(false)}>Vazgeç</Button>
+        <Button type="button" variant="primary" size="sm" onClick={save} disabled={!canSave} pending={rename.isPending} className="font-semibold">
+          {state === "empty" && !rename.isPending ? <WandSparkles className="size-3" /> : null}
           {rename.isPending ? "Kaydediliyor" : state === "empty" ? "Başlıktan üret" : "Kaydet"}
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
 
-function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdit, onClose }) {
+function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdit }) {
   const { data: link, isLoading, isError, error, refetch, isFetching } = useEnsureShortLinkQuery(formId, true);
   const [channel, setChannel] = useState("general");
   const [format, setFormat] = useState(readFormat);
@@ -339,23 +333,23 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
   };
 
   let hint;
-  if (selected.key === "general") hint = <>Etiketsiz link. Instagram, LinkedIn ya da YouTube&apos;dan açılırsa kaynak kendiliğinden tanınır; öbürleri <b className="font-medium text-neutral-300">Etiketsiz</b> satırına düşer.</>;
+  if (selected.key === "general") hint = <>Etiketsiz link. Instagram, LinkedIn ya da YouTube&apos;dan açılırsa kaynak kendiliğinden tanınır; öbürleri <b className="font-medium text-secondary-foreground">Etiketsiz</b> satırına düşer.</>;
   else if (selected.key === "other") {
     const source = slugifyAlias(customSource);
     hint = source
-      ? <>Gelenler genel bakışta <b className="font-medium text-neutral-300">{source}</b> adıyla kendi satırında görünür.</>
+      ? <>Gelenler genel bakışta <b className="font-medium text-secondary-foreground">{source}</b> adıyla kendi satırında görünür.</>
       : "Kaynak adını yaz; boşken link etiketsiz kalır.";
-  } else hint = <><b className="font-medium text-neutral-300">{selected.label}</b> · Bununla gelenler genel bakışta <b className="font-medium text-neutral-300">{selected.label}</b> satırına yazılır.</>;
+  } else hint = <><b className="font-medium text-secondary-foreground">{selected.label}</b> · Bununla gelenler genel bakışta <b className="font-medium text-secondary-foreground">{selected.label}</b> satırına yazılır.</>;
 
   const metaParts = [];
-  if (flash) metaParts.push(<span key="saved" className="text-emerald-300">Kısa ad güncellendi</span>);
+  if (flash) metaParts.push(<span key="saved" className="text-success">Kısa ad güncellendi</span>);
   if (link) {
     if (managedByEvent) {
-      metaParts.push(<span key="clicks"><b className="font-medium text-neutral-300">{link.clickCount.toLocaleString("tr-TR")}</b> açılış</span>);
+      metaParts.push(<span key="clicks"><b className="font-medium text-secondary-foreground">{link.clickCount.toLocaleString("tr-TR")}</b> açılış</span>);
       metaParts.push(<span key="event">{link.eventName || "Etkinlik"} etkinliğinden</span>);
     } else {
       metaParts.push(link.clickCount > 0
-        ? <span key="clicks"><b className="font-medium text-neutral-300">{link.clickCount.toLocaleString("tr-TR")}</b> açılış</span>
+        ? <span key="clicks"><b className="font-medium text-secondary-foreground">{link.clickCount.toLocaleString("tr-TR")}</b> açılış</span>
         : <span key="clicks">Henüz açılmadı</span>);
       const creator = link.createdBy?.fullName;
       const day = formatDay(link.createdAt);
@@ -371,38 +365,34 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
   }
 
   const linkField = isLoading ? (
-    <div className="flex h-10 items-center gap-2 rounded-lg border border-ink/5 bg-black/20 px-3 text-sm text-neutral-500">
-      <Loader2 size={14} className="animate-spin" />
+    <div role="status" className="flex h-10 items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 text-sm text-muted-foreground">
+      <SkylabLoader size={14} />
       <span>Kısa link hazırlanıyor…</span>
     </div>
   ) : isError || !link ? (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-200">
-      <div className="flex min-w-0 items-center gap-2">
-        <CircleAlert size={14} className="shrink-0" />
-        <span className="truncate">{error?.message || "Kısa link alınamadı."}</span>
-      </div>
-      <button type="button" onClick={() => refetch()} disabled={isFetching}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-ink/10 bg-ink/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:bg-ink/10 disabled:opacity-50"
-      >
-        {isFetching ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />} Tekrar dene
-      </button>
-    </div>
+    <Notice tone="danger"
+      action={(
+        <Button type="button" variant="outline" size="sm" onClick={() => refetch()} pending={isFetching}>
+          <RotateCcw className="size-3" /> Tekrar dene
+        </Button>
+      )}
+    >
+      {error?.message || "Kısa link alınamadı."}
+    </Notice>
   ) : editing ? (
     <AliasEditor formId={formId} formTitle={formTitle} link={link} onDone={finishEdit} />
   ) : (
     <>
-      <div title={fullUrl} className={`flex h-10 min-w-0 items-center gap-1 rounded-lg border border-ink/10 bg-black/20 pl-3 pr-1.5 transition-shadow ${flash ? "ring-2 ring-skylab-400/40" : ""}`}>
-        <span className="min-w-0 flex-1 truncate text-sm text-neutral-500">
-          skyl.app/<span className="font-medium text-neutral-100">{alias}</span>
+      <div title={fullUrl} className={`flex h-10 min-w-0 items-center gap-1 rounded-lg border border-input bg-background/60 pl-3 pr-1.5 transition-shadow ${flash ? "ring-2 ring-skylab-600/25" : ""}`}>
+        <span className="min-w-0 flex-1 truncate text-sm text-subtle-foreground">
+          skyl.app/<span className="font-medium text-foreground">{alias}</span>
           {tag && <span className="text-skylab-300/70">{tag}</span>}
         </span>
         {canRename ? (
-          <button type="button" onClick={() => setEditing(true)} aria-label="Kısa adı değiştir" title="Kısa adı değiştir" className={ICON_BUTTON}>
-            <PencilLine size={14} />
-          </button>
+          <IconButton icon={PencilLine} label="Kısa adı değiştir" variant="ghost" size="icon-sm" onClick={() => setEditing(true)} />
         ) : (
           <span title={managedByEvent ? "Kısa ad etkinlik panelinden değiştiriliyor" : "Kısa adı yalnız sahip ve editörler değiştirebilir"}
-            className="grid size-7 shrink-0 cursor-help place-items-center text-neutral-600"
+            className="grid size-7 shrink-0 cursor-help place-items-center text-faint-foreground"
           >
             <Lock size={14} />
           </span>
@@ -410,28 +400,27 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
         <CopyButton state={copied.link} onClick={() => copy("link", fullUrl)} className="hidden sm:inline-flex" />
       </div>
       <div className="mt-2 flex gap-1.5 sm:hidden">
-        <CopyButton state={copied.link} onClick={() => copy("link", fullUrl)} className="h-8 flex-1" />
+        <CopyButton state={copied.link} onClick={() => copy("link", fullUrl)} size="md" className="flex-1" />
         {canNativeShare && (
-          <button type="button" onClick={shareNative}
-            className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border border-ink/10 bg-ink/5 text-xs font-medium text-neutral-200 hover:bg-ink/10"
-          >
-            <Share size={13} /> Paylaş…
-          </button>
+          <Button type="button" variant="outline" size="md" onClick={shareNative} className="flex-1">
+            <Share className="size-3.5" /> Paylaş…
+          </Button>
         )}
       </div>
       {metaParts.length > 0 && (
-        <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-2xs text-neutral-500">
-          {metaParts.flatMap((part, index) => (index === 0 ? [part] : [<span key={`sep-${index}`} className="text-neutral-700">·</span>, part]))}
+        <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-2xs text-subtle-foreground">
+          {metaParts.flatMap((part, index) => (index === 0 ? [part] : [<span key={`sep-${index}`} className="text-faint-foreground">·</span>, part]))}
         </p>
       )}
     </>
   );
 
+  // Not a SegmentedControl: that is 38px tall in a 20px label row, and titles each choice with its label instead of an example link
   const formatToggle = selected.code && link ? (
-    <div role="group" aria-label="Link biçimi" className="flex items-center gap-0.5 rounded-md border border-ink/10 bg-ink/5 p-0.5">
+    <div role="group" aria-label="Link biçimi" className="flex items-center gap-0.5 rounded-md border border-border bg-muted p-0.5">
       {[["suffix", "Kısa", `skyl.app/${alias}/${selected.code}`], ["utm", "UTM", `skyl.app/${alias}?utm_source=${selected.source}`]].map(([value, label, example]) => (
-        <button key={value} type="button" title={example} onClick={() => chooseFormat(value)}
-          className={`rounded px-2 py-0.5 text-3xs transition-colors ${format === value ? "bg-ink/10 text-neutral-200" : "text-neutral-500 hover:text-neutral-300"}`}
+        <button key={value} type="button" title={example} aria-pressed={format === value} onClick={() => chooseFormat(value)}
+          className={`rounded px-2 py-0.5 text-3xs outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring ${format === value ? "bg-accent-strong text-foreground" : "text-subtle-foreground hover:text-secondary-foreground"}`}
         >
           {label}
         </button>
@@ -441,28 +430,27 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
 
   return (
     <>
-      <div className="flex items-center gap-3 border-b border-ink/5 px-4 py-2 sm:px-5">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-skylab-400/20 bg-skylab-400/10 text-skylab-400">
-          <Share2 size={16} />
-        </div>
+      <div className="flex shrink-0 items-center gap-3 border-b border-border-subtle px-4 py-2.5 sm:px-5">
+        <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-lg border border-skylab-400/30 bg-skylab-500/10 text-skylab-300">
+          <Share2 className="size-4" />
+        </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-medium leading-snug text-neutral-100">Formu paylaş</h2>
-          {formTitle && <p className="truncate text-2xs text-neutral-500">{formTitle}</p>}
+          <DialogTitle className="leading-snug font-medium">Formu paylaş</DialogTitle>
+          {formTitle && <p className="truncate text-2xs text-subtle-foreground">{formTitle}</p>}
         </div>
-        <button type="button" onClick={onClose} aria-label="Kapat"
-          className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+        <DialogClose aria-label="Kapat"
+          className="-mr-1.5 grid size-8 shrink-0 place-items-center rounded-md text-subtle-foreground outline-hidden transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <X size={16} />
-        </button>
+          <X className="size-4" />
+        </DialogClose>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-5 overflow-y-auto p-4 scrollbar sm:grid-cols-[minmax(0,1fr)_12.5rem] sm:gap-6 sm:p-5">
         <div className="flex min-w-0 flex-col">
           {formStatus === 1 && (
-            <div className="mb-4 flex gap-2.5 rounded-lg border border-amber-400/40 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-100">
-              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-300" />
-              <span>Form şu an kapalı. Link açılıyor ama yeni yanıt alınmıyor; form yeniden açılınca aynı link çalışır.</span>
-            </div>
+            <Notice tone="warning" className="mb-4">
+              Form şu an kapalı. Link açılıyor ama yeni yanıt alınmıyor; form yeniden açılınca aynı link çalışır.
+            </Notice>
           )}
 
           <SectionLabel aside={<>{managedByEvent && <StatePill>Etkinlik linki</StatePill>}{!editing && formatToggle}</>}>Kısa link</SectionLabel>
@@ -471,47 +459,39 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
           <div className="h-5 shrink-0" />
 
           <SectionLabel>Kanal</SectionLabel>
-          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 scrollbar-hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
-            {SHARE_CHANNELS.map((item) => (
-              <button key={item.key} type="button" disabled={!link} onClick={() => setChannel(item.key)}
-                aria-label={item.label} title={item.label} aria-pressed={channel === item.key}
-                className={`${CHIP_ICON} disabled:pointer-events-none disabled:opacity-40 ${channel === item.key ? CHIP_ON : CHIP_OFF}`}
-              >
-                <ChannelIcon source={item.key} size={14} className={channel === item.key ? "" : "opacity-70"} />
-              </button>
-            ))}
-          </div>
+          {/* Native disabled reaches the toggles through the fieldset; SegmentedControl takes no disabled of its own */}
+          <fieldset disabled={!link} className={`min-w-0 transition-opacity ${link ? "" : "opacity-40"}`}>
+            <SegmentedControl aria-label="Kanal" options={CHANNEL_OPTIONS} value={channel} onValueChange={setChannel} />
+          </fieldset>
           {selected.key === "other" && (
-            <input value={customSource} onChange={(e) => setCustomSource(e.target.value)} placeholder="Kaynak adı, ör. yildiz-duyuru"
-              spellCheck={false} autoComplete="off" className={`mt-2 ${INPUT}`}
+            <Input value={customSource} onChange={(e) => setCustomSource(e.target.value)} placeholder="Kaynak adı, ör. yildiz-duyuru"
+              spellCheck={false} autoComplete="off" inputSize="sm" className="mt-2"
             />
           )}
-          <p className="mt-2 text-2xs leading-relaxed text-neutral-500">{link ? hint : "Link hazır olunca kanal seçebilirsin."}</p>
+          <p className="mt-2 text-2xs leading-relaxed text-subtle-foreground">{link ? hint : "Link hazır olunca kanal seçebilirsin."}</p>
           {selected.openUrl && fullUrl && (
             <div className="mt-2.5">
-              <a href={selected.openUrl(fullUrl, formTitle)} target="_blank" rel="noopener noreferrer" className={`${CHIP} ${CHIP_OFF}`}>
-                <ArrowUpRight size={13} className="opacity-70" /> {selected.openLabel}
-              </a>
+              <Button render={<a href={selected.openUrl(fullUrl, formTitle)} target="_blank" rel="noopener noreferrer" />} variant="outline" size="sm">
+                <ArrowUpRight className="size-3.5 opacity-70" /> {selected.openLabel}
+              </Button>
             </div>
           )}
           {selected.key !== "general" && link && (
             <>
               <button type="button" onClick={() => setDetailsOpen((open) => !open)} aria-expanded={detailsOpen}
-                className="mt-3 inline-flex items-center gap-1.5 self-start text-2xs font-medium text-neutral-500 transition-colors hover:text-neutral-300"
+                className="mt-3 inline-flex items-center gap-1.5 self-start rounded text-2xs font-medium text-subtle-foreground outline-hidden transition-colors hover:text-secondary-foreground focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <ChevronDown size={12} className={`transition-transform duration-200 ${detailsOpen ? "rotate-180" : ""}`} />
                 Kampanya ve içerik etiketi
               </button>
               {detailsOpen && (
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  <label className="flex min-w-0 flex-col gap-1 text-3xs text-neutral-500">
-                    Kampanya (utm_campaign)
-                    <input value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="ör. son-gun" spellCheck={false} autoComplete="off" className={INPUT} />
-                  </label>
-                  <label className="flex min-w-0 flex-col gap-1 text-3xs text-neutral-500">
-                    İçerik (utm_content)
-                    <input value={content} onChange={(e) => setContent(e.target.value)} placeholder="ör. hikaye" spellCheck={false} autoComplete="off" className={INPUT} />
-                  </label>
+                  <Field label="Kampanya (utm_campaign)" className="min-w-0">
+                    <Input value={campaign} onChange={(e) => setCampaign(e.target.value)} placeholder="ör. son-gun" spellCheck={false} autoComplete="off" inputSize="sm" />
+                  </Field>
+                  <Field label="İçerik (utm_content)" className="min-w-0">
+                    <Input value={content} onChange={(e) => setContent(e.target.value)} placeholder="ör. hikaye" spellCheck={false} autoComplete="off" inputSize="sm" />
+                  </Field>
                 </div>
               )}
             </>
@@ -519,25 +499,24 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
         </div>
 
         <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-3 sm:flex sm:flex-col sm:items-stretch sm:gap-2.5">
-          <div className={`grid aspect-square w-full place-items-center overflow-hidden rounded-lg ${qrSrc ? "bg-white" : qrPreview.isError ? "bg-ink/5 text-neutral-500" : "animate-pulse bg-ink/5"}`}>
+          {/* The code stays on white in both themes so every scanner reads it */}
+          <div className={`grid aspect-square w-full place-items-center overflow-hidden rounded-lg ${qrSrc ? "border border-border bg-white" : qrPreview.isError ? "bg-muted text-subtle-foreground" : ""}`}>
             {qrSrc ? (
               <div role="img" aria-label={`skyl.app/${alias} QR kodu`}
                 className="size-full bg-contain bg-center bg-no-repeat" style={{ backgroundImage: `url("${qrSrc}")` }}
               />
             ) : qrPreview.isError ? (
-              <button type="button" onClick={() => qrPreview.refetch()} aria-label="QR önizlemesini yeniden dene" title="QR önizlemesi alınamadı, yeniden dene"
-                className="grid size-8 place-items-center rounded-md transition-colors hover:bg-ink/10 hover:text-neutral-200"
-              >
-                <RotateCcw size={14} />
-              </button>
-            ) : null}
+              <IconButton icon={RotateCcw} label="QR önizlemesini yeniden dene" title="QR önizlemesi alınamadı, yeniden dene" variant="ghost" onClick={() => qrPreview.refetch()} />
+            ) : (
+              <Skeleton className="size-full rounded-lg" />
+            )}
           </div>
           <div className="flex min-w-0 flex-col gap-2.5">
-            <p className="flex min-w-0 items-center gap-1 font-mono text-3xs text-neutral-500 sm:justify-center">
+            <p className="flex min-w-0 items-center gap-1 font-mono text-3xs text-subtle-foreground sm:justify-center">
               {alias ? (
                 <>
                   <span className="truncate">skyl.app/{alias}</span>
-                  <span className="shrink-0 text-neutral-700">·</span>
+                  <span className="shrink-0 text-faint-foreground">·</span>
                   {tags.source && <ChannelIcon source={tags.source} size={11} className="shrink-0" />}
                   <span className="shrink-0">{tags.source ? sourceLabel(tags.source) : "QR"}</span>
                 </>
@@ -545,34 +524,31 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
             </p>
             <div className="grid grid-cols-[1fr_1fr_1.75rem] gap-1.5">
               {["png", "svg"].map((kind) => (
-                <button key={kind} type="button" disabled={!alias || Boolean(qrBusy)} onClick={() => downloadQr(kind)}
-                  title={kind === "png" ? "1024 px PNG" : "Baskı için vektör"}
-                  className={`${CHIP} justify-center px-2 disabled:pointer-events-none disabled:opacity-40 ${CHIP_OFF}`}
+                <Button key={kind} type="button" variant="outline" size="sm" disabled={!alias || Boolean(qrBusy)} pending={qrBusy === kind} onClick={() => downloadQr(kind)}
+                  title={kind === "png" ? "1024 px PNG" : "Baskı için vektör"} className="px-2"
                 >
-                  {qrBusy === kind ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} className="opacity-70" />}
+                  <Download className="size-3.5 opacity-70" />
                   {kind.toUpperCase()}
-                </button>
+                </Button>
               ))}
-              <button type="button" disabled={!alias} onClick={copyQr} aria-label="QR görselini kopyala" title="Görseli kopyala"
-                className={`${CHIP} justify-center px-0 disabled:pointer-events-none disabled:opacity-40 ${copied.qr === "ok" ? CHIP_ON : copied.qr === "err" ? "border-red-500/30 bg-red-500/10 text-red-300" : CHIP_OFF}`}
-              >
-                {copied.qr === "ok" ? <Check size={13} /> : copied.qr === "err" ? <CircleAlert size={13} /> : <Copy size={13} className="opacity-70" />}
-              </button>
+              <Button type="button" variant={COPY_TONE[copied.qr] ?? COPY_TONE.idle} size="icon-sm" disabled={!alias} onClick={copyQr} aria-label="QR görselini kopyala" title="Görseli kopyala">
+                {copied.qr === "ok" ? <Check className="size-3.5" /> : copied.qr === "err" ? <CircleAlert className="size-3.5" /> : <Copy className="size-3.5 opacity-70" />}
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex min-w-0 items-center gap-2 border-t border-ink/5 py-2 pl-4 pr-2.5 sm:pl-5">
-        <span className="shrink-0 text-2xs font-medium text-neutral-500">Form adresi</span>
-        <span title={longUrl} className="min-w-0 flex-1 truncate font-mono text-2xs text-neutral-400">{longUrl.replace(/^https?:\/\//, "")}</span>
-        <button type="button" onClick={() => copy("long", longUrl)} aria-label="Form adresini kopyala" title="Form adresini kopyala"
-          className={`${ICON_BUTTON} ${copied.long === "ok" ? "text-skylab-300" : ""}`}
+      <div className="flex min-w-0 shrink-0 items-center gap-2 border-t border-border-subtle bg-muted/40 py-2 pl-4 pr-2.5 sm:pl-5">
+        <span className="shrink-0 text-2xs font-medium text-subtle-foreground">Form adresi</span>
+        <span title={longUrl} className="min-w-0 flex-1 truncate font-mono text-2xs text-muted-foreground">{longUrl.replace(/^https?:\/\//, "")}</span>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={() => copy("long", longUrl)} aria-label="Form adresini kopyala" title="Form adresini kopyala"
+          className={copied.long === "ok" ? "text-skylab-300 hover:text-skylab-300" : ""}
         >
-          {copied.long === "ok" ? <Check size={13} /> : <Copy size={13} />}
-        </button>
-        <span className="hidden shrink-0 items-center gap-1.5 text-2xs text-neutral-500 sm:inline-flex">
-          {allowAnonymous ? <Users size={12} className="text-neutral-600" /> : <Lock size={12} className="text-neutral-600" />}
+          <IconSwap swapped={copied.long === "ok"} icon={Copy} swappedIcon={Check} className="size-3.5" />
+        </Button>
+        <span className="hidden shrink-0 items-center gap-1.5 text-2xs text-subtle-foreground sm:inline-flex">
+          {allowAnonymous ? <Users size={12} className="text-faint-foreground" /> : <Lock size={12} className="text-faint-foreground" />}
           {allowAnonymous ? "Anonim yanıt açık" : "Giriş gerekli"}
         </span>
       </div>
@@ -582,20 +558,10 @@ function ShareDialogBody({ formId, formTitle, formStatus, allowAnonymous, canEdi
 
 export default function FormShareDialog({ open, onClose, formId, formTitle, formStatus, allowAnonymous = false, canEdit = false }) {
   return (
-    <AnimatePresence>
-      {open && formId && (
-        <motion.div key="form-share" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex h-dvh w-dvw items-center justify-center bg-neutral-950/20 px-3 backdrop-blur-sm sm:px-4"
-        >
-          <motion.div role="dialog" aria-label="Formu paylaş"
-            initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }}
-            transition={{ duration: 0.2, ease: EASE }}
-            className="relative flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-ink/10 bg-sheet shadow-2xl"
-          >
-            <ShareDialogBody formId={formId} formTitle={formTitle} formStatus={formStatus} allowAnonymous={allowAnonymous} canEdit={canEdit} onClose={onClose} />
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <Dialog open={Boolean(open && formId)} onOpenChange={(next) => { if (!next) onClose?.(); }}>
+      <DialogContent hideClose className="sm:max-w-3xl">
+        <ShareDialogBody formId={formId} formTitle={formTitle} formStatus={formStatus} allowAnonymous={allowAnonymous} canEdit={canEdit} />
+      </DialogContent>
+    </Dialog>
   );
 }

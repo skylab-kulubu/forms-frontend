@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CircleAlert, Copy, Loader2, RotateCcw, Share2, Timer, Trash2, X } from "lucide-react";
+import { Check, CircleAlert, Copy, RotateCcw, Share2, Timer, Trash2, X } from "lucide-react";
+import { Button, Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, DialogTitle, Input, Notice, SkylabLoader } from "@skylab-kulubu/skylcn-ui";
 
 const buildShareUrl = (resource, id, token) => {
   if (typeof window === "undefined") return "";
@@ -42,22 +43,23 @@ const getRemainingLabel = (expiresAt) => {
   return `${hours}s ${minutes}dk kaldı`;
 };
 
+const COPY_STATE = {
+  idle: { Icon: Copy, text: "Kopyala", variant: "outline" },
+  success: { Icon: Check, text: "Kopyalandı", variant: "primary" },
+  error: { Icon: CircleAlert, text: "Hata", variant: "destructive" },
+};
+
+const FADE = { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+
 function CopyField({ value, copyState, onCopy, label = "Bağlantıyı kopyala" }) {
+  const { Icon, text, variant } = COPY_STATE[copyState] ?? COPY_STATE.idle;
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-ink/10 bg-black/20 pl-3 pr-1.5 py-1.5">
-      <input readOnly value={value} onFocus={(e) => e.target.select()}
-        className="flex-1 min-w-0 bg-transparent text-sm text-neutral-100 outline-none truncate"
-      />
-      <button type="button" onClick={onCopy} aria-label={label}
-        className={`shrink-0 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
-          copyState === "success" ? "border border-skylab-400/30 bg-skylab-400/10 text-skylab-300"
-          : copyState === "error" ? "border border-red-500/30 bg-red-500/10 text-red-300"
-          : "border border-ink/10 bg-ink/5 text-neutral-200 hover:bg-ink/10"
-        }`}
-      >
-        {copyState === "success" ? <Check size={13} /> : copyState === "error" ? <CircleAlert size={13} /> : <Copy size={13} />}
-        <span>{copyState === "success" ? "Kopyalandı" : copyState === "error" ? "Hata" : "Kopyala"}</span>
-      </button>
+    <div className="flex items-center gap-2">
+      <Input readOnly value={value} onFocus={(e) => e.target.select()} className="flex-1 truncate" />
+      <Button type="button" variant={variant} size="lg" onClick={onCopy} aria-label={label} className="min-w-28">
+        <Icon className="size-3.5" />
+        {text}
+      </Button>
     </div>
   );
 }
@@ -166,94 +168,75 @@ export default function ShareOverlay({
   const errorMessage = error?.message || "Bağlantı oluşturulamadı.";
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div key="share-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex h-dvh w-dvw items-center justify-center bg-neutral-950/20 backdrop-blur-sm px-4"
-        >
-          <motion.div key="share-card"
-            initial={{ opacity: 0, y: 8, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }} transition={{ duration: 0.2 }}
-            className="relative w-full max-w-xl overflow-hidden rounded-xl border border-ink/10 bg-sheet shadow-2xl"
+    <Dialog open={Boolean(open)} onOpenChange={(next) => { if (!next) onClose?.(); }}>
+      <DialogContent hideClose className="sm:max-w-xl">
+        <div className="flex items-center gap-3 border-b border-border-subtle px-5 py-2.5">
+          <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-lg border border-skylab-400/30 bg-skylab-500/10 text-skylab-300">
+            <Share2 className="size-4" />
+          </span>
+          <DialogTitle className="min-w-0 flex-1 py-1 font-medium">{title}</DialogTitle>
+          <DialogClose aria-label="Kapat"
+            className="-mr-1.5 grid size-8 shrink-0 place-items-center rounded-md text-subtle-foreground outline-hidden transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <div className="flex items-center justify-between border-b border-ink/5 px-5 py-2">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-skylab-400/20 bg-skylab-400/10 text-skylab-400">
-                  <Share2 size={16} />
-                </div>
-                <h2 className="text-base font-medium text-neutral-100">{title}</h2>
-              </div>
+            <X className="size-4" />
+          </DialogClose>
+        </div>
 
-              <button type="button" onClick={() => onClose?.()} aria-label="Kapat"
-                className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-ink/5 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-skylab-400/40"
+        <DialogBody className="flex flex-col gap-4 py-5">
+          <DialogDescription>{description}</DialogDescription>
+
+          <AnimatePresence mode="wait" initial={false}>
+            {revoked ? (
+              <motion.div key="revoked" {...FADE}>
+                <Notice tone="warning" icon={Trash2}>Bağlantı iptal edildi</Notice>
+              </motion.div>
+            ) : isPending ? (
+              <motion.div key="loading" {...FADE} role="status"
+                className="flex items-center justify-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-4 text-sm text-muted-foreground"
               >
-                <X size={16} />
-              </button>
-            </div>
+                <SkylabLoader size={14} />
+                <span>Bağlantı oluşturuluyor...</span>
+              </motion.div>
+            ) : isError ? (
+              <motion.div key="error" {...FADE}>
+                <Notice tone="danger"
+                  action={(
+                    <Button type="button" variant="outline" size="sm" onClick={handleRetry}>
+                      <RotateCcw className="size-3" /> Tekrar Dene
+                    </Button>
+                  )}
+                >
+                  {errorMessage}
+                </Notice>
+              </motion.div>
+            ) : shareUrl ? (
+              <motion.div key="ready" {...FADE} className="flex flex-col gap-3">
+                <CopyField value={shareUrl} copyState={copyState} onCopy={handleCopy} />
 
-            <div className="px-5 py-5 space-y-4">
-              <p className="text-xs leading-relaxed text-neutral-400">{description}</p>
-
-              <AnimatePresence mode="wait" initial={false}>
-                {revoked ? (
-                  <motion.div key="revoked" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-4 text-sm text-amber-200"
-                  >
-                    <Trash2 size={14} />
-                    <span>Bağlantı iptal edildi</span>
-                  </motion.div>
-                ) : isPending ? (
-                  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-ink/10 bg-black/20 px-3 py-4 text-sm text-neutral-400"
-                  >
-                    <Loader2 size={14} className="animate-spin" />
-                    <span>Bağlantı oluşturuluyor...</span>
-                  </motion.div>
-                ) : isError ? (
-                  <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-3 text-sm text-red-200"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <CircleAlert size={14} className="shrink-0" />
-                      <span className="truncate">{errorMessage}</span>
+                {(expiresAt || remaining) && (
+                  <div className="flex items-center justify-between gap-2 text-2xs text-subtle-foreground">
+                    <div className="inline-flex items-center gap-1.5">
+                      <Timer className="size-3" />
+                      <span>{remaining ?? "Geçerli"}</span>
                     </div>
-                    <button type="button" onClick={handleRetry}
-                      className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-ink/10 bg-ink/5 px-2 py-1 text-2xs font-medium text-neutral-200 hover:bg-ink/10"
-                    >
-                      <RotateCcw size={12} /> Tekrar Dene
-                    </button>
-                  </motion.div>
-                ) : shareUrl ? (
-                  <motion.div key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
-                    <CopyField value={shareUrl} copyState={copyState} onCopy={handleCopy} />
-
-                    {(expiresAt || remaining) && (
-                      <div className="flex items-center justify-between gap-2 text-2xs text-neutral-500">
-                        <div className="inline-flex items-center gap-1.5">
-                          <Timer size={12} className="text-neutral-500" />
-                          <span>{remaining ?? "Geçerli"}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {expiresLabel && (
-                            <span className="truncate text-neutral-600">{expiresLabel} tarihinde sona erer</span>
-                          )}
-                          {revokeMutate && (
-                            <button type="button" onClick={handleRevoke} disabled={isRevoking}
-                              className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-500/5 px-2 py-1 text-2xs font-medium text-red-300 hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {isRevoking ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
-                              <span>İptal Et</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+                    <div className="flex min-w-0 items-center gap-3">
+                      {expiresLabel && (
+                        <span className="truncate text-faint-foreground">{expiresLabel} tarihinde sona erer</span>
+                      )}
+                      {revokeMutate && (
+                        <Button type="button" variant="destructive" size="sm" pending={isRevoking} onClick={handleRevoke}>
+                          <Trash2 className="size-3" />
+                          İptal Et
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

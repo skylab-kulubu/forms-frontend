@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 import { ArrowRightLeft } from "lucide-react";
-import SearchPicker from "@/app/components/utils/SearchPicker";
+import { Button, Combobox } from "@skylab-kulubu/skylcn-ui";
 import Avatar from "@/app/components/utils/Avatar";
 import ApprovalOverlay from "./ApprovalOverlay";
 import { useUserByMailQuery } from "@/lib/hooks/useUser";
 import { useTransferOwnershipMutation } from "@/lib/hooks/useOwnership";
 import { DELETED_USER_ID } from "@/lib/deleted-user";
-import { FOCUS_RING, PANEL_SECTION, PanelButton, PanelInput, PanelNotice, PillBadge, ROW, SectionHeader } from "./utils/SidePanel";
-
-const DANGER_ACTION = `group flex h-7 flex-1 items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 text-2xs font-medium text-red-300 transition-colors hover:bg-red-500/20 hover:text-red-200 ${FOCUS_RING} disabled:pointer-events-none disabled:opacity-40`;
+import { PANEL_SECTION, PanelButton, PanelNotice, PillBadge, ROW, SectionHeader } from "./utils/SidePanel";
 
 function personName(user) {
     const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.fullName;
@@ -22,47 +19,27 @@ function personName(user) {
 function OwnerPicker({ excludeIds, onSelect }) {
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [open, setOpen] = useState(false);
-    const rootRef = useRef(null);
 
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(search), 300);
         return () => clearTimeout(timer);
     }, [search]);
 
-    useEffect(() => {
-        const handleClick = (event) => { if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false); };
-        document.addEventListener("mousedown", handleClick);
-        return () => document.removeEventListener("mousedown", handleClick);
-    }, []);
-
     const { data, isLoading } = useUserByMailQuery({ email: debouncedSearch, enabled: debouncedSearch.length > 1 });
     const users = (Array.isArray(data) ? data : data?.data || []).filter((user) => user?.id && !excludeIds.includes(user.id));
-
-    const handleSelect = (user) => {
-        onSelect(user);
-        setOpen(false);
-        setSearch("");
-    };
+    // The server is asked from two letters on, so shorter input lists nothing rather than stale results
+    const searching = search.length >= 2;
+    const items = searching ? users.map((user) => ({ value: user.id, label: personName(user), hint: user.email })) : [];
 
     return (
-        <div ref={rootRef} className="relative">
-            <PanelInput value={search} onChange={(event) => { setSearch(event.target.value); setOpen(true); }} onFocus={() => setOpen(true)}
-                placeholder="Yeni sahibi e-posta ile ara..." aria-label="Yeni sahibi e-posta ile ara"
-            />
-            <AnimatePresence>
-                {open && search.length >= 2 && (
-                    <SearchPicker searchValue={search} onSearchChange={setSearch} items={users} itemsPerPage={4} activeItemId={null} getItemId={(user) => user.id} onSelect={handleSelect} searchable={false} loading={isLoading} footerText={isLoading ? "Aranıyor..." : "Listeden yeni sahibi seçiniz."} showClear={false} className="absolute top-full left-0 mt-1 w-full"
-                        renderItem={(user, { active, onSelect: select }) => (
-                            <button type="button" onClick={select} className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition hover:bg-ink/5 ${active ? "bg-ink/10 text-neutral-100" : "text-neutral-200"}`}>
-                                <Avatar name={personName(user)} email={user.email} photoUrl={user.profilePictureUrl} size="md" />
-                                <div className="flex-1 min-w-0"><p className="font-medium leading-tight truncate">{personName(user)}</p><p className="text-2xs text-neutral-500 truncate">{user.email}</p></div>
-                            </button>
-                        )}
-                    />
-                )}
-            </AnimatePresence>
-        </div>
+        <Combobox items={items} value={null} size="sm" onSearch={setSearch}
+            loading={searching && (isLoading || search !== debouncedSearch)}
+            onValueChange={(id) => {
+                const user = users.find((item) => item.id === id);
+                if (user) onSelect(user);
+            }}
+            placeholder="Yeni sahibi e-posta ile ara..." aria-label="Yeni sahibi e-posta ile ara"
+        />
     );
 }
 
@@ -87,22 +64,22 @@ export function OwnershipTransferControls({ kind, itemId, excludeIds = [], prese
         <div className="space-y-3">
             {target ? (
                 <>
-                    <div className={`${ROW} flex items-center justify-between gap-3 border-ink/10 px-3 py-2.5`}>
+                    <div className={`${ROW} flex items-center justify-between gap-3 border-border px-3 py-2.5`}>
                         <div className="flex min-w-0 flex-1 items-center gap-3">
                             <Avatar name={personName(target)} email={target.email} photoUrl={target.profilePictureUrl} size="md" />
                             <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-neutral-100">{personName(target)}</p>
-                                <p className="truncate text-2xs text-neutral-500">{target.email}</p>
+                                <p className="truncate text-sm font-semibold text-foreground">{personName(target)}</p>
+                                <p className="truncate text-2xs text-subtle-foreground">{target.email}</p>
                             </div>
                         </div>
                         <PillBadge>Yeni sahip</PillBadge>
                     </div>
                     <div className="flex gap-2">
                         <PanelButton onClick={() => setTarget(null)} disabled={transferMutation.isPending} className="flex-1">Vazgeç</PanelButton>
-                        <button type="button" disabled={transferMutation.isPending} onClick={() => setConfirmOpen(true)} className={DANGER_ACTION}>
-                            <ArrowRightLeft size={13} className="shrink-0" />
+                        <Button type="button" variant="destructive" size="sm" disabled={transferMutation.isPending} onClick={() => setConfirmOpen(true)} className="flex-1">
+                            <ArrowRightLeft className="size-3.5" />
                             Devret
-                        </button>
+                        </Button>
                     </div>
                 </>
             ) : (
