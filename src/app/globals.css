@@ -160,7 +160,7 @@ body {
   --color-neutral-600: #8a847d;
   --color-neutral-700: #cfc9c1;
   --color-neutral-800: #e6e1db;
-  --color-neutral-900: #fdfcfa;
+  --color-neutral-900: #f6f4f1;
   --color-neutral-950: #ece8e3;
   --color-red-100: #7f1d1d;
   --color-red-200: #991b1b;
@@ -627,7 +627,7 @@ body {
 
 /* The atmosphere on a light page: the same lilac light, fainter, on the page colour and without stars.
    The landing keeps its night sky inside data-theme="dark", so these stop at a dark subtree. */
-[data-theme="light"] { --sl-bg: #fdfcfa; }
+[data-theme="light"] { --sl-bg: #f6f4f1; }
 [data-theme="dark"] { --sl-bg: #08070b; }
 [data-theme="light"] .bg-layers:not([data-theme="dark"] *) {
   background:
