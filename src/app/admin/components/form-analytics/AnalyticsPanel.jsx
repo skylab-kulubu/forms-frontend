@@ -180,7 +180,7 @@ export default function AnalyticsPanel({ form, analytics, wideAnalytics = null, 
         {canPie ? (
           <div className="flex items-center justify-between">
             <span className="text-2xs text-neutral-500">Gösterim</span>
-            <SegmentedControl aria-label="Gösterim" options={VIEWS} value={view} onValueChange={onView} />
+            <SegmentedControl size="sm" aria-label="Gösterim" options={VIEWS} value={view} onValueChange={onView} />
           </div>
         ) : null}
 

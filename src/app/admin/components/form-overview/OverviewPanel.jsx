@@ -101,7 +101,7 @@ function TrendSection({ metrics }) {
     <section className={PANEL_SECTION}>
       <div className="flex items-center justify-between gap-3">
         <p className="font-semibold text-neutral-100">Cevap trendi</p>
-        <SegmentedControl aria-label="Aralık" options={segmentsOf(TREND_RANGES.filter(([key]) => key !== "life" || life))} value={mode} onValueChange={setPicked} />
+        <SegmentedControl size="sm" aria-label="Aralık" options={segmentsOf(TREND_RANGES.filter(([key]) => key !== "life" || life))} value={mode} onValueChange={setPicked} />
       </div>
       <div className="flex items-baseline gap-2">
         <span className="text-2xl font-semibold leading-none tabular-nums text-neutral-50">{count}</span>
@@ -183,7 +183,7 @@ function ShareSection({ formId, metrics, stepForm, canShare, onShare, reviewed =
             <>
               <span className="text-3xs text-neutral-600">Son 90 gün</span>
               {decided ? (
-                <SegmentedControl aria-label="Kanal görünümü" options={segmentsOf([["clicks", "Tıklama"], ["decisions", "Karar"]])} value={view} onValueChange={setChannelView} />
+                <SegmentedControl size="sm" aria-label="Kanal görünümü" options={segmentsOf([["clicks", "Tıklama"], ["decisions", "Karar"]])} value={view} onValueChange={setChannelView} />
               ) : null}
             </>
           )}>Kanallar</Hairline>
