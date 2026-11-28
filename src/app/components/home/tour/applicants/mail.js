@@ -61,7 +61,6 @@ const layout = (inner, reason) => `<div style="background-color:${C.bg};font-fam
 const greeting = `Merhaba ${PERSON.first},`;
 
 export const APPLICATION = "Seçme başvurusu";
-export const TASK = "Kod ödevi";
 
 function received(sentAt) {
   const list = [
@@ -106,8 +105,6 @@ export function mailOf(key, info) {
       return { subject: `Cevabınızda düzeltme istendi · ${APPLICATION}`, preview: `${APPLICATION} cevabınızda düzeltme istedik.`, at: info.at, html: returned(info.at, info.note) };
     case "approved1":
       return { subject: `Sonraki adıma geçtiniz · ${APPLICATION}`, preview: `${APPLICATION} cevabınızı onayladık.`, at: info.at, html: approved(APPLICATION, info.at, info.note) };
-    case "approved2":
-      return { subject: `Sonraki adıma geçtiniz · ${TASK}`, preview: `${TASK} cevabınızı onayladık.`, at: info.at, html: approved(TASK, info.at, info.note) };
     default:
       return null;
   }

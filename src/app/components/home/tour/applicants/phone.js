@@ -6,12 +6,10 @@ import { createMailSheet, mailOf, mailWindow } from "./mail.js";
 const INTRO_KEY = "skyforms:intro";
 const TEAM = "Frontend";
 const STACK = ["0", "1", "4"];
-const SLOTS = ["0", "2"];
-const PLACE = "Yüz yüze, B-204";
 
 export function createPhone(actor, IDS, mode = {}, { ghost = null, control = null } = {}) {
   const compact = Boolean(mode.compact);
-  const { FA1, FA2, FA3, RUN } = IDS;
+  const { FA1, FA2, RUN } = IDS;
 
   const SCREENS = [
     { kind: "form1", url: FA1, phase: "fresh", until: BEAT.submit1 },
@@ -20,16 +18,13 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
     { kind: "status1b", url: FA1, phase: "sent2", until: BEAT.mail3.cta },
     { kind: "gate", url: FA2, phase: "approved1", until: BEAT.start },
     { kind: "task", url: FA2, phase: "running", until: BEAT.submit3 },
-    { kind: "status2", url: FA2, phase: "sent3", until: BEAT.mail4.cta },
-    { kind: "form3", url: FA3, phase: "approved2", until: BEAT.submit4 },
-    { kind: "status3", url: FA3, phase: "sent4", until: Infinity },
+    { kind: "status2", url: FA2, phase: "sent3", until: Infinity },
   ];
   const indexAt = (u) => SCREENS.findIndex((screen) => u < screen.until);
 
   const phaseFor = (kind, u) => {
     if (kind === "status1") return u >= BEAT.returned ? "returned" : "sent1";
     if (kind === "status1b") return u >= BEAT.approved1 ? "approved1" : "sent2";
-    if (kind === "status2") return u >= BEAT.approved2 ? "approved2" : "sent3";
     return SCREENS.find((screen) => screen.kind === kind).phase;
   };
 
@@ -67,10 +62,6 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
     { u: BEAT.mail3.cta + 0.1, f: rest({ ry: -5 }) },
     { u: BEAT.start, f: near({ ry: -3 }) },
     { u: BEAT.submit3, f: rest({ ry: -4 }) },
-    { u: T.meet - 0.1, f: rest({ ry: -7, rx: 2 }) },
-    { u: BEAT.mail4.open, f: near() },
-    { u: BEAT.mail4.cta + 0.1, f: rest({ ry: -5 }) },
-    { u: BEAT.submit4 + 0.1, f: rest({ ry: -3 }) },
     { u: T.end - 0.3, f: rest({ ry: -3 }) },
     { u: T.end, f: flat({ rx: 2, ry: -5 }) },
     { u: T.end + 0.3, f: flat() },
@@ -111,7 +102,6 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
     markIntro(FA1, 1, true);
     markIntro(FA1, 2, screen.kind === "revise" ? u >= BEAT.revise : true);
     markIntro(FA2, 1, screen.kind === "gate" ? u >= BEAT.gate : true);
-    markIntro(FA3, 1, screen.kind === "form3" ? u >= BEAT.slots[0] - 0.12 : true);
     if (actor.cover) actor.cover.style.backgroundImage = screen.kind === "form1" && ghost ? ghost : "";
     actor.load(`/${screen.url}`, readyCheck);
     pending.at = performance.now();
@@ -224,24 +214,10 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
     if (u >= BEAT.begin) clickOnce("begin", buttonByText("Görevi başlat"));
   }
 
-  function meet(u, dt, now) {
-    const form = formOf();
-    if (!form) return;
-    if (form.state.intro) {
-      if (u >= BEAT.slots[0] - 0.08) form.endIntro?.();
-      return;
-    }
-    const picked = SLOTS.slice(0, Math.round(seg(u, BEAT.slots[0], BEAT.slots[1]) * SLOTS.length));
-    if (typeTick(now)) values([["c1", picked], ["c2", u >= BEAT.place ? PLACE : ""]]);
-    if (u < BEAT.slots[0] - 0.04) scrollTo(scroller(), 0, dt, 0.22);
-    else spot(u < BEAT.place + 0.02 ? "c1" : "submit", dt);
-  }
-
   const FINAL = {
     form1: () => [["a3", TEAM], ["a4", true], ["a5", TEXT.projects], ["a6", TEXT.githubWrong], ["a7", STACK]],
     revise: () => [["a6", TEXT.github]],
     task: () => [["b1", TEXT.repo], ["b2", TEXT.summary]],
-    form3: () => [["c1", SLOTS], ["c2", PLACE]],
   };
 
   function advance(from, u, now) {
@@ -288,7 +264,6 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
     { key: "received", beat: BEAT.mail1, info: () => ({ at: stampOf("sent1") }) },
     { key: "returned", beat: BEAT.mail2, info: () => ({ at: stampOf("returned"), note: NOTES.fix }) },
     { key: "approved1", beat: BEAT.mail3, info: () => ({ at: stampOf("approved1"), note: NOTES.pass1 }) },
-    { key: "approved2", beat: BEAT.mail4, info: () => ({ at: stampOf("approved2"), note: NOTES.pass2 }) },
   ];
   const built = new Map();
   const mailAt = (u) => {
@@ -334,8 +309,6 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
     ...tap(at.banner, BEAT.mail3.open), ...tap(at.cta, BEAT.mail3.cta),
     ...tap(at.begin, BEAT.begin), ...tap(at.start, BEAT.start),
     ...tap(at.submit, BEAT.submit3),
-    ...tap(at.banner, BEAT.mail4.open), ...tap(at.cta, BEAT.mail4.cta),
-    ...tap(at.submit, BEAT.submit4),
   ];
 
   function update(u, dt, now, target = u) {
@@ -383,7 +356,6 @@ export function createPhone(actor, IDS, mode = {}, { ghost = null, control = nul
     else if (kind === "revise") formOne(u, dt, now, 2);
     else if (kind === "gate") gate(u, dt);
     else if (kind === "task") task(u, dt, now);
-    else if (kind === "form3") meet(u, dt, now);
     else scrollTo(scroller(), 0, dt, 0.2);
   }
 

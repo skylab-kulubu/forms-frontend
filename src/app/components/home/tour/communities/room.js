@@ -1,4 +1,4 @@
-import { OFF, R, bleed, crop, handAt, lerp, panelShot, part, scrollSpot, scrollTo, seg, shot, slot, splitArea, stint, throttle, typed } from "../film/engine.js";
+import { R, bleed, crop, handAt, lerp, panelShot, part, scrollSpot, scrollTo, seg, shot, slot, splitArea, stint, throttle, typed } from "../film/engine.js";
 import { T } from "./script.js";
 
 const RV = T.review;
@@ -58,11 +58,9 @@ export function createRoom(actor, IDS, server, mode = {}) {
   const before = () => shot(actor, all(), { pad: 6, max: 0.7, rx: 5, ry: -30, dx: 0.55, z: -420, o: 0 });
   const gone = () => shot(actor, all(), { pad: 6, max: 0.5, rx: 4, ry: 30, dx: -0.6, shade: 0.7, z: -500, o: 0 });
 
-  const hiddenLeft = () => slot(actor, OFF.after);
   const trackCompact = [
     ...stint(actor, RV, RV + 1.06),
-    ...stint(actor, ST, T.share),
-    { u: T.end - 0.1, f: hiddenLeft },
+    ...stint(actor, ST, T.end - 0.14),
   ];
 
   const whole = (options) => () => slot(actor, options);
@@ -73,9 +71,8 @@ export function createRoom(actor, IDS, server, mode = {}) {
     { u: APPROVE_AT + 0.2, f: whole({ shade: 0.62, z: -90 }) },
     { u: ST - 0.04, f: whole({ shade: 0.62, z: -90 }) },
     { u: ST + 0.12, f: whole() },
-    { u: T.share - 0.26, f: whole() },
-    { u: T.share - 0.04, f: whole({ o: 0, z: -220, shade: 0.6 }) },
-    { u: T.end - 0.1, f: whole({ o: 0, z: -220, shade: 0.6 }) },
+    { u: T.end - 0.26, f: whole() },
+    { u: T.end - 0.04, f: whole({ o: 0, z: -220, shade: 0.6 }) },
     { u: T.end + 0.22, f: fan },
   ];
 
@@ -85,9 +82,8 @@ export function createRoom(actor, IDS, server, mode = {}) {
     { u: ST - 0.22, f: beside(-0.8) },
     { u: ST - 0.02, f: full(-0.8) },
     { u: FL - 0.02, f: full(-2.2) },
-    { u: T.share - 0.26, f: full(-0.8) },
-    { u: T.share - 0.04, f: gone },
-    { u: T.end - 0.1, f: gone },
+    { u: T.end - 0.26, f: full(-0.8) },
+    { u: T.end - 0.04, f: gone },
     { u: T.end + 0.22, f: () => shot(actor, all(), { max: 0.5, rx: 5, ry: 0, z: -320, area: part(0.2, 0, 0.6, 0.5) }) },
   ];
 
@@ -213,7 +209,7 @@ export function createRoom(actor, IDS, server, mode = {}) {
       Promise.resolve(room.switchMode(mode, patch)).catch(() => {});
       return;
     }
-    if (u > (mapped ? FL - 0.04 : T.share + 0.1)) {
+    if (u > (mapped ? FL - 0.04 : T.end + 0.1)) {
       actor.setHand(null);
       return;
     }
@@ -275,7 +271,7 @@ export function createRoom(actor, IDS, server, mode = {}) {
       return;
     }
 
-    if (canvas) scrollTo(canvas, lerp(0, Math.min(canvas.scrollHeight - canvas.clientHeight, 760), seg(u, FL + 0.3, T.share - 0.34)), dt, 0.22);
+    if (canvas) scrollTo(canvas, lerp(0, Math.min(canvas.scrollHeight - canvas.clientHeight, 760), seg(u, FL + 0.3, T.end - 0.34)), dt, 0.22);
   }
 
   const pending = () => Boolean(switching) || Boolean(actor.ready && server.responseId && actor.win.__formsTour?.room?.route.mode === "response" && actor.win.__formsTour?.room.route.responseId !== server.responseId);

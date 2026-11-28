@@ -1,9 +1,8 @@
-import { Actor, M, REDUCED, RIM, clamp, ease, evalTrack, lerp, seg, setStage, visibleOf } from "../film/engine.js";
-import { CAPTIONS, T } from "./script.js";
+import { Actor, M, REDUCED, RIM, clamp, ease, evalTrack, lerp, retime, seg, setStage, visibleOf } from "../film/engine.js";
+import { CAPTIONS as SCRIPT, SPAN, T } from "./script.js";
 import { createStudio } from "./studio.js";
 import { ANSWERS, SUBMIT_AT, createPhone } from "./phone.js";
 import { APPROVE_AT, NOTE, createRoom } from "./room.js";
-import { createShare } from "./share.js";
 import { createFlow } from "./flow.js";
 import { createCommunitiesServer } from "@/lib/demo/server/communities";
 import { demoBackend } from "@/lib/demo/server/serve";
@@ -57,13 +56,18 @@ function headerBand() {
   return bar ? Math.max(0, Math.round(bar.getBoundingClientRect().bottom + 8)) : 0;
 }
 
-export { CAPTIONS, T };
+const TIME = retime({ T, CAPTIONS: SCRIPT, SPAN });
+const TOUR_T = TIME.T;
+
+export { TOUR_T as T };
+export const CAPTIONS = TIME.CAPTIONS;
 
 const WIDE_AT = T.build + 0.5;
 
-export const REPLAY_AT = T.build + 0.3;
+export const REPLAY_AT = TIME.map.tour(T.build + 0.3);
 
-export const framed = (u) => (u >= T.end - 0.04 ? 0 : ease(seg(u, 0.34, T.build + 0.22)));
+const framedAt = (u) => (u >= T.end - 0.04 ? 0 : ease(seg(u, 0.34, T.build + 0.22)));
+export const framed = (t) => framedAt(TIME.map.film(t));
 
 export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = null, compact = false, fit = false, fill = false, band = null, hold = false }) {
   const state = { u: 0, v: 0, target: 0, last: 0, px: 0, py: 0, tx: 0, ty: 0, live: null, flat: 0, running: false, raf: 0, lead: 556, fitAt: 0, hold };
@@ -74,7 +78,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
   const bled = fill && !fit && !compact;
   const top = bled ? band ?? headerBand() : 0;
   const area = (u) => {
-    const box = areaOf(u);
+    const box = areaOf(TIME.map.tour(u));
     return box.top === undefined ? { ...box, top } : box;
   };
 
@@ -86,15 +90,12 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
 
   const deskA = new Actor(world, "deskA", DESK);
   const deskB = new Actor(world, "deskB", bled ? sideSize() : DESK);
-  const deskC = new Actor(world, "deskC", bled ? sideSize() : DESK);
-  const deskD = new Actor(world, "deskD", bled ? sideSize() : DESK);
   const handset = new Actor(world, "phone", compact ? DESK : { w: 390, h: Math.round(clamp(M.S.h - 90, 560, 800)), phone: true });
-  if (compact) [deskA, deskB, deskC, deskD, handset].forEach((actor) => { actor.touch = true; });
+  if (compact) [deskA, deskB, handset].forEach((actor) => { actor.touch = true; });
   const deskE = bled ? new Actor(world, "deskE", DESK) : null;
-  [deskA, deskB, deskC, deskE].forEach((actor) => actor?.bind(binding("admin")));
-  deskD.bind(binding("komsu"));
+  [deskA, deskB, deskE].forEach((actor) => actor?.bind(binding("admin")));
   handset.bind(binding("aday"));
-  if (bled) [deskA, deskB, deskC, deskD, deskE].forEach((actor) => {
+  if (bled) [deskA, deskB, deskE].forEach((actor) => {
     actor.bleed = true;
     actor.plane.classList.add("is-fill");
   });
@@ -102,20 +103,17 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
   const studio = createStudio(deskA, IDS, mode);
   const phone = createPhone(handset, IDS, mode);
   const room = createRoom(deskB, IDS, server, mode);
-  const share = createShare(deskC, deskD, IDS, mode, () => demo().control.resetShare());
   const flow = deskE ? createFlow(deskE, IDS) : null;
-  const directors = flow ? [studio, phone, room, share, flow] : [studio, phone, room, share];
+  const directors = flow ? [studio, phone, room, flow] : [studio, phone, room];
 
   const tracks = [
     [deskA, studio.track],
     [deskB, room.track],
-    [deskC, share.trackOwner],
-    [deskD, share.trackGuest],
     [handset, phone.track],
   ];
   if (flow) tracks.push([deskE, flow.track]);
 
-  const loaded = { studio: false, phone: false, share: false, flow: false };
+  const loaded = { studio: false, phone: false, flow: false };
 
   async function stepServer(want) {
     const { applicant } = demo().control;
@@ -165,10 +163,8 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
       mode.sheets = size.w < 1024;
       mode.whole = Boolean(size.whole);
       [deskA, handset, deskE].forEach((actor) => actor?.setSize(size.w, size.h));
-      [deskB, deskC, deskD].forEach((actor) => {
-        const own = bled ? sideSize(actor.rim ?? RIM) : size;
-        actor.setSize(own.w, own.h);
-      });
+      const side = bled ? sideSize(deskB.rim ?? RIM) : size;
+      deskB.setSize(side.w, side.h);
     }
     const origin = `${M.V.x + M.V.w / 2}px ${M.V.y + M.V.h / 2}px`;
     scene.style.perspectiveOrigin = origin;
@@ -182,16 +178,13 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
       if (u < T.review - 0.06) return handset;
       if (u < APPROVE_AT + 0.2) return deskB;
       if (u < T.stats - 0.06) return handset;
-      if (u < T.share - 0.06) return deskB;
-      return u < T.share + 0.72 ? deskC : deskD;
+      return deskB;
     }
     if (u < T.live + 0.44) return deskA;
     if (u < T.review - 0.2) return handset;
     if ((mode.fit || mode.fill) && u >= APPROVE_AT + 0.14 && u < T.stats + 0.02) return handset;
-    if (u < (flow ? T.flow - 0.08 : T.share - 0.15)) return deskB;
-    if (flow && u < T.share - 0.15) return deskE;
-    if (u < T.share + 0.72) return deskC;
-    return deskD;
+    if (!flow || u < T.flow - 0.08) return deskB;
+    return deskE;
   }
 
   function floatOf(actor, u) {
@@ -199,7 +192,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
     if (mode.fill) return actor === handset && ((u > T.fill - 0.2 && u < T.review - 0.36) || (u > APPROVE_AT + 0.2 && u < T.stats - 0.1)) ? 0.35 : 0;
     if (actor === deskA && u < T.build + 0.1) return 1 - seg(u, 0.4, T.build + 0.1);
     if (actor === handset && u > T.fill - 0.2 && u < T.review - 0.36) return 0.35;
-    if (u > T.end + 0.1 && actor !== deskC) return 0.5 * seg(u, T.end + 0.1, T.end + 0.3);
+    if (u > T.end + 0.1) return 0.5 * seg(u, T.end + 0.1, T.end + 0.3);
     return 0;
   }
 
@@ -300,10 +293,6 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
       loaded.flow = true;
       flow.load();
     }
-    if (!loaded.share && u >= T.share - 1.4) {
-      loaded.share = true;
-      share.load();
-    }
     if (loaded.phone && !state.live) syncServer(u);
 
     const seconds = now / 1000;
@@ -326,7 +315,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
     });
     if (mode.fill && now - state.fitAt > 400) {
       state.fitAt = now;
-      let moved = [deskA, deskB, deskC, deskD, deskE].filter((actor) => actor?.measure()).length > 0;
+      let moved = [deskA, deskB, deskE].filter((actor) => actor?.measure()).length > 0;
       const lead = deskA.ready ? Math.round(studio.regions.center().x) : state.lead;
       if (!mode.whole && Math.abs(lead - state.lead) > 3) {
         state.lead = lead;
@@ -338,7 +327,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
 
     if (!state.live) directors.forEach((director) => director.update(u, dt, now));
 
-    onFrame?.(u, elapsed);
+    onFrame?.(TIME.map.tour(u), elapsed);
     state.raf = requestAnimationFrame(frame);
   }
 
@@ -376,23 +365,23 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
   }
 
   return {
-    T, CAPTIONS, state, server, compact, fit: mode.fit, mode,
-    get u() { return state.u; },
-    get target() { return state.target; },
+    T: TOUR_T, CAPTIONS, state, server, compact, fit: mode.fit, mode,
+    get u() { return TIME.map.tour(state.u); },
+    get target() { return TIME.map.tour(state.target); },
     get live() { return Boolean(state.live); },
     get ready() { return deskA.ready; },
     get covered() { return Boolean(deskA.cover); },
     get held() { return state.hold; },
-    setTarget(u) { state.target = clamp(u, 0, T.total); },
-    jump(u) {
-      state.target = clamp(u, 0, T.total);
+    setTarget(t) { state.target = clamp(TIME.map.film(t), 0, T.total); },
+    jump(t) {
+      state.target = clamp(TIME.map.film(t), 0, T.total);
       state.u = state.target;
       state.v = 0;
     },
     lead: () => leadAt(state.u),
     settled: () => Math.abs(state.target - state.u) < 0.0005 && !server.busy && tracks.every(([actor]) => !actor.url || actor.ready) && !directors.some((director) => director.pending?.()),
     setLive, layout, start, stop, destroy, release,
-    actors: { deskA, deskB, deskC, deskD, handset, ...(deskE ? { deskE } : {}) },
-    directors: { studio, phone, room, share, ...(flow ? { flow } : {}) },
+    actors: { deskA, deskB, handset, ...(deskE ? { deskE } : {}) },
+    directors: { studio, phone, room, ...(flow ? { flow } : {}) },
   };
 }

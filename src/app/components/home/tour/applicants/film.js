@@ -1,7 +1,7 @@
-import { Actor, M, REDUCED, clamp, ease, evalTrack, lerp, seg, setStage, visibleOf } from "../film/engine.js";
+import { Actor, M, REDUCED, clamp, ease, evalTrack, lerp, retime, seg, setStage, visibleOf } from "../film/engine.js";
 import { IDS, createApplicantsServer } from "@/lib/demo/server/applicants";
 import { demoBackend } from "@/lib/demo/server/serve";
-import { CAPTIONS, T } from "./script.js";
+import { CAPTIONS as SCRIPT, SPAN, T } from "./script.js";
 import { createPhone } from "./phone.js";
 import ghostPhone from "./ghost-phone.webp";
 
@@ -21,18 +21,23 @@ function phoneSize() {
   return { w: 390, h: Math.round(clamp(M.S.h - 90, 560, 800)), phone: true };
 }
 
-export { CAPTIONS, T };
+const TIME = retime({ T, CAPTIONS: SCRIPT, SPAN });
+const TOUR_T = TIME.T;
+
+export { TOUR_T as T };
+export const CAPTIONS = TIME.CAPTIONS;
 
 const WIDE_AT = T.form + 0.5;
 
-export const REPLAY_AT = T.form + 0.3;
+export const REPLAY_AT = TIME.map.tour(T.form + 0.3);
 
-export const framed = (u) => ease(seg(u, 0.34, T.form + 0.22)) * (1 - ease(seg(u, T.end - 0.32, T.end + 0.02)));
+const framedAt = (u) => ease(seg(u, 0.34, T.form + 0.22)) * (1 - ease(seg(u, T.end - 0.32, T.end + 0.02)));
+export const framed = (t) => framedAt(TIME.map.film(t));
 
 export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = null, compact = false, hold = false }) {
   const state = { u: 0, v: 0, target: 0, last: 0, px: 0, py: 0, tx: 0, ty: 0, live: null, flat: 0, running: false, raf: 0, hold };
   const area = (u) => {
-    const box = areaOf(u);
+    const box = areaOf(TIME.map.tour(u));
     return box.top === undefined ? { ...box, top: 0 } : box;
   };
 
@@ -185,7 +190,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
 
     if (!state.live && loaded.phone) phone.update(u, dt, now, clamp(state.target, 0, T.total));
 
-    onFrame?.(u, elapsed);
+    onFrame?.(TIME.map.tour(u), elapsed);
     state.raf = requestAnimationFrame(frame);
   }
 
@@ -224,16 +229,16 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
   }
 
   return {
-    T, CAPTIONS, state, compact, fit: false, mode,
-    get u() { return state.u; },
-    get target() { return state.target; },
+    T: TOUR_T, CAPTIONS, state, compact, fit: false, mode,
+    get u() { return TIME.map.tour(state.u); },
+    get target() { return TIME.map.tour(state.target); },
     get live() { return Boolean(state.live); },
     get ready() { return handset.ready; },
     get covered() { return Boolean(handset.cover); },
     get held() { return state.hold; },
-    setTarget(u) { state.target = clamp(u, 0, T.total); },
-    jump(u) {
-      state.target = clamp(u, 0, T.total);
+    setTarget(t) { state.target = clamp(TIME.map.film(t), 0, T.total); },
+    jump(t) {
+      state.target = clamp(TIME.map.film(t), 0, T.total);
       state.u = state.target;
       state.v = 0;
     },

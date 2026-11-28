@@ -8,9 +8,18 @@ export const T = {
   fix: 3.7,
   result: 5.1,
   task: 6.2,
-  meet: 7.7,
-  end: 9.1,
-  total: 9.8,
+  end: 7.7,
+  total: 8.4,
+};
+
+export const SPAN = {
+  open: 0.9,
+  form: 1.25,
+  send: 1,
+  fix: 1,
+  result: 0.75,
+  task: 1,
+  end: 0.7,
 };
 
 const F = T.form;
@@ -18,7 +27,6 @@ const S = T.send;
 const X = T.fix;
 const R = T.result;
 const K = T.task;
-const G = T.meet;
 
 export const BEAT = {
   team: F + 0.16,
@@ -41,11 +49,6 @@ export const BEAT = {
   repo: [K + 0.46, K + 0.6],
   summary: [K + 0.64, K + 0.9],
   submit3: K + 1.1,
-  approved2: G - 0.05,
-  mail4: { banner: G + 0.04, open: G + 0.16, read: [G + 0.24, G + 0.32], cta: G + 0.42 },
-  slots: [G + 0.66, G + 0.78],
-  place: G + 0.86,
-  submit4: G + 1.05,
 };
 
 export const PERSON = { name: AYSE.fullName, email: AYSE.email, first: AYSE.firstName };
@@ -64,10 +67,8 @@ export const CAPTIONS = [
   },
   {
     at: F, label: "Başvuru formu", title: "Formu doldurun",
-    text: "Afişteki QR formu açar. E-Skylab hesabıyla girdiğiniz için adınız ve e-postanız hazır gelir. Ayşe web deneyimi olduğunu işaretleyince proje ve GitHub soruları açılıyor.",
-    compactText: "Afişteki QR formu açar. E-Skylab hesabıyla girdiğiniz için adınız ve e-postanız hazır gelir.",
+    text: "Afişteki QR formu açar. E-Skylab hesabıyla girdiğinizde adınız ve e-postanız hazır gelir.",
     notes: [
-      { at: F + 0.02, text: "Ad ve e-posta hesaptan gelir" },
       { at: BEAT.web, text: "Cevaba göre yeni sorular açılır" },
       { at: BEAT.submit1 - 0.16, text: "Gönderince ne olacağı formun sonunda yazar" },
     ],
@@ -82,35 +83,23 @@ export const CAPTIONS = [
   },
   {
     at: X, label: "Düzeltme", title: "Düzeltme istenirse",
-    text: "Ekip bir cevabı eksik bulursa notuyla birlikte düzeltme isteyebilir. Ayşe'nin GitHub bağlantısı açılmıyor. E-postadaki bağlantı formu önceki cevaplarla açar, Ayşe yalnız işaretli soruyu değiştirip yeniden gönderir.",
-    compactText: "Ekip bir cevabı eksik bulursa notuyla birlikte düzeltme isteyebilir. Form önceki cevaplarla açılır, yalnız işaretli soru değişir.",
+    text: "Ekip eksik bir cevap için düzeltme isteyebilir. Form önceki cevaplarla açılır, yalnız işaretli soru değişir.",
     notes: [
       { at: BEAT.mail2.banner, text: "Ekibin notu e-postada" },
       { at: BEAT.revise, text: "İşaretli soru formda vurgulu" },
-      { at: BEAT.submit2, text: "Yeniden gönderilir" },
     ],
   },
   {
     at: R, label: "Sonuç", title: "Sonuç e-postayla gelir",
-    text: "Ekip onaylayınca notuyla birlikte bir e-posta gelir. \"Sonraki adıma geç\" bağlantısı kod ödevini açar.",
-  },
-  {
-    at: K, label: "Kod ödevi", title: "Kod ödevini başlatın",
-    text: "Ödev için 48 saat var. Süre Ayşe \"Görevi başlat\"a bastığı an işlemeye başlar ve sunucuda tutulur, sekmeyi kapatsa da devam eder. Görev metni ve teslim soruları da o zaman açılır.",
-    compactText: "Ödev için 48 saat var. Süre \"Görevi başlat\"a basınca işlemeye başlar, görev metni de o zaman açılır.",
+    text: "Onaylanınca e-postadaki bağlantı sıradaki adımı açar. Ayşe için bu 48 saatlik bir kod ödevi, son adım da görüşme.",
     notes: [
       { at: BEAT.begin, text: "Başlatmadan önce süre ve bitiş saati" },
       { at: BEAT.start + 0.04, text: "Kalan süre sayfanın üstünde" },
-      { at: BEAT.submit3, text: "Teslim ekibe gider" },
     ],
   },
   {
-    at: G, label: "Görüşme", title: "Görüşme adımı açılır",
-    text: "Ödev onaylanınca son adım açılır. Ayşe görüşme için uygun saatlerini seçip gönderir, sonucu yine e-postayla öğrenecek.",
-  },
-  {
     at: T.end, label: "İlgi alanları", title: "Neyle ilgileniyorsunuz?",
-    text: "Açılan pozisyonlardan haberdar edebilmemiz için aşağıdaki formu doldurabilirsiniz. İlginize göre başvuru açan ekip size e-postayla haber verecektir.",
+    text: "Açılan pozisyonlardan haberdar edebilmemiz için aşağıdaki formu doldurabilirsiniz.",
     actions: [{ label: "Formu doldurun", section: "interest" }, { label: "Turu baştan izleyin", restart: true, quiet: true }],
   },
 ];

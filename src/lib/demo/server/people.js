@@ -16,7 +16,6 @@ export const PEOPLE = Object.fromEntries([ME, SELIN, AHMET, EGE, DENIZ].map((use
 export const PERSONAS = {
   admin: { user: ME, username: "fatih", roles: ["skyforms:access", "skyforms:*"], realm: ["weblab"] },
   aday: { user: EGE, username: "ege", roles: [], realm: [] },
-  komsu: { user: DENIZ, username: "deniz", roles: ["skyforms:access"], realm: ["gamelab"] },
   ayse: { user: AYSE, username: "ayse", roles: [], realm: [] },
 };
 

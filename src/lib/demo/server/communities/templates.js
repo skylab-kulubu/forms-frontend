@@ -1,5 +1,5 @@
 import { DEPARTMENTS } from "@/data/presets/departments";
-import { ME, SELIN } from "../people";
+import { SELIN } from "../people";
 import { TEAMS } from "./seed";
 
 export const TEMPLATE_IDS = {
@@ -14,7 +14,6 @@ export const TEMPLATE_IDS = {
 export const SHARE_TOKEN = "paylasim-demo";
 
 const BASE = "/api/admin/forms/component-groups";
-const COPY_PREFIX = "6c1f0e2d";
 
 const SEED = [
   {
@@ -78,21 +77,10 @@ const SELIN_SHARED = {
   ],
 };
 
-const NEIGHBOUR_SEED = [
-  {
-    id: "9d3b6a70-2c1e-4f85-a7d4-6e0b9c2f1a33", title: "Oyun jamı kaydı", description: "Jam öncesi takım ve motor bilgisi.",
-    schema: [
-      { id: "j1", type: "short_text", props: { question: "Takımınızın adı", description: "", required: true, inputType: "text" } },
-      { id: "j2", type: "combobox", props: { question: "Kullanacağınız motor", description: "", required: true, allowCustom: false, choices: ["Unity", "Godot", "Unreal Engine"], preset: null } },
-    ],
-  },
-];
-
 const contract = (group, sharedBy = null) => ({ id: group.id, title: group.title, description: group.description ?? "", schema: group.schema, sharedBy });
 
 export function createTemplates() {
   const own = new Map(SEED.map((group) => [group.id, structuredClone(group)]));
-  const neighbour = { groups: structuredClone(NEIGHBOUR_SEED), copied: 0 };
   let created = 0;
   const newId = () => `5d0c4e1a-0000-4000-8000-${String(++created).padStart(12, "0")}`;
 
@@ -141,31 +129,5 @@ export function createTemplates() {
     return [404, { message: "Bulunamadı." }];
   }
 
-  function neighbourRoute(method, pathname, params) {
-    if (!pathname.startsWith(BASE)) return null;
-    const [id, action] = pathname.slice(BASE.length).split("/").filter(Boolean);
-    if (!id && method === "GET") return [200, { data: { items: neighbour.groups.map((group) => contract(group)), totalCount: neighbour.groups.length, page: 1, pageSize: 20, totalPages: 1 } }];
-    const mine = neighbour.groups.find((group) => group.id === id);
-    if (mine && action === "draft") return [200, { data: null }];
-    if (mine) return [200, { data: contract(mine) }];
-
-    if (params.get("token") !== SHARE_TOKEN) return [403, { message: "Yetkiniz yok." }];
-    const source = own.get(id);
-    if (!source) return [404, { message: "Şablon bulunamadı." }];
-    if (method === "GET" && !action) return [200, { data: contract(source, ME) }];
-    if (method === "POST" && action === "clone") {
-      const copy = { id: `${COPY_PREFIX}-0000-4000-8000-${String(++neighbour.copied).padStart(12, "0")}`, title: source.title, description: source.description, schema: structuredClone(source.schema) };
-      neighbour.groups.unshift(copy);
-      return [201, { data: contract(copy) }];
-    }
-    return [404, { message: "Bulunamadı." }];
-  }
-
-  return {
-    route,
-    neighbourRoute,
-    resetNeighbour() {
-      neighbour.groups = neighbour.groups.filter((group) => !group.id.startsWith(COPY_PREFIX));
-    },
-  };
+  return { route };
 }

@@ -20,8 +20,7 @@ export function createCommunitiesServer() {
   const studio = createStudio({ forms, formContract: admin.formContract });
   const applicant = createApplicant({ forms, workflow, responses });
 
-  const server = serve(({ persona, user, method, pathname, params, body }) => (persona === "komsu" ? templates.neighbourRoute(method, pathname, params) : null)
-    ?? database(method, pathname, params)
+  const server = serve(({ user, method, pathname, params, body }) => database(method, pathname, params)
     ?? studio.route(method, pathname, body, user)
     ?? applicant.route(method, pathname, body, user)
     ?? responses.route(method, pathname, params, body, user)
@@ -34,7 +33,6 @@ export function createCommunitiesServer() {
     control: {
       applicant: applicant.control,
       resetBuild: () => studio.resetBuild(IDS.FB),
-      resetShare: () => templates.resetNeighbour(),
       approve: (responseId, note) => responses.route("PATCH", `/api/admin/forms/responses/${responseId}/status`, null, { newStatus: 2, note }, ME),
     },
   };

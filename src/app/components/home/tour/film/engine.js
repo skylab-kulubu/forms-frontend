@@ -7,6 +7,39 @@ export const typed = (text, t) => text.slice(0, Math.round(clamp(t) * text.lengt
 export const R = (x, y, w, h) => ({ x, y, w, h });
 export const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
+export function timeMap(pairs) {
+  const outer = pairs.map(([t]) => t);
+  const inner = pairs.map(([, u]) => u);
+  const map = (from, to, value) => {
+    const last = from.length - 1;
+    if (value <= from[0]) return to[0] + value - from[0];
+    if (value >= from[last]) return to[last] + value - from[last];
+    let index = 1;
+    while (value > from[index]) index += 1;
+    return to[index - 1] + ((to[index] - to[index - 1]) * (value - from[index - 1])) / (from[index] - from[index - 1]);
+  };
+  return { film: (t) => map(outer, inner, t), tour: (u) => map(inner, outer, u) };
+}
+
+export function retime({ T, CAPTIONS, SPAN }) {
+  let at = 0;
+  const pairs = Object.entries(SPAN).map(([key, span]) => {
+    const pair = [at, T[key]];
+    at += span;
+    return pair;
+  });
+  pairs.push([at, T.total]);
+  const map = timeMap(pairs);
+  const tourT = Object.fromEntries(Object.entries(T).map(([key, u]) => [key, map.tour(u)]));
+  const captions = CAPTIONS.map((item, index) => ({
+    ...item,
+    at: map.tour(item.at),
+    span: (CAPTIONS[index + 1]?.at ?? T.total) - item.at,
+    ...(item.notes ? { notes: item.notes.map((note) => ({ ...note, at: map.tour(note.at) })) } : {}),
+  }));
+  return { map, T: tourT, CAPTIONS: captions };
+}
+
 export const PERSPECTIVE = 2200;
 export const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 export const COMPOSE = typeof Element.prototype.animate === "function";

@@ -15,7 +15,7 @@ const WARM_MS = 1200;
 const LAND_MS = 1600;
 const HOP = 1.6;
 const AWAY = 0.3;
-const PACE = { wide: 1, narrow: 0.7 };
+const PACE = { wide: 0.75, narrow: 0.7 };
 const INTRO_MS = { wide: 1700, narrow: 1300 };
 const SWAP_OUT = 140;
 const SWAP_IN = 260;
@@ -240,7 +240,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       const span = (mod.CAPTIONS[index + 1]?.at ?? mod.T.total) - item.at;
       const length = `${item.title} ${item.compactText ?? item.text}`.length;
       const read = Math.min(READ.max, Math.max(READ.min, READ.base + length / READ.chars));
-      return span / Math.max(span / STORY_RATE, read);
+      return span / Math.max((item.span ?? span) / STORY_RATE, read);
     });
 
     const onInnerKey = (event) => {

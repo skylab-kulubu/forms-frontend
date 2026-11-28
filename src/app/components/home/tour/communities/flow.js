@@ -17,8 +17,8 @@ export function createFlow(actor, IDS) {
     { u: STEP_AT + 0.16, f: pan(1.2) },
     { u: BACK_AT - 0.04, f: pan(0.6) },
     { u: BACK_AT + 0.16, f: pan(-1.6, 0.6) },
-    { u: T.share - 0.26, f: pan(-0.8) },
-    { u: T.share - 0.04, f: pan(5, 0, { o: 0, shade: 0.6 }) },
+    { u: T.end - 0.26, f: pan(-0.8) },
+    { u: T.end - 0.04, f: pan(5, 0, { o: 0, shade: 0.6 }) },
   ];
 
   const keep = (find) => {
@@ -40,7 +40,7 @@ export function createFlow(actor, IDS) {
     { u: STEP_AT - 0.02, at: step }, { u: STEP_AT, at: step, click: true },
     { u: STEP_AT + 0.12, at: park }, { u: BACK_AT - 0.14, at: park },
     { u: BACK_AT - 0.02, at: back }, { u: BACK_AT, at: back, click: true },
-    { u: BACK_AT + 0.12, at: park }, { u: T.share - 0.3, at: park },
+    { u: BACK_AT + 0.12, at: park }, { u: T.end - 0.3, at: park },
   ];
 
   function load() {
@@ -53,7 +53,7 @@ export function createFlow(actor, IDS) {
     const onMap = Boolean(actor.q("[data-map-surface]"));
     const button = wantPage === onMap ? (wantPage ? stepButton() : mapButton()) : null;
     if (button && (wantPage ? stepTick : backTick)(now)) button.click();
-    actor.setHand(u < FL - 0.6 || u > T.share + 0.1 ? null : handAt(u, HAND));
+    actor.setHand(u < FL - 0.6 || u > T.end + 0.1 ? null : handAt(u, HAND));
   }
 
   return { actor, track, load, update };

@@ -15,9 +15,22 @@ export const T = {
   review: 9.5,
   stats: 10.8,
   flow: 12.0,
-  share: 13.2,
-  end: 14.5,
-  total: 15.2,
+  end: 13.2,
+  total: 13.9,
+};
+
+export const SPAN = {
+  open: 0.9,
+  build: 2.1,
+  team: 0.95,
+  talk: 0.75,
+  theme: 0.55,
+  live: 0.45,
+  fill: 1.4,
+  review: 1.15,
+  stats: 1,
+  flow: 1.2,
+  end: 0.7,
 };
 
 const B = T.build;
@@ -62,49 +75,38 @@ export const CAPTIONS = [
     text: "Soruları alttaki Ekle menüsünden eklersiniz, bir soruya tıklayınca ayarları sağdaki panelde açılır.",
     compactText: "Soruları alttaki Ekle menüsünden eklersiniz, bir soruya tıklayınca ayarları Ayarlar bölümünde açılır.",
     notes: [
-      { at: BEAT.title[0], text: "Başlık ve açıklama yazılır" },
-      { at: BEAT.q1.open, text: "Ad ve e-posta soruları giriş yapan kişinin hesabından dolar" },
       { at: BEAT.tpl.open, text: "Ekip başvurusu şablonundan yedi bileşen birden eklenir" },
       { at: BEAT.cond - 0.1, text: "GitHub sorusu yalnız WEBLAB seçilirse açılır" },
     ],
   },
   {
     at: T.team, label: "Birlikte düzenleme", title: "Ekipçe düzenleyin",
-    text: "Selin ve Ahmet formu sizinle aynı anda düzenliyor. Kimin hangi sorunun üstünde olduğunu ve ne yazdığını o anda görürsünüz.",
+    text: "Selin ve Ahmet formu sizinle aynı anda düzenliyor. Yorumlar ilgili sorunun yanında durur, çözülünce kapanır.",
   },
   {
-    at: T.talk, label: "Yorumlar", title: "Sorunun yanında konuşun",
-    text: "Selin ekip listesine iki ekip daha eklenmesini öneriyor. Yorum ilgili sorunun yanında durur, ekipler eklenince çözüldü olarak kapanır.",
-  },
-  {
-    at: T.theme, label: "Görünüm", title: "Topluluğunuza özel tema",
-    text: "Form sayfası, gönderildi ve kapandı ekranları seçtiğiniz temayla açılır. Örnekte ARTLAB'in teması deneniyor. Topluluğunuzun renkleri ve yazı tipleriyle size de bir tema ekleyebiliriz.",
-    compactText: "Form sayfası seçtiğiniz temayla açılır. Topluluğunuz için de bir tema ekleyebiliriz.",
-  },
-  {
-    at: T.live, label: "Yayınlama", title: "Kaydedin, form yayında",
-    text: "Cevap kabulünü açıp kaydettiğinizde form yayına girer. Bağlantıyı açan kişi formu telefonundan da doldurabilir.",
+    at: T.theme, label: "Yayınlama", title: "Kaydedin, form yayında",
+    text: "Form seçtiğiniz temayla açılır, topluluğunuz için de tema ekleyebiliriz. Kaydedince yayına girer.",
+    notes: [
+      { at: BEAT.theme.open, text: "Örnekte ARTLAB teması deneniyor" },
+      { at: BEAT.accept - 0.04, text: "Cevap kabulü açılıp kaydedilir" },
+    ],
   },
   {
     at: T.fill, label: "Form sayfası", title: "Başvuran doldurur",
-    text: "Ege'nin adı ve e-postası hesabından gelir. WEBLAB'i seçince GitHub sorusu açılır, gönderdiğinde başvurusunun hangi adımda olduğunu görür.",
+    text: "Ege'nin adı ve e-postası hesabından gelir. Gönderince başvurusunun hangi adımda olduğunu görür.",
   },
   {
     at: T.review, label: "Cevaplar", title: "Cevabı değerlendirin",
-    text: "Ege'nin başvurusu WEBLAB'in listesine düşer. Onaylayınca başvuru sıradaki adıma geçer ve Ege'ye e-posta gider.",
+    text: "Başvuru WEBLAB'in listesine düşer. Onaylayınca sıradaki adıma geçer ve Ege'ye e-posta gider.",
   },
   {
     at: T.stats, label: "Analitik", title: "Cevapları sayılarla okuyun",
-    text: "Her sorunun cevap dağılımı formun üstünde görünür. Bir cevaba tıklarsanız diğer sorular yalnız o cevabı verenlere göre hesaplanır.",
+    text: "Bir cevaba tıklarsanız diğer sorular yalnız o cevabı verenlere göre hesaplanır.",
   },
   {
     at: T.flow, label: "Akışlar", title: "Adımları birbirine bağlayın",
     text: "Onaylanan başvuru sıradaki forma geçer. Kimin hangi adımda beklediğini akış sayfasında görürsünüz.",
-    fillText: "Kış kampı başvurusu üç adımdan oluşuyor. Haritada adımları ve aralarındaki yönlendirmeleri görür, bir adıma tıklayınca formunu açarsınız.",
-  },
-  {
-    at: T.share, label: "Şablonlar", title: "Soruları şablon olarak paylaşın",
-    text: "Sık kullandığınız soruları şablonda saklarsınız. Bağlantıyı alan Deniz, Kendime ekle'ye basınca şablonun bir kopyası onun hesabına geçer.",
+    fillText: "Kış kampı başvurusu üç adımdan oluşuyor. Haritada bir adıma tıklayınca formu açılır.",
   },
   {
     at: T.end, label: "SKY LAB Forms", title: "Kendi formunuzu kurun",
