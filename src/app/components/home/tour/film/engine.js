@@ -198,6 +198,8 @@ export class Actor {
     this.visible = R(0, 0, this.pw, this.ph);
     this.applied = {};
     this.hand = null;
+    this.onChange = null;
+    this.watcher = null;
 
     this.plane = document.createElement("div");
     this.plane.className = phone ? "film-plane film-phone" : "film-plane";
@@ -310,6 +312,9 @@ export class Actor {
     style.textContent = `html { scrollbar-width: none; } ::-webkit-scrollbar { width: 0; height: 0; } ${safe}${cursors}[data-studio-page], [data-studio-root] aside .overflow-y-auto, [data-studio-menu] .overflow-y-auto, [data-room-canvas], [data-room] aside .overflow-y-auto, .h-dvh.overflow-y-auto { will-change: scroll-position; } nav[aria-label='Breadcrumb'] { transition: opacity .2s ease; } html[data-film-cut] nav[aria-label='Breadcrumb'] { opacity: 0; }`;
     this.applied.cut = undefined;
     doc.head?.append(style);
+    this.watcher?.disconnect();
+    this.watcher = new MutationObserver(() => this.onChange?.());
+    this.watcher.observe(doc, { subtree: true, childList: true, attributes: true, characterData: true });
   }
 
   surface() {
@@ -441,6 +446,12 @@ export class Actor {
     if (!this.ready && this.url && this.tries < 3 && performance.now() - this.askedAt > 25000) this.load(this.url, this.isReady, true);
   }
 
+  stamp() {
+    const a = this.applied;
+    const hand = this.hand;
+    return `${a.on}|${a.transform}|${a.o}|${a.shade}|${a.open}|${a.cut}|${a.clip}|${a.round}|${a.hole}|${a.veil}|${this.coverShown}|${Boolean(this.cover)}|${hand ? `${hand.shown}${hand.at}${hand.pressed}` : ""}`;
+  }
+
   q(selector) {
     return this.doc?.querySelector(selector) ?? null;
   }
@@ -480,7 +491,10 @@ export class Actor {
 
   setHand(spot) {
     if (!spot) {
-      if (this.hand) this.hand.root.style.opacity = "0";
+      if (this.hand?.shown) {
+        this.hand.shown = false;
+        this.hand.root.style.opacity = "0";
+      }
       return;
     }
     if (!this.hand) {
@@ -488,11 +502,18 @@ export class Actor {
       root.className = this.touch ? "film-hand is-touch" : "film-hand";
       root.innerHTML = HAND;
       this.over.append(root);
-      this.hand = { root, pressed: false };
+      this.hand = { root, pressed: false, shown: false, at: "" };
     }
     const hand = this.hand;
-    hand.root.style.opacity = "1";
-    hand.root.style.transform = `translate3d(${spot.x.toFixed(1)}px, ${spot.y.toFixed(1)}px, 46px)`;
+    if (!hand.shown) {
+      hand.shown = true;
+      hand.root.style.opacity = "1";
+    }
+    const at = `translate3d(${spot.x.toFixed(1)}px, ${spot.y.toFixed(1)}px, 46px)`;
+    if (at !== hand.at) {
+      hand.at = at;
+      hand.root.style.transform = at;
+    }
     if (hand.pressed !== spot.pressed) {
       hand.pressed = spot.pressed;
       hand.root.classList.toggle("is-down", spot.pressed);

@@ -290,6 +290,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
     const onFrame = (u, dt = 0) => {
       const film = S.film;
       if (!film) return;
+      let playing = false;
       bridge();
       sync();
       const end = S.mod.T.end;
@@ -306,7 +307,10 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
           film.jump(S.play);
           S.cut = false;
         } else {
-          if (S.view && ready && !film.live && !S.dip && S.play < total) S.play = Math.min(total, S.play + Math.min(0.25, dt) * (S.pace[captionAt(S.play)] ?? STORY_RATE));
+          if (S.view && ready && !film.live && !S.dip && S.play < total) {
+            S.play = Math.min(total, S.play + Math.min(0.25, dt) * (S.pace[captionAt(S.play)] ?? STORY_RATE));
+            playing = true;
+          }
           film.setTarget(S.play);
         }
       } else {
@@ -346,6 +350,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
         waiting: !ready && !lead?.masked,
         canTry: S.open && (film.live || Boolean(lead?.ready)),
       });
+      return playing || S.hold !== null;
     };
 
     const run = () => {
@@ -417,6 +422,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       if (S.story) {
         S.play = S.mod.T[key] + 0.02;
         S.cut = true;
+        S.film?.poke?.();
         wake();
         if (smooth) scrollToY(S.top);
         else {
@@ -531,6 +537,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
       if (S.story) {
         S.play = 0;
         S.cut = true;
+        S.film?.poke?.();
         scrollToY(S.top);
         return;
       }
@@ -573,6 +580,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
 
     const onScroll = () => {
       remember(box);
+      S.film?.poke?.();
       S.raw = (box.scrollTop - S.top) / S.per;
       if (!S.open) return;
       clearTimeout(S.rest);
@@ -604,6 +612,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
     near.observe(track);
     const view = new IntersectionObserver(([entry]) => {
       S.view = entry.intersectionRatio >= 0.6;
+      S.film?.poke?.();
     }, { root: box, threshold: [0, 0.6, 1] });
     view.observe(track);
 
@@ -619,6 +628,7 @@ export default function Tour({ film, sections, deep, intro, slim = false, tryabl
         S.dip = 0;
         S.play = Math.max(0, u);
         S.cut = true;
+        S.film?.poke?.();
         requestAnimationFrame(() => requestAnimationFrame(() => scene.classList.remove("is-cut")));
       }, 170);
     };

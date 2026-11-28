@@ -195,7 +195,6 @@ export function createStudio(actor, IDS, mode = {}) {
   let api = null;
   let applied = {};
   let cursorAt = 0;
-  let clock = 0;
   const docTick = throttle(90);
   const menuTick = throttle(160);
   const pillTick = throttle(280);
@@ -592,7 +591,6 @@ export function createStudio(actor, IDS, mode = {}) {
   }
 
   function update(u, dt, now) {
-    clock += dt;
     liftCursors();
     if (!actor.ready) return;
     if (mode.fill && !settle.at) settle.at = performance.now();
@@ -656,9 +654,9 @@ export function createStudio(actor, IDS, mode = {}) {
     }
 
     const cursorsKey = JSON.stringify(state.cursors);
-    if (cursorsKey !== applied.cursors || clock - cursorAt > 0.9) {
+    if (cursorsKey !== applied.cursors || (actor.applied.on && now - cursorAt > 900)) {
       applied.cursors = cursorsKey;
-      cursorAt = clock;
+      cursorAt = now;
       state.cursors.forEach((cursor) => api.session.cursors.set(formId, cursor));
     }
 

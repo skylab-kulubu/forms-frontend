@@ -10,6 +10,8 @@ const GHOST = `url(${ghostPhone.src})`;
 const OMEGA = 4.4;
 const HORIZON = 0.5;
 const STEPS = 30;
+const REST_AFTER = 500;
+const REST_MS = 160;
 
 function compactSize() {
   const w = Math.round(clamp(M.V.w, 340, 414));
@@ -35,7 +37,7 @@ const framedAt = (u) => ease(seg(u, 0.34, T.form + 0.22)) * (1 - ease(seg(u, T.e
 export const framed = (t) => framedAt(TIME.map.film(t));
 
 export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = null, compact = false, hold = false }) {
-  const state = { u: 0, v: 0, target: 0, last: 0, px: 0, py: 0, tx: 0, ty: 0, live: null, flat: 0, running: false, raf: 0, hold };
+  const state = { u: 0, v: 0, target: 0, last: 0, px: 0, py: 0, tx: 0, ty: 0, live: null, flat: 0, running: false, raf: 0, hold, rest: false, quiet: 0, timer: 0, swing: 0, framing: false };
   const area = (u) => {
     const box = areaOf(TIME.map.tour(u));
     return box.top === undefined ? { ...box, top: 0 } : box;
@@ -48,6 +50,9 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
   handset.bind(backend.bind("ayse"));
   const mode = { compact, fill: false, fit: false, home: () => area(0) };
   const phone = createPhone(handset, IDS, mode, { ghost: GHOST, control: () => backend.get().control });
+  handset.onChange = () => {
+    if (!state.live) poke();
+  };
 
   const cover = document.createElement("div");
   cover.className = "film-cover film-phone-wait";
@@ -60,7 +65,20 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
 
   const loaded = { phone: false };
 
+  function poke() {
+    state.quiet = performance.now();
+    if (!state.rest) return;
+    state.rest = false;
+    if (state.framing || !state.running) return;
+    clearTimeout(state.timer);
+    state.timer = 0;
+    cancelAnimationFrame(state.raf);
+    state.last = 0;
+    state.raf = requestAnimationFrame(frame);
+  }
+
   function layout() {
+    poke();
     setStage(area(WIDE_AT));
     if (compact) {
       const size = compactSize();
@@ -78,6 +96,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
   }
 
   function setLive(on) {
+    poke();
     const actor = on ? leadAt(state.u) : null;
     if (state.live === actor) return Boolean(actor);
     if (state.live) {
@@ -102,6 +121,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
     const box = scene.getBoundingClientRect();
     state.tx = clamp((event.clientX - box.left - (M.V.x + M.V.w / 2)) / (M.V.w / 2), -1, 1);
     state.ty = clamp((event.clientY - box.top - (M.V.y + M.V.h / 2)) / (M.V.h / 2), -1, 1);
+    if (state.swing > 0.001) poke();
   }
 
   function advance(dt) {
@@ -149,9 +169,12 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
 
   function frame(now) {
     if (!state.running) return;
+    state.framing = true;
     const elapsed = state.last ? Math.min(2, (now - state.last) / 1000) : 0.016;
     const dt = Math.min(0.05, elapsed);
     state.last = now;
+    const was = [handset.stamp(), handset.fade, handset.ready, handset.motion, handset.clipMotion];
+    let upkeep = false;
     advance(elapsed);
     const u = state.u;
 
@@ -160,12 +183,15 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
     if (Math.abs(state.flat - (state.live ? 1 : 0)) < 0.001) state.flat = state.live ? 1 : 0;
     const calm = seg(u, 0.1, 0.5) * (1 - seg(u, T.end - 0.1, T.end + 0.2));
     const swing = REDUCED || !sway || compact ? 0 : (1 - state.flat) * calm;
+    state.swing = swing;
     state.px = lerp(state.px, state.tx, 1 - Math.exp(-dt / 0.3));
     state.py = lerp(state.py, state.ty, 1 - Math.exp(-dt / 0.3));
     const tilt = `rotateX(${(-state.py * 1.1 * swing).toFixed(3)}deg) rotateY(${(state.px * 1.6 * swing).toFixed(3)}deg)`;
+    let busy = state.u !== state.target || state.v !== 0 || state.flat !== flatWas;
     if (tilt !== state.tilt) {
       state.tilt = tilt;
       world.style.transform = tilt;
+      busy = true;
     }
 
     const seconds = now / 1000;
@@ -179,6 +205,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
     if (!(steady && handset.motion && now - handset.motionAt < 240)) {
       if (!steady || floatOf(u) > 0) {
         handset.motionAt = now;
+        upkeep = steady;
         for (let step = 1; step <= STEPS; step += 1) {
           const t = (HORIZON * step) / STEPS;
           steps.push(stepOf(handset, phone.track, t, seconds + t));
@@ -190,8 +217,24 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
 
     if (!state.live && loaded.phone) phone.update(u, dt, now, clamp(state.target, 0, T.total));
 
-    onFrame?.(TIME.map.tour(u), elapsed);
-    state.raf = requestAnimationFrame(frame);
+    if (onFrame?.(TIME.map.tour(u), elapsed)) busy = true;
+    if (phone.pending()) busy = true;
+    const [stamp, fade, ready, motion, clip] = was;
+    if (handset.stamp() !== stamp || handset.fade !== fade || handset.ready !== ready || (!upkeep && (handset.motion !== motion || handset.clipMotion !== clip))) busy = true;
+    state.framing = false;
+    if (!state.running) return;
+    if (busy) state.quiet = now;
+    if (now - state.quiet < REST_AFTER) {
+      state.rest = false;
+      state.raf = requestAnimationFrame(frame);
+      return;
+    }
+    state.rest = true;
+    state.timer = setTimeout(() => {
+      state.timer = 0;
+      state.last = 0;
+      state.raf = requestAnimationFrame(frame);
+    }, REST_MS);
   }
 
   function boot() {
@@ -207,17 +250,22 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
     window.addEventListener("pointermove", onPointer, { passive: true });
     boot();
     state.last = 0;
+    state.quiet = performance.now();
     state.raf = requestAnimationFrame(frame);
   }
 
   function release() {
     state.hold = false;
+    poke();
     if (state.running) boot();
   }
 
   function stop() {
     state.running = false;
+    state.rest = false;
     cancelAnimationFrame(state.raf);
+    clearTimeout(state.timer);
+    state.timer = 0;
     window.removeEventListener("pointermove", onPointer);
   }
 
@@ -225,6 +273,7 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
     stop();
     setLive(false);
     phone.sheet.destroy();
+    handset.watcher?.disconnect();
     handset.plane.remove();
   }
 
@@ -236,12 +285,21 @@ export function createFilm({ scene, world, area: areaOf, sway = true, onFrame = 
     get ready() { return handset.ready; },
     get covered() { return Boolean(handset.cover); },
     get held() { return state.hold; },
-    setTarget(t) { state.target = clamp(TIME.map.film(t), 0, T.total); },
-    jump(t) {
-      state.target = clamp(TIME.map.film(t), 0, T.total);
-      state.u = state.target;
-      state.v = 0;
+    setTarget(t) {
+      const next = clamp(TIME.map.film(t), 0, T.total);
+      if (next === state.target) return;
+      state.target = next;
+      poke();
     },
+    jump(t) {
+      const next = clamp(TIME.map.film(t), 0, T.total);
+      if (next === state.target && next === state.u && state.v === 0) return;
+      state.target = next;
+      state.u = next;
+      state.v = 0;
+      poke();
+    },
+    poke,
     lead: () => leadAt(state.u),
     settled: () => Math.abs(state.target - state.u) < 0.0005 && handset.ready && !phone.pending(),
     setLive, layout, start, stop, destroy, release,
