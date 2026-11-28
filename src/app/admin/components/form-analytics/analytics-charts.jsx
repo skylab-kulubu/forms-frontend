@@ -79,7 +79,13 @@ export function ToggleSplit({ field, q }) {
   const countOf = (label) => (q.distribution ?? []).find((bucket) => bucket.value === label)?.count ?? 0;
   if (!q.answeredCount) return <EmptyNote />;
 
-  return <ProportionBar className="mt-3" segments={[{ key: "on", label: on, value: countOf(on) }, { key: "off", label: off, value: countOf(off) }]} />;
+  return (
+    <ProportionBar className="mt-3" segments={[
+      { key: "on", label: on, value: countOf(on), color: "var(--skylab-500)" },
+      { key: "off", label: off, value: countOf(off), color: "var(--skylab-800)" },
+    ]}
+    />
+  );
 }
 
 function sliderBins(field, q) {
