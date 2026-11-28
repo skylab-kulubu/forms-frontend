@@ -3,53 +3,33 @@ import Image from "next/image";
 const ROWS = [
   {
     k: "Onay ve ret",
-    g: "Yerleşik bir onay adımı yok. Kararı cevap tablosuna kendiniz yazarsınız ya da bir eklenti kurarsınız.",
-    f: "Ekipten biri cevabı onaylar ya da reddeder. Karara göre başvuranla iletişimi Forms kurar.",
+    g: "Onay adımı yok. Kararı cevap tablosuna kendiniz yazarsınız.",
+    f: "Ekipten biri onaylar ya da reddeder, başvuran e-postayla haber alır.",
   },
   {
     k: "Sıradaki adım",
-    g: "İkinci formun linkini onayladığınız kişilere tek tek gönderirsiniz.",
+    g: "İkinci formun linkini onayladıklarınıza tek tek gönderirsiniz.",
     f: "Onaylanan başvuranın önüne sıradaki form açılır, bağlantısı e-postasına gider.",
   },
   {
     k: "Başvuranın gördüğü",
-    g: "Cevabının bir kopyasını alabilir fakat sonucu siz yazana kadar öğrenemez.",
-    f: "Hangi adımda olduğunu ve ekibin notunu görebilir, böylece süreç daha net ilerler.",
-  },
-  {
-    k: "E-postalar",
-    g: "Yeni cevap gelince sadece size bildirim gider. Başvuranın durumu değiştiğinde ona giden bir e-posta olmaz.",
-    f: "Başvuran gönderince ve karar verilince e-posta alır, size ise unutulmuş cevapların hatırlatması gelir.",
+    g: "Sonucu siz yazana kadar öğrenemez.",
+    f: "Hangi adımda olduğunu ve ekibin notunu görür.",
   },
   {
     k: "Koşullu sorular",
-    g: "Bölüm düzeyinde çalışır, çoktan seçmeli ya da açılır liste cevabına göre başka bölüme geçilir.",
-    f: "Tek bir soru, önceki bir cevaba göre görünür. Hatta farklı bir forma iletilmesi bile sağlanabilir. Metin, sayı, tarih ve dosya cevapları da koşul olabilir.",
+    g: "Bölüm düzeyinde, yalnız seçmeli cevaplara göre çalışır.",
+    f: "Tek bir soru önceki bir cevaba göre açılır. Metin, sayı, tarih ve dosya cevapları da koşul olabilir.",
   },
   {
     k: "Süre",
-    g: "Süre sınırı koyamazsınız. Görev ya da sınav için bir eklenti kurmanız gerekir.",
-    f: "Aday “Görevi başlat”a basınca süresi işlemeye başlar. Süre dolarsa o ana kadarki cevapları size gelir, isterseniz ek süre verirsiniz.",
-  },
-  {
-    k: "Birlikte düzenleme",
-    g: "Formu birden çok kişi düzenleyebilir ama sorulara yorum bırakılamaz.",
-    f: "Kimin hangi soruda olduğunu görürsünüz. Bir soruya yorum bırakıp konuşmayı orada sürdürürsünüz, konu bitince yorumu çözüldü olarak kapatırsınız.",
+    g: "Süre sınırı koyamazsınız.",
+    f: "Süre aday “Görevi başlat”a basınca işler, dolunca o ana kadarki cevaplar size gelir.",
   },
   {
     k: "Analitik",
-    g: "Özet sayfası her soruyu ayrı gösterir. Cevapları süzmek için tabloya geçmeniz gerekir.",
+    g: "Cevapları süzmek için tabloya geçersiniz.",
     f: "Bir cevaba tıklayınca diğer sorular yalnız o cevabı verenlere göre hesaplanır.",
-  },
-  {
-    k: "Tema",
-    g: "Başlık görseli, renk ve birkaç hazır yazı tipi arasından seçersiniz.",
-    f: "Topluluğunuzun sitesindeki renkler ve yazı tipleriyle size özel bir tema ekleriz. Form sayfası, gönderildi ve kapandı ekranları bu temayla açılır.",
-  },
-  {
-    k: "Kimlik",
-    g: "Google hesabıyla giriş istenebilir, ayrıca dosya sorusu varsa giriş zorunludur.",
-    f: "Başvuranlar E-Skylab hesabıyla girer, ad ve e-posta hesaptan gelir. İsterseniz formu anonim cevaba da açarsınız.",
   },
 ];
 

@@ -66,7 +66,7 @@ export default function CommunitiesPage() {
 
         <section className="at-sec" id={ids.compare} data-page="">
           <Head title="Google Forms'tan farkı">
-            Google Forms tek seferlik bir formu toplamak için yeterli. Başvurular ise birkaç adım sürüyor, ekipler karar veriyor ve başvurana haber verilmesi gerekiyorsa bu işlemleri elle yapmanız gerekiyor.
+            Google Forms tek seferlik bir form için yeterli. Başvuru birkaç adım sürünce kararları ve başvurana dönüşü elle yürütürsünüz.
           </Head>
           <Compare />
         </section>

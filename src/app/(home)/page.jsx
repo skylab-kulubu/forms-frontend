@@ -39,7 +39,7 @@ export default function NewHomePage() {
           <div className="a2-int-l" data-rv="">
             <h2 className="a2-h2">Neyle ilgileniyorsunuz?</h2>
             <p className="a2-txt">
-              Sizi daha iyi tanıyabilmemiz ve açılan pozisyonlardan haberdar edebilmemiz için formu doldurabilirsiniz. İlginize göre başvuru açan ekip size e-postayla haber verecektir.
+              İlginize göre başvuru açan ekip size e-postayla haber verecektir.
             </p>
           </div>
           <div data-rv="" style={{ "--rvd": ".12s" }}>

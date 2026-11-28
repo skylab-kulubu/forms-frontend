@@ -170,7 +170,7 @@ export default function HeroWall() {
         <div className="a2-intro">
           <p className="a2-eyebrow">SKY LAB Forms</p>
           <h1 className="a2-h1">Afişteki QR&apos;ın açtığı yer.</h1>
-          <p className="a2-p">Kampüsteki afişlerin QR kodları ve ekiplerin paylaştığı bağlantılar Forms&apos;a açılır. Başvurunuzun alınmasından değerlendirmesine kadar her adım buradan yönetilir.</p>
+          <p className="a2-p">Kampüsteki afişlerin QR kodları ve ekiplerin paylaştığı bağlantılar Forms&apos;a açılır.</p>
           <div className="a2-acts">
             <button type="button" className="f-act" onClick={tryAnywhere} onPointerEnter={arm} onFocus={arm}>
               Forms&apos;u deneyin
