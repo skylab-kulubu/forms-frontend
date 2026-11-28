@@ -1,0 +1,109 @@
+[data-brand] {
+  font-family: var(--font-sans);
+}
+
+[data-brand]:not([data-brand-paper]) {
+  background-color: var(--sl-bg);
+}
+
+[data-brand] ::selection {
+  background: color-mix(in oklab, var(--brand-accent) 30%, transparent);
+  color: var(--brand-heading);
+}
+
+[data-brand-shape="cut"] [data-slot="form-card"] {
+  position: relative;
+  isolation: isolate;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+
+[data-brand-shape="cut"] [data-slot="form-card"]::before,
+[data-brand-shape="cut"] [data-slot="form-card"]::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+[data-brand-shape="cut"] [data-slot="form-card"]::before {
+  inset: -1px;
+  clip-path: polygon(evenodd, 24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px, 24px 0, 24.6px 1px, 1px 24.6px, 1px calc(100% - 1px), calc(100% - 24.6px) calc(100% - 1px), calc(100% - 1px) calc(100% - 24.6px), calc(100% - 1px) 1px, 24.6px 1px);
+  background: var(--brand-edge);
+}
+
+[data-brand-shape="cut"] [data-slot="form-card"]::after {
+  inset: 0;
+  clip-path: polygon(23.6px 0, 100% 0, 100% calc(100% - 23.6px), calc(100% - 23.6px) 100%, 0 100%, 0 23.6px);
+  background: var(--brand-paper);
+}
+
+[data-brand-shape="cut"] .studio-card[data-slot="form-card"]::before {
+  background: color-mix(in oklab, var(--color-white) 15%, transparent);
+}
+
+[data-brand-shape="cut"] .studio-card[data-slot="form-card"]::after {
+  background: var(--studio-paper);
+}
+
+[data-brand-display] [data-slot="form-title"],
+[data-brand-display] [data-slot="screen-title"] {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+[data-brand]:not([data-brand-paper]) [data-slot="form-title"],
+[data-brand]:not([data-brand-paper]) [data-slot="screen-title"] {
+  color: var(--brand-heading);
+}
+
+[data-brand-display] [data-slot="form-title"] {
+  font-size: 1.625rem;
+  line-height: 1.2;
+}
+
+[data-brand-display] [data-slot="form-card"][data-phone] [data-slot="form-title"] {
+  font-size: 1.375rem;
+}
+
+@media (width < 40rem) {
+  [data-brand-display] [data-slot="form-title"] {
+    font-size: 1.375rem;
+  }
+}
+
+[data-brand] [data-slot="field"]:not([data-invalid]) [data-slot="field-number"] {
+  border-color: color-mix(in oklab, var(--brand-highlight-soft) 35%, transparent);
+  background: transparent;
+  color: var(--brand-highlight-soft);
+}
+
+[data-brand] [data-slot="page-footer"],
+[data-brand] [data-slot="footer-mark"] {
+  --skylab-300: color-mix(in oklab, var(--brand-highlight) 70%, white);
+  --skylab-400: color-mix(in oklab, var(--brand-highlight) 85%, white);
+  --skylab-500: var(--brand-highlight);
+}
+
+[data-brand] [data-slot="submit"] {
+  border-color: transparent;
+  background: var(--brand-highlight-soft);
+  color: var(--brand-on-highlight);
+  font-weight: 700;
+  transition: filter 0.15s ease, translate 0.15s ease;
+}
+
+[data-brand] [data-slot="submit"]:hover {
+  background: var(--brand-highlight-soft);
+  filter: brightness(1.06);
+}
+
+[data-brand] [data-slot="submit"]:active {
+  translate: 0 1px;
+}
+
+[data-brand-shape="cut"] [data-slot="submit"] {
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}

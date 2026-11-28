@@ -1,8 +1,13 @@
 import { ArrowUpRight } from "lucide-react";
+import "./decor.css";
 
-const AMBER = "var(--al-amber)";
-const CYAN = "var(--al-cyan)";
-const BG = "var(--al-bg)";
+const AMBER = "var(--brand-highlight)";
+const CYAN = "var(--brand-accent)";
+const BG = "var(--brand-background)";
+
+export function StatusTop() {
+  return <span aria-hidden="true" className="al-status-orbit" />;
+}
 
 export function CardTop({ brand }) {
   return (

@@ -1,3 +1,4 @@
+import BrandRoot from "./BrandRoot";
 import { findBrand } from "./registry";
 
 const FONT_SAMPLE = "Aa Ğğ Iı İi Şş Çç Öö Üü";
@@ -16,5 +17,9 @@ export default function BrandPaper({ brand, className = "", children }) {
   const skin = findBrand(brand);
   if (!skin) return className ? <div className={className}>{children}</div> : children;
 
-  return <div data-brand={skin.key} data-brand-paper="" className={`${className || "contents"} ${skin.scopeClass}`}>{children}</div>;
+  return (
+    <BrandRoot brand={skin} data-brand-paper="" className={className || "contents"}>
+      {children}
+    </BrandRoot>
+  );
 }

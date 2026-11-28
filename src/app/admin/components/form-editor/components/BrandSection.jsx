@@ -1,15 +1,15 @@
-import { brandOptions } from "@/brands/catalog";
+import { brandList } from "@/brands/registry";
 import { MenuPill, PANEL_SECTION, SectionHeader } from "@/app/admin/components/utils/SidePanel";
 
 const PLATFORM = "skylab";
 
 const OPTIONS = [
   { value: PLATFORM, label: "SKY LAB" },
-  ...brandOptions.map((brand) => ({ value: brand.key, label: brand.name, hint: brand.siteLabel })),
+  ...brandList.map((brand) => ({ value: brand.key, label: brand.name, hint: brand.siteLabel })),
 ];
 
 export function BrandSection({ value, onChange }) {
-  const brand = brandOptions.find((option) => option.key === value) ?? null;
+  const brand = brandList.find((option) => option.key === value) ?? null;
 
   return (
     <section className={PANEL_SECTION}>

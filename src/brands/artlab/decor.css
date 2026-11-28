@@ -1,0 +1,67 @@
+[data-brand="artlab"] {
+  --al-path: #3a4656;
+}
+
+[data-brand="artlab"] .al-guide,
+[data-brand="artlab"] .al-orbit {
+  display: none;
+  position: absolute;
+  pointer-events: none;
+}
+
+@media (width >= 64rem) {
+  [data-brand="artlab"] .al-guide {
+    display: block;
+    top: -6rem;
+    bottom: 0;
+    left: -2.75rem;
+    border-left: 1px dashed var(--al-path);
+  }
+
+  [data-brand="artlab"] .al-guide::before,
+  [data-brand="artlab"] .al-guide::after {
+    content: "";
+    position: absolute;
+    top: 6rem;
+  }
+
+  [data-brand="artlab"] .al-guide::before {
+    left: 0;
+    width: calc(2.75rem + 24px);
+    height: 1px;
+    background: color-mix(in oklab, var(--brand-heading) 16%, transparent);
+  }
+
+  [data-brand="artlab"] .al-guide::after {
+    left: -5.5px;
+    width: 12px;
+    height: 12px;
+    translate: 0 -6px;
+    rotate: 45deg;
+    border: 1.5px solid var(--brand-highlight);
+    background: var(--brand-background);
+  }
+}
+
+@media (width >= 72rem) {
+  [data-brand="artlab"] .al-orbit {
+    display: block;
+    top: -5.5rem;
+    left: calc(100% + 1.5rem);
+    width: min(460px, calc((100vw - 42rem) / 2 - 4rem));
+    aspect-ratio: 42 / 17;
+    background: url("./orbit.svg") center / contain no-repeat;
+  }
+}
+
+[data-brand="artlab"] .al-status-orbit {
+  position: absolute;
+  z-index: -1;
+  top: 13vh;
+  left: 50%;
+  width: min(78vw, 46vh);
+  aspect-ratio: 42 / 17;
+  translate: -50% 0;
+  background: url("./orbit.svg") center / contain no-repeat;
+  pointer-events: none;
+}

@@ -4,20 +4,18 @@ import { createContext, useContext, useEffect } from "react";
 
 const BrandSlots = createContext(null);
 
-export function BrandProvider({ brandKey, theme = null, scopeClass = "", slots, children }) {
+export function BrandProvider({ attributes, theme = null, slots, children }) {
   useEffect(() => {
     const root = document.body;
-    const classes = scopeClass.split(" ").filter(Boolean);
-    root.dataset.brand = brandKey;
+    const marks = Object.entries(attributes);
+    for (const [name, value] of marks) root.setAttribute(name, value);
     // Popups mount on the body, so they take the brand's fixed theme from there too
     if (theme) root.dataset.theme = theme;
-    root.classList.add(...classes);
     return () => {
-      delete root.dataset.brand;
+      for (const [name] of marks) root.removeAttribute(name);
       if (theme) delete root.dataset.theme;
-      root.classList.remove(...classes);
     };
-  }, [brandKey, theme, scopeClass]);
+  }, [attributes, theme]);
 
   return <BrandSlots.Provider value={slots}>{children}</BrandSlots.Provider>;
 }

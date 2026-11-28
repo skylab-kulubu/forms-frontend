@@ -412,7 +412,7 @@ export default function FormDisplayer({ form, stage = 0, isWorkflow = false, sta
           >
             {!embedded && <div className="h-12 w-full shrink-0" />}
 
-            <div data-slot="form-card" className="w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-border bg-card shadow-2xl">
+            <div data-slot="form-card" className="mt-(--brand-card-top-space) w-full max-w-2xl flex flex-1 flex-col rounded-3xl border border-border bg-card shadow-2xl">
               <BrandSlot name="CardTop" />
               <motion.div className="flex flex-1 flex-col gap-6 p-6 sm:p-10" variants={containerVariants} initial="hidden" animate="show" exit="exit">
 

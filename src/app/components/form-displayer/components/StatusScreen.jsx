@@ -6,6 +6,7 @@ import { ChevronDown, FileCheck, FileClock, FileLock2, FilePenLine, FileSearchCo
 import { loginWithKeycloak } from "@/lib/authActions";
 import { formatJourneyDate, hasJourney, journeyTimeline, singleResponseTimeline } from "@/lib/workflow-journey";
 import { formatLongDate } from "@/lib/form-timing";
+import { BrandSlot } from "@/brands/BrandContext";
 import LoginButton from "../../utils/LoginButton";
 import JourneyTimeline, { ReviewNote } from "./JourneyTimeline";
 
@@ -216,6 +217,7 @@ export default function StatusScreen({ onRerun = null, ...props }) {
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12, transition: { duration: 0.15, ease: [0.22, 1, 0.36, 1] } }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
+      <BrandSlot name="StatusTop" />
       <div className="flex w-full flex-1 items-center justify-center">
         <div className="flex w-full max-w-104 flex-col items-center text-center">
           <Icon className={`size-8 ${ICON_TONE[screen.tone] ?? ICON_TONE.neutral}`} strokeWidth={1.6} />

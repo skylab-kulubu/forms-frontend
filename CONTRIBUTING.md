@@ -75,6 +75,8 @@ src/
 │   └── api/
 │       └── auth/[...nextauth]/        # NextAuth route handler
 │
+├── brands/                            # Event looks for form pages: one data file per brand (see brands/README.md)
+│
 ├── lib/
 │   ├── apiClient.js                   # Authenticated HTTP client
 │   ├── session-recovery.js            # Silent sign-in iframe, re-login popup, recovery status

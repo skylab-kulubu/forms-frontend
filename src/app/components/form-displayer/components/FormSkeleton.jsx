@@ -21,7 +21,7 @@ export default function FormSkeleton() {
   return (
     <div className="relative z-10 flex min-h-full w-full flex-col items-center px-4 sm:px-6" aria-busy="true" aria-label="Form yükleniyor">
       <div className="h-12 w-full shrink-0" />
-      <div data-slot="form-card" className="flex w-full max-w-2xl flex-1 flex-col rounded-3xl border border-border bg-card shadow-2xl">
+      <div data-slot="form-card" className="mt-(--brand-card-top-space) flex w-full max-w-2xl flex-1 flex-col rounded-3xl border border-border bg-card shadow-2xl">
         <BrandSlot name="CardTop" />
         <div className="flex flex-col gap-6 p-6 sm:p-10">
           <Skeleton className="h-7.5 w-full rounded-lg" />
