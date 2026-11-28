@@ -1,19 +1,24 @@
-import { Anton, Instrument_Serif } from "next/font/google";
+import localFont from "next/font/local";
 import "../components/home/home.css";
 
-const anton = Anton({
+const anton = localFont({
+  src: "../fonts/anton.woff2",
   weight: "400",
-  subsets: ["latin", "latin-ext"],
   variable: "--font-anton",
   display: "swap",
+  declarations: [{ prop: "font-family", value: "Anton" }],
 });
 
-const instrumentSerif = Instrument_Serif({
+const instrumentSerif = localFont({
+  src: [
+    { path: "../fonts/instrument-serif.woff2", style: "normal" },
+    { path: "../fonts/instrument-serif-italic.woff2", style: "italic" },
+  ],
   weight: "400",
-  style: ["normal", "italic"],
-  subsets: ["latin", "latin-ext"],
   variable: "--font-serif",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
+  declarations: [{ prop: "font-family", value: "Instrument Serif" }],
 });
 
 export const metadata = {

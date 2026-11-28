@@ -1,16 +1,20 @@
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "./providers";
 import ThemeScript from "./components/ThemeScript";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
+const spaceGrotesk = localFont({
+  src: "./fonts/space-grotesk.woff2",
+  weight: "300 700",
   variable: "--font-sans",
+  declarations: [{ prop: "font-family", value: "Space Grotesk" }],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrains-mono.woff2",
+  weight: "100 800",
   variable: "--font-mono",
+  declarations: [{ prop: "font-family", value: "JetBrains Mono" }],
 });
 
 export const viewport = { viewportFit: "cover" };
