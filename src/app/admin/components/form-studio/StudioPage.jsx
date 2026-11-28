@@ -101,7 +101,7 @@ export function pageCardRect(width, { phone = false, scrollTop = 0 } = {}) {
   return { left: (usable - column) / 2 + COLUMN_PAD, top: CARD_TOP - scrollTop, width: Math.min(cardWidth, column - COLUMN_PAD * 2) };
 }
 
-export const TOOLBAR_CLASS ="absolute bottom-3 left-1/2 z-30 flex w-max -translate-x-1/2 items-center gap-0.5 rounded-xl border border-ink/10 bg-neutral-900 p-1 shadow-xl shadow-black/40 sm:bottom-4";
+export const TOOLBAR_CLASS ="absolute bottom-3 left-1/2 z-30 flex w-max -translate-x-1/2 items-center gap-0.5 rounded-xl border border-ink/10 bg-neutral-900 p-1 shadow-toolbar sm:bottom-4";
 export const TOOL_DIVIDER = "mx-1 hidden h-5 w-px bg-ink/10 sm:block";
 
 export function ToolButton({ label, active = false, onClick, className = "", children }) {

@@ -83,6 +83,8 @@ body {
   --color-panel: var(--forms-panel);
   --color-panel-soft: var(--forms-panel-soft);
   --color-danger-panel: var(--forms-danger-panel);
+  --shadow-toolbar: var(--forms-toolbar-shadow);
+  --shadow-paper: var(--forms-paper-shadow);
 }
 
 :root {
@@ -106,6 +108,8 @@ body {
   --forms-danger-panel: #1f1414;
   --forms-code: #0b0b0d;
   --forms-shimmer-peak: 0.18;
+  --forms-toolbar-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --forms-paper-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
 }
 [data-theme="dark"] {
   --sb-thumb: #3f3f46;
@@ -150,6 +154,8 @@ body {
   --forms-danger-panel: #fdf3f2;
   --forms-code: #f4f2ef;
   --forms-shimmer-peak: 0.07;
+  --forms-toolbar-shadow: 0 6px 14px -4px rgb(28 26 24 / 0.3), 0 1px 3px rgb(28 26 24 / 0.18);
+  --forms-paper-shadow: 0 20px 25px -5px rgb(28 26 24 / 0.11), 0 8px 10px -6px rgb(28 26 24 / 0.11);
   --sb-thumb: #cfc9c1;
   --sb-thumb-hover: #b4ada4;
   --color-neutral-50: #121014;

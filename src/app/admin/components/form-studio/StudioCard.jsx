@@ -18,7 +18,7 @@ export const CARD_WIDTH = { desktop: 672, phone: 358 };
 export function CardShell({ phone = false, active = false, brand = null, className = "", ref, children }) {
   return (
     <BrandPaper brand={brand}>
-      <div ref={ref} data-slot="form-card" data-phone={phone || undefined} className={`studio-card flex w-full flex-col rounded-3xl border text-neutral-200 shadow-xl shadow-black/30 ${active ? "border-ink/15" : "border-ink/10"} ${className}`}>
+      <div ref={ref} data-slot="form-card" data-phone={phone || undefined} className={`studio-card flex w-full flex-col rounded-3xl border text-neutral-200 shadow-paper ${active ? "border-ink/15" : "border-ink/10"} ${className}`}>
         <div className={`flex flex-1 flex-col gap-6 ${phone ? "p-6" : "p-6 sm:p-10"}`}>{children}</div>
       </div>
     </BrandPaper>

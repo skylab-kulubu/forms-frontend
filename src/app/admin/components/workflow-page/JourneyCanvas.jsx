@@ -89,7 +89,7 @@ function Sheet({ sec, pad = "p-6 sm:p-8", flash = null, selected = false, onSele
 
   return (
     <section ref={ref} data-sec={sec} onClick={onSelect ? (event) => { if (!event.target.closest("button, a, input, label")) onSelect(); } : undefined}
-      className={`studio-card relative flex w-full flex-col rounded-3xl border border-ink/10 shadow-xl shadow-black/30 transition-shadow duration-200 ${
+      className={`studio-card relative flex w-full flex-col rounded-3xl border border-ink/10 shadow-paper transition-shadow duration-200 ${
         selected ? "ring-[6px] ring-skylab-400/25" : onSelect ? "cursor-pointer hover:ring-1 hover:ring-ink/15" : ""
       }`}
     >
