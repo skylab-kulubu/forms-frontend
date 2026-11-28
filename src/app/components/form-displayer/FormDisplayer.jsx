@@ -17,7 +17,6 @@ import StatusScreen from "./components/StatusScreen";
 import TaskBlock from "./components/TaskBlock";
 import { Countdown, DeliverablesHeader, ExtensionNotice, TaskGate, TaskMeta, useIsLate } from "./components/TimedParts";
 import { isFieldMissing, useFormDisplayer } from "./hooks/useFormDisplayer";
-import ThemeSwitch from "./components/ThemeSwitch";
 import Background from "../Background";
 import { BrandSlot } from "@/brands/BrandContext";
 import NoticeDock, { NoticeDockPlacement } from "../utils/NoticeDock";
@@ -105,8 +104,6 @@ function PageFooter() {
           Sorun Bildir
         </a>
       </div>
-
-      <ThemeSwitch />
     </motion.div>
   );
 }

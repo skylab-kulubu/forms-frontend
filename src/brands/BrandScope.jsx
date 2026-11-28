@@ -1,7 +1,7 @@
-import { BrandProvider } from "./BrandContext";
+import { BrandProvider, FixedTheme } from "./BrandContext";
 
 export default function BrandScope({ brand, children }) {
-  if (!brand) return children;
+  if (!brand) return <FixedTheme theme="dark">{children}</FixedTheme>;
 
   const slots = {};
   for (const [name, Slot] of Object.entries(brand.slots)) slots[name] = <Slot brand={brand} />;

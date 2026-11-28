@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect } from "react";
 
 const BrandSlots = createContext(null);
-const BrandTheme = createContext(null);
 
 export function BrandProvider({ brandKey, theme = null, scopeClass = "", slots, children }) {
   useEffect(() => {
@@ -20,15 +19,19 @@ export function BrandProvider({ brandKey, theme = null, scopeClass = "", slots, 
     };
   }, [brandKey, theme, scopeClass]);
 
-  return (
-    <BrandTheme.Provider value={theme}>
-      <BrandSlots.Provider value={slots}>{children}</BrandSlots.Provider>
-    </BrandTheme.Provider>
-  );
+  return <BrandSlots.Provider value={slots}>{children}</BrandSlots.Provider>;
 }
 
-/** The theme a brand draws its pages in, whatever the visitor chose; null without a brand. */
-export const useBrandTheme = () => useContext(BrandTheme);
+export function FixedTheme({ theme, children }) {
+  useEffect(() => {
+    document.body.dataset.theme = theme;
+    return () => {
+      delete document.body.dataset.theme;
+    };
+  }, [theme]);
+
+  return <div data-theme={theme}>{children}</div>;
+}
 
 export function BrandSlot({ name, fallback = null }) {
   return useContext(BrandSlots)?.[name] ?? fallback;
